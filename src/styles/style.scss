@@ -1,0 +1,36 @@
+.borRadduis5 {
+  border-radius: 5px;
+}
+
+.borRadduis10 {
+  border-radius: 10px;
+}
+
+.borRadduis15 {
+  border-radius: 15px;
+}
+
+.el-table {
+  th {
+    background-color: #f2f2f2 !important;
+  }
+
+}
+
+//显示时按钮样式
+.el-button--primary {
+  //需要更改的按钮类型
+  background: #07b161 !important;
+  border-color: #07b161 !important;
+}
+
+//移入时按钮样式
+.el-button--primary:hover {
+  background: #08d374 !important;
+  border-color: #08d374 !important;
+  color: #FFF !important;
+}
+
+.flex {
+  display: flex;
+}
