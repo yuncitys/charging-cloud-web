@@ -8,16 +8,22 @@
 				<div class="tableHead flex">
 					<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">订单号</div>
 					<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">充电站点</div>
+          <div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">充电时长</div>
 					<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">开始时间</div>
 				</div>
 				<vue-seamless-scroll :data="list" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
-						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">{{item.orderCode}}
+						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+              {{item.orderCode}}
 						</div>
 						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
-							{{item.networkAddress}}
+							{{item.networkName}}
 						</div>
-						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">{{item.startTime}}
+            <div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+            	{{item.chargingDuration}}分钟
+            </div>
+						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+              {{item.startTime}}
 						</div>
 					</div>
 				</vue-seamless-scroll>
@@ -89,7 +95,8 @@
 
 	.RealOrderBox {
 		width: 500px;
-		height: 200px;
+		height: 330px;
+    margin: 15px 0;
 		border-radius: 20px 20px 20px 20px;
 
 		.light_TipBox {

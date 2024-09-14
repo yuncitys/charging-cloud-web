@@ -13,7 +13,9 @@
 				<div :class="['tableHead','flex',isDark ? 'dark_tableHead' : 'light_tableHead'] ">
 					<div class="headItem" style="width:10%">排名</div>
 					<div class="headItem" style="width:30%">站点名称</div>
-					<div class="headItem" style="width:30%">订单总量</div>
+					<div class="headItem" style="width:30%">充电总量</div>
+          <div class="headItem" style="width:30%">充电金额</div>
+          <div class="headItem" style="width:30%">充电度数</div>
 					<div class="headItem" style="width:30%">统计时间</div>
 				</div>
 				<vue-seamless-scroll :data="list" class="seamless-warp">
@@ -28,9 +30,9 @@
 						<div class="listItem flex" v-if="index === 2" style="width:10%;justify-content: center;">
 							<div class="round" style="background-color: rgba(251, 129, 55, 1);">{{index+1}}</div>
 						</div>
-						<div class="listItem" v-if="index > 2" :style="{width:'10%',color:isDark ? '#fff' : '#333'}">
+						<!-- <div class="listItem" v-if="index > 2" :style="{width:'10%',color:isDark ? '#fff' : '#333'}">
 							{{index+1}}
-						</div>
+						</div> -->
 						<div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
 							style="width:30%">
 							{{item.networkName}}
@@ -39,8 +41,18 @@
 							style="width:30%">
 							{{navIndex === 0 ? item.orderCount : item.orderMoeny}}{{navIndex === 0 ? '单' : '元'}}
 						</div>
+            <div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
+            	style="width:30%">
+              {{item.orderMoeny}}元
+            </div>
+            <div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
+            	style="width:30%">
+              {{item.chargingDegree || 0}}度
+            </div>
 						<div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
-							style="width:30%">{{item.time}}</div>
+							style="width:30%">
+              {{item.time}}
+            </div>
 					</div>
 				</vue-seamless-scroll>
 			</div>
@@ -62,13 +74,16 @@
 		},
 		data() {
 			return {
-				navList: [{
+				navList: [
+          {
 					id: 1,
-					name: '站点订单总数排名'
-				}, {
-					id: 2,
-					name: '站点消费金额排名'
-				}],
+					name: '充电站排名'
+          },
+        //   {
+        //     id: 2,
+        //     name: '站点消费金额排名'
+        //   },
+        ],
 				navIndex: 0,
 				list: [],
 			}

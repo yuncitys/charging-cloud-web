@@ -5,7 +5,8 @@
 				<div class="box1 flex">
 					<div class="box1_left">
 						<div :class="['label',isDark ? 'dark_label' : 'light_label']">总交易金额</div>
-						<div :class="['val',isDark ? 'dark_val' : 'light_val']">{{countData.countOrderMoney.totalMoeny}}
+						<div :class="['val',isDark ? 'dark_val' : 'light_val']">
+              {{countData.countOrderMoney.totalMoeny}}
 						</div>
 						<div class="lineListBox">
 							<div class="flex lineList">
@@ -43,7 +44,8 @@
 				<div class="box1 flex">
 					<div class="box1_left">
 						<div :class="['label',isDark ? 'dark_label' : 'light_label']">扫码订单</div>
-						<div :class="['val',isDark ? 'dark_val' : 'light_val']">{{countOrderWx.totalOrder}}
+						<div :class="['val',isDark ? 'dark_val' : 'light_val']">
+              {{countOrderWx.totalOrder}}
 						</div>
 						<img src="../../../assets/largeScreen/Slice429.png" class="img" v-if="isDark" />
 						<img src="../../../assets/largeScreen/Slice420.png" class="img" v-if="!isDark" />
@@ -73,6 +75,35 @@
 					</div>
 				</div>
 			</div>
+      <div :class="['statisticsItem',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
+      	<div class="box2 flex">
+      		<div class="box2_left">
+      			<div class="flex childBox">
+      				<img src="../../../assets/largeScreen/Slice434.png" class="img" v-if="isDark" />
+      				<img src="../../../assets/largeScreen/Slice391.png" class="img" v-if="!isDark" />
+      				<div class="textBox">
+      					<div :class="['label',isDark ? 'dark_label' : 'light_label']">用户总数</div>
+      					<div :class="['val',isDark ? 'dark_val' : 'light_val']">
+      						{{countData.countUser.totalUser}}人
+      					</div>
+      				</div>
+      			</div>
+      			<div class="line"></div>
+      			<div class="flex childBox">
+      				<img src="../../../assets/largeScreen/Slice433.png" class="img" v-if="isDark" />
+      				<img src="../../../assets/largeScreen/Slice392.png" class="img" v-if="!isDark" />
+      				<div class="textBox">
+      					<div :class="['label',isDark ? 'dark_label' : 'light_label']">今日新增用户</div>
+      					<div :class="['val',isDark ? 'dark_val' : 'light_val']">
+      						{{countData.countUser.currentDay}}人
+      					</div>
+      				</div>
+      			</div>
+      		</div>
+      		<img src="../../../assets/largeScreen/Slice432.png" class="box2_right" v-if="isDark" />
+      		<img src="../../../assets/largeScreen/Slice393.png" class="box2_right" v-if="!isDark" />
+      	</div>
+      </div>
 			<div :class="['statisticsItem',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
 				<div class="box1 flex">
 					<div class="box1_left">
@@ -107,37 +138,7 @@
 					</div>
 				</div>
 			</div>
-			<div :class="['statisticsItem',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
-				<div class="box2 flex">
-					<div class="box2_left">
-						<div class="flex childBox">
-							<img src="../../../assets/largeScreen/Slice434.png" class="img" v-if="isDark" />
-							<img src="../../../assets/largeScreen/Slice391.png" class="img" v-if="!isDark" />
-							<div class="textBox">
-								<div :class="['label',isDark ? 'dark_label' : 'light_label']">用户总数</div>
-								<div :class="['val',isDark ? 'dark_val' : 'light_val']">
-									{{countData.countUser.totalUser}}人
-								</div>
-							</div>
-						</div>
-						<div class="line"></div>
-						<div class="flex childBox">
-							<img src="../../../assets/largeScreen/Slice433.png" class="img" v-if="isDark" />
-							<img src="../../../assets/largeScreen/Slice392.png" class="img" v-if="!isDark" />
-							<div class="textBox">
-								<div :class="['label',isDark ? 'dark_label' : 'light_label']">今日新增用户</div>
-								<div :class="['val',isDark ? 'dark_val' : 'light_val']">
-									{{countData.countUser.currentDay}}人
-								</div>
-							</div>
-						</div>
-					</div>
-					<img src="../../../assets/largeScreen/Slice432.png" class="box2_right" v-if="isDark" />
-					<img src="../../../assets/largeScreen/Slice393.png" class="box2_right" v-if="!isDark" />
-				</div>
-			</div>
-			<div
-				:class="['statisticsItem','bgAnimationChange',isDark ? 'dark_bgAnimationChange' : 'light_bgAnimationChange'] ">
+			<div :class="['statisticsItem','bgAnimationChange',isDark ? 'dark_bgAnimationChange' : 'light_bgAnimationChange'] ">
 				<div class="flex box3">
 					<div class="box3_left">
 						<div :class="['label',isDark ? 'dark_label' : 'light_label']">进行中订单</div>
@@ -206,7 +207,7 @@
 						countOrder.forEach((item, index) => {
 							if (item.orderType === 0) {
 								this.countOrderCard = item
-							} else if (item.orderType === 2) {
+							} else if (item.orderType === 1) {
 								this.countOrderWx = item
 							}
 						})

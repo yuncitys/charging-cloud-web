@@ -7,18 +7,18 @@
 					<Statistics />
 					<div class="mainBox flex">
 						<div class="mainBox_left">
-							<Recharge />
+							<!-- <Recharge /> -->
 							<Daily />
-							<DeviceNoOrder />
+              <RealOrder />
 						</div>
 						<div class="mainBox_middle">
 							<Map />
-							<Rank /> 
+							<Rank />
 						</div>
 						<div class="mainBox_right">
-							<RealOrder />
+							<SevenDayTrendOrder />
 							<Device />
-							<UpDownLine />
+              <!-- <UpDownLine /> -->
 						</div>
 					</div>
 				</div>
@@ -37,7 +37,7 @@
 	import Statistics from './components/Statistics'
 	import Recharge from './components/Recharge'
 	import Daily from './components/Daily'
-	import DeviceNoOrder from './components/DeviceNoOrder'
+	import SevenDayTrendOrder from './components/SevenDayTrendOrder'
 	import Map from './components/Map'
 	import Rank from './components/Rank'
 	import RealOrder from './components/RealOrder'
@@ -51,7 +51,7 @@
 			Statistics,
 			Recharge,
 			Daily,
-			DeviceNoOrder,
+			SevenDayTrendOrder,
 			Map,
 			Rank,
 			RealOrder,
