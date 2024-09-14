@@ -446,7 +446,7 @@ export function disassembleArr(arr, topOffsetWidth) {
   });
   for (let i = 0; i < list.length; i++) {
     width += list[i];
-    if ((width + 250) > Number(topOffsetWidth)) {
+    if ((width + 450) > Number(topOffsetWidth)) {
       index = i;
       break;
     }
