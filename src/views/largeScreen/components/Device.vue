@@ -9,41 +9,50 @@
 					<img src="../../../assets/largeScreen/Slice435.png" class="img" v-if="isDark" />
 					<img src="../../../assets/largeScreen/Slice398.png" class="img" v-if="!isDark" />
 					<div class="textBox">
-						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">设备在线数量</div>
-						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">{{countDevice.onLineCount}}
+						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">电站数量</div>
+						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">
+              {{countDevice.chargingStationCount}}
 						</div>
 					</div>
 				</div>
-				<!-- <div class="statisticsItem flex">
+				<div class="statisticsItem flex">
 					<img src="../../../assets/largeScreen/Slice436.png" class="img" v-if="isDark" />
 					<img src="../../../assets/largeScreen/Slice397.png" class="img" v-if="!isDark" />
 					<div class="textBox">
-						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">设备总用电量</div>
+						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">在线终端数量</div>
 						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">
-							{{countDevice.deviceTotalPower}}KW
+							{{countDevice.onLineCount}}
 						</div>
 					</div>
-				</div> -->
+				</div>
 				<div class="statisticsItem flex">
 					<img src="../../../assets/largeScreen/Slice437.png" class="img" v-if="isDark" />
 					<img src="../../../assets/largeScreen/Slice396.png" class="img" v-if="!isDark" />
 					<div class="textBox">
-						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">设备离线数量</div>
-						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">{{countDevice.unLineCount}}
+						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">离线终端数量</div>
+						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">
+              {{countDevice.unLineCount}}
 						</div>
 					</div>
 				</div>
 			</div>
 			<div class="tableBox">
-				<div :class="['title',isDark ? 'dark_fontColor' : 'light_fontColor']">异常列表</div>
+				<div :class="['title',isDark ? 'dark_fontColor' : 'light_fontColor']">设备上下线记录</div>
 				<vue-seamless-scroll :data="list" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['deviceCode','textLine1',isDark? 'dark_fontColor' : 'light_fontColor'] ">
-							设备号<span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">{{item.deviceCode}}</span>
+							设备号
+              <span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">
+                {{item.deviceCode}}
+              </span>
 						</div>
-						<div class="tip textLine1"
-							:style="{color:isDark ? 'rgba(255, 16, 112, 1)' : 'rgba(255, 114, 132, 1)'}">
-							异常原因:{{item.feedbackContent}}</div>
+						<div :class="['time','textLine1',isDark? 'dark_fontColor' : 'light_fontColor']">
+							{{item.createTime}}
+							<span :style="{color:isDark ? 'rgba(69, 102, 246, 1)' : 'rgba(72, 219, 195, 1)'}"
+								v-if="item.Type === 1">上线</span>
+							<span :style="{color:isDark ? 'rgba(255, 16, 112, 1)' : 'rgba(255, 114, 132, 1)'}"
+								v-if="item.Type === 0">离线</span>
+						</div>
 					</div>
 				</vue-seamless-scroll>
 			</div>
@@ -53,7 +62,8 @@
 
 <script>
 	import {
-		getDeviceCountAndDeviceFeeBack
+    getDeviceCount,
+		getDeviceLogList
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -68,8 +78,8 @@
 				list: [],
 				countDevice: {
 					onLineCount: 0,
-					deviceTotalPower: 0,
-					unLineCount: 0
+					unLineCount: 0,
+          chargingStationCount: 0,
 				}
 			}
 		},
@@ -77,11 +87,17 @@
 
 		},
 		methods: {
-			getDeviceCountAndDeviceFeeBack() {
-				getDeviceCountAndDeviceFeeBack().then(res => {
+      getDeviceCount(){
+        getDeviceCount().then(res => {
 					if (res.code === 200) {
-						this.countDevice = res.data.countDevice
-						this.list = res.data.deviceFeeBacks
+						this.countDevice = res.data
+					}
+				})
+      },
+			getDeviceLogList() {
+				getDeviceLogList().then(res => {
+					if (res.code === 200) {
+						this.list = res.data
 					}
 				})
 			}
@@ -90,7 +106,8 @@
 
 		},
 		created() {
-			this.getDeviceCountAndDeviceFeeBack()
+      this.getDeviceCount(),
+			this.getDeviceLogList()
 		},
 		destroyed() {
 
@@ -119,7 +136,7 @@
 
 	.DeviceBox {
 		width: 500px;
-		height: 306px;
+		height: 430px;
 		border-radius: 20px 20px 20px 20px;
 		margin: 15px 0;
 
