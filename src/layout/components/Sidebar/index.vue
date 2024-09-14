@@ -18,8 +18,9 @@
         <div class="logoBox" v-if="isCollapse">
           <div class="logoItem flex">
             <div>
-              <img src="../../../assets/logo-xy.png" class="logoImg"
-                style="width: 20px;height: 20px;margin-left: 10px;" />
+              <img :src="logoData.LOGO_IMG" class="logoImg" v-if="logoData.LOGO_IMG" />
+              <!-- <img src="../../../assets/logo-xy.png" class="logoImg"
+                style="width: 20px;height: 20px;margin-left: 10px;" /> -->
             </div>
           </div>
         </div>
