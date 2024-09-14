@@ -37,7 +37,7 @@
               <i class="el-icon-s-platform" style="font-size: 28px;color: #5a5e66;"></i>
             </div>
           </el-tooltip>
-          <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex;align-items:center" />
+          <!-- <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex;align-items:center" /> -->
         </div>
       </template>
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
