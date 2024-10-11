@@ -18,8 +18,8 @@
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
-				highlight-current-row style="width: 100%;" align="center" id="tableBox">
+			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"
+        fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
