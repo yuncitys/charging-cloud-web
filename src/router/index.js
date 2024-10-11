@@ -119,11 +119,20 @@ export const constantRoutes = [{
         }
       },
       {
-        path: 'businessStatisticstwo',
-        component: () => import('@/views/business/businessStatisticstwo'),
-        name: 'businessStatisticstwo',
+        path: 'businessStatisticsTwo',
+        component: () => import('@/views/business/businessStatisticsTwo'),
+        name: 'businessStatisticsTwo',
         meta: {
-          title: '其他报表',
+          title: '充电趋势',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: 'businessStatisticsThree',
+        component: () => import('@/views/business/businessStatisticsThree'),
+        name: 'businessStatisticsThree',
+        meta: {
+          title: '电站趋势',
           icon: 'el-icon-s-check',
         }
       }
