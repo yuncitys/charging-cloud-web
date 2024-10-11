@@ -122,26 +122,28 @@ const actions = {
     })
   },
 }
+
 // 添加指定路由页面后期删除
 function addRouterInfo(arr) {
  let list = JSON.parse(JSON.stringify(arr))
-  if (list.length > 2) {
-    list[2].children.push({
-      children: [],
-      grade: 2,
-      href: "/business/businessStatisticstwo",
-      icon: "el-icon-s-check",
-      id: 447,
-      parentId: list[2].id,
-      perms: ":business:businessStatisticstwo",
-      sorting: 76,
-      title: "其他报表"
-    })
-  }else{
-    return []
-  }
+  // if (list.length > 2) {
+  //   list[2].children.push({
+  //     children: [],
+  //     grade: 2,
+  //     href: "/business/businessStatisticsOther",
+  //     icon: "el-icon-s-check",
+  //     id: 447,
+  //     parentId: list[2].id,
+  //     perms: ":business:businessStatisticsOther",
+  //     sorting: 76,
+  //     title: "其它报表"
+  //   })
+  // }else{
+  //   return []
+  // }
   return list;
 };
+
 export default {
   namespaced: true,
   state,
