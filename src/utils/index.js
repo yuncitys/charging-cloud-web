@@ -437,6 +437,7 @@ export function removeClass(ele, cls) {
  * 顶部菜单栏拆分
  */
 export function disassembleArr(arr, topOffsetWidth) {
+  console.log(arr,topOffsetWidth)
   let lists = [];
   let index = 0;
   let width = 0;
@@ -444,6 +445,7 @@ export function disassembleArr(arr, topOffsetWidth) {
     let len = item.title.length;
     return 94 + ((len - 2) * 14)
   });
+  console.log(list)
   for (let i = 0; i < list.length; i++) {
     width += list[i];
     if ((width + 450) > Number(topOffsetWidth)) {
@@ -451,6 +453,9 @@ export function disassembleArr(arr, topOffsetWidth) {
       break;
     }
   };
+  if(index === 0){
+    index = list.length
+  }
   lists = splitArray(arr, index);
   return lists;
 }
