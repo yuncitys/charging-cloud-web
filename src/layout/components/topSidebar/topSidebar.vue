@@ -10,9 +10,9 @@
           </div>
         </el-menu-item>
       </template>
-      <el-menu-item>
+      <el-menu-item v-if="rightMoreMeunList.length > 0">
         <el-dropdown trigger="click" class="topEldrop">
-          <span class="el-dropdown-link">
+          <span class="el-dropdown-link" >
             更多..<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown" class="top-dropdown-menu">
@@ -24,7 +24,6 @@
                 </div>
               </el-menu-item>
             </el-dropdown-item>
-
           </el-dropdown-menu>
         </el-dropdown>
       </el-menu-item>
