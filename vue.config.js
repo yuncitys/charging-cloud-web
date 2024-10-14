@@ -8,7 +8,7 @@ function resolve(dir) {
 	return path.join(__dirname, dir)
 }
 
-const name = defaultSettings.title || '充电运营管理平台' // page title
+const name = defaultSettings.title || '智慧充电管理平台' // page title
 
 // If your port is set to 80,
 // use administrator privileges to execute the command line.
@@ -40,8 +40,7 @@ module.exports = {
 		},
 		proxy: {
 			[process.env.VUE_APP_BASE_API]: {
-        // target: 'http://127.0.0.1:8868',
-        target: 'https://charge.yuncitys.com',
+        target: 'http://127.0.0.1:8868',
 				changeOrigin: true,
 				pathRewrite: {
 					['^' + process.env.VUE_APP_BASE_API]: ''
