@@ -1,5 +1,5 @@
 module.exports = {
-  title: '共享充电桩管理平台',
+  title: '智慧充电管理平台',
 
   /**
    * @type {boolean} true | false

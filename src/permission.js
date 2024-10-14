@@ -20,7 +20,7 @@ router.beforeEach(async (to, from, next) => {
 
 	NProgress.start()
 
-	document.title = '智能充电运营管理平台'
+	document.title = '智慧充电管理平台'
 
 	const hasToken = getToken()
 
