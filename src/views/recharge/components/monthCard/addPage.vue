@@ -6,13 +6,22 @@
 		<!-- 新增方案-->
 		<el-dialog :visible.sync="showAdd" title="新增月卡套餐" @close="showAdd = false" :append-to-body="true">
 			<el-form ref="addData" :model="addData" label-position="left" label-width="100px" style="margin-left:50px;" :rules="rules">
-
         <el-form-item :label="'套餐名称'" prop="name">
-        	<el-input v-model="addData.name" placeholder="请输入套餐名称" clearable style="width: 60%;" class="name" />
+        	<el-input v-model="addData.name" placeholder="请输入套餐名称" clearable style="width: 100%;" class="name" />
         </el-form-item>
-        <!-- <el-form-item :label="'小区'" prop="adminId">
+        <el-form-item :label="'归属运营商'" prop="adminId">
+        	<el-select style="width: 100%;" class="filter-item" v-model="addData.adminId" filterable clearable placeholder="请选择运营商">
+        	    <el-option
+        	      v-for="item in operatorList"
+        	      :key="item.id"
+        	      :label="item.adminFullname"
+        	      :value="item.id">
+        	    </el-option>
+        	</el-select>
+        </el-form-item>
+        <!-- <el-form-item :label="'归属充电站'" prop="adminId">
         	<el-autocomplete class="filter-item" v-model="addData.netWorkDotName" :fetch-suggestions="querySearch"
-        		placeholder="请选择小区" @select="changeNetworkDot" clearable :debounce='0' style="width: 60%;"
+        		placeholder="请选择充电站" @select="changeNetworkDot" clearable :debounce='0' style="width: 60%;"
         		@change="changeName"></el-autocomplete>
         </el-form-item> -->
         <el-form-item :label="'月卡类型'" prop="monthCardType">
@@ -32,20 +41,20 @@
           </h2>
           <el-form-item :label="'包月方式'" prop="chargingMonthType">
           	<div id="">
-          		<el-radio-group v-model="addData.typeRuleConfig.chargingMonthType">
+          		<el-radio-group v-model="addData.chargingMonthType">
           			<el-radio :label="1">限次包月</el-radio>
                 <el-radio :label="2">限总时长包月</el-radio>
           		</el-radio-group>
           	</div>
           </el-form-item>
 
-          <el-form-item v-if="addData.typeRuleConfig.chargingMonthType === 1">
+          <el-form-item v-if="addData.chargingMonthType === 1">
             <div style="display: flex;align-items: center;">
               <div style="width: 100px;">
               	<span>单月总次数</span>
               </div>
               <div>
-              	<el-input placeholder="请输入次数" v-model="addData.typeRuleConfig.ruleConfig.monthTotal" type="number" style="width: 180px;">
+              	<el-input placeholder="请输入次数" v-model="addData.monthTotal" type="number" style="width: 180px;">
               		<template slot="append">次</template>
               	</el-input>
               </div>
@@ -53,19 +62,19 @@
             		<span>单日总次数</span>
             	</div>
             	<div>
-            		<el-input placeholder="请输入次数" v-model="addData.typeRuleConfig.ruleConfig.dayTotal" type="number" style="width: 180px;">
+            		<el-input placeholder="请输入次数" v-model="addData.dayTotal" type="number" style="width: 180px;">
             			<template slot="append">次</template>
             		</el-input>
             	</div>
             </div>
           </el-form-item>
-          <el-form-item v-if="addData.typeRuleConfig.chargingMonthType === 2">
+          <el-form-item v-if="addData.chargingMonthType === 2">
             <div style="display: flex;align-items: center;">
               <div style="width: 100px;">
               	<span>单月总时长</span>
               </div>
               <div>
-              	<el-input placeholder="请输入时长" v-model="addData.typeRuleConfig.ruleConfig.monthTotal" type="number" style="width: 180px;">
+              	<el-input placeholder="请输入时长" v-model="addData.monthTotal" type="number" style="width: 180px;">
               		<template slot="append">分钟</template>
               	</el-input>
               </div>
@@ -73,7 +82,7 @@
             		<span>单日总时长</span>
             	</div>
             	<div>
-            		<el-input placeholder="请输入时长" v-model="addData.typeRuleConfig.ruleConfig.dayTotal" type="number" style="width: 180px;">
+            		<el-input placeholder="请输入时长" v-model="addData.dayTotal" type="number" style="width: 180px;">
             			<template slot="append">分钟</template>
             		</el-input>
             	</div>
@@ -90,27 +99,36 @@
         	</div>
         </el-form-item>
         <el-form-item :label="'续费规则'" prop="renewType">
-        	<div id="">
-        		<el-radio-group v-model="addData.renewType">
-              <el-radio :label="0">常规续费
-                  <span v-if="addData.renewType === 0"style="display: inline-block;margin-right: 20px;color: #FF0000;">
-                    <div>
-                      <i class="el-icon-warning"></i>若当前已过期则从当前时间开始续费X个月，未过期则按实际过期时间开始续费X个月
-                    </div>
-                  </span>
-              </el-radio>
-
-              <el-radio :label="1">从过期开始续费
-                  <span v-if="addData.renewType === 1"style="display: inline-block;margin-right: 20px;color: #FF0000;">
-                    <div>
-                      <i class="el-icon-warning"></i>从月卡当前的过期时间续费X个月（该方式相当于收取了空白期费用）
-                    </div>
-                  </span>
-              </el-radio>
-        		</el-radio-group>
-        	</div>
+          <el-radio-group v-model="addData.renewType">
+                <el-radio :label="0">常规续费</el-radio>
+                <el-radio :label="1">从过期时间开始续</el-radio>
+          </el-radio-group>
+          <el-alert
+            v-if="addData.renewType === 0"
+            title="常规续费：用户选择续费时长(月数X)，若当前已过期则从当前时间开始续费X个月，若当前未过期则按实际过期时间开始续费X个月。"
+            type="info"
+            show-icon/>
+          <el-alert
+            v-if="addData.renewType === 1"
+            title="从过期开始续费：从月卡当前的过期时间续费X个月（该方式相当于收取了空白期费用）"
+            type="info"
+              show-icon/>
         </el-form-item>
-        
+        <el-form-item label-width="120px" label="是否开通虚拟卡" prop="virtualCardEnabled">
+          <el-switch
+            v-model="addData.virtualCardEnabled"
+            active-text="开启"
+            inactive-text="关闭"
+            active-color="#67c23a">
+          </el-switch>
+          <!-- 提示信息 -->
+          <el-alert
+            v-if="!addData.virtualCardEnabled"
+            title="关闭后购买该月卡需填写实体卡卡号"
+            type="info"
+            show-icon/> <!--style="display: inline-block; vertical-align: middle;"-->
+        </el-form-item>
+
         <div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
         	<h2>收费标准</h2>
         	<div style="margin-left: 20px;">
@@ -160,6 +178,9 @@
 		page,
     add,
 	} from '@/api/monthCard/monthCardList.js'
+  import {
+    getOperator
+  } from '@/api/agent/agentList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -169,26 +190,23 @@
 		data() {
 			return {
 				showAdd: false,
+        operatorList: [],
 				addData: {
           name:'',
-          netWorkDotId:'',
-          netWorkDotName:'',
+          adminId: '',
+          virtualCardEnabled: true,
           monthCardType:0,
-          typeRuleConfig:{
-            "chargingMonthType":1,
-            "ruleConfig":{
-              "monthTotal":'',
-              "dayTotal":'',
-            },
-          },
+          chargingMonthType:1,
+          monthTotal:0,
+          dayTotal:0,
           buyLimit: 0,
           renewType: 1,
           monthPriceConfig:{
             "priceConfig":
             [
               {
-                month:'',
-                money:''
+                month:'1',
+                money:'0'
               }
             ]
           },
@@ -199,6 +217,11 @@
 						message: '请输入套餐名称',
 						trigger: 'blur'
 					}],
+          adminId: [{
+          	required: true,
+          	message: '请选择运营商',
+          	trigger: 'blur'
+          }],
 					monthCardType: [{
 						required: true,
 						message: '请选择月卡类型',
@@ -217,6 +240,11 @@
           renewType: [{
           	required: true,
           	message: '请选择续费规则',
+          	trigger: 'blur'
+          }],
+          virtualCardEnabled: [{
+          	required: true,
+          	message: '请选择是否开通虚拟卡',
           	trigger: 'blur'
           }],
 				},
@@ -271,21 +299,21 @@
       //   })
       // },
 			onaddData(formName) {
-				// this.$refs[formName].validate(valid => {
-					// console.log(valid)
+				this.$refs[formName].validate(valid => {
+					console.log(valid)
           if (this.addData.name == '') {
           	this.$message.error('请输入套餐名称')
           	return false
           }
-          if (this.addData.typeRuleConfig.chargingMonthType == '') {
+          if (this.addData.chargingMonthType == '') {
           	this.$message.error('包月类型不能为空')
           	return false
           }
-          if (this.addData.typeRuleConfig.ruleConfig.monthTotal == '') {
+          if (this.addData.monthTotal == '') {
           	this.$message.error('必填项不能为空')
           	return false
           }
-          if (this.addData.typeRuleConfig.ruleConfig.dayTotal == '') {
+          if (this.addData.dayTotal == '') {
           	this.$message.error('必填项不能为空')
           	return false
           }
@@ -294,10 +322,9 @@
           	return false
           }
           console.log(this.addData,"请求参数")
-          this.addData.typeRuleConfig = JSON.stringify(this.addData.typeRuleConfig)
           this.addData.monthPriceConfig = JSON.stringify(this.addData.monthPriceConfig)
           console.log(this.addData,"请求参数")
-					// if (valid) {
+					if (valid) {
 						console.log("通过")
 						add(this.addData).then(res => {
 							if (res.code == 200) {
@@ -308,15 +335,14 @@
 							} else {
 								this.$message.error(res.msg)
 							}
-              this.addData.typeRuleConfig = JSON.parse(this.addData.typeRuleConfig)
               this.addData.monthPriceConfig = JSON.parse(this.addData.monthPriceConfig)
               console.log(this.addData)
 						})
-					// } else {
-					// 	console.log("不通过")
-					// 	return false
-					// }
-				// })
+					} else {
+						console.log("不通过")
+						return false
+					}
+				})
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
@@ -354,10 +380,19 @@
       	}
       	this.addData.monthPriceConfig.priceConfig.splice(index, 1)
       	this.addData.monthPriceConfig.priceConfig.splice(index, 1)
-      }
+      },
+      getOperator() {
+      	getOperator().then(res => {
+      		if (res.code == 200) {
+      			this.operatorList = res.data
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
 		},
 		created() {
-
+      this.getOperator()
 		},
 	}
 </script>
@@ -369,5 +404,8 @@
   .inputBoxx {
   	margin-top: 20px !important;
   	width: 100%;
+  }
+  /deep/ .el-alert__title {
+    font-size: 14px; /* 调整为你需要的字体大小 */
   }
 </style>
