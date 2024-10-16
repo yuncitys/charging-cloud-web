@@ -39,8 +39,25 @@
             </span>
           </template>
         </el-table-column>
-				</el-table-column>
-        <el-table-column prop="adminName" label="创建人" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column prop="virtualCardEnabled" label="是否开通虚拟卡" align="center" :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+          	<span v-if="scope.row.virtualCardEnabled == 0">否</span>
+          	<span v-if="scope.row.virtualCardEnabled == 1">是</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="chargingMonthType" label="包月类型" align="center" :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+          	<span v-if="scope.row.chargingMonthType == 1">限次数包月</span>
+          	<span v-if="scope.row.chargingMonthType == 2">限总时长包月</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="monthTotalStr" label="单月限制" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column prop="dayTotalStr" label="单日限制" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column prop="updateUser" label="编辑用户" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
@@ -120,7 +137,20 @@
 				page(this.listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
-						this.list = res.data
+            let list = res.data || []
+            list.forEach((item, index) => {
+              let unit = ''
+              if(item.chargingMonthType === 1){
+                unit = '次';
+              } else {
+                unit = '分钟'
+              }
+            	let monthTotalStr = item.monthTotal === undefined ? 0 + unit : item.monthTotal  + unit
+            	let dayTotalStr = item.dayTotal === undefined ? 0 + unit : item.dayTotal + unit
+            	item.monthTotalStr = monthTotalStr;
+            	item.dayTotalStr = dayTotalStr;
+            })
+						this.list = list
 						this.total = res.count
 						this.listLoading = false
 					} else {
