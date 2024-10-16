@@ -118,7 +118,6 @@
 									item.datail = ''
 								}
 							})
-
 						}
 						this.list = list
 						console.log(list)
