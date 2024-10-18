@@ -16,6 +16,10 @@
 				</el-table-column>
         <el-table-column prop="wxName" label="小程序名称" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
+        <el-table-column prop="networkName" label="运营充电站" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column prop="networkAddress" label="充电站位置" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
 				<el-table-column prop="name" label="套餐名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="monthCardType" label="月卡类型" align="center" :show-overflow-tooltip="isPc">
