@@ -8,7 +8,7 @@
 			<el-input v-model="listQuery.userCode" style="width: 150px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入用户ID" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
-				style="margin-right: 20px ;" start-placeholder="注册开始日期" end-placeholder="注册结束日期" @change="dateChange"
+				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
 				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
 			</el-date-picker>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
@@ -21,34 +21,60 @@
 				</el-table-column>
         <el-table-column label="小程序名称" prop="wxName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-				<el-table-column label="ID" prop="userCode" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column label="昵称" prop="userName" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column label="头像" prop="headImg" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope" style="text-align: center;">
-						<imgView :imgSrc="scope.row.headImg" />
-					</template>
+				<el-table-column label="购买用户" prop="userName" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column label="手机号" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
+        <el-table-column label="月卡编号" prop="code" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
         <el-table-column label="购买天数" prop="days" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="包月类型" prop="monthCardType" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="购买金额" prop="money" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <!-- <el-table-column label="包月规则" prop="monthCardRuleConfig" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column> -->
-				<el-table-column prop="startTime" label="生效日期" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="月卡类型" prop="monthCardType" align="center" :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+          	<span type="success" v-if="scope.row.monthCardType == 0">仅充电</span>
+          	<span type="success" v-if="scope.row.monthCardType == 1">仅停车</span>
+          	<span type="success" v-if="scope.row.monthCardType == 2">停车+充电</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="包月规则" prop="chargingMonthType" align="center" :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+          	<span v-if="scope.row.chargingMonthType == 1">限次数包月</span>
+          	<span v-if="scope.row.chargingMonthType == 2">限总时长包月</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+          	<span type="success" v-if="scope.row.renewType == 0">常规续费
+            </span>
+          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="单月限制" prop="monthTotal" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="单日限制" prop="dayTotal" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column prop="isVirtualCard" label="是否虚拟卡" align="center" :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+          	<span v-if="scope.row.isVirtualCard == 0">否</span>
+          	<span v-if="scope.row.isVirtualCard == 1">是</span>
+          </template>
+        </el-table-column>
+				<el-table-column prop="startTime" label="起至日期" align="center" sortable :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.startTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="endTime" label="失效日期" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column prop="endTime" label="截至日期" align="center" sortable :show-overflow-tooltip="isPc">
         	<template slot-scope="scope">
         		<span>{{ scope.row.endTime | formatDate }}</span>
         	</template>
         </el-table-column>
-				<el-table-column label="操作" align="center" width="260">
+				<el-table-column label="操作" align="center" width="160">
 					<template slot-scope="scope">
 						<el-button type="primary" @click='onHistory(scope.row)' size="mini">
               购买记录
