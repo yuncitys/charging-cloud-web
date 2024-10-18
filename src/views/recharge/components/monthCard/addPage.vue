@@ -10,7 +10,8 @@
         	<el-input v-model="addData.name" placeholder="请输入套餐名称" clearable style="width: 100%;" class="name" />
         </el-form-item>
         <el-form-item :label="'归属运营商'" prop="adminId">
-        	<el-select style="width: 100%;" class="filter-item" v-model="addData.adminId" filterable clearable placeholder="请选择运营商">
+        	<el-select style="width: 100%;" class="filter-item" v-model="addData.adminId" filterable clearable
+          placeholder="请选择运营商" @change="handleChange">
         	    <el-option
         	      v-for="item in operatorList"
         	      :key="item.id"
@@ -19,11 +20,17 @@
         	    </el-option>
         	</el-select>
         </el-form-item>
-        <!-- <el-form-item :label="'归属充电站'" prop="adminId">
-        	<el-autocomplete class="filter-item" v-model="addData.netWorkDotName" :fetch-suggestions="querySearch"
-        		placeholder="请选择充电站" @select="changeNetworkDot" clearable :debounce='0' style="width: 60%;"
-        		@change="changeName"></el-autocomplete>
-        </el-form-item> -->
+        <el-form-item :label="'运营充电站'" prop="chargingStationId">
+        	<el-select style="width: 100%;" class="filter-item" v-model="addData.chargingStationId"
+            filterable clearable :disabled="isDisabled" placeholder="请选择充电站">
+        	    <el-option
+        	      v-for="item in chargingStationList"
+        	      :key="item.id"
+        	      :label="item.networkName"
+        	      :value="item.id">
+        	    </el-option>
+        	</el-select>
+        </el-form-item>
         <el-form-item :label="'月卡类型'" prop="monthCardType">
         	<div id="">
         		<el-radio-group v-model="addData.monthCardType">
@@ -181,6 +188,9 @@
   import {
     getOperator
   } from '@/api/agent/agentList.js'
+  import {
+    getChargingStationList
+  } from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -190,7 +200,9 @@
 		data() {
 			return {
 				showAdd: false,
+        isDisabled: true,
         operatorList: [],
+        chargingStationList: [],
 				addData: {
           name:'',
           adminId: '',
@@ -210,6 +222,7 @@
               }
             ]
           },
+          chargingStationId: ''
 				},
 				rules: {
 					name: [{
@@ -245,6 +258,11 @@
           virtualCardEnabled: [{
           	required: true,
           	message: '请选择是否开通虚拟卡',
+          	trigger: 'blur'
+          }],
+          chargingStationId: [{
+          	required: true,
+          	message: '请选择运营充电站',
           	trigger: 'blur'
           }],
 				},
@@ -381,10 +399,27 @@
       	this.addData.monthPriceConfig.priceConfig.splice(index, 1)
       	this.addData.monthPriceConfig.priceConfig.splice(index, 1)
       },
+      handleChange(value) {
+        console.log('选中的值是:', value);
+        this.isDisabled = false
+        this.getChargingStationList(value)
+      },
       getOperator() {
       	getOperator().then(res => {
       		if (res.code == 200) {
       			this.operatorList = res.data
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
+      getChargingStationList(adminId) {
+        let data = {
+          adminId
+        }
+      	getChargingStationList(data).then(res => {
+      		if (res.code == 200) {
+      			this.chargingStationList = res.data;
       		} else {
       			this.$message.error(res.msg)
       		}

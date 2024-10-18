@@ -12,11 +12,23 @@
         	<el-input v-model="editData.name" placeholder="请输入套餐名称" clearable style="width: 60%;" class="name" />
         </el-form-item>
         <el-form-item :label="'归属运营商'" prop="adminId">
-        	<el-select style="width: 100%;" class="filter-item" v-model="editData.adminId" filterable clearable placeholder="请选择运营商">
+        	<el-select style="width: 100%;" class="filter-item" v-model="editData.adminId" filterable clearable
+          placeholder="请选择运营商" @change="handleChange">
         	    <el-option
         	      v-for="item in operatorList"
         	      :key="item.id"
         	      :label="item.adminFullname"
+        	      :value="item.id">
+        	    </el-option>
+        	</el-select>
+        </el-form-item>
+        <el-form-item :label="'运营充电站'" prop="chargingStationId">
+        	<el-select style="width: 100%;" class="filter-item" v-model="editData.chargingStationId"
+            filterable clearable :disabled="isDisabled" placeholder="请选择充电站">
+        	    <el-option
+        	      v-for="item in chargingStationList"
+        	      :key="item.id"
+        	      :label="item.networkName"
         	      :value="item.id">
         	    </el-option>
         	</el-select>
@@ -178,6 +190,9 @@
   import {
     getOperator
   } from '@/api/agent/agentList.js'
+  import {
+    getChargingStationList
+  } from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -192,7 +207,9 @@
 		data() {
 			return {
 				showEdit: false,
+        isDisabled: true,
         operatorList: [],
+        chargingStationList: [],
 				editData: {
           id:'',
           name:'',
@@ -213,6 +230,7 @@
               }
             ]
           },
+          chargingStationId: '',
 				},
 				rules: {
 					name: [{
@@ -248,6 +266,11 @@
           virtualCardEnabled: [{
           	required: true,
           	message: '请选择是否开通虚拟卡',
+          	trigger: 'blur'
+          }],
+          chargingStationId: [{
+          	required: true,
+          	message: '请选择运营站点',
           	trigger: 'blur'
           }],
 				},
@@ -355,6 +378,11 @@
       	this.editData.monthPriceConfig.priceConfig.splice(index, 1)
       	this.editData.monthPriceConfig.priceConfig.splice(index, 1)
       },
+      handleChange(value) {
+        console.log('选中的值是:', value);
+        this.isDisabled = false
+        this.getChargingStationList(value)
+      },
       getOperator() {
       	getOperator().then(res => {
       		if (res.code == 200) {
@@ -363,6 +391,18 @@
       			this.$message.error(res.msg)
       		}
       	})
+      },
+      getChargingStationList(adminId) {
+          let data = {
+            adminId
+          }
+        	getChargingStationList(data).then(res => {
+        		if (res.code == 200) {
+        			this.chargingStationList = res.data;
+        		} else {
+        			this.$message.error(res.msg)
+        		}
+        	})
       },
 		},
 		created() {
