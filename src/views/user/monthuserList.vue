@@ -29,7 +29,7 @@
 				</el-table-column>
         <el-table-column label="月卡编号" prop="code" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="购买天数" prop="days" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="购买月数" prop="days" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="购买金额" prop="money" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
@@ -48,15 +48,13 @@
         </el-table-column>
         <el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.renewType == 0">常规续费
-            </span>
-          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费
-            </span>
+          	<span type="success" v-if="scope.row.renewType == 0">常规续费</span>
+          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
           </template>
         </el-table-column>
-        <el-table-column label="单月限制" prop="monthTotal" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="单月限制" prop="monthTotalStr" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="单日限制" prop="dayTotal" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="单日限制" prop="dayTotalStr" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column prop="isVirtualCard" label="是否虚拟卡" align="center" :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
@@ -74,11 +72,19 @@
         		<span>{{ scope.row.endTime | formatDate }}</span>
         	</template>
         </el-table-column>
-				<el-table-column label="操作" align="center" width="160">
+				<el-table-column label="操作" align="center" width="320" fixed="right">
 					<template slot-scope="scope">
-						<el-button type="primary" @click='onHistory(scope.row)' size="mini">
-              购买记录
-						</el-button>
+            <div style="display: flex;justify-content: center;align-items: center;">
+              <el-button type="primary" @click='onHistory(scope.row)' size="mini">
+                月卡操作记录
+              </el-button>
+              <el-button type="primary" @click='onHistory(scope.row)' style="margin-left: 10px;" size="mini">
+                月卡续费
+              </el-button>
+              <el-button type="danger" @click='onHistory(scope.row)' style="margin-left: 10px;" size="mini">
+                月卡注销
+              </el-button>
+            </div>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -175,14 +181,27 @@
 					listQuery.createTimeEnd = ''
 				}
 				getList(listQuery).then(res => {
-					if (res.code == 200) {
-						console.log(res)
-						this.list = res.data
-						this.total = res.count
-						this.listLoading = false
-					} else {
-						this.$message.error(res.msg)
-					}
+          if (res.code == 200) {
+          	console.log(res)
+            let list = res.data || []
+            list.forEach((item, index) => {
+              let unit = ''
+              if(item.chargingMonthType === 1){
+                unit = '次';
+              } else {
+                unit = '分钟'
+              }
+            	let monthTotalStr = item.monthTotal === undefined ? 0 + unit : item.monthTotal  + unit
+            	let dayTotalStr = item.dayTotal === undefined ? 0 + unit : item.dayTotal + unit
+            	item.monthTotalStr = monthTotalStr;
+            	item.dayTotalStr = dayTotalStr;
+            })
+          	this.list = list
+          	this.total = res.count
+          	this.listLoading = false
+          } else {
+          	this.$message.error(res.msg)
+          }
 				})
 			},
 		},
