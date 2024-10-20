@@ -37,10 +37,8 @@
         </el-table-column>
         <el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.renewType == 0">常规续费
-            </span>
-          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费
-            </span>
+          	<span type="success" v-if="scope.row.renewType == 0">常规续费</span>
+          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
           </template>
         </el-table-column>
         <el-table-column prop="virtualCardEnabled" label="是否开通虚拟卡" align="center" :show-overflow-tooltip="isPc">
