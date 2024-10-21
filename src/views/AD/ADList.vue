@@ -46,11 +46,14 @@
         </el-table-column> -->
 				<el-table-column label="操作" width="200">
 					<template slot-scope="scope">
-						<!-- 编辑广告 -->
-						<editPage :row_data="scope.row" @getLists="getLists" />
-						<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
-							icon="el-icon-delete" v-if="btnAuthen.permsVerifAuthention(':AD:ADList:delete')">删除
-						</el-button>
+            <div style="display: flex;justify-content: center;align-items: center;">
+              <!-- 编辑广告 -->
+              <editPage :row_data="scope.row" @getLists="getLists" />
+              <el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
+              	icon="el-icon-delete" v-if="btnAuthen.permsVerifAuthention(':AD:ADList:delete')">
+                删除
+              </el-button>
+            </div>
 					</template>
 				</el-table-column>
 			</el-table>
