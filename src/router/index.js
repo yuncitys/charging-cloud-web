@@ -565,6 +565,14 @@ export const constantRoutes = [{
         title: '退款记录',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'monthUserOperRecord',
+      component: () => import('@/views/finance/monthUserOperRecord'),
+      name: 'monthUserOperRecord',
+      meta: {
+        title: '月卡操作记录',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
