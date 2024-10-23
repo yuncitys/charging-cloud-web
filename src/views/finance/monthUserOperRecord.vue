@@ -1,6 +1,10 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
+      <el-input v-model="listQuery.monthCardCode" style="width: 150px;margin-right: 20px ;" class="filter-item"
+      	placeholder="请输入月卡编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+      <el-input v-model="listQuery.payCode" style="width: 150px;margin-right: 20px ;" class="filter-item"
+        	placeholder="请输入支付单号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.userName" style="width: 150px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入用户昵称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.phoneNumber" style="width: 150px;margin-right: 20px ;" class="filter-item"
@@ -27,24 +31,13 @@
 				</el-table-column>
 				<el-table-column label="手机号" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column label="月卡编号" prop="code" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="月卡编号" prop="monthCardCode" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="购买月数" prop="days" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="支付单号" prop="payCode" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="购买月数" prop="months" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="购买金额" prop="money" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="月卡类型" prop="monthCardType" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.monthCardType == 0">仅充电</span>
-          	<span type="success" v-if="scope.row.monthCardType == 1">仅停车</span>
-          	<span type="success" v-if="scope.row.monthCardType == 2">停车+充电</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="包月规则" prop="chargingMonthType" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span v-if="scope.row.chargingMonthType == 1">限次数包月</span>
-          	<span v-if="scope.row.chargingMonthType == 2">限总时长包月</span>
-          </template>
         </el-table-column>
         <el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
@@ -52,41 +45,35 @@
           	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
           </template>
         </el-table-column>
-        <el-table-column label="单月限制" prop="monthTotalStr" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="单日限制" prop="dayTotalStr" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="isVirtualCard" label="是否虚拟卡" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column prop="operationWay" label="操作路径" align="center" :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
-          	<span v-if="scope.row.isVirtualCard == 0">否</span>
-          	<span v-if="scope.row.isVirtualCard == 1">是</span>
+          	<span type="success" v-if="scope.row.operationWay == 0">用户自助</span>
+          	<span type="success" v-if="scope.row.operationWay == 1">管理平台</span>
           </template>
         </el-table-column>
-				<el-table-column prop="startTime" label="起至日期" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="续费前有效期" prop="renewBeforeTime" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="续费后有效期" prop="renewAfterTime" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="备注" prop="remark" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+				<el-table-column prop="startTime" label="创建时间" align="center" sortable :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span>{{ scope.row.startTime | formatDate }}</span>
+						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="endTime" label="截至日期" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column prop="endTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
         	<template slot-scope="scope">
-        		<span>{{ scope.row.endTime | formatDate }}</span>
+        		<span>{{ scope.row.updateTime | formatDate }}</span>
         	</template>
         </el-table-column>
-				<el-table-column label="操作" align="center" width="320" fixed="right">
+				<!-- <el-table-column label="操作" align="center" width="320" fixed="right">
 					<template slot-scope="scope">
             <div style="display: flex;justify-content: center;align-items: center;">
-              <el-button type="primary" @click='onHistory(scope.row)' size="mini">
-                月卡操作记录
-              </el-button>
-              <el-button type="primary" @click='onHistory(scope.row)' style="margin-left: 10px;" size="mini">
-                月卡续费
-              </el-button>
-              <el-button type="danger" @click='onHistory(scope.row)' style="margin-left: 10px;" size="mini">
-                月卡注销
-              </el-button>
+
             </div>
 					</template>
-				</el-table-column>
+				</el-table-column> -->
 			</el-table>
 			<div class="pagination-container">
 				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
@@ -100,7 +87,7 @@
 <script>
 	import {
     getList
-	} from '@/api/user/monthCardUser.js'
+	} from '@/api/monthCard/monthCardOperationLogList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -109,7 +96,7 @@
 		components: {
 			imgView
 		},
-		name: 'monthCardUser',
+		name: 'monthCardOperLog',
 		data() {
 			return {
 				tableKey: 0,
@@ -121,6 +108,8 @@
           userCode: '',
 					userName: '',
           phoneNumber: '',
+          payCode: '',
+          monthCardCode: '',
 					createTimeStart: '',
 					createTimeEnd: '',
 					page: 1,
@@ -138,17 +127,6 @@
 			},
 		},
 		methods: {
-      onHistory(row){
-        console.log("查询用户：",row)
-        const userCode = row.userCode || 0;
-        this.$router.push({
-        	name: 'rechargeRecord',
-        	query: {
-        		userId: userCode,
-            type: '3'
-        	}
-        })
-      },
 			handleSizeChange(val) {
 				this.listQuery.limit = val
 				this.getLists()
@@ -184,18 +162,6 @@
           if (res.code == 200) {
           	console.log(res)
             let list = res.data || []
-            list.forEach((item, index) => {
-              let unit = ''
-              if(item.chargingMonthType === 1){
-                unit = '次';
-              } else {
-                unit = '分钟'
-              }
-            	let monthTotalStr = item.monthTotal === undefined ? 0 + unit : item.monthTotal  + unit
-            	let dayTotalStr = item.dayTotal === undefined ? 0 + unit : item.dayTotal + unit
-            	item.monthTotalStr = monthTotalStr;
-            	item.dayTotalStr = dayTotalStr;
-            })
           	this.list = list
           	this.total = res.count
           	this.listLoading = false
