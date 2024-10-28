@@ -273,10 +273,14 @@
 							balanceAmount
 						} = this
 						let money = this.addAdData.money
-						if (money % 1 !== 0) {
-							this.$message.error('请输入整数')
-							return false
-						}
+						// if (money % 1 !== 0) {
+						// 	this.$message.error('请输入整数')
+						// 	return false
+						// }
+            if (money <= 0) {
+            	this.$message.error('提现金额不能小于0')
+            	return false
+            }
 						if (parseInt(money) > parseInt(balanceAmount)) {
 							this.$message.error('余额不足')
 							return false
