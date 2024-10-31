@@ -7,10 +7,6 @@
 			</div>
 			<el-input v-model="listQuery.withdrawCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入流水号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<!-- <el-input v-model="listQuery.adminId" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入用户ID" clearable/> -->
-			<!-- <el-input v-model="listQuery.phone" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入用户手机号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" /> -->
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择提现状态" clearable @change="handleFilter" @clear="handleFilter()">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -18,7 +14,8 @@
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
-			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="showDialog=true">提现
+			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="showDialog=true">
+        提现
 			</el-button>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -28,51 +25,66 @@
 				</el-table-column>
         <el-table-column prop="wxName" label="小程序名称" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <!-- <el-table-column prop="wxAppId" label="小程序appid" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column> -->
-				<el-table-column label="提现账号" prop="adminFullname" align="center" :show-overflow-tooltip='isPc'>
+        <el-table-column label="商户流水号" prop="withdrawCode" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
+				<el-table-column label="打款账号" prop="openId" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="手机号" prop="adminPhone" align="center" :show-overflow-tooltip='isPc'>
+        <el-table-column label="申请用户" prop="withdrawUser"  align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
+				<el-table-column label="申请金额" prop="money"  align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="流水号" prop="withdrawCode" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column label="申请金额" prop="money"  align="center" :show-overflow-tooltip='isPc' sortable>
-				</el-table-column>
-				<el-table-column label="申请时间" prop="createTime"  align="center" :show-overflow-tooltip='isPc' sortable>
-					<template slot-scope="scope">
-						<span>{{ scope.row.createTime | formatDate }}</span>
-					</template>
-				</el-table-column>
+        <el-table-column label="付款金额" prop="actualAmount"  align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
+        <el-table-column label="打款用户" prop="payUser"  align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
+        <el-table-column label="打款费率(%)" prop="withdrawRate"  align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
 				<el-table-column prop="status" label="状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="info" v-if="scope.row.status == 0">提现中</el-tag>
-						<el-tag type="success" v-if="scope.row.status == 1">提现成功</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 2">已撤回</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 3">退回</el-tag>
+						<span type="success" v-if="scope.row.status === 'APPLYING'">申请打款中</span>
+						<span type="success" v-if="scope.row.status === 'WAIT_PAY'">待付款确认</span>
+						<span type="success" v-if="scope.row.status === 'ACCEPTED'">申请已受理</span>
+						<span type="success" v-if="scope.row.status === 'PROCESSING'">打款中</span>
+            <span type="success" v-if="scope.row.status === 'FINISHED'">打款完成</span>
+            <span type="success" v-if="scope.row.status === 'CLOSED'">打款关闭</span>
+            <span type="success" v-if="scope.row.status === 'REJECT'">打款驳回</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="payType" label="付款方式" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="payType" label="打款方式" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="info" v-if="scope.row.payType == 1">微信零钱</el-tag>
-						<el-tag type="info" v-if="scope.row.payType == 2">线下提现</el-tag>
+						<span type="success" v-if="scope.row.payType == 1">付款到微信零钱</span>
+						<span type="success" v-if="scope.row.payType == 2">线下付款</span>
+            <span type="success"  v-if="scope.row.payType == 3">付款到银行卡</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="payTime" label="付款时间" align="center" :show-overflow-tooltip='isPc' sortable>
+				<el-table-column prop="payTime" label="打款时间" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.payTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="remarks" label="备注" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="remarks" label="付款备注" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
+        <el-table-column prop="failReason" label="驳回原因" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
+        <el-table-column label="申请时间" prop="createTime"  align="center" :show-overflow-tooltip='isPc' sortable>
+        	<template slot-scope="scope">
+        		<span>{{ scope.row.createTime | formatDate }}</span>
+        	</template>
+        </el-table-column>
+        <el-table-column label="更新时间" prop="updateTime"  align="center" :show-overflow-tooltip='isPc' sortable>
+        	<template slot-scope="scope">
+        		<span>{{ scope.row.updateTime | formatDate }}</span>
+        	</template>
+        </el-table-column>
 				<el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
 						<el-button type="primary" style="margin-left: 10px;" size="mini"
-							v-if="scope.row.status == 0 && btnAuthen.permsVerifAuthention(':finance:record:addMoney')"
-							@click='WithdrawCash(scope.row)'>打款
+							v-if="scope.row.status === 'APPLYING' && btnAuthen.permsVerifAuthention(':finance:record:addMoney')"
+							@click='openPayWindow(scope.row)'>打款
 						</el-button>
 						<el-button type="primary" style="margin-left: 10px;" size="mini"
-							v-if="scope.row.status == 0 && btnAuthen.permsVerifAuthention(':finance:record:reject')"
-							@click='AdminUserCash(scope.row)'>驳回
+							v-if="scope.row.status === 'APPLYING' && btnAuthen.permsVerifAuthention(':finance:record:reject')"
+							@click='openRejectWindow(scope.row)'>驳回
 						</el-button>
 					</template>
 				</el-table-column>
@@ -86,17 +98,58 @@
 
 			<el-dialog :visible.sync="showDialog" title="提现" @close="showDialog = false" v-if="showDialog"
 				:append-to-body="true">
-				<el-form ref="addAdData" :model="addAdData" label-position="left" label-width="100px"
+				<el-form ref="withdrawData" :model="withdrawData" label-position="left" label-width="100px"
 					style="width: 600px; margin-left:50px;" :rules="Rules">
 					<el-form-item :label="'金额'" prop="money">
-						<el-input v-model="addAdData.money" placeholder="请输入金额" clearable type="number" />
+						<el-input v-model="withdrawData.money" placeholder="请输入金额" clearable type="number" />
 					</el-form-item>
 					<el-form-item>
-						<el-button type="primary" @click="btnBClick('addAdData')">确定</el-button>
+						<el-button type="primary" @click="btnBClick('withdrawData')">确定</el-button>
 						<el-button @click="showDialog = false">取消</el-button>
 					</el-form-item>
 				</el-form>
 			</el-dialog>
+
+      <el-dialog :visible.sync="showDialog1" title="驳回" @close="showDialog1 = false" v-if="showDialog1"
+      	:append-to-body="true">
+      	<el-form ref="rejectData" :model="rejectData" label-position="left" label-width="100px"
+      		style="width: 600px; margin-left:50px;" :rules="rejectRules">
+          <el-form-item :label="'提现单号'" prop="withdrawCode">
+          	<el-input v-model="rejectData.withdrawCode" type="text" disabled/>
+          </el-form-item>
+      		<el-form-item :label="'驳回原因'" prop="failReason">
+      			<el-input v-model="rejectData.failReason" placeholder="请输入驳回原因" clearable type="textarea" />
+      		</el-form-item>
+      		<el-form-item>
+      			<el-button type="primary" @click="rejectClick('rejectData')">确定</el-button>
+      			<el-button @click="showDialog1 = false">取消</el-button>
+      		</el-form-item>
+      	</el-form>
+      </el-dialog>
+
+      <el-dialog :visible.sync="showDialog2" title="打款" @close="showDialog2 = false" v-if="showDialog2"
+      	:append-to-body="true">
+      	<el-form ref="payData" :model="payData" label-position="left" label-width="100px"
+      		style="width: 600px; margin-left:50px;" :rules="payRules">
+          <el-form-item :label="'提现单号'" prop="withdrawCode">
+          	<el-input v-model="payData.withdrawCode" type="text" disabled/>
+          </el-form-item>
+          <el-form-item :label="'付款方式'" prop="payType">
+          	<el-radio-group v-model="payData.payType">
+          		<el-radio :label="1">付款到微信零钱</el-radio>
+          		<el-radio :label="2">线下付款</el-radio>
+              <el-radio :label="3">付款到银行卡</el-radio>
+          	</el-radio-group>
+          </el-form-item>
+      		<el-form-item :label="'付款备注'" prop="remarks">
+      			<el-input v-model="payData.remarks" placeholder="请输入打款备注" clearable type="textarea" />
+      		</el-form-item>
+      		<el-form-item>
+      			<el-button type="primary" @click="payClick('payData')">确定</el-button>
+      			<el-button @click="showDialog2 = false">取消</el-button>
+      		</el-form-item>
+      	</el-form>
+      </el-dialog>
 
 		</div>
 	</div>
@@ -120,10 +173,21 @@
 		components: {},
 		data() {
 			return {
-				addAdData: {
+				withdrawData: {
 					money: ''
 				},
+        rejectData: {
+        	withdrawCode: '',
+          failReason: ''
+        },
+        payData: {
+        	withdrawCode: '',
+          payType: 1,
+          remarks:''
+        },
 				showDialog: false,
+        showDialog1: false,
+        showDialog2: false,
 				listLoading: true,
 				page: 1,
 				limit: 10,
@@ -134,22 +198,29 @@
 					limit: 10,
 					status: '',
 					withdrawCode: '',
-					// adminId:'',
-					phone: ''
 				},
 				tableKey: 0,
 				tags: [{
-					title: '提现中',
-					id: 0,
+					title: '申请中',
+					id: 'APPLYING',
 				}, {
-					title: '提现成功',
-					id: 1,
+					title: '待付款确认',
+					id: 'WAIT_PAY',
 				}, {
-					title: '撤回 ',
-					id: 2,
+					title: '申请已受理',
+					id: 'ACCEPTED',
 				}, {
-					title: '退回 ',
-					id: 3,
+					title: '打款中',
+					id: 'PROCESSING',
+				}, {
+					title: '打款完成',
+					id: 'FINISHED',
+				}, {
+					title: '打款关闭',
+					id: 'CLOSED',
+				}, {
+					title: '打款驳回',
+					id: 'REJECT',
 				}],
 				totalAmount: 0,
 				balanceAmount: 0,
@@ -160,6 +231,35 @@
 						trigger: 'change'
 					}],
 				},
+        payRules: {
+        	payType: [{
+        		required: true,
+        		message: '请选择付款方式',
+        		trigger: 'change'
+        	}],
+          withdrawCode: [{
+          	required: true,
+          	message: '请输入付款单号',
+          	trigger: 'change'
+          }],
+          remarks: [{
+          	required: true,
+          	message: '请输入付款备注',
+          	trigger: 'change'
+          }],
+        },
+        rejectRules: {
+            withdrawCode: [{
+            	required: true,
+            	message: '请输入付款单号',
+            	trigger: 'change'
+            }],
+            failReason: [{
+            	required: true,
+            	message: '请输入拒绝原因',
+            	trigger: 'change'
+            }],
+        },
 			}
 		},
 		filters: {
@@ -191,24 +291,27 @@
 					}
 				})
 			},
+      payClick() {
+      	this.$common.throttle(this.WithdrawCash(), 2000)
+      },
+      openPayWindow(row){
+        this.showDialog2 = true,
+        this.payData.withdrawCode = row.withdrawCode
+      },
 			WithdrawCash(row) {
 				this.$confirm('是否确认打款?', '警告', {
 					confirmButtonText: '是',
 					cancelButtonText: '否',
 					type: 'warning'
 				}).then(() => {
-					let data = {
-						withdrawCode: row.withdrawCode,
-						withdrawAdminId: row.withdrawAdminId,
-						money: row.money
-					}
-					console.log(data)
-					updateWithdrawCashStatus(data).then(res => {
+					console.log("付款请求参数：",this.payData)
+					updateWithdrawCashStatus(this.payData).then(res => {
 						if (res.code == 200) {
 							this.$message({
 								type: 'success',
 								message: res.msg
 							})
+              this.showDialog2 = false
 							this.getLists()
 						} else {
 							this.$message.error(res.msg)
@@ -216,23 +319,27 @@
 					})
 				})
 			},
-			AdminUserCash(row) {
+      rejectClick() {
+      	this.$common.throttle(this.AdminUserCash(), 2000)
+      },
+      openRejectWindow(row){
+        this.showDialog1 = true,
+        this.rejectData.withdrawCode = row.withdrawCode
+      },
+			AdminUserCash() {
 				this.$confirm('是否确认驳回?', '警告', {
 					confirmButtonText: '是',
 					cancelButtonText: '否',
 					type: 'warning'
 				}).then(() => {
-					let data = {
-						withdrawCode: row.withdrawCode,
-						adminPhone: row.adminPhone
-					}
-					console.log(data)
-					updateAdminUserCash(data).then(res => {
+					console.log("驳回操作请求参数：",this.rejectData)
+					updateAdminUserCash(this.rejectData).then(res => {
 						if (res.code == 200) {
 							this.$message({
 								type: 'success',
 								message: res.msg
 							})
+              this.showDialog1 = false
 							this.getLists()
 						} else {
 							this.$message.error(res.msg)
@@ -263,16 +370,16 @@
 				})
 			},
 			btnBClick() {
-				this.$common.throttle(this.onaddAdData, 2000)
+				this.$common.throttle(this.onWithdraw, 2000)
 			},
-			onaddAdData() {
-				this.$refs['addAdData'].validate(valid => {
+			onWithdraw() {
+				this.$refs['withdrawData'].validate(valid => {
 					if (valid) {
-						console.log(this.addAdData)
+						console.log(this.withdrawData)
 						let {
 							balanceAmount
 						} = this
-						let money = this.addAdData.money
+						let money = this.withdrawData.money
 						// if (money % 1 !== 0) {
 						// 	this.$message.error('请输入整数')
 						// 	return false
@@ -285,10 +392,10 @@
 							this.$message.error('余额不足')
 							return false
 						}
-						gotoWithdrawCash(this.addAdData).then(res => {
+						gotoWithdrawCash(this.withdrawData).then(res => {
 							if (res.code == 200) {
 								this.showDialog = false
-								this.resetForm('addAdData')
+								this.resetForm('withdrawData')
 								this.$message.success(res.msg)
 								this.getLists()
 							} else {
