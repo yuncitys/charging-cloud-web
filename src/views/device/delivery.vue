@@ -3,10 +3,19 @@
 		<div class="filter-container">
 			<el-input v-model="listQuery.deviceCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入设备号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+			<!-- <el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入站点名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.networkAddress" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入设备地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+				placeholder="请输入设备地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" /> -->
+      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+        @change="handleFilter()" placeholder="请选择充电站">
+          <el-option
+            v-for="item in chargingStationList"
+            :key="item.id"
+            :label="item.networkName"
+            :value="item.id">
+          </el-option>
+      </el-select>
 			<el-select v-model="listQuery.deviceStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择设备在线状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -205,6 +214,9 @@
 		deleteDevice,
 		findDealerList,
 	} from '@/api/device/deviceList.js'
+  import {
+    getChargingStationList
+  } from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -251,9 +263,11 @@
 					dealerId: '',
 					page: 1,
 					limit: 10,
-					ruleId: 1
+					ruleId: 1,
+          chargingStationIds: ''
 				},
         dealerList: [],
+        chargingStationList: [],
 				formThead: {
 					deviceCode: true,
 					deviceTypeName: true,
@@ -304,7 +318,14 @@
 				} else {
 					this.$message.error(res.msg)
 				}
-			})
+			}),
+      getChargingStationList().then(res => {
+      	if (res.code == 200) {
+      		this.chargingStationList = res.data;
+      	} else {
+      		this.$message.error(res.msg)
+      	}
+      })
 		},
 		methods: {
 			//切换导航
