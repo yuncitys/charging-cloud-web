@@ -52,6 +52,7 @@
 				</el-table-column>
 				<el-table-column prop="payType" label="打款方式" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
+            <span type="success" v-if="scope.row.payType == 0">未付款</span>
 						<span type="success" v-if="scope.row.payType == 1">付款到微信零钱</span>
 						<span type="success" v-if="scope.row.payType == 2">线下付款</span>
             <span type="success"  v-if="scope.row.payType == 3">付款到银行卡</span>
@@ -375,7 +376,7 @@
 			onWithdraw() {
 				this.$refs['withdrawData'].validate(valid => {
 					if (valid) {
-						console.log(this.withdrawData)
+						console.log("提现请求数据：",this.withdrawData)
 						let {
 							balanceAmount
 						} = this
@@ -384,14 +385,15 @@
 						// 	this.$message.error('请输入整数')
 						// 	return false
 						// }
-            if (money <= 0) {
-            	this.$message.error('提现金额不能小于0')
+            if (money < 1) {
+            	this.$message.error('最低提现额度1元')
             	return false
             }
-						if (parseInt(money) > parseInt(balanceAmount)) {
+						if (parseFloat(money) > parseFloat(balanceAmount)) {
 							this.$message.error('余额不足')
 							return false
 						}
+            this.withdrawData.money = parseInt(money * 100)
 						gotoWithdrawCash(this.withdrawData).then(res => {
 							if (res.code == 200) {
 								this.showDialog = false
