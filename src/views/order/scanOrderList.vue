@@ -9,10 +9,19 @@
         placeholder="请输入用户ID号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.phoneNumber" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请输入手机号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
+      <!-- <el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请输入站点省份" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入站点名称" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
+        placeholder="请输入站点名称" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" /> -->
+      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+        @change="handleFilter()" placeholder="请选择充电站">
+          <el-option
+            v-for="item in chargingStationList"
+            :key="item.id"
+            :label="item.networkName"
+            :value="item.id">
+          </el-option>
+      </el-select>
       <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable
         clearable @change="handleFilter()" placeholder="请选择代理商">
         <el-option v-for="item in dealerList" :key="item.id" :label="item.adminFullname" :value="item.id">
@@ -330,6 +339,9 @@
     findDevicePowerDetails
   } from '@/api/order/scanOrderList.js'
   import {
+    getChargingStationList
+  } from '@/api/netWorkDot/netWorkDotList.js'
+  import {
     parseTime,
     numTime,
     formatSeconds,
@@ -341,7 +353,6 @@
   import orderDetail from './components/orderDetail.vue'
   import powerCharts from './components/powerCharts.vue'
   import downExcel from './components/downExcel.vue'
-
   import imgView from '@/components/Common/imgView.vue'
   export default {
     name: 'scanOrderList',
@@ -368,6 +379,7 @@
         total: 10,
         tableKey: 0,
         dealerList: [],
+        chargingStationList: [],
         listQuery: {
           page: 1,
           limit: 10,
@@ -383,7 +395,8 @@
           networkName: '',
           adminId: '',
           orderType: 1,
-          ruleId: 1
+          ruleId: 1,
+          chargingStationIds: ''
         },
         formThead: {
           orderCode: true,
@@ -458,7 +471,13 @@
       },
     },
     mounted() {
-
+      getChargingStationList().then(res => {
+      	if (res.code == 200) {
+      		this.chargingStationList = res.data;
+      	} else {
+      		this.$message.error(res.msg)
+      	}
+      })
     },
     methods: {
       //切换导航

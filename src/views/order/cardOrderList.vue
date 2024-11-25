@@ -9,10 +9,19 @@
         placeholder="请输入卡号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.userCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请输入用户ID号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
+      <!-- <el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请输入站点省份" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入站点名称" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
+        placeholder="请输入站点名称" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" /> -->
+      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+        @change="handleFilter()" placeholder="请选择充电站">
+          <el-option
+            v-for="item in chargingStationList"
+            :key="item.id"
+            :label="item.networkName"
+            :value="item.id">
+          </el-option>
+      </el-select>
       <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable
         clearable @change="handleFilter()" placeholder="请选择代理商">
         <el-option v-for="item in dealerList" :key="item.id" :label="item.adminFullname" :value="item.id">
@@ -299,6 +308,9 @@
     findDealerList,
   } from '@/api/device/deviceList.js'
   import {
+    getChargingStationList
+  } from '@/api/netWorkDot/netWorkDotList.js'
+  import {
     parseTime,
     numTime,
     formatSeconds
@@ -330,6 +342,7 @@
         total: 10,
         tableKey: 0,
         dealerList: [],
+        chargingStationList: [],
         listQuery: {
           page: 1,
           limit: 10,
@@ -346,7 +359,8 @@
           networkName: '',
           adminId: '',
           orderType: 0,
-          ruleId: 1
+          ruleId: 1,
+          chargingStationIds: ''
         },
         formThead: {
           cardNo: true,
@@ -419,7 +433,13 @@
       },
     },
     mounted() {
-
+      getChargingStationList().then(res => {
+      	if (res.code == 200) {
+      		this.chargingStationList = res.data;
+      	} else {
+      		this.$message.error(res.msg)
+      	}
+      })
     },
     methods: {
       //切换导航
