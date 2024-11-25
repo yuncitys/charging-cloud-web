@@ -3,6 +3,10 @@
 		<div class="filter-container">
 			<el-input v-model="listQuery.networkAddress" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入充电站地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+      <el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
+        placeholder="请输入充电站省份" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
+      <el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+        placeholder="请输入充电站名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
 			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
 			  placeholder="请选择代理商">
 			    <el-option
@@ -100,6 +104,7 @@
 		addNetworkDot,
 		updateNetworkDot,
 		deleteNetworkDot,
+    getChargingStationList
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		findDealerList,
@@ -137,6 +142,8 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
+          networkName: '',
+          networkProvince: '',
 					networkAddress: '',
 					adminId: '',
 					ruleId: 1
