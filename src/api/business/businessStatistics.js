@@ -1,6 +1,6 @@
 import request from '@/utils/request'
 
-export function getList(data) {
+export function getReportsStatistics(data) {
 	return request({
 		url: '/api/web/reports/statistics',
 		method: 'post',
@@ -22,9 +22,31 @@ export function getList(data) {
 }
 
 //  查询设备
-export function findReportsAndStatisticsByDevice(data) {
+export function getDeviceStatistics(data) {
 	return request({
 		url: '/api/web/reports/device',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
+// 导出报表信息
+export function exportDeviceReport(data) {
+	return request({
+		url: '/api/web/reports/export',
 		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
