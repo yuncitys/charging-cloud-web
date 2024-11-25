@@ -17,15 +17,99 @@
 					</div>
 				</div>
 			</el-card>
-			<businessDevList></businessDevList>
+			<!-- <businessDevList></businessDevList> -->
+      <div id="page">
+        <el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入设备号" v-model="listQuery.deviceCode" class="filter-item" clearable
+        	@keyup.enter.native="handleFilter" @clear="handleFilter()" />
+        <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()"
+          placeholder="请选择代理商">
+            <el-option
+              v-for="item in dealerList"
+              :key="item.id"
+              :label="item.adminFullname"
+              :value="item.id">
+            </el-option>
+        </el-select>
+        <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+          @change="handleFilter()" placeholder="请选择充电站">
+            <el-option
+              v-for="item in chargingStationList"
+              :key="item.id"
+              :label="item.networkName"
+              :value="item.id">
+            </el-option>
+        </el-select>
+        <el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
+        	style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
+        	format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+        </el-date-picker>
+        <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
+          查询
+        </el-button>
+
+        <!-- 导出Excel -->
+        <downDeviceReportsExcel :queryData="listQuery" />
+
+      	<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" border fit
+      		highlight-current-row style="width: 100%;" align="center" id="tableBox">
+      		<el-table-column type="index" width="55" label="序号" align="center">
+      			<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
+      		</el-table-column>
+          <el-table-column prop="ruleId" label="产品类型" align="center" :show-overflow-tooltip="isPc">
+            <template slot-scope="scope">
+            	<span v-if="scope.row.ruleId == 1">单车桩</span>
+            	<span v-if="scope.row.ruleId == 2">汽车桩</span>
+            </template>
+          </el-table-column>
+      		<el-table-column prop="deviceCode" label="设备号" align="center" :show-overflow-tooltip="isPc">
+      		</el-table-column>
+          <el-table-column prop="deviceStatus" label="设备状态" align="center" :show-overflow-tooltip="isPc">
+            <template slot-scope="scope">
+            	<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
+            	<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="deviceName" label="设备名称" align="center" :show-overflow-tooltip="isPc">
+          </el-table-column>
+          <el-table-column prop="deviceTypeName" label="设备类型" align="center" :show-overflow-tooltip="isPc">
+          </el-table-column>
+          <el-table-column prop="networkName" label="站点名称" align="center" :show-overflow-tooltip="isPc">
+          </el-table-column>
+          <el-table-column prop="networkAddress" label="站点地址" align="center" :show-overflow-tooltip="isPc">
+          </el-table-column>
+      		<el-table-column prop="orderCount" label="订单总数" align="center" sortable :show-overflow-tooltip="isPc">
+      		</el-table-column>
+      		<el-table-column prop="countCashByCard" label="刷卡收入" align="center" sortable :show-overflow-tooltip="isPc">
+      		</el-table-column>
+      		<el-table-column prop="countCashByScan" label="扫码收入" align="center" sortable :show-overflow-tooltip="isPc">
+      		</el-table-column>
+      		<el-table-column prop="adminId" label="代理商" align="center" :show-overflow-tooltip="isPc">
+      			<template slot-scope="scope">
+      				<div v-if="scope.row.adminId">
+      					<deviceAdmin :row_data="scope.row"></deviceAdmin>
+      				</div>
+      			</template>
+      		</el-table-column>
+      	</el-table>
+      	<div class="pagination-container">
+      		<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="limit" :total="total"
+      			background layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
+      			@current-change="handleCurrentChange" />
+      	</div>
+      </div>
 		</div>
 	</div>
 </template>
 
 <script>
 	import {
-		getList,
+    findDealerList,
+		getReportsStatistics,
+    getDeviceStatistics
 	} from '@/api/business/businessStatistics.js'
+  import {
+    getChargingStationList
+  } from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime,
 		trim
@@ -35,11 +119,15 @@
 	} from '@/api/user'
 	import businessDevList from './businessDevList.vue'
 	import businessBusList from './businessBusList.vue'
+  import deviceAdmin from '../device/components/deviceAdmin.vue'
+  import downDeviceReportsExcel from './components/downDeviceReportsExcel.vue'
 	export default {
 		name: 'businessStatistics1',
 		components: {
+      deviceAdmin,
 			businessDevList,
-			businessBusList
+			businessBusList,
+      downDeviceReportsExcel
 		},
 		data() {
 			return {
@@ -51,48 +139,55 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-					dearId: "",
-					deviceCode: ""
+          dearId: '',
+          deviceCode: '',
+          allocationStatus: 1,
+          chargingStationIds:'',
+          createTimeStart: '',
+          createTimeEnd: ''
 				},
 				tableKey: 0,
 				isChildUpdate1: true,
 				isChildUpdate2: false,
-				fourData: {},
 				loading: false,
+        listLoading: false,
 				dateYear: '',
+        time: '',
 				statisticsList: [{
-						title: '交易金额',
+						title: '交易金额（元）',
 						data: ''
 					},
 					{
-						title: '扫码充值金额',
+						title: '扫码充值金额（元）',
 						data: ''
 					},
 					{
-						title: 'IC卡代人充值金额',
+						title: 'IC卡充值金额（元）',
 						data: ''
 					},
 					{
-						title: '套餐预充值金额',
+						title: '套餐充值金额（元）',
 						data: ''
 					},
 					{
-						title: '总电量',
+						title: '总使用电量（度）',
 						data: ''
 					},
 					{
-						title: '订单数量',
+						title: '总充电次数（笔）',
 						data: ''
 					},
 					{
-						title: '可提现金额',
+						title: '总充电时长（分）',
 						data: ''
 					},
 					{
-						title: '在线设备总数',
+						title: '在线设备总数（台）',
 						data: ''
 					},
-				]
+        ],
+        dealerList: [],
+        chargingStationList: [],
 			}
 		},
 		filters: {
@@ -155,30 +250,30 @@
 			// 		this.getLists()
 			// 	})
 			// },
-			getLists() {
+			getReportsStatistics() {
 				this.loading = true
 				let listQuery = this.listQuery
 				let statisticsList = this.statisticsList
-				getList(listQuery).then(res => {
+				getReportsStatistics(listQuery).then(res => {
 					if (res.code == 200) {
-						let fourData = res.data.reportCount
+						let reportCount = res.data
 						statisticsList.forEach((item, index) => {
-							if (item.title == '交易金额') {
-								item.data = fourData.totalMoney || 0
-							} else if (item.title == '扫码充值金额') {
-								item.data = fourData.scanQRMoney || 0
-							} else if (item.title == 'IC卡代人充值金额') {
-								item.data = fourData.icCardMoney || 0
-							} else if (item.title == '套餐预充值金额') {
-								item.data = fourData.preMoney || 0
-							} else if (item.title == '总电量') {
-								item.data = fourData.totalPower || 0
-							} else if (item.title == '订单数量') {
-								item.data = fourData.totalOrder || 0
-							} else if (item.title == '可提现金额') {
-								item.data = fourData.balanceAmount || 0
-							} else if (item.title == '在线设备总数') {
-								item.data = fourData.deviceCount || 0
+							if (item.title == '交易金额（元）') {
+								item.data = reportCount.totalMoney || 0
+							} else if (item.title == '扫码充值金额（元）') {
+								item.data = reportCount.scanQRMoney || 0
+							} else if (item.title == 'IC卡充值金额（元）') {
+								item.data = reportCount.icCardMoney || 0
+							} else if (item.title == '套餐充值金额（元）') {
+								item.data = reportCount.preMoney || 0
+							} else if (item.title == '总使用电量（度）') {
+								item.data = reportCount.totalPower || 0
+							} else if (item.title == '总充电次数（笔）') {
+								item.data = reportCount.totalOrder || 0
+							} else if (item.title == '总充电时长（分）') {
+								item.data = reportCount.totalDuration || 0
+							} else if (item.title == '在线设备总数（台）') {
+								item.data = reportCount.deviceCount || 0
 							}
 						})
 						this.statisticsList = statisticsList
@@ -190,6 +285,47 @@
 					}
 				})
 			},
+      getChargingStationList() {
+      	getChargingStationList().then(res => {
+      		if (res.code == 200) {
+      			this.chargingStationList = res.data;
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
+      findDealerList() {
+      	findDealerList().then(res => {
+      		if (res.code == 200) {
+      			this.dealerList = res.data;
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
+      dateChange(e) {
+      	console.log(e)
+      	if (e) {
+      		this.listQuery.createTimeStart = e[0]
+      		this.listQuery.createTimeEnd = e[1]
+      	} else {
+      		this.listQuery.createTimeStart = ''
+      		this.listQuery.createTimeEnd = ''
+      	}
+      	this.handleFilter()
+      },
+      getLists() {
+      	this.listLoading = true
+      	getDeviceStatistics(this.listQuery).then(res => {
+      		if (res.code == 200) {
+      			this.list = res.data
+      			this.total = res.count
+      			this.listLoading = false
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
 			handleSizeChange(val) {
 				this.listQuery.limit = val
 				this.getLists()
@@ -201,6 +337,7 @@
 			handleFilter() {
 				this.listQuery.page = 1
 				this.getLists()
+        this.getReportsStatistics()
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
@@ -239,6 +376,9 @@
 		},
 		created() {
 			// this.getRouters()
+      this.findDealerList()
+      this.getChargingStationList()
+      this.getReportsStatistics()
       this.getLists()
 			this.dateYear = this.formatTime(new Date(), 'yyyy-MM-dd')
 		},
@@ -246,6 +386,11 @@
 </script>
 
 <style scoped="scoped">
+  #page {
+  	margin-top: 30px;
+  	margin-left: 20px;
+  }
+
 	.flex {
 		display: flex;
 	}
@@ -262,8 +407,6 @@
 		display: inline-block;
 		margin-left: 30px;
 	}
-
-
 
 	.cardBox {
 		width: 100%;
