@@ -271,34 +271,46 @@
 				}],
 
 				pageType: 0,
-
-				moneyList: [{
-					id: 1
-				}, {
-					id: 2
-				}, {
-					id: 3
-				}, {
-					id: 5
-				}, {
-					id: 10
-				}, {
-					id: 15
-				}],
-				timeList: [{
-					id: 2
-				}, {
-					id: 4
-				}, {
-					id: 6
-				}, {
-					id: 8
-				}, {
-					id: 10
-				}, {
-					id: 12
-				}],
-
+				moneyList: [
+				  {
+				    id: 1,
+				  },
+				  {
+				    id: 2,
+				  },
+				  {
+				    id: 3,
+				  },
+				  {
+				    id: 5
+				  },
+				  {
+				    id: 10
+				  },
+				  {
+				    id: 15
+				  },
+				],
+				timeList: [
+				  {
+				    id: 2
+				  },
+				  {
+				    id: 4,
+				  },
+				  {
+				    id: 6
+				  },
+				  {
+				    id: 8
+				  },
+				  {
+				    id: 10
+				  },
+				  {
+				    id: 12
+				  }
+				],
 				isAutostop: false,
 				chco: 0,
 				fixedMoney: 5,
@@ -334,7 +346,7 @@
 						id: 12
 					}]
 				let item = this.row_data
-        console.log("item",item);
+        console.log("编辑数据：",item)
 				this.formData.tdpId = item.id
 				this.formData.feeName = item.feeName
 				this.formData.realTimeCharging = item.realTimeCharging
@@ -362,19 +374,17 @@
 				this.formData.money = money
 				this.formData.electricityPrice = item.electricityPrice
 
-        if(item.priceView !=''){
-          console.log("item",item);
+        if(item.priceView != ''){
           let priceViewDetail = {};
-          if(typeof(item.priceView)=='string'){
+          if(typeof(item.priceView) == 'string'){
             priceViewDetail = JSON.parse(item.priceView);
           }else{
             priceViewDetail = item.priceView;
           }
           item.priceView = priceViewDetail;
-          console.log(item.priceView,"挡位")
-          let priceViewArr = []
-          priceViewArr = item.priceView.view.split(',')
-          console.log(priceViewArr,"view")
+          console.log("充电档位配置：",priceViewDetail)
+          let priceViewArr = item.priceView.view.split(',')
+          console.log("充电档位：",priceViewArr)
           let priceViewObj = []
           priceViewArr.forEach((item, index) => {
             let obj = {
@@ -383,20 +393,21 @@
             priceViewObj.push(obj)
           })
           let priceUnit = item.priceView.unit
-          console.log(priceUnit)
           if (priceUnit === 0) {
           	this.timeList = priceViewObj
           } else if (priceUnit === 2) {
           	this.moneyList = priceViewObj
           }
           this.$forceUpdate()
-          console.log(this.timeList, this.moneyList)
         }
-        this.isAutostop = item.config.AutostopConfig.isAutostop ? true : false
-        this.chco = item.config.AutostopConfig.details.chco ? item.config.AutostopConfig.details.chco : 0
-        this.fixedMoney = item.config.AutostopConfig.details.money ? item.config.AutostopConfig.details.money : 5
-        this.maxChargeTime = item.config.AutostopConfig.details.maxChargeTime ? item.config.AutostopConfig.details.maxChargeTime : 12
-				console.log(this.formData)
+        if (item.config != '') {
+          let autostopConfigDetail = item.config;
+          console.log("充满自停配置：{}",autostopConfigDetail)
+          this.isAutostop = autostopConfigDetail.AutostopConfig.isAutostop ? true : false
+          this.chco = autostopConfigDetail.AutostopConfig.details.chco
+          this.fixedMoney = autostopConfigDetail.AutostopConfig.details.money
+          this.maxChargeTime = autostopConfigDetail.AutostopConfig.details.maxChargeTime
+        }
 				this.showDialog = true
 			},
 			addForm(type) {
@@ -518,8 +529,6 @@
 				fixedMoney = fixedMoney ? fixedMoney : 5
 				maxChargeTime = maxChargeTime ? maxChargeTime : 12
 
-				let formData = this.formData
-				console.log(formData)
         var config = {};
         var isAutostopConfig = {};
         isAutostopConfig['isAutostop'] = isAutostop;
@@ -556,6 +565,7 @@
         console.log(priceViewJson);
         this.formData.priceView = priceViewJson;
 
+        let formData = this.formData
 				let powerSectionBeforeArr = []
 				let powerSectionBefore = ''
 				let powerSectionAfterArr = []
@@ -593,7 +603,6 @@
         resultData.priceView = formData.priceView
         resultData.config = formData.config
 
-				console.log(formData, duration, money, powerSectionBefore, powerSectionAfter)
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
 					if (valid) {

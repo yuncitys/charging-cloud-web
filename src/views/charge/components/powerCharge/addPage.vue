@@ -14,7 +14,7 @@
 					<el-input v-model="formData.remark" placeholder="请输入收费金额" clearable style="width: 60%;"
 						type="textarea" :rows="2" />
 				</el-form-item>
-				<el-form-item :label="'计时类型'" prop="realTimeCharging">
+				<el-form-item :label="'计费周期'" prop="realTimeCharging">
 					<div id="">
 						<el-radio-group v-model="formData.realTimeCharging">
 							<el-radio v-for="(item,index) in payType" :key="index" :label="index">{{item.title}}
@@ -93,8 +93,7 @@
 						</div>
 					</div>
 				</div>
-				<div
-					style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
+				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
 					<h2>车主显示档位 (充电车主选择支付金额的页面)</h2>
 					<div style="display: flex;align-items: center;margin-left: 20px;">
 						<div>
@@ -226,8 +225,15 @@
 			return {
 				showDialog: false,
 				formData: {
+          ruleId: 1,
 					feeName: '',
 					priceType: 2,
+          realTimeCharging: 0,
+          chargeType: 0,
+          remark: '',
+          priceView: '',
+          config: '',
+          electricityPrice: 0,
 					duration: [{
 						left: 1,
 						right: ''
@@ -236,13 +242,6 @@
 						hour: 1,
 						money: 1
 					}],
-					electricityPrice: '',
-					realTimeCharging: 0,
-					chargeType: 0,
-					priceUnit: 0,
-					priceView: '',
-					remark: '',
-					ruleId: 1
 				},
 				formArr: [""],
 				payType: [{
@@ -265,34 +264,46 @@
 				}],
 
 				pageType: 0,
-
-				moneyList: [{
-					id: 1
-				}, {
-					id: 2
-				}, {
-					id: 3
-				}, {
-					id: 5
-				}, {
-					id: 10
-				}, {
-					id: 15
-				}],
-				timeList: [{
-					id: 2
-				}, {
-					id: 4
-				}, {
-					id: 6
-				}, {
-					id: 8
-				}, {
-					id: 10
-				}, {
-					id: 12
-				}],
-
+				moneyList: [
+				  {
+				    id: 1,
+				  },
+				  {
+				    id: 2,
+				  },
+				  {
+				    id: 3,
+				  },
+				  {
+				    id: 5
+				  },
+				  {
+				    id: 10
+				  },
+				  {
+				    id: 15
+				  },
+				],
+				timeList: [
+				  {
+				    id: 2
+				  },
+				  {
+				    id: 4,
+				  },
+				  {
+				    id: 6
+				  },
+				  {
+				    id: 8
+				  },
+				  {
+				    id: 10
+				  },
+				  {
+				    id: 12
+				  }
+				],
 				isAutostop: false,
 				chco: 0,
 				fixedMoney: 5,
@@ -458,8 +469,8 @@
 				  		priceViewArr.push(item.id)
 				  })
 				}
-        priceViewArr = priceViewArr.join(',')
-        priceView['view'] = priceViewArr
+        let priceViewStr = priceViewArr.join(',')
+        priceView['view'] = priceViewStr
 				priceView['unit'] = priceUnit
 				priceView['preMoney'] = fixedMoney
 				var priceViewJson = JSON.stringify(priceView);
@@ -494,15 +505,14 @@
 				resultData.money = money
 				resultData.powerSectionBefore = powerSectionBefore
 				resultData.powerSectionAfter = powerSectionAfter
+        resultData.electricityPrice = formData.electricityPrice
 				resultData.realTimeCharging = formData.realTimeCharging
 				resultData.chargeType = formData.chargeType
         resultData.priceView = formData.priceView
         resultData.config = formData.config
-        resultData.electricityPrice = formData.electricityPrice
         resultData.remark = formData.remark || ''
         resultData.ruleId = formData.ruleId
 
-				console.log(formData, duration, money, powerSectionBefore, powerSectionAfter)
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
 					if (valid) {
