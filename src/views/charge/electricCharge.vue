@@ -20,9 +20,9 @@
 				</el-table-column>
 				<el-table-column prop="detail" label="方案详情" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="realTimeCharging" label="计费方案" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="realTimeCharging" label="计费周期" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span>{{ scope.row.realTimeCharging==0?'1分钟收费':"实时30分钟收费" }}</span>
+						<span>{{ scope.row.realTimeCharging==0?'实时1分钟收费':"实时30分钟收费" }}</span>
 					</template>
 				</el-table-column>
 				</el-table-column>

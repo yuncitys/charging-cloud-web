@@ -19,12 +19,12 @@
 				</el-table-column>
 				<el-table-column prop="detail" label="方案详情" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="realTimeCharging" label="计费类型" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="realTimeCharging" label="计费周期" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span>{{scope.row.realTimeCharging ? '按30分钟收费' : '按1分钟收费'}}</span>
+						<span>{{scope.row.realTimeCharging ? '按30分钟收费' : '实时1分钟收费'}}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="chargeType" label="功耗类型" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="chargeType" label="计费功耗类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{scope.row.chargeType ? '最高功率' : '平均功率'}}</span>
 					</template>
@@ -112,7 +112,6 @@
 				this.listLoading = true
 				getList(this.listQuery).then(res => {
 					if (res.code == 200) {
-						console.log(res)
 						let list = res.data || []
 						if (list.length != 0) {
 							list.forEach((item, index) => {
@@ -121,8 +120,8 @@
 									item.priceContents.forEach((item1, index1) => {
 										let detail = item1.powerSectionBefore + '-' + item1.powerSectionAfter + 'W,' + item1.duration + '小时' + "/" + item1.money + "元"
 										arr[index1] = detail
-										item.detail = arr.join(";")
 									})
+                  item.detail = arr.join(";")
 								} else {
 									item.datail = ''
 								}
@@ -137,7 +136,6 @@
 							})
 						}
 						this.list = list
-						console.log(list)
 						this.total = res.count
 						this.listLoading = false
 					} else {
