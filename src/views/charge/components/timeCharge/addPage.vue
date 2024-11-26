@@ -12,7 +12,7 @@
 					<el-input v-model="addData.remark" placeholder="请输入收费说明" clearable style="width: 60%;"
 						type="textarea" :rows="2" />
 				</el-form-item>
-				<el-form-item :label="'计时类型'" prop="realTimeCharging">
+				<el-form-item :label="'计费周期'" prop="realTimeCharging">
 					<div id="">
 						<el-radio-group v-model="addData.realTimeCharging">
 							<el-radio v-for="(item,index) in payType" :key="index" :label="index">{{item.title}}
@@ -68,7 +68,6 @@
 									</div>
 								</div>
 
-
 								<div v-if="!isPc">
 									<div class="flex" style="align-items: center;">
 										<div style="margin-right: 20px;">时间</div>
@@ -99,11 +98,11 @@
 										<el-button type="danger" @click="delForm(index)">删除</el-button>
 									</div>
 								</div>
-
 							</div>
 						</div>
 					</div>
 				</div>
+
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
 					<h2>是否开启充满自停</h2>
 					<div style="margin-left: 20px;">
@@ -160,6 +159,7 @@
 						</div>
 					</div>
 				</div>
+
 				<el-form-item>
 					<el-button type="primary" @click="onaddData('addData')">确定</el-button>
 					<el-button @click="showAdd = false">取消</el-button>
