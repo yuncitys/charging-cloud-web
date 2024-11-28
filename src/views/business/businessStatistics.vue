@@ -154,21 +154,25 @@
 				dateYear: '',
         time: '',
 				statisticsList: [{
-						title: '交易金额（元）',
+						title: '交易总金额（元）',
 						data: ''
 					},
 					{
 						title: '扫码充值金额（元）',
 						data: ''
 					},
+          {
+          	title: '套餐充值金额（元）',
+          	data: ''
+          },
 					{
-						title: 'IC卡充值金额（元）',
+						title: '月卡充值金额（元）',
 						data: ''
 					},
-					{
-						title: '套餐充值金额（元）',
-						data: ''
-					},
+          {
+          	title: '充电总费用（元）',
+          	data: ''
+          },
 					{
 						title: '总使用电量（度）',
 						data: ''
@@ -182,7 +186,11 @@
 						data: ''
 					},
 					{
-						title: '在线设备总数（台）',
+						title: '总充电电费（元）',
+						data: ''
+					},
+          {
+						title: '总充电服务费（元）',
 						data: ''
 					},
         ],
@@ -258,22 +266,26 @@
 					if (res.code == 200) {
 						let reportCount = res.data
 						statisticsList.forEach((item, index) => {
-							if (item.title == '交易金额（元）') {
+							if (item.title == '交易总金额（元）') {
 								item.data = reportCount.totalMoney || 0
 							} else if (item.title == '扫码充值金额（元）') {
 								item.data = reportCount.scanQRMoney || 0
-							} else if (item.title == 'IC卡充值金额（元）') {
-								item.data = reportCount.icCardMoney || 0
+							} else if (item.title == '月卡充值金额（元）') {
+								item.data = reportCount.monthCardMoney || 0
 							} else if (item.title == '套餐充值金额（元）') {
-								item.data = reportCount.preMoney || 0
+								item.data = reportCount.packageMoney || 0
 							} else if (item.title == '总使用电量（度）') {
 								item.data = reportCount.totalPower || 0
 							} else if (item.title == '总充电次数（笔）') {
 								item.data = reportCount.totalOrder || 0
 							} else if (item.title == '总充电时长（分）') {
 								item.data = reportCount.totalDuration || 0
-							} else if (item.title == '在线设备总数（台）') {
-								item.data = reportCount.deviceCount || 0
+							} else if (item.title == '总充电电费（元）') {
+								item.data = reportCount.totalElectricityPrice || 0
+							} else if (item.title == '总充电服务费（元）') {
+								item.data = reportCount.totalServicePrice || 0
+							} else if (item.title == '充电总费用（元）') {
+								item.data = reportCount.totalRealityPayMoney || 0
 							}
 						})
 						this.statisticsList = statisticsList
