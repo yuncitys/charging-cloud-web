@@ -70,11 +70,11 @@
         totalPower,
         orderCount,
         orderPrice,
-        DAY
+        datetime
       } = {}) {
         this.chart.setOption({
           xAxis: {
-            data: DAY,
+            data: datetime,
             boundaryGap: false,
             axisTick: {
               show: false
@@ -169,7 +169,24 @@
               animationDuration: 2800,
               animationEasing: 'quadraticOut'
             }
-          ]
+          ],
+          dataZoom: [
+            {
+                type: 'slider', // 滑动条型缩放控件
+                show: true, // 是否显示控件
+                xAxisIndex: 0, // 控制 X 轴的缩放
+                start: 0, // 数据窗口的起始位置（百分比）
+                end: 70, // 数据窗口的结束位置（百分比）
+                height: 20,      // 水平滑块的高度
+                bottom: 20,      // 水平滑块距离图表底部的距离
+            },
+            {
+                type: 'inside', // 支持鼠标滚轮缩放的方式
+                xAxisIndex: 0,
+                height: 20,      // 水平滑块的高度
+                bottom: 20,      // 水平滑块距离图表底部的距离
+            },
+          ],
         })
       }
     }
