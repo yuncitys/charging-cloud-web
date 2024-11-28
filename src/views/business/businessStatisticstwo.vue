@@ -70,14 +70,14 @@
         <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
       </div>
 
-      <el-table v-loading="listLoading" :key="tableKey" :data="chargingTrendList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading" :key="chargingTrendList.datetime" :data="chargingTrendList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
       	</el-table-column>
         <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-      	<el-table-column label="订单数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="订单总数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
       	<el-table-column label="充电时长(分)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
       	</el-table-column>
@@ -116,7 +116,7 @@
     totalPower: [],
     orderCount: [],
     orderPrice: [],
-    DAY: []
+    datetime: []
   }
   export default {
     name: 'chargingTrendStatistics',
@@ -129,7 +129,7 @@
           userCount: [],
           orderCount: [],
           orderPrice: [],
-          DAY: []
+          datetime: []
         },
         page: 1,
         limit: 10,
@@ -235,14 +235,14 @@
               totalPower: [],
               orderCount: [],
               orderPrice: [],
-              DAY: []
+              datetime: []
             }
             if (chargingTrendStatistics.length != 0) {
               chargingTrendStatistics.forEach((item, index) => {
                 lineChartData.totalPower.push(item.totalPower)
                 lineChartData.orderCount.push(item.totalChargeNumber)
                 lineChartData.orderPrice.push(item.actualPrice)
-                lineChartData.DAY.push(item.datetime)
+                lineChartData.datetime.push(item.datetime)
               })
             }
             this.lineChartData = lineChartData
@@ -259,7 +259,7 @@
             this.listLoading = false
             this.total = res.count
             this.chargingTrendList = res.data
-            console.log("chargingTrendList：",this.chargingTrendList)
+            // console.log("chargingTrendList：",this.chargingTrendList)
             // this.$forceUpdate()
           }else {
 						this.$message.error(res.msg)
