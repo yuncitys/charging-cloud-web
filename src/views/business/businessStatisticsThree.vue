@@ -69,7 +69,7 @@
         <!-- 靠右的导出按钮 -->
         <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
       </div>
-      <el-table v-loading="listLoading" :key="tableKey" :data="chargingStationSingleList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading" :key="chargingStationSectionList.networkName" :data="chargingStationSingleList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
@@ -104,6 +104,62 @@
       <div class="report-header">
         <div class="title-section">
           <!-- 标题 -->
+          <span class="title">金额明细</span>
+          <!-- 带有统计说明的图标提示 -->
+          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
+            <el-icon><i class="el-icon-question"></i></el-icon>
+          </el-tooltip>
+        </div>
+        <!-- 靠右的导出按钮 -->
+        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+      </div>
+      <el-table v-loading="listLoading2" :key="chargingStationSectionList.networkName" :data="chargingStationFundList" element-loading-text="拼命加载中......"
+        fithighlight-current-row style="width: 100%;" align="center" id="tableBox2">
+      	<el-table-column type="index" width="55" label="序号" align="center">
+      		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
+      	</el-table-column>
+        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="归属运营商" prop="adminFullname" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="运营设备总数(台)" prop="deviceCount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+      	<el-table-column label="在线设备总数(台)" prop="onlineDeviceCount" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="离线设备总数(台)" prop="offlineDeviceCount" sortable align="center" :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="充电口总数(个)" prop="portCount" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="总充电收益(元)" prop="totalIncome" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="余额支付(元)" prop="balancePaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+        <el-table-column label="微信支付(元)" prop="wechatPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="微信支付分(元)" prop="wechatScorePaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="刷卡支付(元)" prop="swipeCardPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="投币支付(元)" prop="insertCoinsPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="支付宝支付(元)" prop="AlipayPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column label="月卡支付(元)" prop="monthCardPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+      </el-table>
+      <div class="pagination-container">
+      	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
+      		:total="chargingStationFundTotal" background layout="total, sizes, prev, pager, next, jumper"
+      		@size-change="handleSizeChange2" @current-change="handleCurrentChange2" />
+      </div>
+
+      <div class="report-header">
+        <div class="title-section">
+          <!-- 标题 -->
           <span class="title">汇总列表</span>
           <!-- 带有统计说明的图标提示 -->
           <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
@@ -113,8 +169,8 @@
         <!-- 靠右的导出按钮 -->
         <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
       </div>
-      <el-table v-loading="listLoading1" :key="tableKey1" :data="chargingStationSectionList" element-loading-text="拼命加载中......"
-        fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
+      <el-table v-loading="listLoading1" :key="chargingStationSectionList.networkName" :data="chargingStationSectionList" element-loading-text="拼命加载中......"
+        fithighlight-current-row style="width: 100%;" align="center" id="tableBox1">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
       	</el-table-column>
@@ -122,7 +178,7 @@
         </el-table-column>
         <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="归属运营商" prop="adminFullname" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="归属运营商" prop="adminFullname" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="总设备数(台)" prop="totalDevice" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
@@ -155,7 +211,8 @@
     chargingTrend,
     chargingTrendList,
     chargingStationSection,
-    chargingStationSingle
+    chargingStationSingle,
+    chargingStationFund
   } from '@/api/business/businessStatistics.js'
   import {
     getChargingStationList
@@ -165,7 +222,7 @@
     totalPower: [],
     orderCount: [],
     orderPrice: [],
-    DAY: []
+    datetime: []
   }
   export default {
     name: 'chargingStationStatistics',
@@ -178,18 +235,22 @@
           userCount: [],
           orderCount: [],
           orderPrice: [],
-          DAY: []
+          datetime: []
         },
         page: 1,
         limit: 10,
         chargingStationSectionTotal: 10,
         chargingStationSingleTotal: 10,
+        chargingStationFundTotal: 10,
         tableKey: 0,
         tableKey1: 0,
+        tableKey2: 0,
         listLoading: false,
         listLoading1: false,
+        listLoading2: false,
         chargingStationSingleList: [],
         chargingStationSectionList: [],
+        chargingStationFundList: [],
         listQuery: {
         	timeType: 3,
         	startTime: this.formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),3),
@@ -288,14 +349,14 @@
               totalPower: [],
               orderCount: [],
               orderPrice: [],
-              DAY: []
+              datetime: []
             }
             if (chargingTrendStatistics.length != 0) {
               chargingTrendStatistics.forEach((item, index) => {
                 lineChartData.totalPower.push(item.totalPower)
                 lineChartData.orderCount.push(item.totalChargeNumber)
                 lineChartData.orderPrice.push(item.actualPrice)
-                lineChartData.DAY.push(item.datetime)
+                lineChartData.datetime.push(item.datetime)
               })
             }
             this.lineChartData = lineChartData
@@ -312,7 +373,7 @@
             this.listLoading = false
             this.chargingStationSingleTotal = res.count
             this.chargingStationSingleList = res.data
-            console.log("chargingStationSingleList：",this.chargingStationSingleList)
+            // console.log("chargingStationSingleList：",res.data)
             // this.$forceUpdate()
           }else {
 						this.$message.error(res.msg)
@@ -327,15 +388,27 @@
             this.listLoading1 = false
             this.chargingStationSectionTotal = res.count
             this.chargingStationSectionList = res.data
-            console.log("chargingStationSectionList：",this.chargingStationSectionList)
+            // console.log("chargingStationSectionList：",res.data)
             // this.$forceUpdate()
           }else {
       			this.$message.error(res.msg)
       		}
         })
       },
-      handleSetLineChartData(type) {
-        this.lineChartData = lineChartData[type]
+      getChargingStationFundList() {
+        this.listLoading2 = true
+        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
+        chargingStationFund(listQuery).then(res => {
+          if (res.code == 200) {
+            this.listLoading2 = false
+            this.chargingStationFundTotal = res.count
+            this.chargingStationFundList = res.data
+            // console.log("chargingStationFundList：",res.data)
+            // this.$forceUpdate()
+          }else {
+      			this.$message.error(res.msg)
+      		}
+        })
       },
       dateChange(e) {
       	if (e) {
@@ -352,6 +425,7 @@
         this.listQuery.limit = 10
       	this.getChargingTrend()
         this.getChargingStationSingleList()
+        this.getChargingStationFundList()
         this.getChargingStationSectionList()
       },
       handleSizeChange(val) {
@@ -370,6 +444,14 @@
       	this.listQuery.page = val
       	this.getChargingStationSectionList()
       },
+      handleSizeChange2(val) {
+      	this.listQuery.limit = val
+      	this.getChargingStationFundList()
+      },
+      handleCurrentChange2(val) {
+      	this.listQuery.page = val
+      	this.getChargingStationFundList()
+      },
       // 将日期格式化为 'yyyy-MM-dd' 的方法
       formatDate(date,timeType) {
         const year = date.getFullYear();
@@ -387,6 +469,7 @@
       this.getChargingStationList()
       this.getChargingTrend()
       this.getChargingStationSingleList()
+      this.getChargingStationFundList()
       this.getChargingStationSectionList()
     },
   }
