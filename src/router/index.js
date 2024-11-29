@@ -135,6 +135,15 @@ export const constantRoutes = [{
           title: '电站趋势',
           icon: 'el-icon-s-check',
         }
+      },
+      {
+        path: 'businessStatisticsFour',
+        component: () => import('@/views/business/businessStatisticsFour'),
+        name: 'businessStatisticsFour',
+        meta: {
+          title: '交易趋势',
+          icon: 'el-icon-s-check',
+        }
       }
     ]
   },
