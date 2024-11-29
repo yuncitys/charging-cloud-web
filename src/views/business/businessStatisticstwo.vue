@@ -38,8 +38,7 @@
             :value="item.id">
           </el-option>
       </el-select>
-      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
-      	icon="el-icon-search">
+      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
         查询
       </el-button>
 
@@ -54,7 +53,7 @@
         </div>
       </div>
       <el-row class="borRadduis10" style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
-        <line-chart :chart-data="lineChartData" />
+        <charging-trend-line-chart :chart-data="lineChartData"></charging-trend-line-chart>
       </el-row>
 
       <div class="report-header">
@@ -100,7 +99,7 @@
 </template>
 
 <script>
-  import LineChart from './components/LineChart'
+  import ChargingTrendLineChart from './components/ChargingTrendLineChart'
   import {
     findDealerList,
     chargingTrend,
@@ -121,7 +120,7 @@
   export default {
     name: 'chargingTrendStatistics',
     components: {
-      LineChart,
+      ChargingTrendLineChart,
     },
     data() {
       return {
