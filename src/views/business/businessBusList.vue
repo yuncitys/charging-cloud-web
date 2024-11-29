@@ -8,8 +8,9 @@
 				</el-select>
 			</el-form-item>
 			<el-form-item>
-				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
-					icon="el-icon-search">查询</el-button>
+				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
+          查询
+        </el-button>
 			</el-form-item>
 		</el-form>
 
