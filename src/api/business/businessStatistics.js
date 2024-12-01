@@ -241,3 +241,48 @@ export function chargingUserTradingSection(data) {
   })
 }
 
+// 交易趋势
+export function chargingUserTradingSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingUserTradingSingle',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
+
+// 用户充电趋势
+export function chargingUserChargingSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingUserChargingSingle',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
