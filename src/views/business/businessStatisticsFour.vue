@@ -33,7 +33,6 @@
             :value="item.id">
           </el-option>
       </el-select>
-
       <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
         查询
       </el-button>
@@ -65,7 +64,46 @@
         <!-- 靠右的导出按钮 -->
         <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
       </div>
+      <el-table v-loading="listLoading1" :key="chargingUserTradingSingleList.userCode" :data="chargingUserTradingSingleList" element-loading-text="拼命加载中......"
+        fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
+      	<el-table-column type="index" width="55" label="序号" align="center">
+      		<template slot-scope="scope"><span>{{scope.$index+(listQuery.page - 1) * listQuery.limit + 1}} </span></template>
+      	</el-table-column>
+        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        </el-table-column>
+      	<el-table-column label="用户编号" prop="userCode" align="center" :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="用户名称" prop="userName" align="center" :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="用户手机" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="支付总数(次)" prop="payCount" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="支付金额(元)" prop="payMoneyCount" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="退款总数(次)" prop="refundCount" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+        <el-table-column label="退款金额(元)" prop="refundMoneyCount" align="center" sortable :show-overflow-tooltip="isPc">
+        </el-table-column>
+      </el-table>
+      <div class="pagination-container">
+      	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
+      		:total="chargingUserTradingSingleTotal" background layout="total, sizes, prev, pager, next, jumper"
+      		@size-change="handleSizeChange1" @current-change="handleCurrentChange1" />
+      </div>
 
+      <div class="report-header">
+        <div class="title-section">
+          <!-- 标题 -->
+          <span class="title">汇总列表</span>
+          <!-- 带有统计说明的图标提示 -->
+          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
+            <el-icon><i class="el-icon-question"></i></el-icon>
+          </el-tooltip>
+        </div>
+        <!-- 靠右的导出按钮 -->
+        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+      </div>
       <el-table v-loading="listLoading" :key="chargingUserTradingList.userCode" :data="chargingUserTradingList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
@@ -90,7 +128,7 @@
       </el-table>
       <div class="pagination-container">
       	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
-      		:total="total" background layout="total, sizes, prev, pager, next, jumper"
+      		:total="chargingUserTradingSectionTotal" background layout="total, sizes, prev, pager, next, jumper"
       		@size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </div>
@@ -103,6 +141,7 @@
   import {
     findDealerList,
     chargingUserTradingCurve,
+    chargingUserTradingSingle,
     chargingUserTradingSection
   } from '@/api/business/businessStatistics.js'
   const lineChartData = {
@@ -125,9 +164,12 @@
           refundMoneyCount: [],
           datetime: []
         },
-        total: 0,
+        chargingUserTradingSectionTotal: 10,
+        chargingUserTradingSingleTotal: 10,
         listLoading: false,
+        listLoading1: false,
         chargingUserTradingList: [],
+        chargingUserTradingSingleList: [],
         listQuery: {
         	timeType: 3,
         	startTime: this.formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),3),
@@ -238,12 +280,26 @@
         chargingUserTradingSection(listQuery).then(res => {
           if (res.code == 200) {
             this.listLoading = false
-            this.total = res.count
+            this.chargingUserTradingSectionTotal = res.count
             this.chargingUserTradingList = res.data
             this.$forceUpdate()
           }else {
 						this.$message.error(res.msg)
 					}
+        })
+      },
+      getChargingUserTradingSingleList() {
+        this.listLoading1 = true
+        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
+        chargingUserTradingSingle(listQuery).then(res => {
+          if (res.code == 200) {
+            this.listLoading1 = false
+            this.chargingUserTradingSingleTotal = res.count
+            this.chargingUserTradingSingleList = res.data
+            this.$forceUpdate()
+          }else {
+      			this.$message.error(res.msg)
+      		}
         })
       },
       handleSetLineChartData(type) {
@@ -263,6 +319,7 @@
       	this.listQuery.page = 1
         this.listQuery.limit = 20
       	this.getChargingUserTradingCurve()
+        this.getChargingUserTradingSingleList()
         this.getChargingUserTradingSectionList()
       },
       handleSizeChange(val) {
@@ -272,6 +329,14 @@
       handleCurrentChange(val) {
       	this.listQuery.page = val
       	this.getChargingUserTradingSectionList()
+      },
+      handleSizeChange1(val) {
+      	this.listQuery.limit = val
+      	this.getChargingUserTradingSingleList()
+      },
+      handleCurrentChange1(val) {
+      	this.listQuery.page = val
+      	this.getChargingUserTradingSingleList()
       },
       // 将日期格式化为 'yyyy-MM-dd' 的方法
       formatDate(date,timeType) {
@@ -288,6 +353,7 @@
     created() {
       this.getDealerList()
       this.getChargingUserTradingCurve()
+      this.getChargingUserTradingSingleList()
       this.getChargingUserTradingSectionList()
     },
   }
@@ -319,5 +385,10 @@
 .export-button {
   background-color: #409EFF;
   color: white;
+}
+
+#userChargingPage {
+  	margin-top: 80px;
+  	/* margin-left: 10px; */
 }
 </style>
