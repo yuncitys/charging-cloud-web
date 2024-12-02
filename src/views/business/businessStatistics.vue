@@ -400,7 +400,7 @@
 <style scoped="scoped">
   #page {
   	margin-top: 30px;
-  	margin-left: 20px;
+  	/* margin-left: 20px; */
   }
 
 	.flex {
