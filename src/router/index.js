@@ -144,6 +144,15 @@ export const constantRoutes = [{
           title: '交易趋势',
           icon: 'el-icon-s-check',
         }
+      },
+      {
+        path: 'businessStatisticsFive',
+        component: () => import('@/views/business/businessStatisticsFive'),
+        name: 'businessStatisticsFive',
+        meta: {
+          title: '用户趋势',
+          icon: 'el-icon-s-check',
+        }
       }
     ]
   },
