@@ -1,5 +1,6 @@
 import request from '@/utils/request'
 
+//列表
 export function getList(data) {
 	return request({
 		url: '/api/permission/admin/findAdminUserList',
@@ -110,6 +111,7 @@ export function editPasswordAdminUser(data) {
 	})
 }
 
+//下级列表
 export function findAdminUserSonList(data) {
 	return request({
 		url: '/api/permission/admin/findAdminUserSonList',
@@ -178,7 +180,18 @@ export function freezeAdminUser(data) {
 //获取运营商
 export function getOperator() {
 	return request({
-		url: '/api/permission/admin/getOperator',
+		url: '/api/permission/admin/getOperatorList',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+	})
+}
+
+//获取系统帐号
+export function getAgent() {
+	return request({
+		url: '/api/permission/admin/getAgentList',
 		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
