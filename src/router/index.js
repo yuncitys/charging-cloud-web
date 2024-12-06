@@ -591,6 +591,14 @@ export const constantRoutes = [{
         title: '月卡操作记录',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'orderSplitRecord',
+      component: () => import('@/views/finance/orderSplitRecord'),
+      name: 'orderSplitRecord',
+      meta: {
+        title: '分成记录',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
