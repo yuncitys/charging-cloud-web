@@ -79,13 +79,26 @@
 				</el-table-column>
 				<el-table-column label="操作" align="center" width="240">
 					<template slot-scope="scope">
-						<!-- 编辑 -->
-						<editPage :row_data="scope.row" @getLists="getLists" />
-						<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
-							icon="el-icon-delete"
-							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')" size="mini">
-              删除
-						</el-button>
+            <div style="display: flex;align-items: center;justify-content: space-around;">
+              <div >
+                <div>
+                  <!-- 编辑 -->
+                  <edit-page :row_data="scope.row" @getLists="getLists" />
+                </div>
+                <div class="top10">
+                  <!-- 设置分成 -->
+                  <set-split-account-page :row_data="scope.row" @getLists="getLists"/>
+                </div>
+              </div>
+              <div>
+                <div style="margin-left: 0px;">
+                  <el-button type="danger" @click="del(scope.row.id)" size="mini" icon="el-icon-delete"
+                  	v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">
+                    删除
+                  </el-button>
+                </div>
+              </div>
+            </div>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -115,12 +128,14 @@
 	} from '@/utils/index'
 	import addPage from './components/addPage.vue'
 	import editPage from './components/editPage.vue'
+  import setSplitAccountPage from './components/setSplitAccountPage.vue'
 	import downExcel from './components/downExcel.vue'
 	export default {
 		name: 'netWorkDotList',
 		components: {
 			addPage,
 			editPage,
+      setSplitAccountPage,
 			downExcel
 		},
 		data() {
