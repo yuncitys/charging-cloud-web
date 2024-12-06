@@ -31,16 +31,6 @@ export function saveConfig(data) {
 		headers: {
 			"Content-Type": "application/json; charset=UTF-8",
 		},
-		// transformRequest: [
-		// 	function(data) {
-		// 		var ret = ''
-		// 		for (var it in data) {
-		// 			ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-		// 		}
-		// 		ret = ret.substring(0, ret.lastIndexOf('&'))
-		// 		return ret
-		// 	}
-		// ],
 		data
 	})
 }
