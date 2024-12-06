@@ -139,7 +139,7 @@
 					networkProvince: '',
 					networkCity: '',
 					networkRegion: '',
-          startingPrice : '',
+          startingPrice : 0.0,
 					ruleId: 1
 				},
 				mapInput: "",
@@ -324,7 +324,7 @@
 					networkCity: scope.networkCity,
 					networkRegion: scope.networkRegion,
 					adminName: scope.adminFullname,
-          startingPrice: scope.startingPrice,
+          startingPrice: scope.startingPrice ?? 0,
 					ruleId: scope.ruleId
 				}
 				this.formData = formData

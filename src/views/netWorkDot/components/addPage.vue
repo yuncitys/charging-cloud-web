@@ -139,7 +139,7 @@
 					networkProvince: '',
 					networkCity: '',
 					networkRegion: '',
-          startingPrice: '',
+          startingPrice: 0.0,
 					ruleId: 1
 				},
 				mapInput: "",
