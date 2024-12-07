@@ -26,17 +26,6 @@
 						<el-option v-for="item in agentList" :key="item.id" :label="item.roleName" :value="item.id" />
 					</el-select>
 				</el-form-item>
-				<el-form-item label="是否参与分成:" prop="isSeparate" style="width: 100%;">
-					<el-radio-group v-model="addData.isSeparate">
-						<el-radio :label="0">不参与</el-radio>
-						<el-radio :label="1">参与</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'分成比例'" prop="interestRate" v-if="addData.isSeparate===1">
-					<el-input v-model="addData.interestRate" placeholder="设置该下级代理商获得的分成比例（%）" clearable type="number">
-						<template slot="append">%</template>
-					</el-input>
-				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onaddData('addData')">确定</el-button>
 					<el-button @click="showAdd = false">取消</el-button>
@@ -68,7 +57,7 @@
 		parseTime
 	} from '@/utils/index'
 	export default {
-		name: 'agentList1',
+		name: 'agentAddpage',
 		components: {
 
 		},
@@ -105,9 +94,6 @@
 					adminFullname: '',
 					adminPhone: '',
 					roleId: '',
-					isSeparate: 1,
-					interestRate: '',
-					isOpenGood: 0
 				},
 				rules: {
 					adminName: [{
@@ -118,11 +104,6 @@
 					adminFullname: [{
 						required: true,
 						message: '请输入姓名',
-						trigger: 'blur'
-					}],
-					isSeparate: [{
-						required: true,
-						message: '请选择是否参与分成',
 						trigger: 'blur'
 					}],
 					adminPhone: [{
@@ -137,14 +118,6 @@
 						required: true,
 						message: '请选择角色',
 						trigger: 'blur'
-					}, ],
-					interestRate: [{
-						required: true,
-						message: '请输入分成比例',
-						trigger: 'change',
-					}, {
-						validator: checkNum,
-						trigger: 'change'
 					}],
 				},
 				agentList: [],
@@ -169,18 +142,9 @@
 				this.getAgentRoleList()
 				this.showAdd = true
 			},
-			handleSelect(e) {
-				console.log(e)
-				this.addData.isOpenGood = e
-			},
 			onaddData(formName) {
 				let addData = JSON.parse(JSON.stringify(this.addData))
-				let interestRate = parseInt(this.addData.interestRate)
-				interestRate = interestRate ? interestRate / 100 : 0
-				addData.interestRate = interestRate
-				console.log(addData)
 				this.$refs[formName].validate(valid => {
-					console.log(valid)
 					if (valid) {
 						console.log("通过")
 						addAdminUser(addData).then(res => {

@@ -26,17 +26,6 @@
 						<el-option v-for="item in tags" :key="item.id" :label="item.roleName" :value="item.id" />
 					</el-select>
 				</el-form-item>
-				<el-form-item label="是否参与分成:" prop="isSeparate" style="width: 100%;">
-					<el-radio-group v-model="editData.isSeparate">
-						<el-radio :label="0">不参与</el-radio>
-						<el-radio :label="1">参与</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'分成比例'" prop="interestRate" v-if="editData.isSeparate===1">
-					<el-input v-model="editData.interestRate" placeholder="设置该下级代理商获得的分成比例（%）" clearable type="number">
-						<template slot="append">%</template>
-					</el-input>
-				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onEditData('editData')">确定</el-button>
 					<el-button @click="showEdit = false">取消</el-button>
@@ -67,7 +56,7 @@
 		uploadImg
 	} from '@/api/AD/ADList.js'
 	export default {
-		name: 'agentList1',
+		name: 'agentEditpage',
 		components: {
 
 		},
@@ -110,9 +99,6 @@
 					adminFullname: '',
 					adminPhone: '',
 					roleId: '',
-					isSeparate: 1,
-					interestRate: '',
-					isOpenGood: 1
 				},
 				rules: {
 					adminName: [{
@@ -123,11 +109,6 @@
 					adminFullname: [{
 						required: true,
 						message: '请输入姓名',
-						trigger: 'blur'
-					}],
-					isSeparate: [{
-						required: true,
-						message: '请选择是否参与分成',
 						trigger: 'blur'
 					}],
 					adminPhone: [{
@@ -142,14 +123,6 @@
 						required: true,
 						message: '请选择角色',
 						trigger: 'blur'
-					}, ],
-					interestRate: [{
-						required: true,
-						message: '请输入分成比例',
-						trigger: 'change',
-					}, {
-						validator: checkNum,
-						trigger: 'change'
 					}],
 				},
 				tags: [],
@@ -170,32 +143,19 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-			handleSelect(e) {
-				console.log(e)
-				this.editData.isOpenGood = e
-			},
 			showDidlaoEditData() {
 				let item = this.row_data
         this.editData.id = item.id
 				this.editData.adminName = item.adminName
 				this.editData.adminFullname = item.adminFullname
 				this.editData.adminPhone = item.adminPhone
-				this.editData.interestRate = item.interestRate ? (item.interestRate * 100).toFixed(0) : 0
 				this.editData.roleId = item.roleId
-				this.editData.isSeparate = item.isSeparate
-				this.editData.isOpenGood = item.isOpenGood || 0
 				this.showEdit = true
-				console.log(this.editData)
 				this.getRoleList()
 			},
 			onEditData(formName) {
 				let editData = JSON.parse(JSON.stringify(this.editData))
-				let interestRate = parseInt(this.editData.interestRate)
-				interestRate = interestRate ? interestRate / 100 : 0
-				editData.interestRate = interestRate
-				console.log(editData, "this.editData")
 				this.$refs[formName].validate(valid => {
-					console.log(valid, "1111")
 					if (valid) {
 						console.log("通过")
 						updateAdminUser(editData).then(res => {
@@ -225,7 +185,6 @@
 					}
 				})
 			},
-
 			//上传图片
 			uploadShopSteps(file) {
 				// console.log(file.file)
