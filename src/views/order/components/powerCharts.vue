@@ -1,7 +1,8 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button type="primary" @click="openDialog()" style="margin-left: 10px;"
-			v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findDevicePowerDetails')" size="mini">功率图
+		<el-button type="primary" size="mini" @click="openDialog()"
+			v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findDevicePowerDetails')">
+      功率图
 		</el-button>
 		<!-- 功率图 -->
 		<el-dialog :visible.sync="showChart" title="订单功率图" @close="closeDialog" width="75%" :append-to-body="true">
@@ -12,14 +13,6 @@
 					</div>
 					<div class="itemright  borsa itemdivs">
 						{{OrderListData.orderCode}}
-					</div>
-				</div>
-				<div class="borderItem">
-					<div class="itemleft borsa itemdiv">
-						省份
-					</div>
-					<div class="itemright  borsa  itemdivs borenone">
-						{{OrderListData.networkProvince}}
 					</div>
 				</div>
 				<div class="borderItem">
@@ -94,14 +87,6 @@
         		{{OrderListData.networkAddress}}
         	</div>
         </div>
-				<!-- <div class="borderItem">
-					<div class="itemleft borsa itemdiv">
-						实时功率
-					</div>
-					<div class="itemright  borsa itemdivs boerdno">
-						{{OrderListData.power}}
-					</div>
-				</div> -->
 				<div class="borderItem ">
 					<div class="itemleft borsa itemdiv ">
 						总金额
