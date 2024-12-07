@@ -261,26 +261,60 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="320"  fixed="right">
           <template slot-scope="scope">
-            <div style="display: flex;justify-content: center;align-items: center;">
-              <el-button type="primary" @click="updateOrderStatus(scope.row.id)" style="margin-left: 10px;" size="mini"
-                v-if="scope.row.orderStatus == 1 && btnAuthen.permsVerifAuthention(':sys:orderInfo:updateOrderStatus')">
-                结束订单
-              </el-button>
-              <!-- 功率图 -->
-              <power-charts :row_data="scope.row" />
+            <div style="display: flex;align-items: center;justify-content: space-around;">
+              <div>
+                <div>
+                  <el-button type="primary" size="mini" @click="closeOrder(scope.row.id)"
+                    v-if="scope.row.orderStatus == 1 && btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder')">
+                    结束订单
+                  </el-button>
+                </div>
+                <div class="top10">
+                  <el-button type="primary" size="mini" @click="abnormalOrderSettlement(scope.row.orderCode)"
+                    v-if="scope.row.orderStatus != 2 && btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement')">
+                    异常结算
+                  </el-button>
+                </div>
+              </div>
 
-              <!-- 详情 -->
-              <order-detail :row_data="scope.row" />
+              <div>
+                <div>
+                  <!-- 功率图 style="margin-left: 10px;"-->
+                  <power-charts :row_data="scope.row" />
+                </div>
+                <div class="top10">
+                  <!-- 详情 -->
+                  <order-detail :row_data="scope.row" />
+                </div>
+              </div>
 
-              <el-button type="danger" @click="del(scope.row.orderCode)" style="margin-left: 10px;"
-                v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')" size="mini">
-                删除
-              </el-button>
-              <el-button type="primary" @click="btnBClick(scope.row)" style="margin-left: 10px;"
-                v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:updateOrder') && showReturn(scope.row.orderStatus,scope.row.payStatus) "
-                size="mini">
-                退款
-              </el-button>
+              <div>
+                <div>
+                  <el-button type="primary" size='mini' @click="toOrderSplitRecord(scope.row)" >
+                    收益明细
+                  </el-button>
+                </div>
+                <div class="top10">
+                  <el-button type="primary" size='mini' @click="toOrderSplitRecord(scope.row)">
+                    分账明细
+                  </el-button>
+                </div>
+              </div>
+
+              <div>
+                <div>
+                  <el-button type="danger" size="mini" @click="del(scope.row.orderCode)"
+                    v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">
+                    删除
+                  </el-button>
+                </div>
+                <div class="top10">
+                  <el-button type="primary" size="mini" @click="orderRefundClick(scope.row)"
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">
+                    退款
+                  </el-button>
+                </div>
+              </div>
             </div>
           </template>
         </el-table-column>
@@ -299,10 +333,11 @@
     getList,
     deleteOrder,
     findOrderInfoById,
-    updateOrderStatus,
+    closeOrder,
     downloadExcel,
-    updateOrder,
-    findDevicePowerDetails
+    orderRefund,
+    findDevicePowerDetails,
+    abnormalOrderSettlement,
   } from '@/api/order/cardOrderList.js'
   import {
     findDealerList,
@@ -446,8 +481,8 @@
       handleClick(tab, event) {
         this.listQuery.ruleId = tab.name
         this.listQuery.page = 1,
-          this.listQuery.limit = 10,
-          this.getLists()
+        this.listQuery.limit = 10,
+        this.getLists()
       },
       //显示退款按钮
       showReturn(orderStatus, payStatus) {
@@ -546,7 +581,7 @@
         this.listQuery.page = val
         this.getLists()
       },
-      updateOrderStatus(id) {
+      closeOrder(id) {
         this.$confirm('是否结束订单?', '警告', {
           confirmButtonText: '是',
           cancelButtonText: '否',
@@ -555,9 +590,8 @@
           let data = {
             id: id
           }
-          updateOrderStatus(data).then(res => {
+          closeOrder(data).then(res => {
             if (res.code == 200) {
-              this.showAdd = false
               this.$message.success(res.msg)
               this.getLists()
             } else {
@@ -566,11 +600,11 @@
           })
         })
       },
-      btnBClick(item) {
+      orderRefundClick(item) {
         this.returnData = item
-        this.$common.throttle(this.returnMoney, 2000)
+        this.$common.throttle(this.orderRefund, 2000)
       },
-      returnMoney() {
+      orderRefund() {
         let item = this.returnData
         this.$confirm('是否确认退款?', '警告', {
           confirmButtonText: '是',
@@ -581,7 +615,26 @@
             orderCode: item.orderCode,
             wxOpenId: item.wxOpenId
           }
-          updateOrder(data).then(res => {
+          orderRefund(data).then(res => {
+            if (res.code == 200) {
+              this.$message.success(res.msg)
+              this.getLists()
+            } else {
+              this.$message.error(res.msg)
+            }
+          })
+        })
+      },
+      abnormalOrderSettlement(orderCode){
+        this.$confirm('是否要异常结束订单?', '警告', {
+          confirmButtonText: '是',
+          cancelButtonText: '否',
+          type: 'warning'
+        }).then(() => {
+          let data = {
+            orderCode: orderCode
+          }
+          abnormalOrderSettlement(data).then(res => {
             if (res.code == 200) {
               this.$message.success(res.msg)
               this.getLists()
