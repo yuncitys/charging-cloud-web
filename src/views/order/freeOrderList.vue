@@ -286,6 +286,10 @@
                 v-if="scope.row.orderStatus == 1 && btnAuthen.permsVerifAuthention(':sys:orderInfo:updateOrderStatus')">
                 结束订单
               </el-button>
+              <el-button type="primary" size="mini" @click="abnormalOrderSettlement(scope.row.orderCode)"
+                v-if="scope.row.orderStatus != 2 && btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement')">
+                异常结算
+              </el-button>
               <!-- 功率图 -->
               <power-charts :row_data="scope.row" />
 
@@ -314,10 +318,11 @@
     getList,
     deleteOrder,
     findOrderInfoById,
-    updateOrderStatus,
+    closeOrder,
     downloadExcel,
-    updateOrder,
-    findDevicePowerDetails
+    orderRefund,
+    findDevicePowerDetails,
+    abnormalOrderSettlement,
   } from '@/api/order/scanOrderList.js'
   import {
     findDealerList,
@@ -464,8 +469,8 @@
       handleClick(tab, event) {
         this.listQuery.ruleId = tab.name
         this.listQuery.page = 1,
-          this.listQuery.limit = 10,
-          this.getLists()
+        this.listQuery.limit = 10,
+        this.getLists()
       },
       dateChange(e) {
         console.log(e)
@@ -558,7 +563,7 @@
         this.getLists()
       },
       //结束订单
-      updateOrderStatus(id) {
+      closeOrder(id) {
         this.$confirm('是否结束订单?', '警告', {
           confirmButtonText: '是',
           cancelButtonText: '否',
@@ -567,9 +572,8 @@
           let data = {
             id: id
           }
-          updateOrderStatus(data).then(res => {
+          closeOrder(data).then(res => {
             if (res.code == 200) {
-              this.showAdd = false
               this.$message.success(res.msg)
               this.getLists()
             } else {
@@ -578,23 +582,16 @@
           })
         })
       },
-      btnBClick(item) {
-        this.returnData = item
-        this.$common.throttle(this.returnMoney, 2000)
-      },
-      //退款
-      returnMoney() {
-        let item = this.returnData
-        this.$confirm('是否确认退款?', '警告', {
+      abnormalOrderSettlement(orderCode){
+        this.$confirm('是否要异常结束订单?', '警告', {
           confirmButtonText: '是',
           cancelButtonText: '否',
           type: 'warning'
         }).then(() => {
           let data = {
-            orderCode: item.orderCode,
-            wxOpenId: item.wxOpenId
+            orderCode: orderCode
           }
-          updateOrder(data).then(res => {
+          abnormalOrderSettlement(data).then(res => {
             if (res.code == 200) {
               this.$message.success(res.msg)
               this.getLists()

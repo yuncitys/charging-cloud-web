@@ -291,9 +291,13 @@
         <el-table-column label="操作" align="center" width="320" fixed="right">
           <template slot-scope="scope">
             <div style="display: flex;justify-content: center;align-items: center;">
-              <el-button type="primary" @click="updateOrderStatus(scope.row.id)" style="margin-left: 10px;" size="mini"
-                v-if="scope.row.orderStatus == 1 && btnAuthen.permsVerifAuthention(':sys:orderInfo:updateOrderStatus')">
+              <el-button type="primary" @click="closeOrder(scope.row.id)" style="margin-left: 10px;" size="mini"
+                v-if="scope.row.orderStatus == 1 && btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder')">
                 结束订单
+              </el-button>
+              <el-button type="primary" size="mini" @click="abnormalOrderSettlement(scope.row.orderCode)"
+                v-if="scope.row.orderStatus != 2 && btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement')">
+                异常结算
               </el-button>
               <!-- 功率图 -->
               <power-charts :row_data="scope.row" />
@@ -323,10 +327,11 @@
     getList,
     deleteOrder,
     findOrderInfoById,
-    updateOrderStatus,
+    closeOrder,
     downloadExcel,
-    updateOrder,
-    findDevicePowerDetails
+    orderRefund,
+    findDevicePowerDetails,
+    abnormalOrderSettlement,
   } from '@/api/order/scanOrderList.js'
   import {
     parseTime,
@@ -345,7 +350,7 @@
   import downExcel from './components/downExcel.vue'
   import imgView from '@/components/Common/imgView.vue'
   export default {
-    name: 'scanOrderList',
+    name: 'monthOrderList',
     components: {
       orderDetail,
       powerCharts,
@@ -474,8 +479,8 @@
       handleClick(tab, event) {
         this.listQuery.ruleId = tab.name
         this.listQuery.page = 1,
-          this.listQuery.limit = 10,
-          this.getLists()
+        this.listQuery.limit = 10,
+        this.getLists()
       },
       dateChange(e) {
         console.log(e)
@@ -577,7 +582,7 @@
         this.getLists()
       },
       //结束订单
-      updateOrderStatus(id) {
+      closeOrder(id) {
         this.$confirm('是否结束订单?', '警告', {
           confirmButtonText: '是',
           cancelButtonText: '否',
@@ -586,9 +591,27 @@
           let data = {
             id: id
           }
-          updateOrderStatus(data).then(res => {
+          closeOrder(data).then(res => {
             if (res.code == 200) {
-              this.showAdd = false
+              this.$message.success(res.msg)
+              this.getLists()
+            } else {
+              this.$message.error(res.msg)
+            }
+          })
+        })
+      },
+      abnormalOrderSettlement(orderCode){
+        this.$confirm('是否要异常结束订单?', '警告', {
+          confirmButtonText: '是',
+          cancelButtonText: '否',
+          type: 'warning'
+        }).then(() => {
+          let data = {
+            orderCode: orderCode
+          }
+          abnormalOrderSettlement(data).then(res => {
+            if (res.code == 200) {
               this.$message.success(res.msg)
               this.getLists()
             } else {
