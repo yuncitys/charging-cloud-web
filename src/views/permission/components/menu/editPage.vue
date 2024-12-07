@@ -4,7 +4,7 @@
 			@click="showDidlaoEditData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':permission:menu:edit')">编辑
 		</el-button>
-		
+
 		<el-dialog :visible.sync="showEdit" title="编辑菜单" @close="showEdit = false" :append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;" :rules="rules">
@@ -36,7 +36,7 @@
 				</el-form-item>
 			</el-form>
 		</el-dialog>
-		
+
 	</div>
 </template>
 
@@ -58,15 +58,15 @@
 		},
 		data() {
 			return {
-              showEdit: false,
-              editData: {
-              	id: '',
-              	title: '',
-              	href: '',
-              	perms: '',
-              	sorting: '',
-              	icon: ''
-              },
+        showEdit: false,
+        editData: {
+          id: '',
+          title: '',
+          href: '',
+          perms: '',
+          sorting: '',
+          icon: ''
+        },
 			  cities: ['el-icon-platform-eleme',
 			  	'el-icon-s-custom',
 			  	'el-icon-user-solid',
@@ -142,6 +142,7 @@
 			showDidlaoEditData() {
 				let item=this.row_data
 				console.log(item)
+        this.editData.parentId = item.parentId
 				this.editData.title = item.title
 				this.editData.href = item.href
 				this.editData.perms = item.perms
