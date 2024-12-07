@@ -20,17 +20,6 @@
 				<el-form-item :label="'手机号'" prop="adminPhone">
 					<el-input v-model="editData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
-				<el-form-item label="是否参与分成:" prop="isSeparate" style="width: 100%;">
-					<el-radio-group v-model="editData.isSeparate">
-						<el-radio :label="0">不参与</el-radio>
-						<el-radio :label="1">参与</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'分成比例'" prop="interestRate" v-if="editData.isSeparate===1">
-					<el-input v-model="editData.interestRate" placeholder="设置该下级代理商获得的分成比例（%）" clearable type="number">
-						<template slot="append">%</template>
-					</el-input>
-				</el-form-item>
 				<el-form-item :label="'小程序名称'" prop="wxName" v-if="editData.roleId == 3">
 					<el-input v-model="editData.wxName" placeholder="请输入小程序名称" clearable />
 				</el-form-item>
@@ -159,8 +148,6 @@
 					adminFullname: '',
 					adminPhone: '',
 					roleId: 3,
-					isSeparate: 1,
-					interestRate: '',
 					id: '',
           domainName: '',
 					wxAppId: '',
@@ -174,8 +161,7 @@
 					templateJscdId: '',
           certSerialNo: '',
           certificateFile: '',
-          certificateKeyFile: '',
-					isOpenGood: 1
+          certificateKeyFile: ''
 				},
 				rules: {
 					adminName: [{
@@ -188,11 +174,6 @@
 						message: '请输入姓名',
 						trigger: 'blur'
 					}],
-					isSeparate: [{
-						required: true,
-						message: '请选择是否参与分成',
-						trigger: 'blur'
-					}],
 					adminPhone: [{
 						required: true,
 						message: '请输入手机号',
@@ -200,14 +181,6 @@
 					}, {
 						validator: checkPhone,
 						trigger: 'blur'
-					}],
-					interestRate: [{
-						required: true,
-						message: '请输入分成比例',
-						trigger: 'change',
-					}, {
-						validator: checkNum,
-						trigger: 'change'
 					}],
           domainName: [{
           	required: true,
@@ -333,19 +306,13 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-			handleSelect(e) {
-				console.log(e)
-				this.editData.isOpenGood = e
-			},
 			showDidlaoEditData() {
 				let item = this.row_data
+        this.editData.id = item.id
 				this.editData.adminName = item.adminName
 				this.editData.adminFullname = item.adminFullname
 				this.editData.adminPhone = item.adminPhone
-				this.editData.interestRate = item.interestRate ? (item.interestRate * 100).toFixed(0) : 0
 				this.editData.roleId = item.roleId
-				this.editData.isSeparate = item.isSeparate
-				this.editData.id = item.id
         this.editData.domainName = item.domainName || ''
 				this.editData.wxAppId = item.wxAppId || ''
 				this.editData.wxSecret = item.wxSecret || ''
@@ -355,7 +322,6 @@
 				this.editData.wxQrcode = item.wxQrcode || ''
 				this.editData.templateKscdId = item.templateKscdId || ''
 				this.editData.templateJscdId = item.templateJscdId || ''
-				this.editData.isOpenGood = item.isOpenGood || 0
         this.editData.wxMchKeyV3 = item.wxMchKeyV3 || ''
         this.editData.certSerialNo = item.certSerialNo || ''
         this.editData.certificateFile = item.certificateFile || ''
@@ -365,9 +331,6 @@
 			},
 			onEditData(formName) {
 				let editData = JSON.parse(JSON.stringify(this.editData))
-				let interestRate = parseInt(this.editData.interestRate)
-				interestRate = interestRate ? interestRate / 100 : 0
-				editData.interestRate = interestRate
 				console.log(editData, "this.editData")
 				this.$refs[formName].validate(valid => {
 					console.log(valid, "1111")
