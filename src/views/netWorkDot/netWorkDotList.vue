@@ -77,7 +77,7 @@
 						<span>{{ scope.row.updateTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="240">
+				<el-table-column label="操作" align="center" width="220">
 					<template slot-scope="scope">
             <div style="display: flex;align-items: center;justify-content: space-around;">
               <div >
