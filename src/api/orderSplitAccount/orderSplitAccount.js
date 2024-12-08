@@ -23,9 +23,9 @@ export function getSplitAccount(data) {
 }
 
 //保存或更新
-export function saveOrUpdate(data) {
+export function saveOrUpdate(networkDotId,data) {
 	return request({
-		url: '/api/web/splitAccount/saveOrUpdate',
+		url: '/api/web/splitAccount/saveOrUpdate/' + networkDotId,
 		method: 'post',
 		headers: {
 			"Content-Type": "application/json; charset=UTF-8",
