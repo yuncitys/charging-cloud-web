@@ -35,6 +35,8 @@
 				</el-table-column>
         <el-table-column label="分账订单" prop="splitOrderCode" align="center" :show-overflow-tooltip='isPc'>
         </el-table-column>
+        <el-table-column label="收款帐号" prop="adminFullname" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
 				<el-table-column label="分账金额(元)" prop="splitAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
         <el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
