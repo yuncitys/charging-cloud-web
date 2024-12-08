@@ -109,7 +109,7 @@
 				dialogVisible: false, // 弹窗是否显示
 				loading: false, // 表格加载状态
 				tableData: [], // 表格数据
-        payeeList: [] // 收款人下拉列表
+        payeeList: [] ,// 收款人下拉列表
 			}
 		},
 		filters: {
@@ -184,9 +184,10 @@
       },
       // 保存数据
       saveData() {
-        console.log('保存的数据：', this.tableData);
         let data = this.tableData
-        saveOrUpdate(data).then(res => {
+        let networkDotId = this.row_data.id
+        console.log('充电站',networkDotId,'保存的数据：',this.tableData);
+        saveOrUpdate(networkDotId,data).then(res => {
         	if (res.code == 200) {
             this.dialogVisible = false;
         		this.$message.success(res.msg)
