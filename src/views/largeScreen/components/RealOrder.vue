@@ -137,7 +137,8 @@
 			}
 
 			.seamless-warp {
-				height: 100px;
+				// height: 100px;
+        height: auto;
 				overflow: hidden;
 			}
 
