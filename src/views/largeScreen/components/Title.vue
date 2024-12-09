@@ -2,7 +2,7 @@
 	<div>
 		<div :class="[isDark ? '' : 'light_titleBoxs','titleBoxs','flex']">
 			<div class="titleBox flex">
-				<div :class="['text',isDark ? 'dark_text' : 'light_text']" style="margin-left:30px ;">云创智城</div>
+				<div :class="['text',isDark ? 'dark_text' : 'light_text']" style="margin-left:30px ;">智慧充电系统</div>
 				<div :class="['text',isDark ? 'dark_text' : 'light_text']">Visualize data</div>
 			</div>
 			<div class="flex titleBoxs_right">

@@ -76,7 +76,7 @@
     },
     data() {
       return {
-        SystemTitle: '云创智城智慧快充',
+        SystemTitle: '智慧充电综合管理平台',
         Copyright: 'Copyright© 2021 深圳市云创智城科技有限公司 All Rights Reserved 粤ICP备2022076347号',
         loginForm: {
           account: '',
