@@ -82,7 +82,7 @@
       	</el-table-column>
       	<el-table-column label="使用电量(次)" prop="chargingPowerCount" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-        <el-table-column label="充电时长(分)" prop="chargingPowerCount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="充电时长(分)" prop="actualDuration" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
@@ -128,7 +128,7 @@
       	</el-table-column>
       	<el-table-column label="使用电量(次)" prop="chargingPowerCount" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-        <el-table-column label="充电时长(分)" prop="chargingPowerCount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="充电时长(分)" prop="actualDuration" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
