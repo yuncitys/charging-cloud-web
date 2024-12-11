@@ -75,11 +75,11 @@
 
       <el-table v-loading="loading" :data="jobList" @selection-change="handleSelectionChange" element-loading-text="拼命加载中......"  fit
         highlight-current-row style="width: 100%;" align="center" id="tableBox">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column type="index" width="55" label="序号" align="center">
+        <el-table-column type="selection" width="60" align="center" />
+        <el-table-column type="index" width="100" label="序号" align="center">
           <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
         </el-table-column>
-        <el-table-column label="任务编号" width="100" align="center" prop="jobId" />
+        <el-table-column label="任务编号" align="center" prop="jobId" />
         <el-table-column label="任务名称" align="center" prop="jobName" :show-overflow-tooltip="true" />
         <el-table-column label="任务组名" align="center" prop="jobGroup">
           <template slot-scope="scope">
@@ -99,24 +99,24 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" class-name="small-padding fixed-width">
+        <el-table-column label="操作" align="center" width="280" fixed="right">
           <template slot-scope="scope">
             <el-button
               size="mini"
-              type="text"
+              type="primary"
               icon="el-icon-edit"
               @click="handleUpdate(scope.row)"
               v-if="btnAuthen.permsVerifAuthention(':monitor:job:edit')"
             >修改</el-button>
             <el-button
               size="mini"
-              type="text"
+              type="primary"
               icon="el-icon-delete"
               @click="handleDelete(scope.row)"
               v-if="btnAuthen.permsVerifAuthention(':monitor:job:remove')"
             >删除</el-button>
             <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
-              <el-button size="mini" type="text" icon="el-icon-d-arrow-right">更多</el-button>
+              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 10px;">更多</el-button>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="handleRun" icon="el-icon-caret-right"
                   v-if="btnAuthen.permsVerifAuthention(':monitor:job:changeStatus')">执行一次</el-dropdown-item>
@@ -177,9 +177,9 @@
               <el-form-item label="cron表达式" prop="cronExpression">
                 <el-input v-model="form.cronExpression" placeholder="请输入cron执行表达式">
                   <template slot="append">
-                    <el-button type="primary" @click="handleShowCron">
+                    <el-button type="primary" @click="handleShowCron" style="color: aliceblue;">
                       生成表达式
-                      <i class="el-icon-time el-icon--right"></i>
+                      <i class="el-icon-time  el-icon--right"></i>
                     </el-button>
                   </template>
                 </el-input>

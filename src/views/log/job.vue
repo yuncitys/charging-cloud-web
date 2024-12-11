@@ -89,7 +89,7 @@
           <template slot-scope="scope">
             <el-button
               size="mini"
-              type="text"
+              type="primary"
               icon="el-icon-view"
               @click="handleView(scope.row)"
             >详细</el-button>
