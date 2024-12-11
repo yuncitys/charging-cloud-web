@@ -1,6 +1,6 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button type="primary" size="mini" @click="openDialog()"
+		<el-button type="primary" size="mini" @click="openDialog()" style="margin-left: 10px;"
 			v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findDevicePowerDetails')">
       功率图
 		</el-button>
@@ -63,14 +63,14 @@
 						{{OrderListData.endTime}}
 					</div>
 				</div>
-				<div class="borderItem">
+				<!-- <div class="borderItem">
 					<div class="itemleft borsa itemdiv">
 						省份
 					</div>
 					<div class="itemright  borsa itemdivs">
 						{{OrderListData.networkProvince}}
 					</div>
-				</div>
+				</div> -->
 				<div class="borderItem">
 					<div class="itemleft borsa itemdiv ">
 						站点名称
@@ -171,7 +171,7 @@
 		},
 	}
 	export default {
-		name: 'orderList1',
+		name: 'powerChart',
 		components: {
 			LineChart,
 		},
@@ -188,15 +188,6 @@
 				priceTypeText: '',
 				feeName: '',
 				details: '',
-				showData: {
-					firstAgentProfit: true,
-					secondAgentProfit: true,
-					thirdAgentProfit: true,
-					fourAgentProfit: true,
-					fiveAgentProfit: true,
-					sixAgentProfit: true,
-				},
-				roleId: 8
 			}
 		},
 		mounted() {
@@ -225,8 +216,8 @@
 			},
 			//显示功率图
 			openDialog() {
+        this.showChart = true
 				this.OrderListData = this.row_data;
-				this.showChart = true
 				this.deviceCode1 = this.row_data.deviceCode
 				this.startTime = this.row_data.startTimeAll
 				this.endTime = this.row_data.endTimeAll
@@ -240,70 +231,6 @@
 					this.DevicePowerDetails()
 				}, 300000)
 				this.setTime = setTime;
-
-				this.getRouters()
-			},
-			getRouters() {
-				getRouter().then(res => {
-					console.log(res)
-					let roleId = res.data.adminUser.roleId
-					this.roleId = roleId
-					if (roleId <= 3) {
-						this.showData = {
-							firstAgentProfit: true,
-							secondAgentProfit: true,
-							thirdAgentProfit: true,
-							fourAgentProfit: true,
-							fiveAgentProfit: true,
-							sixAgentProfit: true,
-						}
-					} else if (roleId === 4) {
-						this.showData = {
-							firstAgentProfit: false,
-							secondAgentProfit: true,
-							thirdAgentProfit: false,
-							fourAgentProfit: false,
-							fiveAgentProfit: false,
-							sixAgentProfit: false,
-						}
-					} else if (roleId === 5) {
-						this.showData = {
-							firstAgentProfit: false,
-							secondAgentProfit: false,
-							thirdAgentProfit: true,
-							fourAgentProfit: false,
-							fiveAgentProfit: false,
-							sixAgentProfit: false,
-						}
-					} else if (roleId === 6) {
-						this.showData = {
-							firstAgentProfit: false,
-							secondAgentProfit: false,
-							thirdAgentProfit: false,
-							fourAgentProfit: true,
-							fiveAgentProfit: false,
-							sixAgentProfit: false,
-						}
-					} else if (roleId === 7) {
-						this.showData = {
-							firstAgentProfit: false,
-							secondAgentProfit: false,
-							thirdAgentProfit: false,
-							fourAgentProfit: false,
-							fiveAgentProfit: true,
-							sixAgentProfit: false,
-						}
-					} else if (roleId === 8) {
-						this.showData = {
-							firstAgentProfit: false,
-							secondAgentProfit: false,
-							thirdAgentProfit: false,
-							fourAgentProfit: false,
-							fiveAgentProfit: false,
-							sixAgentProfit: true,
-						}
-					}
-				})
 			},
 			findDevicePriceById(devicePriceId) {
 				let data = {
@@ -330,8 +257,7 @@
 									detail = item.duration + '度电' + "/" + item.money + "元"
 								} else if (priceType === 2) {
 									priceTypeText = '功率'
-									detail = item.powerSectionBefore + '-' + item.powerSectionAfter +
-										'W,' + item.duration + '小时' + "/" + item.money + "元"
+									detail = item.powerSectionBefore + '-' + item.powerSectionAfter + 'W,' + item.duration + '小时' + "/" + item.money + "元"
 								}
 								arr[index] = detail
 							})
