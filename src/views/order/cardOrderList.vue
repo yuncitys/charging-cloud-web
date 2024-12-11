@@ -133,9 +133,9 @@
 
       <el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" fit
         highlight-current-row style="width: 100%;" align="center" id="tableBox">
-        <el-table-column type="index" width="55" label="序号" align="center">
+        <!-- <el-table-column type="index" width="55" label="序号" align="center">
           <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column prop="orderCode" label="订单号" v-if="formThead.orderCode" align="center"
           :show-overflow-tooltip='isPc' width="150px" fixed="left">
         </el-table-column>
@@ -259,63 +259,30 @@
             <span>{{ scope.row.createTime | formatDate }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="320"  fixed="right">
+        <el-table-column label="操作" align="center" width="380" fixed="right">
           <template slot-scope="scope">
-            <div style="display: flex;align-items: center;justify-content: space-around;">
-              <div>
-                <div>
-                  <el-button type="primary" size="mini" @click="closeOrder(scope.row.id)"
-                    v-if="scope.row.orderStatus == 1 && btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder')">
-                    结束订单
-                  </el-button>
-                </div>
-                <div class="top10">
-                  <el-button type="primary" size="mini" @click="abnormalOrderSettlement(scope.row.orderCode)"
-                    v-if="scope.row.orderStatus != 2 && btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement')">
-                    异常结算
-                  </el-button>
-                </div>
-              </div>
-
-              <div>
-                <div>
-                  <!-- 功率图 style="margin-left: 10px;"-->
-                  <power-charts :row_data="scope.row" />
-                </div>
-                <div class="top10">
-                  <!-- 详情 -->
-                  <order-detail :row_data="scope.row" />
-                </div>
-              </div>
-
-              <div>
-                <div>
-                  <el-button type="primary" size='mini' @click="toOrderSplitRecord(scope.row)" >
-                    收益明细
-                  </el-button>
-                </div>
-                <div class="top10">
-                  <el-button type="primary" size='mini' @click="toOrderSplitRecord(scope.row)">
-                    分账明细
-                  </el-button>
-                </div>
-              </div>
-
-              <div>
-                <div>
-                  <el-button type="danger" size="mini" @click="del(scope.row.orderCode)"
-                    v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">
-                    删除
-                  </el-button>
-                </div>
-                <div class="top10">
-                  <el-button type="primary" size="mini" @click="orderRefundClick(scope.row)"
-                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">
-                    退款
-                  </el-button>
-                </div>
-              </div>
-            </div>
+            <order-detail :row_data="scope.row" />
+            <power-charts :row_data="scope.row" />
+            <el-button
+              size="mini"
+              type="danger"
+              icon="el-icon-delete"
+              style="margin-left: 10px;"
+              @click="deleteOrder(scope.row.orderCode)"
+              v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')"
+            >删除</el-button>
+            <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
+              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 10px;">更多</el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
+                  v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1">结束订单</el-dropdown-item>
+                <el-dropdown-item command="handleAbnormalOrderSettlement" icon="el-icon-warning-outline"
+                  v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement') && scope.row.orderStatus == 1">异常结算</el-dropdown-item>
+                <el-dropdown-item command="handleOrderRefund" icon="el-icon-money"
+                  v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">订单退款</el-dropdown-item>
+                <el-dropdown-item command="handleOrderSplitRecord" icon="el-icon-s-operation">分账明细</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
           </template>
         </el-table-column>
       </el-table>
@@ -477,6 +444,25 @@
       })
     },
     methods: {
+      // 更多操作触发
+      handleCommand(command, row) {
+        switch (command) {
+          case "handleCloseOrder":
+            this.closeOrder(row.id);
+            break;
+          case "handleAbnormalOrderSettlement":
+            this.abnormalOrderSettlement(row.orderCode);
+            break;
+          case "handleOrderRefund":
+            this.orderRefund(row.orderCode)
+            break;
+          case "handleOrderSplitRecord":
+            this.toOrderSplitRecord(row.orderCode)
+            break;
+          default:
+            break;
+        }
+      },
       //切换导航
       handleClick(tab, event) {
         this.listQuery.ruleId = tab.name
@@ -525,8 +511,7 @@
                 item.eleNum = item.hours
                 let userdTime = ''
                 if (item.orderStatus != 1) {
-                  userdTime = numTime(item.endTimeAll, item.startTimeAll, 1) ||
-                    '00:00:00'
+                  userdTime = numTime(item.endTimeAll, item.startTimeAll, 1) || '00:00:00'
                   item.userdTime = numTime(item.endTimeAll, item.startTimeAll, 0)
                 } else {
                   let nowDate = this.getTime()
@@ -534,8 +519,7 @@
                   item.userdTime = numTime(nowDate, item.startTimeAll, 0)
                 }
                 userdTime = userdTime.split(':')
-                let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(userdTime[1]) *
-                  60 + parseFloat(userdTime[2])
+                let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(userdTime[1]) * 60 + parseFloat(userdTime[2])
                 let num2 = parseFloat(item.hours) * 60
                 let num3 = num2 - num1
                 item.hasTime = formatSeconds(num3)
@@ -550,7 +534,7 @@
           }
         })
       },
-      del(orderCode) {
+      deleteOrder(orderCode) {
         this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
           confirmButtonText: '是',
           cancelButtonText: '否',
@@ -601,19 +585,16 @@
         })
       },
       orderRefundClick(item) {
-        this.returnData = item
-        this.$common.throttle(this.orderRefund, 2000)
+        this.$common.throttle(this.orderRefund(item.orderCode), 2000)
       },
-      orderRefund() {
-        let item = this.returnData
+      orderRefund(orderCode) {
         this.$confirm('是否确认退款?', '警告', {
           confirmButtonText: '是',
           cancelButtonText: '否',
           type: 'warning'
         }).then(() => {
           let data = {
-            orderCode: item.orderCode,
-            wxOpenId: item.wxOpenId
+            orderCode: orderCode
           }
           orderRefund(data).then(res => {
             if (res.code == 200) {
