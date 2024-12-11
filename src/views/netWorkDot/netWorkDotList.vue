@@ -77,28 +77,16 @@
 						<span>{{ scope.row.updateTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="220">
+				<el-table-column label="操作" align="center" width="280" fixed="right">
 					<template slot-scope="scope">
-            <div style="display: flex;align-items: center;justify-content: space-around;">
-              <div >
-                <div>
-                  <!-- 编辑 -->
-                  <edit-page :row_data="scope.row" @getLists="getLists" />
-                </div>
-                <div class="top10">
-                  <!-- 设置分成 -->
-                  <set-split-account-page :row_data="scope.row" @getLists="getLists"/>
-                </div>
-              </div>
-              <div>
-                <div style="margin-left: 0px;">
-                  <el-button type="danger" @click="del(scope.row.id)" size="mini" icon="el-icon-delete"
-                  	v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">
-                    删除
-                  </el-button>
-                </div>
-              </div>
-            </div>
+            <!-- 编辑 -->
+            <edit-page :row_data="scope.row" @getLists="getLists" />
+            <!-- 设置分成 -->
+            <set-split-account-page :row_data="scope.row" @getLists="getLists"/>
+            <el-button style="margin-left: 10px;" type="danger" size="mini" icon="el-icon-delete"  @click="del(scope.row.id)"
+            	v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">
+              删除
+            </el-button>
 					</template>
 				</el-table-column>
 			</el-table>

@@ -1,6 +1,6 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button type="primary" style="margin-left: 10px;" @click="showformData()" size="mini"
+		<el-button type="primary" @click="showformData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')">编辑
 		</el-button>
 		<!-- 编辑 -->

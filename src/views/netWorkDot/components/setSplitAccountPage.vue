@@ -27,7 +27,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="splitRate" label="分成比例(%)" width="150">
+        <el-table-column prop="splitRate" label="分成比例(%)" >
           <template #default="scope">
             <el-input
               v-model="scope.row.splitRate"
@@ -37,7 +37,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="isHost" label="是否主分成人" width="150">
+        <el-table-column prop="isHost" label="是否主分成人" >
           <template #default="scope">
             <el-radio
               :label="true"
@@ -47,7 +47,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="remark" label="备注" width="200">
+        <el-table-column prop="remark" label="备注" >
           <template #default="scope">
             <el-input
               v-model="scope.row.remark"
@@ -57,7 +57,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" width="100">
+        <el-table-column label="操作" >
           <template #default="scope">
             <el-button
               type="danger"
