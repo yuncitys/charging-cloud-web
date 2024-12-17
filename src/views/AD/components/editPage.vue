@@ -8,6 +8,16 @@
 		<el-dialog :visible.sync="showEditAD" title="编辑广告" @close="showEditAD = false" v-loading="loadingEdit" :append-to-body="true">
 			<el-form ref="editAdData" :model="editAdData" label-position="left" label-width="120px"
 				style="width: 600px; margin-left:50px;" :rules="Rules" :append-to-body="true">
+        <el-form-item :label="'运营商'" prop="adminId">
+          <el-select style="width: 100%;" class="filter-item" v-model="editAdData.adminId" filterable clearable placeholder="请选择运营商">
+              <el-option
+                v-for="item in operatorList"
+                :key="item.id"
+                :label="item.adminFullname"
+                :value="item.id">
+              </el-option>
+          </el-select>
+        </el-form-item>
 				<el-form-item :label="'广告名称'" prop="imageTitle">
 					<el-input v-model="editAdData.imageTitle" placeholder="请输入广告名称" clearable />
 				</el-form-item>
@@ -49,7 +59,10 @@
 	import {
 		parseTime
 	} from '@/utils/index'
-    import uploadFile from '@/components/Common/uploadFile.vue'
+  import {
+    getOperator
+  } from '@/api/agent/agentList.js'
+  import uploadFile from '@/components/Common/uploadFile.vue'
 	export default {
 		props:{
 			row_data:{
@@ -62,11 +75,13 @@
 		data() {
 			return {
 				showEditAD: false,
+        operatorList: [],
 				editAdData: {
 					imageTitle: '',
 					imageUrl: '',
 					imageLink: '',
 					sorting: '',
+          adminId: '',
 					types: 1
 				},
 				tags: [{
@@ -88,6 +103,11 @@
 						message: '请上传图片或者视频',
 						trigger: 'change'
 					}],
+          adminId: [{
+          	required: true,
+          	message: '请选择运营商',
+          	trigger: 'blur',
+          }]
 				},
 			}
 		},
@@ -100,6 +120,15 @@
 			},
 		},
 		methods: {
+      getOperator() {
+      	getOperator().then(res => {
+      		if (res.code == 200) {
+      			this.operatorList = res.data
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
 			changeTypes(e) {
 				console.log(e)
 				this.editAdData.imageUrl = ''
@@ -107,10 +136,11 @@
 				this.$refs.upload.getType(e)
 			},
 			editData() {
-				let scope=this.row_data
+				let scope = this.row_data
 				console.log(scope)
 				let edit = {
 					id: scope.id,
+          adminId: scope.adminId,
 					imageTitle: scope.imageTitle,
 					imageUrl: scope.imageUrl,
 					sorting: scope.sorting,
@@ -119,6 +149,7 @@
 				}
 				this.showEditAD = true
 				this.editAdData = edit
+        this.getOperator()
 				this.$nextTick(()=>{
 					this.$refs.upload.getType(scope.types)
 				})

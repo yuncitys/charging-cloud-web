@@ -9,6 +9,16 @@
 		<el-dialog :visible.sync="showAddAD" title="新增广告" @close="showAddAD = false" v-loading="loadingAdd">
 			<el-form ref="addAdData" :model="addAdData" label-position="left" label-width="120px"
 				style="width: 600px; margin-left:50px;" :rules="Rules" :append-to-body="true">
+        <el-form-item :label="'运营商'" prop="adminId">
+          <el-select style="width: 100%;" class="filter-item" v-model="addAdData.adminId" filterable clearable placeholder="请选择运营商">
+              <el-option
+                v-for="item in operatorList"
+                :key="item.id"
+                :label="item.adminFullname"
+                :value="item.id">
+              </el-option>
+          </el-select>
+        </el-form-item>
 				<el-form-item :label="'广告名称'" prop="imageTitle">
 					<el-input v-model="addAdData.imageTitle" placeholder="请输入广告名称" clearable />
 				</el-form-item>
@@ -48,6 +58,9 @@
 		updateImageCarousel,
 		uploadImg
 	} from '@/api/AD/ADList.js'
+  import {
+    getOperator
+  } from '@/api/agent/agentList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -60,11 +73,13 @@
 		data() {
 			return {
 				showAddAD: false,
+        operatorList: [],
 				addAdData: {
 					imageTitle: '',
 					imageUrl: '',
 					imageLink: '',
 					sorting: '',
+          adminId: '',
 					types: 1
 				},
 				tags: [{
@@ -86,6 +101,11 @@
 						message: '请上传图片或者视频',
 						trigger: 'change'
 					}],
+          adminId: [{
+          	required: true,
+          	message: '请选择运营商',
+          	trigger: 'blur',
+          }]
 				},
 			}
 		},
@@ -98,6 +118,15 @@
 			},
 		},
 		methods: {
+      getOperator() {
+      	getOperator().then(res => {
+      		if (res.code == 200) {
+      			this.operatorList = res.data
+      		} else {
+      			this.$message.error(res.msg)
+      		}
+      	})
+      },
 			changeTypes(e) {
 				console.log(e)
 				this.addAdData.imageUrl = ''
@@ -106,6 +135,7 @@
 			},
 			onShowAddAD() {
 				this.showAddAD = true
+        this.getOperator()
 				this.$nextTick(() => {
 					this.$refs.upload.getType(1)
 				})
