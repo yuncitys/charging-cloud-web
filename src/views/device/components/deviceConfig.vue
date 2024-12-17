@@ -18,16 +18,29 @@
         </el-form-item>
 				<el-form-item :label="'设备类型'" prop="deviceTypeId">
 					<el-select v-model="configData.deviceTypeId" placeholder="请选择端口数" style="width: 100%;">
-						<el-option v-for="item in dectinoType" :key="item.value" :label="item.label" :value="item.value"
+						<el-option v-for="item in dectinoType" :key="item.deviceTypeId" :label="item.deviceTypeName" :value="item.deviceTypeId"
 							:disabled="item.disabled">
 						</el-option>
 					</el-select>
 				</el-form-item>
-				<el-form-item :label="'运营商'" prop="domainName">
-					<el-autocomplete style="width: 100%;margin-right: 20px ;" class="filter-item" v-model="adminName"
-						:fetch-suggestions="querySearch" placeholder="请选择运营商" @select="handleSelect" clearable
-						:debounce='0' @change="changeName"></el-autocomplete>
-				</el-form-item>
+        <el-form-item :label="'设备号长度'" prop="digit">
+        	<el-select v-model="configData.digit" placeholder="请选择设备号长度" style="width: 100%;">
+        		<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
+        			:disabled="item.disabled">
+        		</el-option>
+        	</el-select>
+        </el-form-item>
+        <el-form-item :label="'运营商'" prop="adminId">
+          <el-select style="width: 100%;" class="filter-item" v-model="configData.adminId" filterable clearable placeholder="请选择运营商">
+              <el-option
+                v-for="item in operatorList"
+                :key="item.id"
+                :label="item.adminFullname"
+                :value="item.id"
+                @click.native="handleOptionClick(item)">
+              </el-option>
+          </el-select>
+        </el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="DownloadConfig('configData')" v-loading.fullscreen.lock="loading">
 						确定</el-button>
@@ -48,7 +61,6 @@
 		closePort,
 		deleteDevice,
 		queryDeviceToCommand,
-		queryOneProtStatus,
 		chargeOnePort,
 		addDevice,
 		findDeviceType,
@@ -67,6 +79,9 @@
 		updateDeviceStatus,
 		operationDevice
 	} from '@/api/device/deviceList.js'
+  import {
+    getOperator
+  } from '@/api/agent/agentList.js'
 	import {
 		getNowTime
 	} from '@/utils/index'
@@ -91,14 +106,13 @@
 				showConfig: false,
 				loading: false,
 				configData: {
+          digit: '',
 					number: '',
 					deviceTypeId: '',
-          adminId:'',
-          domainName: '',
+          adminId: '',
 					ruleId: 1
 				},
-				domainName: '',
-				adminName: '',
+        domainName: '',
 				configrules: {
 					number: [{
 						required: true,
@@ -113,7 +127,7 @@
 						message: '请选择端口数',
 						trigger: 'blur',
 					}],
-					domainName: [{
+					adminId: [{
 						required: true,
 						message: '请选择运营商',
 						trigger: 'blur',
@@ -122,82 +136,49 @@
           	required: true,
           	message: '请选择产品',
           	trigger: 'blur',
-          }]
+          }],
+          digit: [{
+						required: true,
+						message: '请选择设备号长度',
+						trigger: 'blur',
+					}],
 				},
 				dectinoType: [],
+        operatorList: [],
+        digitData:[
+          {
+            id: 1,
+            value: 8,
+          },
+          {
+            id: 2,
+            value: 14,
+          },
+        ]
 			}
 		},
 		mounted() {
 
 		},
 		methods: {
-			getfindDealerList() {
-				//查询所有代理商
-				findDealerList().then(res => {
+      handleOptionClick(item) {
+        console.log('选中的值:', item);
+        // 在这里可以执行选中后的逻辑
+        this.domainName = item.domainName
+      },
+			getOperator() {
+				getOperator().then(res => {
 					if (res.code == 200) {
-						let dealerList = res.data
-						let restaurants = []
-						dealerList.forEach((item, index) => {
-							if (item.roleId === 3) {
-								restaurants.push(item)
-							}
-						})
-						this.restaurants = restaurants
+						this.operatorList = res.data
 					} else {
 						this.$message.error(res.msg)
 					}
 				})
 			},
-			//查询搜索代理商
-			querySearch(queryString, cb) {
-				var restaurants = this.restaurants;
-				let restaurantsText = []
-				if (restaurants.length != '') {
-					restaurants.forEach((item, index) => {
-						let obj = {
-							value: '',
-							dealerId: '',
-							domainName: ''
-						}
-						let value = item.adminName + "(" + item.adminFullname + ")"
-						obj.value = value
-						obj.dealerId = item.id
-						obj.domainName = item.domainName
-						restaurantsText.push(obj)
-					})
-				}
-				var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
-				// 调用 callback 返回建议列表的数据
-				cb(results);
-			},
-			createFilter(queryString) {
-				return (restaurant) => {
-					return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
-				};
-			},
-			//选择代理商
-			handleSelect(item) {
-				console.log(item)
-				let domainName = item.domainName ? item.domainName : ''
-				this.domainName = domainName + ''
-				this.adminName = item.value + ''
-        this.configData.adminId = item.dealerId
-        this.configData.domainName = domainName + ''
-			},
-			//清除已选择代理商
-			changeName() {
-				// if (this.adminName == '') {
-				// 	this.domainName = ''
-				// }
-        this.adminName == ''
-        this.domainName = ''
-			},
 			onShowConfig() {
 				this.showConfig = true
-				this.domainName = ''
-				this.adminName = ''
 				this.getTypeListss()
-				this.getfindDealerList()
+				this.getOperator()
 			},
 			ruleIdChange() {
         this.configData.deviceTypeId = ''
@@ -209,21 +190,8 @@
 					ruleId: this.configData.ruleId
 				}
 				findDeviceType(data).then(res => {
-					console.log(res)
 					if (res.code == 200) {
-						let datas = res.data;
-						console.log(datas)
-						let linshidata = []
-						datas.forEach((item, index) => {
-							let obj = {
-								label: "",
-								value: ""
-							};
-							obj.label = item.deviceTypeName
-							obj.value = item.deviceTypeId
-							linshidata.push(obj)
-						})
-						this.dectinoType = linshidata
+						this.dectinoType = res.data;
 					} else {
 						this.$message.error(res.msg)
 					}
@@ -232,25 +200,19 @@
 			//导出设备配置
 			DownloadConfig(formName) {
 				let configData = this.configData
-				console.log(this.domainName)
+				console.log(configData)
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
 					if (valid) {
 						console.log("通过")
-						if (!this.domainName) {
-							this.$message.error('请选择代理商')
-							return false
-						}
 						this.loading = true
 						downLoadDeviceCodes(configData).then(res => {
 							if (res.code == 200) {
-								let prot = res.data.prot;
+								let port = res.data.port;
 								import('@/vendor/Export2Excel').then(excel => {
-									const tHeader = ['Broker Address', 'Broker Port', 'Client ID',
-										'User Name', 'Password', '发布Topic', '订阅Topic', '设备编号',
-										'整机二维码内容'
-									]
-									for (let i = 0; i < prot; i++) {
+									const tHeader = ['Broker Address', 'Broker Port', 'Client ID', 'User Name', 'Password', '发布Topic', '订阅Topic', '设备编号',
+										'整机二维码内容']
+									for (let i = 0; i < port; i++) {
 										tHeader.push(`第${i+1}路二维码内容`)
 									}
 									const filterVal = ['brokeAddress',
@@ -263,7 +225,7 @@
 										'deviceCode',
 										'deviceCodeCom'
 									]
-									for (let i = 0; i < prot; i++) {
+									for (let i = 0; i < port; i++) {
 										filterVal.push(`port${i+1}`)
 									}
 									const list = []
@@ -298,25 +260,20 @@
 											obj.deviceCode = deviceCode[index]
 											obj.userName = userName[index]
 											obj.upTopic = upTopic[index]
-											let domainName = this.domainName
-											domainName = this.getFormat(domainName)
+											let domainName = this.getFormat(this.domainName)
 											let ruleId = this.configData.ruleId
-											let baseUrl = domainName +
-												`weixin${ruleId}/miniprogram`
+											let baseUrl = domainName + `weixin${ruleId}/miniprogram`
 											let urls = deviceCode[index]
-											for (let i = 0; i <= prot; i++) {
+											for (let i = 0; i <= port; i++) {
 												if (i == 0) {
-													obj.deviceCodeCom = baseUrl +
-														'?qrcode=' + urls
+													obj.deviceCodeCom = baseUrl + '?qrcode=' + urls
 												} else {
 													let str = 'port' + i
-													obj[str] = baseUrl + '?qrcode=' +
-														urls + '&port=' + i
+													obj[str] = baseUrl + '?qrcode=' + urls + '&port=' + i
 												}
 											}
 											list.push(obj)
 										})
-
 									}
 									console.log(list)
 									const data = this.formatJson(filterVal, list)
