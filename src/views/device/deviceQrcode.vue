@@ -43,11 +43,20 @@
             <span v-if="scope.row.port != 0 && scope.row.status == 1">{{scope.row.port}}号插座</span>
           </template>
         </el-table-column>
+        <el-table-column prop="bandingUser" label="绑定用户" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
+        <el-table-column prop="unbandingUser" label="解绑用户" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" sortable :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
+        	<template slot-scope="scope">
+        		<span>{{ scope.row.updateTime | formatDate }}</span>
+        	</template>
+        </el-table-column>
 				<el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
 						<el-button type="primary" size='mini'
