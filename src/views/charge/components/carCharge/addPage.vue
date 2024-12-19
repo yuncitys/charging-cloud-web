@@ -7,9 +7,9 @@
 			<!-- 新增方案-->
 			<el-dialog :visible.sync="showAdd" title="新增方案" @close="showAdd = false" class="scheme-dialog"
 				:append-to-body="true">
-				<el-form ref="addData" :model="addData" label-position="left" label-width="100px" style="margin-left:50px;">
+				<el-form ref="addData" :model="addData" label-position="left" label-width="80px">
 					<el-form-item :label="'方案名称'" prop="name">
-						<el-input v-model="addData.name" placeholder="请输入方案名称" clearable style="width: 400px;" />
+						<el-input v-model="addData.name" placeholder="请输入方案名称" clearable />
 					</el-form-item>
 					<el-form-item :label="'价格类别'" prop="realTimeCharging">
 						<div class="price-item" v-for="(item,index) in  addData.priceTier">

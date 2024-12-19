@@ -1,16 +1,17 @@
 <template>
 	<div style="display: inline-block;">
 		<div>
-			<el-button style="margin-right: 20px ;" type="primary"
+			<el-button type="primary"
 				v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:carCharge:edit')"
-				@click="showDidlaoEditData">编辑方案
+				@click="showDidlaoEditData">
+        编辑方案
 			</el-button>
-			<!-- 编辑方案-->
+			<!-- 编辑方案 style="margin-right: 20px ;"-->
 			<el-dialog :visible.sync="showEdit" title="编辑方案" @close="showEdit = false" class="scheme-dialog"
 				:append-to-body="true">
-				<el-form ref="editData" :model="editData" label-position="left" label-width="100px" style="margin-left:50px;">
+				<el-form ref="editData" :model="editData" label-position="left" label-width="80px">
 					<el-form-item :label="'方案名称'" prop="name">
-						<el-input v-model="editData.name" placeholder="请输入方案名称" clearable style="width: 400px;" />
+						<el-input v-model="editData.name" placeholder="请输入方案名称" clearable/>
 					</el-form-item>
 					<el-form-item :label="'价格类别'" prop="realTimeCharging">
 						<div class="price-item" v-for="(item,index) in  editData.priceTier" :key="index">

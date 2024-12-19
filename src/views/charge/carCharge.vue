@@ -14,9 +14,10 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{ scope.$index + (page - 1) * limit + 1 }} </span></template>
 				</el-table-column>
-				<el-table-column prop="feeName" label="方案名称" align="center" width="150">
+				<el-table-column prop="feeName" label="方案名称" align="center">
 				</el-table-column>
-				<el-table-column prop="detailList" label="方案详情" align="center" :show-overflow-tooltip="true">
+				<el-table-column prop="detailList" label="方案详情" align="center"  width="350"
+          :show-overflow-tooltip="true">
 					<template slot-scope="scope">
 						<div v-for="(item,index) in scope.row.detailList">
 							时间段:{{item.stTime}}~{{item.enTime}};电费:￥{{item.powerPrice}};服务费:￥{{item.serviceFee}}
@@ -28,17 +29,33 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="adminFullname" label="创建人" align="center" width="150"
+        <el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
+        	<template slot-scope="scope">
+        		<span>{{ scope.row.updateTime | formatDate }}</span>
+        	</template>
+        </el-table-column>
+				<el-table-column prop="createUser" label="创建用户" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
+        <el-table-column prop="updateUser" label="更新用户" align="center"
+        	:show-overflow-tooltip="isPc">
+        </el-table-column>
 				<el-table-column label="操作" align="center" fixed="right">
 					<template slot-scope="scope">
-						<editPage @getLists="getLists" :row_data="scope.row" />
-						<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
-							icon="el-icon-delete"
-							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:carCharge:delete')">
-							删除
-						</el-button>
+            <div style="display: flex;align-items: center;justify-content: space-around;">
+              <div>
+                <div>
+                  <editPage @getLists="getLists" :row_data="scope.row" />
+                </div>
+                <div class="top10">
+                  <el-button type="danger" @click="del(scope.row.id)"
+                  	icon="el-icon-delete"
+                  	v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:carCharge:delete')">
+                  	删除
+                  </el-button>
+                </div>
+              </div>
+            </div>
 					</template>
 				</el-table-column>
 			</el-table>
