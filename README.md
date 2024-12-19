@@ -56,8 +56,6 @@ YunCharge是一套用于二轮电单车和四轮充电桩充电领域的运营�
 ### 运行效果
 ![image](https://github.com/user-attachments/assets/7f36acd4-e770-43a1-8752-f168d587e804)
 
-![image](https://github.com/user-attachments/assets/7827f38c-a72d-4579-a81f-37abb0e4dc67)
-
 ![image](https://github.com/user-attachments/assets/8b08af56-0172-44a8-9705-90d281c67374)
 
 ![image](https://github.com/user-attachments/assets/fc7bb3d1-f058-4995-b919-fe06f0577d13)
