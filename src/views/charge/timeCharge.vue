@@ -31,14 +31,22 @@
 						<span v-if="scope.row.config.AutostopConfig.isAutostop === 0">否</span>
 					</template>
 				</el-table-column>
+        <el-table-column prop="createUser" label="创建用户" align="center" width="150"
+        	:show-overflow-tooltip="isPc">
+        </el-table-column>
+        <el-table-column prop="updateUser" label="更新用户" align="center" width="150"
+        	:show-overflow-tooltip="isPc">
+        </el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="adminFullname" label="创建人" align="center" width="150"
-					:show-overflow-tooltip="isPc">
-				</el-table-column>
+        <el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
+        	<template slot-scope="scope">
+        		<span>{{ scope.row.updateTime | formatDate }}</span>
+        	</template>
+        </el-table-column>
 				<el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
 						<editPage @getLists="getLists" :row_data="scope.row"></editPage>
