@@ -19,16 +19,18 @@
 				</el-table-column>
 				<el-table-column prop="deviceCode" label="设备号" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="networkName" label="网点名称" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="networkName" label="充电站点" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="networkAddress" label="设备地址" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="networkAddress" label="详细地址" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="type" label="状态" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="type" label="日志事件" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<el-tag type="danger" v-if="scope.row.type == 0">离线</el-tag>
 						<el-tag type="success" v-if="scope.row.type == 1">上线</el-tag>
 					</template>
 				</el-table-column>
+        <el-table-column prop="reason" label="故障原因" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
 				<el-table-column prop="createTime" label="时间" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
@@ -36,7 +38,7 @@
 				</el-table-column>
 				<!-- <el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
-						
+
 					</template>
 				</el-table-column> -->
 			</el-table>
