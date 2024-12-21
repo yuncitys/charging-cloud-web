@@ -1,11 +1,13 @@
 <template>
 	<div style="display: inline-block;">
-        <el-button style="margin-right: 20px ;" type="primary" @click="showAdd=true" class="filter-item"
-        	v-if="btnAuthen.permsVerifAuthention(':sys:month:card:add')">新增套餐</el-button>
+  <el-button style="margin-right: 20px ;" type="primary" @click="showAdd=true" class="filter-item"
+    v-if="btnAuthen.permsVerifAuthention(':sys:month:card:add')">
+    新增套餐
+  </el-button>
 
 		<!-- 新增方案-->
 		<el-dialog :visible.sync="showAdd" title="新增月卡套餐" @close="showAdd = false" :append-to-body="true">
-			<el-form ref="addData" :model="addData" label-position="left" label-width="100px" style="margin-left:50px;" :rules="rules">
+			<el-form ref="addData" :model="addData" label-position="left" label-width="100px" :rules="rules">
         <el-form-item :label="'套餐名称'" prop="name">
         	<el-input v-model="addData.name" placeholder="请输入套餐名称" clearable style="width: 100%;" class="name" />
         </el-form-item>

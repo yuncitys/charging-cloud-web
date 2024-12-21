@@ -1,15 +1,15 @@
 <template>
 	<div style="display: inline-block;">
-        <el-button type="primary" @click="" style="margin-left: 10px;"
-        	@click="showDidlaoEditData()" size="mini"
-        	v-if="btnAuthen.permsVerifAuthention(':sys:month:card:edit')">编辑
-        </el-button>
+    <el-button type="primary" @click="" style="margin-left: 10px;"
+      @click="showDidlaoEditData()" size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:month:card:edit')">
+      编辑
+    </el-button>
 
 		<!-- 编辑月卡套餐-->
 		<el-dialog :visible.sync="showEdit" title="编辑月卡套餐" @close="showEdit = false" :append-to-body="true">
-			<el-form ref="editData" :model="editData" label-position="left" label-width="100px" style="margin-left:50px;" :rules="rules">
+			<el-form ref="editData" :model="editData" label-position="left" label-width="100px" :rules="rules">
         <el-form-item :label="'套餐名称'" prop="name">
-        	<el-input v-model="editData.name" placeholder="请输入套餐名称" clearable style="width: 60%;" class="name" />
+        	<el-input v-model="editData.name" placeholder="请输入套餐名称" clearable style="width: 100%;" class="name" />
         </el-form-item>
         <el-form-item :label="'归属运营商'" prop="adminId">
         	<el-select style="width: 100%;" class="filter-item" v-model="editData.adminId" filterable clearable
