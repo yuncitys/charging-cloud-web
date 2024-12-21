@@ -6,8 +6,7 @@
     </el-button>
 		<!-- 编辑方案-->
 		<el-dialog :visible.sync="showEdit" title="编辑方案" @close="showEdit = false" :append-to-body="true">
-			<el-form ref="editData" :model="editData" label-position="left" label-width="100px"
-				style="margin-left:50px;" :rules="rules">
+			<el-form ref="editData" :model="editData" label-position="left" label-width="100px" :rules="rules">
         <el-form-item :label="'运营商'" prop="adminId">
           <el-select style="width: 100%;" class="filter-item" v-model="editData.adminId" filterable clearable placeholder="请选择运营商">
               <el-option

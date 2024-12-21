@@ -7,8 +7,7 @@
 
 		<!-- 新增方案-->
 		<el-dialog :visible.sync="showAdd" title="新增方案" @close="showAdd = false" :append-to-body="true">
-			<el-form ref="addData" :model="addData" label-position="left" label-width="100px" style="margin-left:50px;"
-				:rules="rules">
+			<el-form ref="addData" :model="addData" label-position="left" label-width="100px"  :rules="rules">
         <el-form-item :label="'运营商'" prop="adminId">
           <el-select style="width: 100%;" class="filter-item" v-model="addData.adminId" filterable clearable placeholder="请选择运营商">
               <el-option
