@@ -3,16 +3,14 @@
 		<el-button type="primary" @click="" style="margin-left: 10px;" @click="showDidlaoformData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:powerCharge:edit')">编辑
 		</el-button>
-		<el-dialog :visible.sync="showDialog" title="编辑方案" @close="showDialog = false" :append-to-body="true"
-			width="60%">
-			<el-form ref="formData" :model="formData" label-position="left" label-width="100px"
-				style="margin-left:50px;">
+		<el-dialog :visible.sync="showDialog" title="编辑方案" @close="showDialog = false" :append-to-body="true">
+			<el-form ref="formData" :model="formData" label-position="left" label-width="80px">
 				<el-form-item :label="'方案名称'" prop="feeName">
-					<el-input v-model="formData.feeName" placeholder="请输入方案名称" clearable style="width: 60%;"
+					<el-input v-model="formData.feeName" placeholder="请输入方案名称" clearable
 						class="feeName" />
 				</el-form-item>
 				<el-form-item :label="'收费说明'" prop="remark">
-					<el-input v-model="formData.remark" placeholder="请输入收费金额" clearable style="width: 60%;"
+					<el-input v-model="formData.remark" placeholder="请输入收费金额" clearable
 						type="textarea" :rows="2" />
 				</el-form-item>
 				<el-form-item :label="'计时类型'" prop="realTimeCharging">
