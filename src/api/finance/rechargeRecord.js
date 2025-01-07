@@ -41,5 +41,3 @@ export function downloadExcel(data) {
 		data
 	})
 }
-
-
