@@ -599,6 +599,14 @@ export const constantRoutes = [{
         title: '分成记录',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'refundCenter',
+      component: () => import('@/views/finance/refundCenter'),
+      name: 'refundCenter',
+      meta: {
+        title: '退款中心',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
