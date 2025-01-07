@@ -36,11 +36,11 @@
 				</el-table-column>
 				<el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="用户头像" prop="headImg" align="center">
+				<!-- <el-table-column label="用户头像" prop="headImg" align="center">
 					<template slot-scope="scope" style="text-align: center;">
 						<imgView :imgSrc="scope.row.headImg" />
 					</template>
-				</el-table-column>
+				</el-table-column> -->
 				<el-table-column label="退款金额" prop="refundMoney" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
         <el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc' sortable>
@@ -68,6 +68,8 @@
 				</el-table-column>
 				<el-table-column prop="result" label="处理结果" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
+        <el-table-column prop="remark" label="退款说明" align="center" :show-overflow-tooltip='isPc'>
+        </el-table-column>
 				<el-table-column prop="createTime" label="退款时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
