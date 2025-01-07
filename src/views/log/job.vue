@@ -64,7 +64,7 @@
         <!-- <el-table-column type="index" width="55" label="序号" align="center">
           <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
         </el-table-column> -->
-        <el-table-column label="日志编号" width="80" align="center" prop="jobLogId" />
+        <el-table-column label="日志编号" align="center" prop="jobLogId" />
         <el-table-column label="任务名称" align="center" prop="jobName" :show-overflow-tooltip="true" />
         <el-table-column label="任务组名" align="center" prop="jobGroup" :show-overflow-tooltip="true">
           <template slot-scope="scope">
