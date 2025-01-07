@@ -10,7 +10,7 @@
 			<el-input v-model="listQuery.userName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入用户昵称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.type" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请选择充值类型" clearable @change="handleFilter">
+				placeholder="请选择交易类型" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
@@ -39,20 +39,20 @@
 				</el-table-column>
         <el-table-column label="用户电话" prop="phoneNumber" align="center" :show-overflow-tooltip='isPc'>
         </el-table-column>
-				<el-table-column prop="headImg" label="用户头像" align="center">
+				<!-- <el-table-column prop="headImg" label="用户头像" align="center">
 					<template slot-scope="scope" style="text-align: center;">
 						<imgView :imgSrc="scope.row.headImg" />
 					</template>
-				</el-table-column>
-				<el-table-column prop="payMoeny" label="付款金额" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
+				<el-table-column prop="payMoney" label="付款金额" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="giftMoney" label="赠送金额" align="center" :show-overflow-tooltip='isPc' sortable>
 				</el-table-column>
 				<el-table-column prop="type" label="充值类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag v-if="scope.row.type == 0">单次充值</el-tag>
-						<el-tag v-if="scope.row.type == 1">充值套餐</el-tag>
-						<el-tag v-if="scope.row.type == 2">充值ic卡</el-tag>
+						<el-tag v-if="scope.row.type == 0">充电缴费</el-tag>
+						<el-tag v-if="scope.row.type == 1">充值余额</el-tag>
+						<el-tag v-if="scope.row.type == 2">充值IC卡</el-tag>
             <el-tag v-if="scope.row.type == 3">充值月卡</el-tag>
 					</template>
 				</el-table-column>
@@ -60,6 +60,7 @@
 					<template slot-scope="scope">
 						<el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
 						<el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
+            <el-tag type="success" v-if="scope.row.payStatus == 2">支付失败</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
@@ -116,15 +117,15 @@
 				tableKey: 0,
 				tags: [{
 						id: '0',
-						title: '单次充值'
+						title: '充电缴费'
 					},
 					{
 						id: '1',
-						title: '充值套餐'
+						title: '充值余额'
 					},
 					{
 						id: '2',
-						title: '充值ic卡'
+						title: '充值IC卡'
 					},
           {
           	id: '3',
