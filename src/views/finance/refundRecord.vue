@@ -5,6 +5,8 @@
 				placeholder="请输入用户ID" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.refundCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入退款编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+      <el-input v-model="listQuery.payCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
+        placeholder="请输入支付编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -43,13 +45,13 @@
 				</el-table-column> -->
 				<el-table-column label="退款金额" prop="refundMoney" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc' sortable>
+        <el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.refundSource == 'WECHAT'">订单退款</el-tag>
-            <el-tag v-if="scope.row.refundSource == 'BALANCE'">余额退款</el-tag>
+            <el-tag v-if="scope.row.refundSource == 'CHARGING_ORDER'">订单退款</el-tag>
+            <el-tag v-if="scope.row.refundSource == 'WALLET_BALANCE'">余额退款</el-tag>
           </template>
         </el-table-column>
-				<el-table-column label="退款渠道" prop="channel" align="center" :show-overflow-tooltip='isPc' sortable>
+				<el-table-column label="退款渠道" prop="channel" align="center" :show-overflow-tooltip='isPc'>
           <template slot-scope="scope">
             <el-tag v-if="scope.row.channel == 'ORIGINAL'">原路退回</el-tag>
             <el-tag v-if="scope.row.channel == 'BALANCE'">退回余额</el-tag>
@@ -114,6 +116,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
+          payCode:'',
           refundCode:'',
 					userCode: '',
 					status: '',
@@ -206,7 +209,13 @@
 			},
 		},
 		created() {
-			this.getLists()
+      const payCode = this.$route.query.payCode;
+      if (payCode !== undefined && payCode != '') {
+        this.listQuery.payCode = payCode;
+        this.getLists();
+      } else {
+        this.getLists();
+      }
 		},
 	}
 </script>
