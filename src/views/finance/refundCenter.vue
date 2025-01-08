@@ -18,8 +18,8 @@
 
 			<div style="margin: 15px 0;">
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
-					icon="el-icon-search">查询</el-button>
-				<downExcel :queryData="listQuery" />
+					icon="el-icon-search">查询
+        </el-button>
 			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -56,16 +56,10 @@
 				</el-table-column>
         <el-table-column label="操作" align="center" width="200">
         	<template slot-scope="scope">
-            <!-- <el-button
-              type="primary" size='mini'
-              @click="handleRefund(scope.row.taskName,scope.row.result)"
-              v-if="btnAuthen.permsVerifAuthention(':monitor:task:download')">退款</el-button> -->
-            <!-- 交易退款 -->
             <refund-page :row_data="scope.row" @getLists="getLists"/>
             <el-button
               type="primary" size='mini' style="margin-left: 10px;"
-              @click="handleRefund(scope.row.taskName,scope.row.result)"
-              v-if="btnAuthen.permsVerifAuthention(':monitor:task:download')">详情</el-button>
+              @click="handleRefundRecord(scope.row)">详情</el-button>
         	</template>
         </el-table-column>
 			</el-table>
@@ -191,21 +185,18 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-      handleRefund(){
-
+      handleRefundRecord(row){
+        const payCode = row.payCode || '';
+        this.$router.push({
+        	name: 'refundRecord',
+        	query: {
+        		payCode: payCode
+        	}
+        })
       }
 		},
 		created() {
-			const userId = this.$route.query.userId;
-			const type = this.$route.query.type;
-      console.log("购买记录：",userId)
-			if (userId !== undefined && userId != 0) {
-			  this.listQuery.userId = userId;
-			  this.listQuery.type = type;
-			  this.getLists();
-			} else {
-			  this.getLists();
-			}
+			this.getLists();
 		},
 	}
 </script>
