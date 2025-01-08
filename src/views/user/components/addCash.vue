@@ -1,6 +1,6 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button type="success" style="margin-right: 20px;" @click='updMoney()' size="mini"
+		<el-button type="success" style="margin-right: 10px;" @click='updMoney()' size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':user:wxuserList:updateCash')">
 			充值
 		</el-button>
