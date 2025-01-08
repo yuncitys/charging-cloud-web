@@ -60,7 +60,7 @@
 
       <el-table v-loading="loading" :data="jobLogList" @selection-change="handleSelectionChange" element-loading-text="拼命加载中......"  fit
         highlight-current-row style="width: 100%;" align="center" id="tableBox">
-        <el-table-column type="selection" width="55" align="center" />
+        <el-table-column type="selection" width="60" align="center" />
         <!-- <el-table-column type="index" width="55" label="序号" align="center">
           <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
         </el-table-column> -->
