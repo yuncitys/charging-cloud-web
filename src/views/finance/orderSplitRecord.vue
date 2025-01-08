@@ -45,7 +45,7 @@
         </el-table-column>
         <el-table-column label="分账比例(%)" prop="splitRate" align="center" :show-overflow-tooltip='isPc'>
         </el-table-column>
-        <el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc' sortable>
+        <el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
           <template slot-scope="scope">
             <el-tag v-if="scope.row.splitType === 0">分成</el-tag>
           </template>

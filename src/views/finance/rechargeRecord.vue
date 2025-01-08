@@ -194,16 +194,7 @@
 			},
 		},
 		created() {
-			const userId = this.$route.query.userId;
-			const type = this.$route.query.type;
-      console.log("购买记录：",userId)
-			if (userId !== undefined && userId != 0) {
-			  this.listQuery.userId = userId;
-			  this.listQuery.type = type;
-			  this.getLists();
-			} else {
-			  this.getLists();
-			}
+			this.getLists();
 		},
 	}
 </script>
