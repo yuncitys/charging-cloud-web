@@ -59,8 +59,11 @@
 					<template slot-scope="scope">
 						<!-- 充值 -->
 						<addCash :row_data="scope.row" @getLists="getLists" />
+            <!-- 扣费 -->
+            <subtract-cash :row_data="scope.row" @getLists="getLists" />
 						<el-button type="primary" @click='open(scope.row)' size="mini"
-							v-if="btnAuthen.permsVerifAuthention(':user:wxuserList:oneEdit')">编辑
+							v-if="btnAuthen.permsVerifAuthention(':user:wxuserList:oneEdit')">
+              编辑
 						</el-button>
 					</template>
 				</el-table-column>
@@ -110,10 +113,12 @@
 		parseTime
 	} from '@/utils/index'
 	import addCash from './components/addCash.vue'
+  import subtractCash from './components/subtractCash.vue'
 	import imgView from '@/components/Common/imgView.vue'
 	export default {
 		components: {
 			addCash,
+      subtractCash,
 			imgView
 		},
 		name: 'wxuserList',
