@@ -61,7 +61,7 @@
               <el-button
                 type="primary"
                 size="small"
-                @click="handleDelete(scope.$index)"
+                @click="handleTradingRecord(scope.row)"
               >详情</el-button>
             </template>
           </el-table-column>
@@ -166,6 +166,15 @@
               this.$message.success(res.msg)
         	} else {
         		this.$message.error(res.msg)
+        	}
+        })
+      },
+      handleTradingRecord(row){
+        const orderCode = row.orderCode || '';
+        this.$router.push({
+        	name: 'scanOrderList',
+        	query: {
+        		orderCode: orderCode
         	}
         })
       }
