@@ -172,8 +172,14 @@
 			},
 		},
 		created() {
-			this.getLists()
-			this.isPc = !this.$common.isMobile()
+      const userId = this.$route.query.userId;
+      this.isPc = !this.$common.isMobile()
+      if (userId !== undefined && userId != '') {
+        this.listQuery.userCode = userId;
+        this.getLists();
+      } else {
+        this.getLists();
+      }
 		},
 	}
 </script>
