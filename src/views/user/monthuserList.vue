@@ -75,13 +75,13 @@
 				<el-table-column label="操作" align="center" width="320" fixed="right">
 					<template slot-scope="scope">
             <div style="display: flex;justify-content: center;align-items: center;">
-              <el-button type="primary" @click='onHistory(scope.row)' size="mini">
+              <el-button type="primary" @click='handleOperateHistory(scope.row)' size="mini">
                 月卡操作记录
               </el-button>
-              <el-button type="primary" @click='onHistory(scope.row)' style="margin-left: 10px;" size="mini">
+              <el-button type="primary" @click='handleOperateHistory(scope.row)' style="margin-left: 10px;" size="mini">
                 月卡续费
               </el-button>
-              <el-button type="danger" @click='onHistory(scope.row)' style="margin-left: 10px;" size="mini">
+              <el-button type="danger" @click='handleOperateHistory(scope.row)' style="margin-left: 10px;" size="mini">
                 月卡注销
               </el-button>
             </div>
@@ -138,14 +138,12 @@
 			},
 		},
 		methods: {
-      onHistory(row){
-        console.log("查询用户：",row)
-        const userCode = row.userCode || 0;
+      handleOperateHistory(row){
+        const userCode = row.userCode || '';
         this.$router.push({
-        	name: 'rechargeRecord',
+        	name: 'monthUserOperRecord',
         	query: {
-        		userId: userCode,
-            type: '3'
+        		userId: userCode
         	}
         })
       },
