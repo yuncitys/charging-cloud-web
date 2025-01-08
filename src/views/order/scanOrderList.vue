@@ -697,10 +697,15 @@
       },
     },
     created() {
-      this.getLists()
+      const orderCode = this.$route.query.orderCode;
+      if (orderCode !== undefined && orderCode != '') {
+        this.listQuery.orderCode = orderCode;
+        this.getLists();
+      } else {
+        this.getLists();
+      }
       this.findDealerList()
     },
-
   }
 
 </script>
