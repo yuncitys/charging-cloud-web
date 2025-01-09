@@ -272,6 +272,15 @@ export const constantRoutes = [{
         title: '设备二维码',
         icon: 'el-icon-setting',
       }
+    }, {
+      path: 'chargingPileSimulator',
+      component: () => import('@/views/device/chargingPileSimulator'),
+      name: 'chargingPileSimulator',
+      hidden: true,
+      meta: {
+        title: '充电桩模拟器',
+        icon: 'el-icon-setting',
+      }
     }]
   },
   {
