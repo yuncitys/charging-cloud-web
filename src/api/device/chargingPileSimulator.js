@@ -41,3 +41,14 @@ export function connectStatus(chargePointId) {
   	}
   })
 }
+
+export function trigger(data) {
+  return request({
+  	url: '/api/message/chargePileSimulator/trigger',
+  	method: 'post',
+  	headers: {
+  		"Content-Type": "application/json; charset=UTF-8",
+  	},
+  	data
+  })
+}
