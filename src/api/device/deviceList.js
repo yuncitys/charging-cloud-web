@@ -584,6 +584,16 @@ export function batchSetPower(data) {
 	})
 }
 
+export function saveOrUpdate(data) {
+  return request({
+  	url: '/api/web/device/saveOrUpdate',
+  	method: 'post',
+  	headers: {
+  		"Content-Type": "application/json; charset=UTF-8",
+  	},
+  	data
+  })
+}
 
 
 
