@@ -271,7 +271,7 @@
           <el-col :span="16" style="position: fixed; right: 20px; width: 48%;">
             <el-card style="height: 100%;">
               <div slot="header" class="clearfix">
-              	<span>交互日志，设备号:{{this.form.chargePointId}}</span>
+              	<span>交互日志，设备号：{{this.form.chargePointId}}</span>
               </div>
               <div class="commedBox">
               	<div v-for="(item,index) in CommandDetails" :key="index">
