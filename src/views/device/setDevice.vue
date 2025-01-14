@@ -608,9 +608,9 @@
           userId: 1,
         	deviceCode: this.deviceInfo.deviceCode,
         	port: parseInt(this.partIndex)  + 1,
-        	mod: 0,//手动定时
+        	mod: 1,//手动定时
         	value: this.time,
-          totalPrice: 1000
+          totalPrice: 100
         }
         console.log('开启单个端口', data)
         openDevice(data).then(res => {
