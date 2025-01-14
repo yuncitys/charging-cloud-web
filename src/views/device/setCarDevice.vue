@@ -454,7 +454,7 @@
 					port: this.partIndex + 1,
 					mod: 1,//手动定时
 					value: this.time,
-          totalPrice: 1000
+          totalPrice: 100
 				}
 				openDevice(data).then(res => {
 					if (res.code === 200) {
