@@ -1,10 +1,8 @@
 <template>
 	<el-row :gutter="40" class="panel-group">
 		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col " v-if="roleId <= 3">
-			<div class="card-panel borRadduis10" @click="handleSetLineChartData('newVisitis')">
-				<div class="card-panel-icon-wrapper icon-people">
-					<svg-icon icon-class="peoples" class-name="card-panel-icon" />
-				</div>
+			<div class="card-panel borRadduis15 user-panel-color" @click="handleSetLineChartData('newVisitis')">
+				<div class="panel-img user-panel-img"></div>
 				<div class="card-panel-description">
 					<div class="card-panel-text">
 						用户数量
@@ -15,11 +13,9 @@
 			</div>
 		</el-col>
 		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
-			<div class="card-panel borRadduis10" @click="handleSetLineChartData('messages')">
-				<div class="card-panel-icon-wrapper icon-message">
-					<svg-icon icon-class="message" class-name="card-panel-icon" />
-				</div>
-				<div class="card-panel-description">
+			<div class="card-panel borRadduis15 device-panel-color" @click="handleSetLineChartData('messages')">
+        <div class="device-panel-img panel-img"></div>
+        <div class="card-panel-description">
 					<div class="card-panel-text">
 						设备总数
 					</div>
@@ -29,11 +25,9 @@
 			</div>
 		</el-col>
 		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
-			<div class="card-panel borRadduis10" @click="handleSetLineChartData('purchases')">
-				<div class="card-panel-icon-wrapper icon-money">
-					<svg-icon icon-class="money" class-name="card-panel-icon" />
-				</div>
-				<div class="card-panel-description">
+			<div class="card-panel borRadduis15 trade-panel-color" @click="handleSetLineChartData('purchases')">
+        <div class="trade-panel-img panel-img"></div>
+        <div class="card-panel-description">
 					<div class="card-panel-text">
 						交易额
 					</div>
@@ -43,11 +37,9 @@
 			</div>
 		</el-col>
 		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
-			<div class="card-panel borRadduis10" @click="handleSetLineChartData('shoppings')">
-				<div class="card-panel-icon-wrapper icon-shopping">
-					<svg-icon icon-class="shopping" class-name="card-panel-icon" />
-				</div>
-				<div class="card-panel-description">
+			<div class="card-panel borRadduis15 order-panel-color" @click="handleSetLineChartData('shoppings')">
+        <div class="order-panel-img panel-img"></div>
+        <div class="card-panel-description">
 					<div class="card-panel-text">
 						总订单
 					</div>
@@ -98,17 +90,50 @@
 		.card-panel-col {
 			margin-bottom: 32px;
 		}
-
+    .user-panel-color{
+      background-color: #15c350;
+    }
+    .panel-img{
+      width: 80px;
+      height: 80px;
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
+    .user-panel-img{
+      background: url(../../../../assets/home-panel/user-panel.png) no-repeat;
+      background-size: 100% 100%;
+    }
+    .device-panel-color{
+      background-color: rgb(7, 120, 246);
+    }
+    .device-panel-img{
+      background: url(../../../../assets/home-panel/device-panel.png) no-repeat;
+      background-size: 100% 100%;
+    }
+    .trade-panel-color{
+      background-color: rgb(2, 193, 255);
+    }
+    .trade-panel-img{
+      background: url(../../../../assets/home-panel/trade-panel.png) no-repeat;
+      background-size: 100% 100%;
+    }
+    .order-panel-color{
+      background-color: rgb(124, 126, 255);
+    }
+    .order-panel-img{
+      background: url(../../../../assets/home-panel/order-panel.png) no-repeat;
+      background-size: 100% 100%;
+    }
 		.card-panel {
-			height: 108px;
-			cursor: pointer;
-			font-size: 12px;
-			position: relative;
-			overflow: hidden;
-			color: #666;
-			background: #fff;
-			box-shadow: 4px 4px 40px rgba(0, 0, 0, .05);
-			border-color: rgba(0, 0, 0, .05);
+      height: 108px;
+      cursor: pointer;
+      font-size: 12px;
+      position: relative;
+      overflow: hidden;
+      color: #ffffff;
+      box-shadow: 4px 4px 40px rgba(0, 0, 0, .05);
+      border-color: rgb(149 255 189 / 5%);
 
 			&:hover {
 				.card-panel-icon-wrapper {
@@ -162,20 +187,21 @@
 			}
 
 			.card-panel-description {
-				float: right;
+				float: left;
 				font-weight: bold;
 				margin: 26px;
-				margin-left: 0px;
+				margin-left: 59px;
 
 				.card-panel-text {
 					line-height: 18px;
-					color: rgba(0, 0, 0, 0.45);
+					color: white;
 					font-size: 16px;
+          font-weight: bolder;
 					margin-bottom: 12px;
 				}
 
 				.card-panel-num {
-					font-size: 20px;
+					font-size: 30px;
 				}
 			}
 		}
