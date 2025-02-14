@@ -858,6 +858,34 @@ export const constantRoutes = [{
     }, ]
   },
   {
+    path: '/interconnection',
+    component: Layout,
+    redirect: '/organizationList',
+    alwaysShow: true, // will always show the root menu
+    name: 'organization',
+    meta: {
+      title: '互联互通',
+      icon: 'peoples',
+    },
+    children: [{
+      path: 'organizationList',
+      component: () => import('@/views/interconnection/organizationList'),
+      name: 'organizationList',
+      meta: {
+        title: '互联客户管理',
+        icon: 'el-icon-s-check',
+      }
+    }, {
+      path: 'pushConfigList',
+      component: () => import('@/views/interconnection/pushConfigList'),
+      name: 'pushConfigList',
+      meta: {
+        title: '互联推送管理',
+        icon: 'el-icon-s-check',
+      }
+    }]
+  },
+  {
     path: '*',
     redirect: '/404',
     hidden: true
