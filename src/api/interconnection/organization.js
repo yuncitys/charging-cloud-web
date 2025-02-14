@@ -1,0 +1,45 @@
+import request from '@/utils/request'
+
+//设备列表
+export function getOrganizeList(data) {
+	return request({
+		url: '/api/web/interconnection/organizeList',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
+export function addOrganize(data) {
+	return request({
+		url: '/api/web/interconnection/addOrganize',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/json; charset=UTF-8",
+		},
+		data
+	})
+}
+
+export function updateOrganize(data) {
+	return request({
+		url: '/api/web/interconnection/updateOrganize',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/json; charset=UTF-8",
+		},
+		data
+	})
+}
