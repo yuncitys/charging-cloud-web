@@ -876,9 +876,9 @@ export const constantRoutes = [{
         icon: 'el-icon-s-check',
       }
     }, {
-      path: 'pushConfigList',
-      component: () => import('@/views/interconnection/pushConfigList'),
-      name: 'pushConfigList',
+      path: 'organizationSecretKeyList',
+      component: () => import('@/views/interconnection/organizationSecretKeyList'),
+      name: 'organizationSecretKeyList',
       meta: {
         title: '互联推送管理',
         icon: 'el-icon-s-check',
