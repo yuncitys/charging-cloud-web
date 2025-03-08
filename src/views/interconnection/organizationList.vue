@@ -54,11 +54,12 @@
 						<span>{{ scope.row.updateTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="200">
+				<el-table-column label="操作" align="center" width="230">
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: center;align-items: center;">
-							<!-- 编辑 -->
-							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row)">编辑</el-button>
+							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)">编辑</el-button>
+							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
+							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)">删除</el-button>
 						</div>
 					</template>
 				</el-table-column>
@@ -96,7 +97,12 @@
 				total: 10,
 				listQuery: {
 					page: 1,
-					limit: 10
+					limit: 10,
+					organizationName: '',
+					administratorName: '',
+					administratorPhone: '',
+					companyName: '',
+					socialCreditCode: ''
 				},
 				tableKey: 0,
 			}
@@ -123,7 +129,7 @@
 					}
 				})
 			},
-			delete(id) {
+			handleDelete(id) {
 				this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
 					confirmButtonText: '是',
 					cancelButtonText: '否',
@@ -158,10 +164,11 @@
 				this.listQuery.page = 1
 				this.getOrganizeList()
 			},
-			addOrUpdateHandle(row) {
+			addOrUpdateHandle(row,isDetail) {
 				this.formVisible = true
 				this.$nextTick(() => {
-				this.$refs.organizationForm.openDialog(row)})
+					this.$refs.organizationForm.openDialog(row,isDetail)
+				})
       		},
 			refresh(isrRefresh) {
 				this.formVisible = false
