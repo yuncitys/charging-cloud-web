@@ -103,7 +103,7 @@
             },
             filterNode(value, data) {
                 if (!value) return true;
-                return data.label.includes(value);
+                return data.networkName.includes(value);
             },
             filterTree() {
                 this.$refs.stationTree.filter(this.searchKey);
@@ -127,8 +127,8 @@
             handleSubmit() {
                 this.$refs.form.validate(valid => {
                     if (valid) {
-                    console.log("提交数据:", this.formData);
-                    this.visible = false;
+                        console.log("提交数据:", this.formData);
+                        this.visible = false;
                     }
                 });
             },
