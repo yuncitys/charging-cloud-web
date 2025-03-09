@@ -159,17 +159,18 @@ import { title } from '@/settings';
       openDialog(formData,isDetail) {
         this.dialogVisible = true;
         if(formData == null){
-          // this.isEdit = false
+          this.isEdit = false
           this.isDetail = false
           this.title = '新增'
         } else if (!isDetail) {
-          // this.isEdit = true
+          this.isEdit = true
           this.title = '编辑'
           this.isDetail = false
           this.form = formData
         } else {
           this.title = '详情'
           this.isDetail = true
+          this.isEdit = false
           this.form = formData
         }
       },
