@@ -264,7 +264,8 @@
 					page: 1,
 					limit: 10,
 					ruleId: 1,
-          chargingStationIds: ''
+          			chargingStationIds: '',
+					devicePurpose: 'DIRECT_CONNECTION'
 				},
         dealerList: [],
         chargingStationList: [],

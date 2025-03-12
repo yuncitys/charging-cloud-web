@@ -340,10 +340,11 @@
 					deviceStatus: '',
 					activateStatus: '',
 					dealerId: '',
-          allocationStatus: 0,
+          			allocationStatus: 0,
 					page: 1,
 					limit: 10,
-					ruleId: 1
+					ruleId: 1,
+					devicePurpose: 'DIRECT_CONNECTION'
 				},
 				formThead: {
 					deviceCode: true,

@@ -401,14 +401,15 @@
 					page: 1,
 					limit: 10,
 					ruleId: 1,
-          chargingStationIds: ''
+          			chargingStationIds: '',
+					devicePurpose: 'DIRECT_CONNECTION'
 				},
 				formThead: {
 					deviceCode: true,
 					deviceTypeName: true,
 					deviceSignal: true,
 					deviceVersion: true,
-          deviceSim: true,
+          			deviceSim: true,
 					deviceImei: true,
 					allocationStatus: false,
 					networkName: true,
