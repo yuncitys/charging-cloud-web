@@ -49,8 +49,10 @@
         			:value="item.id" />
         	</el-select>
         </el-form-item>
-        <el-form-item :label="'总功率/W'" prop="deviceTotalPower">
-        	<el-input v-model="addDeviceData.deviceTotalPower" clearable placeholder="请输入总设备功率" />
+        <el-form-item :label="'总功率'" prop="deviceTotalPower">
+        	<el-input v-model="addDeviceData.deviceTotalPower" clearable placeholder="请输入总设备功率">
+				<template slot="append">W</template>
+			</el-input>
         </el-form-item>
 				<!-- <el-form-item :label="'设备版本'" prop="deviceVersion" v-if="addDeviceData.ruleId == 1">
 					<el-input v-model="addDeviceData.deviceVersion" clearable placeholder="请输入设备版本" />
