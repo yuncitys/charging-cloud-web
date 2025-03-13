@@ -11,7 +11,7 @@
               <!-- <img src="../../../assets/logo.png" class="logoImg" v-else/> -->
             </div>
             <div class="logoText">
-              {{logoData.TITLE ? logoData.TITLE : '智能充电运营管理平台'}}
+              {{logoData.TITLE ? logoData.TITLE : '智慧充电运营平台'}}
             </div>
           </div>
         </div>
