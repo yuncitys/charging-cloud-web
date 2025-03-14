@@ -23,11 +23,25 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
-        <el-form-item :label="'设备号长度'" prop="digit">
-        	<el-select v-model="configData.digit" placeholder="请选择设备号长度" style="width: 100%;">
+        <el-form-item :label="'编号长度'" prop="length">
+        	<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
         		<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
         			:disabled="item.disabled">
         		</el-option>
+        	</el-select>
+        </el-form-item>
+		<el-form-item label="计费规则" prop="deviceChagePattern" v-if="configData.ruleId === 1">
+        	<el-radio-group v-model="configData.deviceChagePattern" @change="changeChagePattern">
+        		<el-radio :label="0">时间</el-radio>
+        		<el-radio :label="1">电量</el-radio>
+        		<el-radio :label="2">功率</el-radio>
+        	</el-radio-group>
+        </el-form-item>
+        <el-form-item :label="'收费方案'" prop="devicePriceId">
+        	<el-select v-model="configData.devicePriceId" class="filter-item" placeholder="请选择收费方案"
+        		clearable style="width: 100%">
+        		<el-option v-for="item in devicePriceList" :key="item.id" :label="item.feeName"
+        			:value="item.id" />
         	</el-select>
         </el-form-item>
         <el-form-item :label="'运营商'" prop="adminId">
@@ -106,13 +120,15 @@
 				showConfig: false,
 				loading: false,
 				configData: {
-          digit: '',
+					length: '',
 					number: '',
 					deviceTypeId: '',
-          adminId: '',
+					deviceChagePattern: 0,
+					devicePriceId: '',
+					adminId: '',
 					ruleId: 1
 				},
-        domainName: '',
+        		domainName: '',
 				configrules: {
 					number: [{
 						required: true,
@@ -127,45 +143,84 @@
 						message: '请选择端口数',
 						trigger: 'blur',
 					}],
+					deviceChagePattern: [{
+						required: true,
+						message: '请选择计费类型',
+						trigger: 'blur',
+					}],
+					devicePriceId: [{
+						required: true,
+						message: '请选择计费规则',
+						trigger: 'blur',
+					}],
 					adminId: [{
 						required: true,
 						message: '请选择运营商',
 						trigger: 'blur',
 					}],
-          ruleId: [{
-          	required: true,
-          	message: '请选择产品',
-          	trigger: 'blur',
-          }],
-          digit: [{
+					ruleId: [{
+						required: true,
+						message: '请选择产品',
+						trigger: 'blur',
+					}],
+          			length: [{
 						required: true,
 						message: '请选择设备号长度',
 						trigger: 'blur',
 					}],
-				},
+					},
 				dectinoType: [],
-        operatorList: [],
-        digitData:[
-          {
-            id: 1,
-            value: 8,
-          },
-          {
-            id: 2,
-            value: 14,
-          },
-        ]
+				operatorList: [],
+				devicePriceList: [],
+				digitData:[
+					// {
+					// 	id: 1,
+					// 	value: 8,
+					// },
+					{
+						id: 2,
+						value: 14,
+					},
+				],
+				
 			}
 		},
 		mounted() {
 
 		},
 		methods: {
-      handleOptionClick(item) {
-        console.log('选中的值:', item);
-        // 在这里可以执行选中后的逻辑
-        this.domainName = item.domainName
-      },
+			handleOptionClick(item) {
+				console.log('选中的值:', item);
+				// 在这里可以执行选中后的逻辑
+				this.domainName = item.domainName
+			},
+			//选择收费类型
+			changeChagePattern(e) {
+				console.log(e)
+				this.configData.deviceChagePattern = e
+				this.configData.devicePriceId = ''
+				this.getDevicePriceByPriceType()
+			},
+			//获取方案列表
+			getDevicePriceByPriceType() {
+				let ruleId = this.configData.ruleId
+				let deviceChagePattern = this.configData.deviceChagePattern
+				if (parseInt(deviceChagePattern) == 3) {
+					deviceChagePattern = 2
+				}
+				if (this.configData.ruleId === 2) {
+					deviceChagePattern = 1
+				}
+				let data = {
+					priceType: deviceChagePattern,
+					ruleId: ruleId
+				}
+				findDevicePriceByPriceType(data).then(res => {
+					if (res.code == 200) {
+						this.devicePriceList = res.data || []
+					}
+				})
+     		},
 			getOperator() {
 				getOperator().then(res => {
 					if (res.code == 200) {
@@ -179,10 +234,13 @@
 				this.showConfig = true
 				this.getTypeListss()
 				this.getOperator()
+				this.getDevicePriceByPriceType()
 			},
 			ruleIdChange() {
-        this.configData.deviceTypeId = ''
+        		this.configData.deviceTypeId = ''
+				this.configData.devicePriceId = ''
 				this.getTypeListss()
+				this.getDevicePriceByPriceType()
 			},
 			getTypeListss() {
 				this.listLoading = true
