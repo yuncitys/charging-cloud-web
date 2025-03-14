@@ -17,19 +17,21 @@
             <el-card>
               <h3>连接设置</h3>
               <el-form ref="form" :model="form" label-width="150px">
-                <!-- OCPP Server -->
-                <el-form-item label="ChargePoint Server">
-                  <el-input v-model="form.chargePointServer"></el-input>
+                <!-- ChargePoint Server -->
+                <el-form-item label="连接地址">
+                  <el-input v-model="form.chargePointServer">
+                    <template slot="prepend">tcp://</template>
+                  </el-input>
                 </el-form-item>
 
                 <!-- ChargePoint ID -->
-                <el-form-item label="ChargePoint ID">
+                <el-form-item label="设备编号">
                   <el-input v-model="form.chargePointId"></el-input>
                 </el-form-item>
 
-                <!-- OCPP Version -->
-                <el-form-item label="ChargePoint Model">
-                  <el-select v-model="form.chargePointModel" placeholder="请选择" @change="changeType">
+                <!-- ChargePoint Model -->
+                <el-form-item label="设备型号">
+                  <el-select v-model="form.chargePointModel" placeholder="请选择型号" @change="changeType">
                     <el-option
                       v-for="item in chargePointModelOptions"
                       :key="item.value"
@@ -39,23 +41,25 @@
                   </el-select>
                 </el-form-item>
 
-                <!-- type -->
-                <el-form-item label="ChargePoint Type">
+                <!-- ChargePoint Type -->
+                <el-form-item label="设备类型">
                   <el-select v-model="form.chargingPointTypeId" placeholder="请选择类型">
                     <el-option v-for="item in chargingPointModels"
                     :key="item.deviceTypeId"
                     :label="item.deviceTypeName"
-                    :value="item.deviceTypeId" :disabled="showDeviceType"/>
+                    :value="item.deviceTypeId + ''" :disabled="showDeviceType"/>
                   </el-select>
                 </el-form-item>
 
-                <!-- Charge Point Version -->
-                <el-form-item label="ChargePoint Version">
-                  <el-input v-model="form.chargePointVersion" disabled></el-input>
+                <!-- ChargePoint Version -->
+                <el-form-item label="软件版本">
+                  <el-input v-model="form.chargePointVersion" disabled>
+                    <template slot="prepend">YKC</template>
+                  </el-input>
                 </el-form-item>
 
                 <!-- Firmware Version -->
-                <el-form-item label="Firmware Version">
+                <el-form-item label="固件版本">
                   <el-input v-model="form.firmwareVersion"></el-input>
                 </el-form-item>
 
@@ -96,7 +100,7 @@
 
                 <!-- 保存按钮 -->
                 <el-form-item>
-                  <el-button type="primary" @click="saveForm">Save</el-button>
+                  <el-button type="primary" @click="saveForm" v-if="!serverConnected">Save</el-button>
                 </el-form-item>
               </el-form>
             </el-card>
@@ -110,14 +114,15 @@
             <el-card>
               <el-form label-width="180px">
                 <!-- Server Status -->
-                <el-form-item label="Server Status:">
+                <el-form-item label="连接状态:">
                   <span :style="{ color: serverConnected ? 'green' : 'red' }">
-                    {{ serverConnected ? "Connected" : "Disconnected" }}
+                    <!-- {{ serverConnected ? "Connected" : "Disconnected" }} -->
+                    {{ serverConnected ? "已连接" : "未连接" }}
                   </span>
                 </el-form-item>
 
                 <!-- Charge Point Availability -->
-                <el-form-item label="Charge Point Availability:">
+                <el-form-item label="设备可用性:">
                   <el-select v-model="chargePointFrom.chargePointAvailability" placeholder="Select" disabled>
                     <el-option
                       v-for="item in availabilityOptions"
@@ -129,7 +134,7 @@
                 </el-form-item>
 
                 <!-- Charge Point Status -->
-                <el-form-item label="Charge Point Status:">
+                <el-form-item label="设备状态:">
                   <el-select v-model="chargePointFrom.chargePointStatus" placeholder="Select" @change="changeStatus">
                     <el-option
                       v-for="item in chargePointStatusOptions"
@@ -194,8 +199,8 @@
           <el-col :span="16">
             <el-card>
               <el-form label-width="180px">
-                <!-- Charge Point Availability -->
-                <el-form-item label="ConnectorAvailability:">
+                <!-- ConnectorAvailability -->
+                <el-form-item label="枪可用性:">
                   <el-select v-model="connector1From.connectorAvailability" placeholder="Select" disabled>
                     <el-option
                       v-for="item in availabilityOptions"
@@ -206,8 +211,8 @@
                   </el-select>
                 </el-form-item>
 
-                <!-- Charge Point Status -->
-                <el-form-item label="ConnectorStatus:">
+                <!-- ConnectorStatus -->
+                <el-form-item label="枪状态:">
                   <el-select v-model="connector1From.connectorStatus" placeholder="Select">
                     <el-option
                       v-for="item in statusOptions"
@@ -233,8 +238,8 @@
           <el-col :span="16">
             <el-card>
               <el-form label-width="180px">
-                <!-- Charge Point Availability -->
-                <el-form-item label="ConnectorAvailability:">
+                <!-- ConnectorAvailability -->
+                <el-form-item label="枪可用性:">
                   <el-select v-model="connector2From.connectorAvailability" placeholder="Select" disabled>
                     <el-option
                       v-for="item in availabilityOptions"
@@ -245,8 +250,8 @@
                   </el-select>
                 </el-form-item>
 
-                <!-- Charge Point Status -->
-                <el-form-item label="ConnectorStatus:">
+                <!-- ConnectorStatus -->
+                <el-form-item label="枪状态:">
                   <el-select v-model="connector2From.connectorStatus" placeholder="Select">
                     <el-option
                       v-for="item in statusOptions"
@@ -363,9 +368,9 @@
         form: {
           chargePointServer: "127.0.0.1:9000",
           chargePointId: "24102413849856",
-          chargePointModel: "1",
+          chargePointModel: 1,
           chargingPointTypeId: "",//设备类型
-          chargePointVersion: "1.6",
+          chargePointVersion: 1.6,
           firmwareVersion: "J1.9M107",
           chargePointVendor: "Elmo",
           rfidTag: "DEADBEEF",
@@ -397,17 +402,26 @@
         availabilityOptions: [
           { label: "Operative", value: "Operative" },
           { label: "Inoperative", value: "Inoperative" },
+          // { label: "有效的", value: "Operative" },
+          // { label: "无效的", value: "Inoperative" },
         ],
         chargePointStatusOptions: [
-          { label: "Available", value: 0 },
-          { label: "Unavailable", value: 1 },
-          { label: "Faulted", value: 2 },
+          // { label: "Available", value: 0 },
+          // { label: "Unavailable", value: 1 },
+          // { label: "Faulted", value: 2 },
+          { label: "可用", value: 0 },
+          { label: "不可用", value: 1 },
+          { label: "故障", value: 2 },
         ],
         statusOptions: [
-          { label: "Available", value: 0 },
-          { label: "Charging", value: 1 },
-          { label: "Unavailable", value: 2 },
-          { label: "Faulted", value: 3 },
+          // { label: "Available", value: 0 },
+          // { label: "Charging", value: 1 },
+          // { label: "Unavailable", value: 2 },
+          // { label: "Faulted", value: 3 },
+          { label: "空闲", value: 0 },
+          { label: "充电中", value: 1 },
+          { label: "不可用", value: 2 },
+          { label: "故障", value: 3 },
         ],
         contextOptions: [
           { label: "Sample.Periodic", value: "Sample.Periodic" },
@@ -418,8 +432,10 @@
           { label: "Energy.Export", value: "Energy.Export" },
         ],
         chargePointModelOptions: [
-          { label: "Direct Current", value: 1 },
-          { label: "Alternating Current", value: 0 },
+          // { label: "Direct Current", value: 1 },
+          // { label: "Alternating Current", value: 0 },
+          { label: "直流电", value: 1 },
+          { label: "交流电", value: 0 },
         ],
         chargingPointModels: [],
 
@@ -511,7 +527,8 @@
           deviceVersion: this.form.firmwareVersion,
           operationState: this.chargePointFrom.chargePointStatus,
           port1: this.connector1From.connectorStatus,
-          port2: this.connector2From.connectorStatus
+          port2: this.connector2From.connectorStatus,
+          devicePurpose: 'VIRTUAL_CONNECTION'
         }
         console.log("表单数据:", saveForm);
         saveOrUpdate(saveForm).then(res => {
@@ -562,10 +579,11 @@
               return;
             }
             this.serverConnected = res.data.connectStatus,
+            this.form.chargePointServer = res.data.chargePointServer
             this.form.chargePointId = res.data.chargePointId,
-            this.form.chargingPointTypeId = res.data.deviceTypeId,
-            this.form.chargePointModel = res.data.electricOut,
+            this.form.chargePointModel = parseInt(res.data.chargePointModel),
             this.form.firmwareVersion = res.data.firmwareVersion,
+            this.form.chargingPointTypeId = res.data.deviceTypeId,
             this.chargePointFrom.chargePointStatus = res.data.chargePointStatus,
             this.connector1From.connectorStatus =  res.data.port1,
             this.connector2From.connectorStatus =  res.data.port2
@@ -611,8 +629,8 @@
       },
       //WebSocket连接
       stompConnection() {
-        //线下
-        //let sockJS = new SockJS(`${process.env.VUE_APP_BASE_API}/api/message/websocket`);
+        // 线下
+        // let sockJS = new SockJS(`${process.env.VUE_APP_BASE_API}/api/message/websocket`);
       	// 线上
       	let sockJS = new SockJS(`/api/message/websocket`);
       	this.StompClient = Stomp.over(sockJS);
@@ -689,6 +707,12 @@
       }
     },
     created() {
+      //获取跳转路由数据
+      let deviceId = this.$route.query.id
+			let deviceCode = this.$route.query.deviceCode
+      this.form.chargePointId = deviceCode
+			console.log(deviceId, deviceCode)
+      
       //获取设备类型
       this.getDeviceTypeModels()
       //获取设备类型
@@ -697,7 +721,7 @@
       this.initConnectStatus();
     },
     destroyed() {
-    	this.disconnect();
+    	// this.disconnect();
       this.stompDisconnect();
       clearInterval(this.WebSocketInterVal)
     	clearInterval(this.ConnectStatusInterVal)
