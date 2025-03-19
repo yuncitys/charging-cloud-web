@@ -7,48 +7,53 @@
 				placeholder="请选择设备状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()" placeholder="请选择代理商">
-          <el-option
-            v-for="item in dealerList"
-            :key="item.id"
-            :label="item.adminFullname"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()" placeholder="请选择代理商">
+				<el-option
+					v-for="item in dealerList"
+					:key="item.id"
+					:label="item.adminFullname"
+					:value="item.id">
+				</el-option>
+			</el-select>
 
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
-        查询
-      </el-button>
+				查询
+			</el-button>
 
 			<div style="margin: 15px 0;">
 				<addPage @getLists="getLists" />
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item"
 					@click="onbatchDevicePutState"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchPutDevice')">
-          批量入库
+          			批量入库
 				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onBatchSetPower'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchSetPower')">
-          批量设置设备参数
+          			批量设置设备参数
 				</el-button>
-        <!-- 收费标准 -->
-        <el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='batchAddDevicePrice'
-        	v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allCharge')">
-          批量设置收费方案
-        </el-button>
-        <!-- 导出配置 -->
-        <device-config @getLists="getLists" />
+				<!-- 收费标准 -->
+				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='batchAddDevicePrice'
+					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allCharge')">
+					批量设置收费方案
+				</el-button>
+				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleDownload"
+					:loading="downloadLoading" icon="el-icon-download">模板下载
+				</el-button>
+				<!-- 批量导入设备 -->
+				<batchAddDevice @getLists="getLists" />
+				<!-- 导出配置 -->
+				<device-config @getLists="getLists" />
 				<!--导出Excel  -->
 				<downExcel :queryData="listQuery" />
 			</div>
 
 			<el-tabs v-model="activeName" type="card"  @tab-click="handleClick">
-        <el-tab-pane
-            v-for="(item, index) in ruleIdList"
-            :key="item.id"
-            :label="item.title"
-            :name="item.id">
-        </el-tab-pane>
+				<el-tab-pane
+					v-for="(item, index) in ruleIdList"
+					:key="item.id"
+					:label="item.title"
+					:name="item.id">
+				</el-tab-pane>
 			</el-tabs>
 
 			<div class="filter-container">
@@ -86,22 +91,22 @@
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-        		<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="deviceImei" label="imei号" v-if="formThead.deviceImei" align="center"
-        	:show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="deviceSim" label="sim号" v-if="formThead.deviceSim" align="center"
-        	:show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="deviceName" label="设备名称"  v-if="formThead.deviceName" align="center"
-        	:show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
+						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column prop="deviceImei" label="imei号" v-if="formThead.deviceImei" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="deviceSim" label="sim号" v-if="formThead.deviceSim" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="deviceName" label="设备名称"  v-if="formThead.deviceName" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -119,13 +124,13 @@
 				<el-table-column prop="feeName" label="计费标准" v-if="formThead.feeName" align="center"
 					:show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-        		<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
+						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
@@ -138,23 +143,23 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="adminId" label="代理商" v-if="formThead.adminId" align="center" width="120">
-        	<template slot-scope="scope">
-        		<div v-if="scope.row.adminId">
-        			<deviceAdmin :row_data="scope.row"></deviceAdmin>
-        		</div>
-        		<div v-else>
-        			未分配代理商
-        		</div>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="adminId" label="代理商" v-if="formThead.adminId" align="center" width="120">
+					<template slot-scope="scope">
+						<div v-if="scope.row.adminId">
+							<deviceAdmin :row_data="scope.row"></deviceAdmin>
+						</div>
+						<div v-else>
+							未分配代理商
+						</div>
+					</template>
+				</el-table-column>
 				<el-table-column label="操作" align="center" width="350">
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: space-around;">
 							<div>
 								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')">
 									<el-button type="danger" @click="del(scope.row.id)" size='mini'>
-                    删除
+                    					删除
 									</el-button>
 								</div>
 								<div class="top10">
@@ -285,8 +290,8 @@
 		updateDeviceStatus,
 		operationDevice,
 		batchDevicePutState,
-    setDeviceChargeModel,
-    batchSetDeviceChargeModel
+    	setDeviceChargeModel,
+    	batchSetDeviceChargeModel
 	} from '@/api/device/deviceList.js'
 
 	import {
@@ -303,6 +308,7 @@
 	import deviceAdmin from './components/deviceAdmin.vue'
 	import editDeviceType from './components/editDeviceType.vue'
 	import batchPower from './components/batchPower.vue'
+	import batchAddDevice from './components/batchAddDevice.vue'
 	export default {
 		components: {
 			wxCode,
@@ -314,19 +320,20 @@
 			deviceBind,
 			deviceAdmin,
 			editDeviceType,
-			batchPower
+			batchPower,
+			batchAddDevice
 		},
 		name: 'undeviceList',
 		data() {
 			return {
-        activeName: '1',
-        ruleIdList: [{
-        	id: '1',
-        	title: '单车'
-        }, {
-        	id: '2',
-        	title: '汽车'
-        }],
+				activeName: '1',
+				ruleIdList: [{
+					id: '1',
+					title: '单车'
+				}, {
+					id: '2',
+					title: '汽车'
+				}],
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -382,8 +389,8 @@
 					}],
 				},
 				ids: '',
-        priceTypeDialog: '',
-        deviceChagePattern: 0,
+				priceTypeDialog: '',
+				deviceChagePattern: 0,
 				//设置收费方案
 				showPriceType: false,
 				PriceType: {
@@ -399,6 +406,7 @@
 				},
 				deviceCodes: '',
 				ruleId: 1,
+				downloadLoading: false
 			}
 		},
 		filters: {
@@ -419,11 +427,24 @@
 			})
 		},
 		methods: {
+			//模板下载
+			handleDownload() {
+				import('@/vendor/Export2Excel').then(excel => {
+					const tHeader = ['设备编号', '设备IMEI', '设备名称', '设备功率']
+					const data = []
+					excel.export_json_to_excel({
+						header: tHeader,
+						data,
+						filename: '设备导入模板'
+					})
+					this.downloadLoading = false
+				})
+			},
 			//切换导航
 			handleClick(tab, event) {
 				this.listQuery.ruleId = tab.name
-        this.listQuery.page = 1,
-        this.listQuery.limit = 10,
+				this.listQuery.page = 1,
+				this.listQuery.limit = 10,
 				this.getLists()
 			},
 			//批量入库
@@ -559,11 +580,11 @@
 					this.$message.error("请选择要设置收费方案的设备")
 					return false
 				}
-        let deviceArray =  this.deviceCodes.split(",");
-        if (deviceArray.length > 30){
-          this.$message.error("单次下发最大支持30个设备")
-          return false
-        }
+				let deviceArray =  this.deviceCodes.split(",");
+				if (deviceArray.length > 30){
+				this.$message.error("单次下发最大支持30个设备")
+				return false
+				}
 				this.showPriceTypes = true
 				this.PriceTypes.devicePriceId = ''
 				this.PriceTypes.deviceCodes = this.deviceCodes
@@ -585,29 +606,29 @@
 					ruleId: this.ruleId
 				}
 				console.log(data)
-        if (this.ruleId === 1) {
-          batchAddDevicePrice(data).then(res => {
-          	if (res.code == 200) {
-          		this.showPriceTypes = false
-          		this.resetForm(formName)
-          		this.$message.success(res.msg)
-          		this.getLists()
-          	} else {
-          		this.$message.error(res.msg)
-          	}
-          })
-        }else if(this.ruleId === 2){
-          batchSetDeviceChargeModel(data).then(res => {
-          	if (res.code == 200) {
-          		this.showPriceTypes = false
-          		this.resetForm(formName)
-          		this.$message.success(res.msg)
-          		this.getLists()
-          	} else {
-          		this.$message.error(res.msg)
-          	}
-          })
-        }
+				if (this.ruleId === 1) {
+				batchAddDevicePrice(data).then(res => {
+					if (res.code == 200) {
+						this.showPriceTypes = false
+						this.resetForm(formName)
+						this.$message.success(res.msg)
+						this.getLists()
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+				}else if(this.ruleId === 2){
+				batchSetDeviceChargeModel(data).then(res => {
+					if (res.code == 200) {
+						this.showPriceTypes = false
+						this.resetForm(formName)
+						this.$message.success(res.msg)
+						this.getLists()
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+				}
 			},
 			//显示收费方案
 			showonPriceType(item) {
@@ -630,35 +651,35 @@
 					this.$message.error("请选择要设置的收费方案")
 					return false
 				}
-        let data = {
-        	deviceCode: this.PriceType.deviceCode,
-        	devicePriceId: this.PriceType.devicePriceId,
-        	devicePriceType: this.deviceChagePattern,
-        	ruleId: this.ruleId
-        }
-        if(this.ruleId === 1){
-          addDevicePrice(data).then(res => {
-          	if (res.code == 200) {
-          		this.showPriceType = false
-          		this.resetForm(formName)
-          		this.$message.success(res.msg)
-          		this.getLists()
-          	} else {
-          		this.$message.error(res.msg)
-          	}
-          })
-        }else if (this.ruleId === 2){
-          setDeviceChargeModel(data).then(res => {
-          	if (res.code == 200) {
-          		this.showPriceType = false
-          		this.resetForm(formName)
-          		this.$message.success(res.msg)
-          		this.getLists()
-          	} else {
-          		this.$message.error(res.msg)
-          	}
-          })
-        }
+				let data = {
+					deviceCode: this.PriceType.deviceCode,
+					devicePriceId: this.PriceType.devicePriceId,
+					devicePriceType: this.deviceChagePattern,
+					ruleId: this.ruleId
+				}
+				if(this.ruleId === 1){
+					addDevicePrice(data).then(res => {
+						if (res.code == 200) {
+							this.showPriceType = false
+							this.resetForm(formName)
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+				}else if (this.ruleId === 2){
+					setDeviceChargeModel(data).then(res => {
+						if (res.code == 200) {
+							this.showPriceType = false
+							this.resetForm(formName)
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+				}
 			},
 			//选择收费类型
 			changeChagePattern(e) {
