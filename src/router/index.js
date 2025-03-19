@@ -281,6 +281,15 @@ export const constantRoutes = [{
         title: '充电桩模拟器',
         icon: 'el-icon-setting',
       }
+    }, {
+      path: 'virtualDeviceList',
+      component: () => import('@/views/device/virtualDeviceList'),
+      name: 'virtualDeviceList',
+      hidden: true,
+      meta: {
+        title: '虚拟设备',
+        icon: 'el-icon-setting',
+      }
     }]
   },
   {
