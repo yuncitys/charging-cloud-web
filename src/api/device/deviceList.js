@@ -287,16 +287,16 @@ export function downloadExcel(data) {
 }
 
 //设备导入
-export function uploadExcel(data) {
-	return request({
-		url: '/api/web/device/uploadDeviceExcel',
-		method: 'post',
-		headers: {
-			"Content-Type": "multipart/form-data",
-		},
-		data
-	})
-}
+// export function uploadExcel(data) {
+// 	return request({
+// 		url: '/api/web/device/uploadDeviceExcel',
+// 		method: 'post',
+// 		headers: {
+// 			"Content-Type": "multipart/form-data",
+// 		},
+// 		data
+// 	})
+// }
 
 // 添加收费方案
 export function addDevicePrice(data) {
@@ -866,5 +866,35 @@ export function restartDevice(data) {
 			}
 		],
 		data
+	})
+}
+
+//上传文件
+export function uploadExcel(data) {
+	return request({
+		url: '/api/web/device/Upload',
+		method: 'post',
+		headers: {
+			"Content-Type": "multipart/form-data",
+		},
+		data: data
+	})
+}
+
+//导入预览
+export function importPreview(data) {
+	return request({
+	  url: `/api/web/device/ImportPreview`,
+	  method: 'get',
+	  params: data
+	})
+}
+
+//导入数据
+export function importData(data) {
+	return request({
+	  url: `/api/web/device/ImportData`,
+	  method: 'post',
+	  data: data
 	})
 }
