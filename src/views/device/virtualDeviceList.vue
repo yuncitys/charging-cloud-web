@@ -399,7 +399,7 @@
 		name: 'virtualDeviceList',
 		data() {
 			return {
-				activeName: '1',
+				activeName: '2',
 				ruleIdList: [{
 					id: '1',
 					title: '单车'
