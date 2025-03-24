@@ -153,6 +153,15 @@ export const constantRoutes = [{
           title: '用户趋势',
           icon: 'el-icon-s-check',
         }
+      },
+      {
+        path: 'businessStatisticsSix',
+        component: () => import('@/views/business/businessStatisticsSix'),
+        name: 'businessStatisticsSix',
+        meta: {
+          title: '分账汇总',
+          icon: 'el-icon-s-check',
+        }
       }
     ]
   },
