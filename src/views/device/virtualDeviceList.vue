@@ -423,7 +423,7 @@
 					// allocationStatus: 1,
 					page: 1,
 					limit: 10,
-					ruleId: 1,
+					ruleId: 2,
           			chargingStationIds: '',
 					devicePurpose: 'VIRTUAL_CONNECTION'
 				},
