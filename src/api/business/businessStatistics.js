@@ -264,7 +264,7 @@ export function chargingUserTradingSingle(data) {
 }
 
 
-// 用户充电趋势
+// 用户充电明细
 export function chargingUserChargeSingle(data) {
   return request({
     url: '/api/web/reports/chargingUserChargeSingle',
@@ -287,7 +287,7 @@ export function chargingUserChargeSingle(data) {
 }
 
 
-// 用户充电趋势
+// 用户充电汇总
 export function chargingUserChargeSection(data) {
   return request({
     url: '/api/web/reports/chargingUserChargeSection',
@@ -331,3 +331,70 @@ export function chargingUserChargeCurve(data) {
   })
 }
 
+
+// 分账明细
+export function chargingOrderSplitSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingOrderSplitSingle',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
+
+// 分账汇总
+export function chargingOrderSplitSection(data) {
+  return request({
+    url: '/api/web/reports/chargingOrderSplitSection',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
+// 分账趋势
+export function chargingOrderSplitCurve(data) {
+  return request({
+    url: '/api/web/reports/chargingOrderSplitCurve',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
