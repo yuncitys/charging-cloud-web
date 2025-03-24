@@ -139,7 +139,7 @@
       </el-table>
       <div class="pagination-container">
       	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
-      		:total="chargingUserChargingSingleTotal" background layout="total, sizes, prev, pager, next, jumper"
+      		:total="chargingUserChargingSectionTotal" background layout="total, sizes, prev, pager, next, jumper"
       		@size-change="handleSizeChange2" @current-change="handleCurrentChange2" />
       </div>
     </div>
