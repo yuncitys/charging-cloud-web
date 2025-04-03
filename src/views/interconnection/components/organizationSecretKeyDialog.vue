@@ -1,76 +1,73 @@
 <template>
-    <div>
-      <el-dialog :title="title" :visible.sync="dialogVisible" width="50%">
-        <div style="width: 100%; height:100px;">
-          <el-steps :active="currentStep" align-center>
-            <el-step title="互联客户密钥"></el-step>
-            <el-step title="运营商密钥"></el-step>
-          </el-steps>
-        </div>
-  
+  <div>
+    <el-dialog :title="title" :visible.sync="dialogVisible" width="50%">
+      <div style="width: 100%; height:100px;">
+        <el-steps :active="currentStep" align-center>
+          <el-step title="互联客户密钥"></el-step>
+          <el-step title="运营商密钥"></el-step>
+        </el-steps>
+      </div>
+
+      <el-form :model="form" ref="form" label-width="120px" label-position="left" style="width: 600px; margin-left:80px;">
         <div v-if="currentStep === 1">
-          <el-form :model="form" label-width="100px" label-position="left" style="width: 600px; margin-left:80px;">
-            <el-form-item label="互联机构" required>
-                <el-select style="width: 100%;" class="filter-item" v-model="form.organizationId" filterable clearable placeholder="请选择互联机构" :disabled = "isDetail">
-                    <el-option
-                        v-for="item in organizeList"
-                        :key='item.id'
-                        :label="item.organizationName"
-                        :value="item.id + ''">
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item label="机构密钥" required>
-              <el-input v-model="form.reqOperatorSecret" placeholder="请输入机构密钥" :disabled = "isDetail"></el-input>
-            </el-form-item>
-            <el-form-item label="签名密钥" required>
-              <el-input v-model="form.reqDataSecret" placeholder="请输入签名密钥" :disabled = "isDetail"></el-input>
-            </el-form-item>
-            <el-form-item label="初始化向量" required>
-              <el-input v-model="form.reqDataSecretIv" placeholder="请输入初始化向量" :disabled = "isDetail"></el-input>
-            </el-form-item>
-            <el-form-item label="消息密钥" required>
-              <el-input v-model="form.reqSigSecret" placeholder="请输入消息密钥" :disabled = "isDetail"></el-input>
-            </el-form-item>
-          </el-form>
+          <el-form-item label="互联机构" prop="organizationId" required>
+            <el-select style="width: 100%;" class="filter-item" v-model="form.organizationId" filterable clearable placeholder="请选择互联机构" :disabled = "isDetail">
+                <el-option
+                    v-for="item in organizeList"
+                    :key='item.id'
+                    :label="item.organizationName"
+                    :value="item.id + ''">
+                </el-option>
+            </el-select>
+          </el-form-item>
+          <el-form-item label="机构密钥" prop="reqOperatorSecret" required>
+            <el-input v-model="form.reqOperatorSecret" placeholder="请输入机构密钥" :disabled = "isDetail"></el-input>
+          </el-form-item>
+          <el-form-item label="签名密钥" prop="reqDataSecret" required>
+            <el-input v-model="form.reqDataSecret" placeholder="请输入签名密钥" :disabled = "isDetail"></el-input>
+          </el-form-item>
+          <el-form-item label="初始化向量" prop="reqDataSecretIv" required>
+            <el-input v-model="form.reqDataSecretIv" placeholder="请输入初始化向量" :disabled = "isDetail"></el-input>
+          </el-form-item>
+          <el-form-item label="消息密钥" prop="reqSigSecret" required>
+            <el-input v-model="form.reqSigSecret" placeholder="请输入消息密钥" :disabled = "isDetail"></el-input>
+          </el-form-item>
         </div>
-        
         <div v-if="currentStep === 2">
-          <el-form :model="form" label-width="120px" label-position="left"  style="width: 600px; margin-left:80px;">
-            <el-form-item label="推送方" required>
-                <el-select style="width: 100%;" class="filter-item" v-model="form.operatorId" filterable clearable placeholder="请选择推送方" :disabled = "isDetail">
-                    <el-option
-                        v-for="item in operatorList"
-                        :key="item.id"
-                        :label="item.adminFullname"
-                        :value="item.id + ''">
-                    </el-option>
-                </el-select>
-            </el-form-item>
-            <el-form-item label="推送方密钥" required>
-              <el-input v-model="form.resOperatorSecret" placeholder="请输入机构密钥" :disabled = "isDetail"></el-input>
-            </el-form-item>
-            <el-form-item label="签名密钥" required>
-              <el-input v-model="form.resDataSecret" placeholder="请输入签名密钥" :disabled = "isDetail"></el-input>
-            </el-form-item>
-            <el-form-item label="初始化向量" required>
-              <el-input v-model="form.resDataSecretIv" placeholder="请输入初始化向量" :disabled = "isDetail"></el-input>
-            </el-form-item>
-            <el-form-item label="消息密钥" required>
-              <el-input v-model="form.resSigSecret" placeholder="请输入消息密钥" :disabled = "isDetail"></el-input>
-            </el-form-item>
-          </el-form>
+          <el-form-item label="推送方" prop="operatorId" required>
+              <el-select style="width: 100%;" class="filter-item" v-model="form.operatorId" filterable clearable placeholder="请选择推送方" :disabled = "isDetail">
+                  <el-option
+                      v-for="item in operatorList"
+                      :key="item.id"
+                      :label="item.adminFullname"
+                      :value="item.id + ''">
+                  </el-option>
+              </el-select>
+          </el-form-item>
+          <el-form-item label="推送方密钥" prop="resOperatorSecret" required>
+            <el-input v-model="form.resOperatorSecret" placeholder="请输入机构密钥" :disabled = "isDetail"></el-input>
+          </el-form-item>
+          <el-form-item label="签名密钥" prop="resDataSecret" required>
+            <el-input v-model="form.resDataSecret" placeholder="请输入签名密钥" :disabled = "isDetail"></el-input>
+          </el-form-item>
+          <el-form-item label="初始化向量" prop="resDataSecretIv" required>
+            <el-input v-model="form.resDataSecretIv" placeholder="请输入初始化向量" :disabled = "isDetail"></el-input>
+          </el-form-item>
+          <el-form-item label="消息密钥" prop="resSigSecret" required>
+            <el-input v-model="form.resSigSecret" placeholder="请输入消息密钥" :disabled = "isDetail"></el-input>
+          </el-form-item>
         </div>
-        
-        <span slot="footer" class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button v-if="currentStep > 1" @click="prevStep">上一步</el-button>
-          <el-button v-if="currentStep < 2" type="primary" @click="nextStep">下一步</el-button>
-          <el-button v-if="currentStep === 2 && !isDetail" type="primary" @click="saveOrUpdate">保存</el-button>
-        </span>
-      </el-dialog>
-    </div>
-  </template>
+      </el-form>
+      
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button v-if="currentStep > 1" @click="prevStep">上一步</el-button>
+        <el-button v-if="currentStep < 2" type="primary" @click="nextStep">下一步</el-button>
+        <el-button v-if="currentStep === 2 && !isDetail" type="primary" @click="saveOrUpdate">保存</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
     
   <script>
     import {

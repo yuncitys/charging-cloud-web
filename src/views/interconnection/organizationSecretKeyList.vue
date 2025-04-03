@@ -38,7 +38,7 @@
 				<el-table-column label="操作" align="center" width="310">
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: center;align-items: center;">
-							<el-button type="primary" size = "mini" @click="chareStationPushHandle(scope.row)">站点推送</el-button>
+							<!-- <el-button type="primary" size = "mini" @click="chareStationPushHandle(scope.row)">站点推送</el-button> -->
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)">编辑</el-button>
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
 							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)">删除</el-button>
