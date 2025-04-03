@@ -10,100 +10,96 @@
           <el-step title="推送配置"></el-step>
         </el-steps>
       </div>
+      <el-form :model="form" ref="form" label-width="120px" label-position="left" style="width: 600px; margin-left:80px;">
+        <div v-if="currentStep === 1">
+            <el-form-item label="机构名称" prop="organizationName" required>
+              <el-input v-model="form.organizationName" placeholder="请输入机构名称" :disabled = "isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="公司名称" prop="companyName" required>
+              <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled = "isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="信用代码" prop="socialCreditCode" required>
+              <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled = "isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="机构管理员" prop="administratorName" required>
+              <el-input v-model="form.administratorName" placeholder="请输入机构管理员" :disabled = "isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="联系方式" prop="administratorPhone"  required>
+              <el-input v-model="form.administratorPhone" placeholder="请输入联系方式" :disabled = "isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="启充金额" prop="startChargingMoney" required>
+              <el-input v-model="form.startChargingMoney" placeholder="请输入启充金额(两位小数)" :disabled = "isDetail">
+                <template slot="append">元</template>
+              </el-input>
+            </el-form-item>
+            <el-form-item label="停充金额" prop="stopChargedMoney" required>
+              <el-input v-model="form.stopChargedMoney" placeholder="请输入停充金额(两位小数)" :disabled = "isDetail">
+                <template slot="append">元</template>
+              </el-input>
+            </el-form-item>
+            <el-form-item label="机构类型" prop="organizationType" required>
+              <el-radio-group v-model="form.organizationType" :disabled = "isDetail">
+                <el-radio :label="0">流量平台</el-radio>
+                <el-radio :label="1">监管平台</el-radio>
+              </el-radio-group>
+            </el-form-item>
+        </div>
+        <div v-if="currentStep === 2">
+          <el-form-item label="接口URL" prop="apiUrl" required>
+              <el-input v-model="form.apiUrl" placeholder="请输入接口URL" :disabled = "isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="对账选择" prop="checkBillType" required>
+              <el-radio-group v-model="form.checkBillType" :disabled = "isDetail">
+                <el-radio :label="0">线下手动</el-radio>
+                <el-radio :label="1">线上推送</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="价格推送" prop="pushPriceType" required>
+              <el-radio-group v-model="form.pushPriceType" :disabled = "isDetail">
+                <el-radio :label="0">标准价</el-radio>
+                <el-radio :label="1">优惠价</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="电量小数" prop="electricDecimal" required>
+              <el-radio-group v-model="form.electricDecimal" :disabled = "isDetail">
+                <el-radio :label="2">两位</el-radio>
+                <el-radio :label="3">三位</el-radio>
+                <el-radio :label="4">四位</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="设备状态" prop="pushDeviceState" required>
+              <el-radio-group v-model="form.pushDeviceState" :disabled = "isDetail">
+                <el-radio :label="0">不推送</el-radio>
+                <el-radio :label="1">变位推送</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="启动充电推送" prop="pushStartCharge" required>
+              <el-radio-group v-model="form.pushStartCharge" :disabled = "isDetail">
+                <el-radio :label="0">不推送</el-radio>
+                <el-radio :label="1">推送</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="结束充电推送" prop="pushStopCharge" required>
+              <el-radio-group v-model="form.pushStopCharge" :disabled = "isDetail">
+                <el-radio :label="0">不推送</el-radio>
+                <el-radio :label="1">推送</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="实时数据" prop="pushRealTimeData" required>
+              <el-radio-group v-model="form.pushRealTimeData" :disabled = "isDetail">
+                <el-radio :label="0">不推送</el-radio>
+                <el-radio :label="1">推送</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="充电订单信息" prop="pushOrderInfo" required>
+              <el-radio-group v-model="form.pushOrderInfo" :disabled = "isDetail">
+                <el-radio :label="0">不推送</el-radio>
+                <el-radio :label="1">推送</el-radio>
+              </el-radio-group>
+            </el-form-item>
+        </div>
+      </el-form>
 
-      <div v-if="currentStep === 1">
-        <el-form :model="form" label-width="100px" label-position="left" style="width: 600px; margin-left:80px;">
-          <el-form-item label="机构名称" required>
-            <el-input v-model="form.organizationName" placeholder="请输入机构名称" :disabled = "isDetail"></el-input>
-          </el-form-item>
-          <el-form-item label="公司名称" required>
-            <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled = "isDetail"></el-input>
-          </el-form-item>
-          <el-form-item label="信用代码" required>
-            <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled = "isDetail"></el-input>
-          </el-form-item>
-          <el-form-item label="机构管理员" required>
-            <el-input v-model="form.administratorName" placeholder="请输入机构管理员" :disabled = "isDetail"></el-input>
-          </el-form-item>
-          <el-form-item label="联系方式" required>
-            <el-input v-model="form.administratorPhone" placeholder="请输入联系方式" :disabled = "isDetail"></el-input>
-          </el-form-item>
-          <el-form-item label="启充金额" required>
-            <el-input v-model="form.startChargingMoney" placeholder="请输入启充金额(两位小数)" :disabled = "isDetail">
-              <template slot="append">元</template>
-            </el-input>
-          </el-form-item>
-          <el-form-item label="停充金额" required>
-            <el-input v-model="form.stopChargedMoney" placeholder="请输入停充金额(两位小数)" :disabled = "isDetail">
-              <template slot="append">元</template>
-            </el-input>
-          </el-form-item>
-          <el-form-item label="机构类型" required>
-            <el-radio-group v-model="form.organizationType" :disabled = "isDetail">
-              <el-radio :label="0">流量平台</el-radio>
-              <el-radio :label="1">监管平台</el-radio>
-					  </el-radio-group>
-          </el-form-item>
-        </el-form>
-      </div>
-      
-      <div v-if="currentStep === 2">
-        <el-form :model="form" label-width="120px" label-position="left"  style="width: 600px; margin-left:80px;">
-          <el-form-item label="接口URL" required>
-            <el-input v-model="form.apiUrl" placeholder="请输入接口URL" :disabled = "isDetail"></el-input>
-          </el-form-item>
-          <el-form-item label="对账选择" required>
-            <el-radio-group v-model="form.checkBillType" :disabled = "isDetail">
-              <el-radio :label="0">线下手动</el-radio>
-              <el-radio :label="1">线上推送</el-radio>
-					  </el-radio-group>
-          </el-form-item>
-          <el-form-item label="价格推送" required>
-            <el-radio-group v-model="form.pushPriceType" :disabled = "isDetail">
-              <el-radio :label="0">标准价</el-radio>
-              <el-radio :label="1">优惠价</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="电量小数" required>
-            <el-radio-group v-model="form.electricDecimal" :disabled = "isDetail">
-              <el-radio :label="2">两位</el-radio>
-              <el-radio :label="3">三位</el-radio>
-              <el-radio :label="4">四位</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="设备状态" required>
-            <el-radio-group v-model="form.pushDeviceState" :disabled = "isDetail">
-              <el-radio :label="0">不推送</el-radio>
-              <el-radio :label="1">变位推送</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="启动充电推送" required>
-            <el-radio-group v-model="form.pushStartCharge" :disabled = "isDetail">
-              <el-radio :label="0">不推送</el-radio>
-              <el-radio :label="1">推送</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="结束充电推送" required>
-            <el-radio-group v-model="form.pushStopCharge" :disabled = "isDetail">
-              <el-radio :label="0">不推送</el-radio>
-              <el-radio :label="1">推送</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="实时数据" required>
-            <el-radio-group v-model="form.pushRealTimeData" :disabled = "isDetail">
-              <el-radio :label="0">不推送</el-radio>
-              <el-radio :label="1">推送</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="充电订单信息" required>
-            <el-radio-group v-model="form.pushOrderInfo" :disabled = "isDetail">
-              <el-radio :label="0">不推送</el-radio>
-              <el-radio :label="1">推送</el-radio>
-            </el-radio-group>
-          </el-form-item>
-        </el-form>
-      </div>
-      
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button v-if="currentStep > 1" @click="prevStep">上一步</el-button>
@@ -217,8 +213,10 @@ import { title } from '@/settings';
         addOrganize(data).then(res => {
         	if (res.code == 200) {
             this.dialogVisible = false;
-        		this.$message.success(res.msg)
+            this.currentStep = 1,
+            // this.$refs['form'].resetFields();
             this.$emit('getOrganizeList')
+            this.$message.success(res.msg)
         	} else {
             this.dialogVisible = true;
         		this.$message.error(res.msg)

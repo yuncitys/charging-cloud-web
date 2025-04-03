@@ -76,7 +76,8 @@
 
 <script>
 	import {
-		getOrganizeList
+		getOrganizeList,
+		deleteOrganize
 	} from '@/api/interconnection/organization.js'
 	import {
 		parseTime
@@ -135,11 +136,7 @@
 					cancelButtonText: '否',
 					type: 'warning'
 				}).then(() => {
-					let data = {
-						id
-					}
-					console.log(data)
-					deleteImageCarousel(data).then(res => {
+					deleteOrganize(id).then(res => {
 						if (res.code == 200) {
 							this.$message({
 								type: 'success',
