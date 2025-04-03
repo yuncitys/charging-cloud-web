@@ -24,6 +24,7 @@
 			<div style="margin: 15px 0;">
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 					icon="el-icon-search">查询</el-button>
+				<orderSplitDownExcel :queryData="listQuery" />
 			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -89,16 +90,17 @@
 	import {
 		getList,
 	} from '@/api/finance/orderSplitRecord.js'
-  import {
-    getAgent
-  } from '@/api/agent/agentList.js'
+	import {
+		getAgent
+	} from '@/api/agent/agentList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
+	import orderSplitDownExcel from './components/orderSplitDownExcel.vue'
 	export default {
 		name: 'orderSplitRecord',
 		components: {
-
+			orderSplitDownExcel
 		},
 		data() {
 			return {
@@ -110,9 +112,9 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-          status: '',
-          adminId: '',
-          orderCode: '',
+					status: '',
+					adminId: '',
+					orderCode: '',
 					createTimeStart: '',
 					createTimeEnd: ''
 				},
@@ -136,7 +138,7 @@
 				],
 
 				time: '',
-        dealerList: [],
+        		dealerList: [],
 			}
 		},
 		filters: {
@@ -195,20 +197,20 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-      findDealerList() {
-      	getAgent().then(res => {
-      		if (res.code == 200) {
-      			this.dealerList = res.data
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			findDealerList() {
+				getAgent().then(res => {
+					if (res.code == 200) {
+						this.dealerList = res.data
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 		},
 		created() {
-      this.listQuery.orderCode = this.$route.query.orderCode || ''
+			this.listQuery.orderCode = this.$route.query.orderCode || ''
 			this.getList()
-      this.findDealerList()
+			this.findDealerList()
 		},
 	}
 </script>
