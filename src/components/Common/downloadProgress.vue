@@ -13,15 +13,9 @@
 </template>
 
 <script>
-  import {
-    getTask
-  } from '@/api/task/task.js'
 	import {
-		parseTime,
-		numTime,
-		formatSeconds,
-		getNowTime
-	} from '@/utils/index'
+		getTask
+	} from '@/api/task/task.js'
 	export default {
 		data() {
 			return {
@@ -53,6 +47,7 @@
 				this.showDialog = false
 			},
 			open(taskId) {
+				console.log("打开下载进度框:",taskId)
 				this.showDialog = true
 				this.setInt = setInterval(() => {
 					this.getTask(taskId)
@@ -68,17 +63,17 @@
 						let result = res.data.result
 						if (result) {
 							if (this.percentage == 100) {
-                  clearInterval(this.setInt)
-                  setTimeout(() => {
-                    let a = document.createElement('a');
-                    a.href = this.Global.APIURl + res.data.result;
-                    // let time = getNowTime()
-                    // a.download = `订单列表${time}.xlsx`
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    this.close()
-                  }, 1000)
+								clearInterval(this.setInt)
+								setTimeout(() => {
+									let a = document.createElement('a');
+									a.href = this.Global.APIURl + res.data.result;
+									// let time = getNowTime()
+									// a.download = `订单列表${time}.xlsx`
+									document.body.appendChild(a);
+									a.click();
+									document.body.removeChild(a);
+									this.close()
+								}, 1000)
 							}
 						}
 					}
