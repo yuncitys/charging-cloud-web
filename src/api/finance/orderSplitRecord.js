@@ -21,7 +21,7 @@ export function getList(data) {
 	})
 }
 
-export function downloadExcel(data) {
+export function exportExcel(data) {
 	return request({
 		url: '/api/web/splitRecord/export',
 		method: 'post',
