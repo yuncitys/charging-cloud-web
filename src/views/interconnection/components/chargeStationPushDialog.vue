@@ -9,12 +9,12 @@
           <el-input v-model="formData.organizationType" disabled></el-input>
         </el-form-item>
   
-        <el-form-item label="电站维度">
+        <!-- <el-form-item label="电站维度">
           <el-radio-group v-model="formData.stationType">
             <el-radio :label="0">按电站</el-radio>
             <el-radio :label="1">全部电站</el-radio>
           </el-radio-group>
-        </el-form-item>
+        </el-form-item> -->
   
         <el-form-item label="选择电站" prop="selectedStations" v-if="formData.stationType === 0">
           <div class="station-select-box">
