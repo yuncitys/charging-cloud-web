@@ -429,15 +429,15 @@
 	}
 
 	.cardItem {
-    width: 22%;
-    padding-top: 20px;
-    padding-bottom: 20px;
-    padding-left: 20px;
-    border: 1px solid #ddffe3;
-    color: #0ab161;
-    margin: 5px 0;
-    border-radius: 10px;
-    background: #f8fffb;
+		width: 22%;
+		padding-top: 20px;
+		padding-bottom: 20px;
+		padding-left: 20px;
+		border: 1px solid #ddffe3;
+		color: #0ab161;
+		margin: 5px 0;
+		border-radius: 10px;
+		background: #f8fffb;
 	}
 
 	.cardText1 {
