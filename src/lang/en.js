@@ -62,7 +62,7 @@ export default {
     clipboardDemo: 'Clipboard',
     i18n: 'I18n',
     externalLink: 'External Link',
-    profile: 'Profile'
+    profile: 'Profile',
   },
   navbar: {
     dashboard: 'Dashboard',
@@ -70,7 +70,8 @@ export default {
     logOut: 'Log Out',
     profile: 'Profile',
     theme: 'Theme',
-    size: 'Global Size'
+    size: 'Global Size',
+    changePassword: 'Change Password'
   },
   login: {
     title: 'Login Form',
@@ -79,7 +80,9 @@ export default {
     password: 'Password',
     any: 'any',
     thirdparty: 'Or connect with',
-    thirdpartyTips: 'Can not be simulated on local, so please combine you own business simulation! ! !'
+    thirdpartyTips: 'Can not be simulated on local, so please combine you own business simulation! ! !',
+    rememberMe: 'Remember Me',
+    systemTitle: 'Comprehensive Management Platform for Smart Charging'
   },
   documentation: {
     documentation: 'Documentation',

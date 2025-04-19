@@ -70,7 +70,8 @@ export default {
     logOut: 'ログアウト',
     profile: 'プロフィール',
     theme: 'テーマ変更',
-    size: '画面サイズ'
+    size: '画面サイズ',
+    changePassword: 'パスワードを変更します'
   },
   login: {
     title: 'ユーザログイン',
@@ -79,7 +80,9 @@ export default {
     password: 'パスワード',
     any: 'password',
     thirdparty: '外部IDでログイン',
-    thirdpartyTips: 'ローカル環境ではログインできません。実装が必要です。'
+    thirdpartyTips: 'ローカル環境ではログインできません。実装が必要です。',
+    rememberMe: '覚えていてください',
+    systemTitle: 'スマート充電統合管理プラットフォームです'
   },
   documentation: {
     documentation: 'ドキュメント',

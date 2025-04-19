@@ -70,7 +70,8 @@ export default {
     github: 'Github',
     theme: 'Tema',
     size: 'Tamaño global',
-    profile: 'Profile'
+    profile: 'Profile',
+    changePassword: 'Cambiar mi contraseña'
   },
   login: {
     title: 'Formulario de acceso',
@@ -79,7 +80,9 @@ export default {
     password: 'Contraseña',
     any: 'nada',
     thirdparty: 'Conectar con',
-    thirdpartyTips: 'No se puede simular en local, así que combine su propia simulación de negocios. ! !'
+    thirdpartyTips: 'No se puede simular en local, así que combine su propia simulación de negocios. ! !',
+    rememberMe: 'Recordarme de mí',
+    systemTitle: 'Plataforma de gestión integral de carga inteligente'
   },
   documentation: {
     documentation: 'Documentación',
