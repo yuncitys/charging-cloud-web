@@ -1,20 +1,24 @@
 <template>
   <div class="login-bg">
     <div class="login-box-wrap">
-      <div class="login-logo img"></div>
+      <div class="login-logo img">
+      </div>
+      <!-- 国际化 -->
+      <div class="login-logo lang">
+        <lang-select class="set-language" />
+      </div>
       <div class="login-form-item">
         <el-form ref="loginForm" :model="loginForm" :rules="loginRules" autocomplete="on" label-position="left">
+          <!-- 标题 -->
           <div class="title-container">
             <h3 class="title" style="color:#4d8cfd;font-size: 24px;line-height: 33px">
-              {{SystemTitle}}
+              {{ $t('login.systemTitle') }}
             </h3>
           </div>
           <!--账号-->
           <el-form-item prop="account" style="background-color: #FFFFFF;border-radius: 5px;">
-
             <el-input ref="account" v-model="loginForm.account" :placeholder="$t('login.username')" name="account"
               type="text" tabindex="1" autocomplete="off">
-
               <template slot="prepend">
                 <svg-icon icon-class="user" />
               </template>
@@ -24,11 +28,9 @@
           <el-tooltip v-model="capsTooltip" content="Caps lock is On" placement="right" manual
             style="background-color: #FFFFFF;border-radius: 5px;">
             <el-form-item prop="password">
-
               <el-input :key="passwordType" ref="password" v-model="loginForm.password" :type="passwordType"
                 :placeholder="$t('login.password')" name="password" tabindex="2" autocomplete="on"
                 @keyup.native="checkCapslock" @blur="capsTooltip = false" @keyup.enter.native="handleLogin">
-                >
                 <template slot="prepend">
                   <svg-icon icon-class="password" />
                 </template>
@@ -40,18 +42,17 @@
           </el-tooltip>
           <!-- 记住我 @change="checked=>isCheckRow(checked)"-->
           <el-form-item prop="rememberMe">
-            <el-checkbox v-model="loginForm.rememberMe" class="rememberMe">记住我</el-checkbox>
+            <el-checkbox v-model="loginForm.rememberMe" class="rememberMe">{{ $t('login.rememberMe') }}</el-checkbox>
           </el-form-item>
-          <el-button :loading="loading" type="primary"
-            style="width:100%;margin-bottom:30px;background-color: #4d8cfd;color: #FFFFFF;border: none;height: 45px;font-size: 16px;"
+          
+          <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;background-color: #4d8cfd;color: #FFFFFF;border: none;height: 45px;font-size: 16px;"
             @click.native.prevent="handleLogin">
             {{ $t('login.logIn') }}
           </el-button>
         </el-form>
       </div>
     </div>
-    <div
-      style="color: #000;font-size: 14px; position: absolute; bottom: 0; background: rgba(0, 0,0, 0.1); width: 100%; text-align: center; line-height: 3">
+    <div style="color: #000;font-size: 14px; position: absolute; bottom: 0; background: rgba(0, 0,0, 0.1); width: 100%; text-align: center; line-height: 3">
       {{Copyright}}
     </div>
   </div>
@@ -308,6 +309,14 @@
     margin: 5.8% 0 0 12.8%;
   }
 
+  .login-bg .login-box-wrap .login-logo.lang {
+      color: #fff;
+      position: absolute;
+      top: 0px;
+      right: 180px;
+      cursor: pointer;
+  }
+
   .login-bg .login-box-wrap .login-logo.img {
     width: 60px;
     height: 60px;
@@ -322,10 +331,7 @@
     right: 16%;
     width: 360px;
     height: 500px;
-
-
   }
-
 
   .title-container {
     position: relative;
@@ -338,14 +344,14 @@
       font-weight: bold;
     }
 
-    .set-language {
-      color: #fff;
-      position: absolute;
-      top: 3px;
-      font-size: 18px;
-      right: 0px;
-      cursor: pointer;
-    }
+    // .set-language {
+    //   color: #fff;
+    //   position: absolute;
+    //   top: 3px;
+    //   font-size: 18px;
+    //   right: 0px;
+    //   cursor: pointer;
+    // }
   }
 
   // .login-container {
