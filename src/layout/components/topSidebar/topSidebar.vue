@@ -13,7 +13,7 @@
       <el-menu-item v-if="rightMoreMeunList.length > 0">
         <el-dropdown trigger="click" class="topEldrop">
           <span class="el-dropdown-link" >
-            更多..<i class="el-icon-arrow-down el-icon--right"></i>
+            更多...<i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown" class="top-dropdown-menu">
             <el-dropdown-item v-for="item in rightMoreMeunList" :key="item.title">
@@ -29,21 +29,23 @@
       </el-menu-item>
     </el-menu>
     <div class="right-menu" style="display: flex;">
-      <template v-if="device!=='mobile'">
-        <div style="display:flex;align-items:center">
-          <el-tooltip content="大数据" effect="dark" placement="bottom">
+      <div style="display:flex; align-items:center">
+        <template v-if="device!=='mobile'">
+          <el-tooltip content="大数据" effect="dark" placement="bottom"  class="right-menu-item hover-effect" >
             <div class="largeScreenBox" @click="largeScreen">
               <i class="el-icon-s-platform" style="font-size: 28px;color: #5a5e66;"></i>
             </div>
           </el-tooltip>
-          <!-- <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex;align-items:center" /> -->
-        </div>
-      </template>
+        </template>
+        <lang-select class="right-menu-item hover-effect" style="display:flex; align-items:center" />
+        <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex; align-items:center" />
+      </div>
+
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
         <div class="userName">{{userName}}<i class="el-icon-caret-bottom" style="font-size: 18px;color: #666;" /></div>
         <el-dropdown-menu slot="dropdown" class="sysInfo">
           <el-dropdown-item divided @click.native="setPwd">
-            <span>修改密码</span>
+            <span style="display:block;">{{ $t('navbar.changePassword') }}</span>
           </el-dropdown-item>
           <el-dropdown-item divided @click.native="logout">
             <span style="display:block;">{{ $t('navbar.logOut') }}</span>
@@ -56,6 +58,7 @@
 
 <script>
   import Screenfull from '@/components/Screenfull'
+  import LangSelect from '@/components/LangSelect'
 
   import {
     mapGetters
@@ -67,11 +70,11 @@
   export default {
     components: {
       Screenfull,
-
+      LangSelect
     },
     data() {
       return {
-        pActiveMenu: '首页',
+        pActiveMenu: 'Dashboard',
         topOffsetWidth: 0,
         lists: [],
         elmenuMore: []
@@ -87,7 +90,6 @@
         'permission_routes',
         'sidebar',
         'device'
-
       ]),
       userName() {
         return this.$store.getters.adminUser.adminName
