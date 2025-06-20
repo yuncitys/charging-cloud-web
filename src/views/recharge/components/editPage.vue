@@ -1,22 +1,21 @@
 <template>
 	<div style="display: inline-block;">
-    <el-button type="primary" @click="" style="margin-left: 10px;"
-      @click="showDidlaoEditData()" size="mini"
-      v-if="btnAuthen.permsVerifAuthention(':sys:recharge:updateRecharge')">编辑
-    </el-button>
+		<el-button type="primary" @click="" style="margin-left: 10px;" @click="showDidlaoEditData()" size="mini"
+			v-if="btnAuthen.permsVerifAuthention(':sys:recharge:updateRecharge')">编辑
+		</el-button>
 		<!-- 编辑方案-->
 		<el-dialog :visible.sync="showEdit" title="编辑方案" @close="showEdit = false" :append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="100px" :rules="rules">
-        <el-form-item :label="'运营商'" prop="adminId">
-          <el-select style="width: 100%;" class="filter-item" v-model="editData.adminId" filterable clearable placeholder="请选择运营商">
-              <el-option
-                v-for="item in operatorList"
-                :key="item.id"
-                :label="item.adminFullname"
-                :value="item.id">
-              </el-option>
-          </el-select>
-        </el-form-item>
+				<!-- <el-form-item :label="'运营商'" prop="adminId">
+				<el-select style="width: 100%;" class="filter-item" v-model="editData.adminId" filterable clearable placeholder="请选择运营商">
+					<el-option
+						v-for="item in operatorList"
+						:key="item.id"
+						:label="item.adminFullname"
+						:value="item.id">
+					</el-option>
+				</el-select>
+				</el-form-item> -->
 				<el-form-item :label="'充值金额'" prop="rechargeAmount">
 					<el-input v-model="editData.rechargeAmount" placeholder="请输入充值金额" clearable
 						type="number" />
@@ -36,18 +35,11 @@
 
 <script>
 	import {
-		getList,
-		addRecharge,
-		deleteRecharge,
 		updateRecharge
 	} from '@/api/netWorkDot/charge/recharge.js'
-  import {
-    getOperator
-  } from '@/api/agent/agentList.js'
 	import {
-		parseTime
-	} from '@/utils/index'
-	import qs from 'qs'
+		getOperator
+	} from '@/api/agent/agentList.js'
 	export default {
 		name: 'recharge1',
 		props:{
@@ -63,11 +55,10 @@
 				showEdit: false,
 				editData: {
 					id: '',
-          adminId: '',
 					rechargeAmount: '',
 					giftAmount: ''
 				},
-        operatorList: [],
+        		operatorList: [],
 				rules: {
 					rechargeAmount: [{
 						required: true,
@@ -79,11 +70,11 @@
 						message: '请输入赠送金额',
 						trigger: 'blur'
 					}],
-          adminId: [{
-          	required: true,
-          	message: '请选择运营商',
-          	trigger: 'blur'
-          }],
+					adminId: [{
+						required: true,
+						message: '请选择运营商',
+						trigger: 'blur'
+					}],
 				},
 			}
 		},
@@ -92,19 +83,19 @@
 				let item = this.row_data
 				this.showEdit = true
 				this.editData.id = item.id
-        this.editData.adminId = item.adminId
+        		this.editData.adminId = item.adminId
 				this.editData.giftAmount = item.giftAmount
 				this.editData.rechargeAmount = item.rechargeAmount
 			},
-      getOperator() {
-      	getOperator().then(res => {
-      		if (res.code == 200) {
-      			this.operatorList = res.data
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			getOperator() {
+				getOperator().then(res => {
+					if (res.code == 200) {
+						this.operatorList = res.data
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 			onEditData(formName) {
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
