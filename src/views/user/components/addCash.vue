@@ -17,7 +17,7 @@
 					<el-input v-model="uptNumber" placeholder="请输入充值金额" type="number" />
 				</el-form-item>
 				<el-form-item :label="'备注'" prop="remark">
-					<el-input v-model="remark" placeholder="请输入备注" />
+					<el-input v-model="remark" placeholder="请输入备注" type = "textarea" />
 				</el-form-item>
 				<el-form-item>
 					<el-button type="success" @click="updNumBer()">充值</el-button>
@@ -29,11 +29,6 @@
 
 <script>
 	import {
-		wxgetList,
-		deleteUser,
-		batchDeleteAppUser,
-		updateAppUserer,
-		wxgetListNew,
 		updateCash
 	} from '@/api/user/userList.js'
 	import {

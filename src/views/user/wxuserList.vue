@@ -18,13 +18,10 @@
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"
-        fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
+			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column label="小程序名称" prop="wxName" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column label="昵称" prop="userName" align="center" :show-overflow-tooltip="isPc">
@@ -59,11 +56,11 @@
 					<template slot-scope="scope">
 						<!-- 充值 -->
 						<addCash :row_data="scope.row" @getLists="getLists" />
-            <!-- 扣费 -->
-            <subtract-cash :row_data="scope.row" @getLists="getLists" />
+						<!-- 扣费 -->
+						<subtract-cash :row_data="scope.row" @getLists="getLists" />
 						<el-button type="primary" @click='open(scope.row)' size="mini"
 							v-if="btnAuthen.permsVerifAuthention(':user:wxuserList:oneEdit')">
-              编辑
+              				编辑
 						</el-button>
 					</template>
 				</el-table-column>
@@ -118,7 +115,7 @@
 	export default {
 		components: {
 			addCash,
-      subtractCash,
+      		subtractCash,
 			imgView
 		},
 		name: 'wxuserList',

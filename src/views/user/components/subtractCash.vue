@@ -6,7 +6,7 @@
 		</el-button>
 		<!-- 充值 -->
 		<el-dialog :visible.sync="updateMoneydialog" title="金额扣除" @close="updateMoneydialog=false" :append-to-body="true">
-			<el-form ref="editData" label-position="left" label-width="150px" style="width: 450px; margin-left:50px;">
+			<el-form ref="editData" label-position="left" label-width="150px" style="width: 400px; margin-left:50px;">
 				<el-form-item :label="'手机号'" prop="phoneNumber">
 					<el-input v-model="editData.phoneNumber" disabled />
 				</el-form-item>
@@ -92,7 +92,7 @@
 								message: res.msg
 							})
 							this.realityPayMoney = 0
-              this.giveMoney = 0
+              				this.giveMoney = 0
 							this.updateMoneydialog = false
 							this.$emit('getLists')
 						} else {
