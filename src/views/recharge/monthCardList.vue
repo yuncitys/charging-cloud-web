@@ -6,7 +6,7 @@
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
-      <addPage @getLists="getLists"/>
+      		<addPage @getLists="getLists"/>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
 				highlight-current-row style="width: 100%;" align="center" row-key="id"
@@ -14,63 +14,61 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column prop="wxName" label="小程序名称" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="networkName" label="运营充电站" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="networkAddress" label="充电站位置" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="networkName" label="运营站点" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="name" label="套餐名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="monthCardType" label="月卡类型" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.monthCardType == 0">仅充电</span>
-          	<span type="success" v-if="scope.row.monthCardType == 1">仅停车</span>
-          	<span type="success" v-if="scope.row.monthCardType == 2">停车+充电</span>
-          </template>
+					<template slot-scope="scope">
+						<span type="success" v-if="scope.row.monthCardType == 0">仅充电</span>
+						<span type="success" v-if="scope.row.monthCardType == 1">仅停车</span>
+						<span type="success" v-if="scope.row.monthCardType == 2">停车+充电</span>
+					</template>
 				</el-table-column>
-        <el-table-column prop="buyLimit" label="购买权限" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span v-if="scope.row.buyLimit == 0">无限制</span>
-          	<span v-if="scope.row.buyLimit == 1">仅小区用户</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.renewType == 0">常规续费</span>
-          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="virtualCardEnabled" label="是否开通虚拟卡" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span v-if="scope.row.virtualCardEnabled == 0">否</span>
-          	<span v-if="scope.row.virtualCardEnabled == 1">是</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="chargingMonthType" label="包月类型" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span v-if="scope.row.chargingMonthType == 1">限次数包月</span>
-          	<span v-if="scope.row.chargingMonthType == 2">限总时长包月</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="monthTotalStr" label="单月限制" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="dayTotalStr" label="单日限制" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="updateUser" label="编辑用户" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="buyLimit" label="购买权限" align="center" :show-overflow-tooltip="isPc">
+				<template slot-scope="scope">
+					<span v-if="scope.row.buyLimit == 0">无限制</span>
+					<span v-if="scope.row.buyLimit == 1">仅小区用户</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
+				<template slot-scope="scope">
+					<span type="success" v-if="scope.row.renewType == 0">常规续费</span>
+					<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="virtualCardEnabled" label="虚拟卡" align="center" :show-overflow-tooltip="isPc">
+				<template slot-scope="scope">
+					<span v-if="scope.row.virtualCardEnabled == 0">否</span>
+					<span v-if="scope.row.virtualCardEnabled == 1">是</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="chargingMonthType" label="包月类型" align="center" :show-overflow-tooltip="isPc">
+				<template slot-scope="scope">
+					<span v-if="scope.row.chargingMonthType == 1">限次数包月</span>
+					<span v-if="scope.row.chargingMonthType == 2">限总时长包月</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="monthTotalStr" label="单月限制" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="dayTotalStr" label="单日限制" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="updateUser" label="编辑用户" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
 						<!--编辑方案-->

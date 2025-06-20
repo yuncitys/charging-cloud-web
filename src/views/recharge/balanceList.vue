@@ -8,33 +8,32 @@
 
 			<!-- 新增方案 type:0 (IC卡)   1(余额)-->
       <addPage :recharge_type="recharge_type" @getLists="getLists"/>
-
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
 				highlight-current-row style="width: 100%;" align="center" row-key="id"
 				:tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column prop="wxName" label="小程序名称" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="rechargeAmount" label="充值金额" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="giftAmount" label="赠送金额" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="updateUser" label="更新用户" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="updateUser" label="更新用户" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
 						<!--编辑方案 type:0 (IC卡)   1(余额)-->
@@ -52,7 +51,6 @@
 					:total="total" background layout="total, sizes, prev, pager, next, jumper"
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</div>
-
 		</div>
 	</div>
 </template>
@@ -87,7 +85,7 @@
 					type:1,
 					page: 1,
 					limit: 10,
-					wxName:''
+					operatorName:''
 				},
 				tableKey: 0,
 				// 充值类型 0:IC卡 1：余额
