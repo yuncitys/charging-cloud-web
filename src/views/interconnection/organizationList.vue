@@ -19,26 +19,25 @@
 			<div style="margin: 15px 0;">
 				<el-button type="primary" @click="addOrUpdateHandle()">添加</el-button>
 			</div>
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
-				highlight-current-row style="width: 100%;" align="center" id="tableBox">
+			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column prop="organizationName" label="机构名称" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="name" label="机构名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="companyName" label="公司名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="socialCreditCode" label="统一社会信用代码" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="socialCreditCode" label="社会信用代码" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="organizationType" label="机构类型" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="orgType" label="机构类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.organizationType == 0">流量平台</span>
-						<span v-if="scope.row.organizationType == 1">监管平台</span>
+						<span v-if="scope.row.orgType == 3">流量平台</span>
+						<span v-if="scope.row.orgType == 4">监管平台</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="administratorName" label="机构管理员" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="manageName" label="机构管理员" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="administratorPhone" label="联系方式" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="contactInfo" label="联系方式" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -78,7 +77,7 @@
 	import {
 		getOrganizeList,
 		deleteOrganize
-	} from '@/api/interconnection/organization.js'
+	} from '@/api/organization/organization.js'
 	import {
 		parseTime
 	} from '@/utils/index'
