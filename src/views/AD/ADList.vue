@@ -11,8 +11,6 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column prop="wxName" label="小程序名称" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
 				<el-table-column prop="imageTitle" label="广告名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="types" label="广告类型" align="center" :show-overflow-tooltip="isPc">
@@ -39,21 +37,21 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <!-- <el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column> -->
+				<el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="操作" width="200">
 					<template slot-scope="scope">
-            <div style="display: flex;justify-content: center;align-items: center;">
-              <!-- 编辑广告 -->
-              <editPage :row_data="scope.row" @getLists="getLists" />
-              <el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
-              	icon="el-icon-delete" v-if="btnAuthen.permsVerifAuthention(':AD:ADList:delete')">
-                删除
-              </el-button>
-            </div>
+						<div style="display: flex;justify-content: center;align-items: center;">
+							<!-- 编辑广告 -->
+							<editPage :row_data="scope.row" @getLists="getLists" />
+							<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
+								icon="el-icon-delete" v-if="btnAuthen.permsVerifAuthention(':AD:ADList:delete')">
+								删除
+							</el-button>
+						</div>
 					</template>
 				</el-table-column>
 			</el-table>
