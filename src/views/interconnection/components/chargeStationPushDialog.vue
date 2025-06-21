@@ -1,22 +1,32 @@
 <template>
     <el-dialog :title="dialogTitle" :visible.sync="visible" width="50%">
-      <el-form ref="form" :model="formData" label-width="100px" :rules="rules">
-        <el-form-item label="客户名称">
-          <el-input v-model="formData.organizationName" disabled></el-input>
+      <el-form ref="form" :model="formData" label-width="100px">
+        <el-form-item label="互联机构" prop="organizationId">
+          <el-select style="width: 100%;" class="filter-item" v-model="formData.organizationId" filterable clearable placeholder="请选择互联机构" disabled>
+              <el-option
+                  v-for="item in organizeList"
+                  :key='item.id'
+                  :label="item.name"
+                  :value="item.id">
+              </el-option>
+          </el-select>
         </el-form-item>
   
-        <el-form-item label="客户类别">
-          <el-input v-model="formData.organizationType" disabled></el-input>
-        </el-form-item>
-  
-        <!-- <el-form-item label="电站维度">
-          <el-radio-group v-model="formData.stationType">
-            <el-radio :label="0">按电站</el-radio>
-            <el-radio :label="1">全部电站</el-radio>
+        <el-form-item label="机构类型" prop="orgType">
+          <el-radio-group v-model="formData.orgType" disabled>
+            <el-radio :label="3">流量平台</el-radio>
+            <el-radio :label="4">监管平台</el-radio>
           </el-radio-group>
-        </el-form-item> -->
+        </el-form-item>
   
-        <el-form-item label="选择电站" prop="selectedStations" v-if="formData.stationType === 0">
+        <el-form-item label="电站维度">
+          <el-radio-group v-model="formData.stationScopeType">
+            <el-radio :label="2">按电站</el-radio>
+            <!-- <el-radio :label="3">按电站分组</el-radio> -->
+          </el-radio-group>
+        </el-form-item>
+  
+        <el-form-item label="选择电站" prop="selectedStations" v-if="formData.stationScopeType === 2">
           <div class="station-select-box">
             <div class="search-bar">
               <!-- <el-checkbox v-model="checkAll" @change="handleCheckAll">全选</el-checkbox> -->
@@ -39,7 +49,7 @@
   
       <div slot="footer" class="dialog-footer">
         <el-button @click="visible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">推送</el-button>
+        <el-button type="primary" @click="handleSubmit">保存</el-button>
       </div>
     </el-dialog>
 </template>
@@ -48,6 +58,11 @@
     import {
         getChargingStationList
     } from '@/api/netWorkDot/netWorkDotList.js'
+    import {
+      getOrganize,
+      getAvailableStation,
+      saveAvailableStation
+    } from '@/api/organization/organization.js'
     export default {
         data() {
             return {
@@ -56,81 +71,109 @@
                 searchKey: "",
                 checkAll: false,
                 formData: {
-                    organizationName: "资金清算平台",
-                    organizationType: "流量平台",
-                    stationType: 0,
-                    selectedStations: [],
+                  organizationId: '',
+                  orgType: '',
+                  stationScopeType: 2,
+                  dataId: [],
                 },
                 stations: [],
                 filteredStations: [],
-                rules: {
-                    selectedStations: [{ required: true, message: "请选择电站", trigger: "change" }],
-                },
                 defaultProps: {
-					children: 'children',
-					label: 'networkName'
-				},
+                  children: 'children',
+                  label: 'networkName'
+                },
+                organizeList: [],
                 chargeStationList: []
             };
         },
         watch: {
-            searchKey() {
-                this.filterTree();
-            },
+          searchKey() {
+            this.filterTree();
+          },
         },
         methods: {
             initTreeData(operatorId,operatorName){
-                const data = {
-                    ruleId: 2,
-                    adminId: operatorId
+              getChargingStationList(operatorId).then(res => {
+                let treeData = {
+                  id: parseInt(operatorId),
+                  networkName: operatorName,
+                  networkAddress: "",
+                  children: res.data
                 }
-                getChargingStationList(data).then(res => {
-                    let treeData = {
-                        id: parseInt(operatorId),
-                        networkName: operatorName,
-                        networkAddress: "",
-                        children: res.data
-                    }
-                    let treeList = [treeData]
-                    this.stations = treeList
-                    console.log("stations",this.stations)
-                    this.filteredStations = JSON.parse(JSON.stringify(this.stations));
-                })
+                let treeList = [treeData]
+                this.stations = treeList
+                console.log("stations:",this.stations)
+                this.filteredStations = JSON.parse(JSON.stringify(this.stations));
+              })
+            },
+            getOrganize(){
+              let data = {orgMold: 2}
+              getOrganize(data).then(res => {
+                this.organizeList = res.data
+              })
+            },
+            getAvailableStation(organizationId){
+              getAvailableStation(organizationId).then(res => {
+                if (res.code == 200){
+                  this.formData = res.data
+                  this.$nextTick(() => {
+                    this.$refs.stationTree.setCheckedKeys(res.data.dataId)
+                  })
+                }
+              })
             },
             openDialog(data) {
-                this.visible = true;
-                this.initTreeData(data.operatorId,data.operatorName)
+              this.visible = true;
+              this.getOrganize()
+              this.getAvailableStation(data.organizationId)
+              this.initTreeData(data.operatorId,data.operatorName)
             },
             filterNode(value, data) {
-                if (!value) return true;
-                return data.networkName.includes(value);
+              if (!value) return true;
+              return data.networkName.includes(value);
             },
             filterTree() {
-                this.$refs.stationTree.filter(this.searchKey);
+              this.$refs.stationTree.filter(this.searchKey);
             },
             handleCheck(data, checked) {
-                const selected = this.$refs.stationTree.getCheckedKeys();
-                this.formData.selectedStations = selected;
-                this.checkAll = selected.length === this.getAllStationIds().length;
+              const selected = this.$refs.stationTree.getCheckedKeys();
+              console.log("selected:",selected)
+              this.formData.dataId = selected;
+              this.checkAll = selected.length === this.getAllStationIds().length;
             },
             handleCheckAll(val) {
-                if (val) {
-                    this.$refs.stationTree.setCheckedKeys(this.getAllStationIds());
-                } else {
-                    this.$refs.stationTree.setCheckedKeys([]);
-                }
-                this.formData.selectedStations = val ? this.getAllStationIds() : [];
+              if (val) {
+                this.$refs.stationTree.setCheckedKeys(this.getAllStationIds());
+              } else {
+                this.$refs.stationTree.setCheckedKeys([]);
+              }
+              this.formData.chargeStationId = val ? this.getAllStationIds() : [];
             },
             getAllStationIds() {
-                return this.stations.flatMap(parent => parent.children.map(child => child.id));
+              return this.stations.flatMap(parent => parent.children.map(child => child.id));
             },
             handleSubmit() {
-                this.$refs.form.validate(valid => {
-                    if (valid) {
-                        console.log("提交数据:", this.formData);
-                        this.visible = false;
+              // const keys = [
+              //   ...this.$refs.stationTree.getCheckedKeys(),
+              //   ...this.$refs.stationTree.getHalfCheckedKeys()
+              // ];
+              let data = this.formData
+              if (data.dataId.length == 0) {
+                this.$message.error('请选择可用的充电站点')
+                return false
+              }
+              this.$refs.form.validate(valid => {
+                if (valid) {
+                  console.log("提交数据:", data);
+                  saveAvailableStation(data).then(res => {
+                    if (res.code == 200) {
+                      this.visible = false;
+                    } else {
+                      this.$message.error(res.msg)
                     }
-                });
+                  })
+                }
+              });
             },
         },
     };
