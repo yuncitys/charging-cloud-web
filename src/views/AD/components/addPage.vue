@@ -7,25 +7,24 @@
 			v-if="btnAuthen.permsVerifAuthention(':AD:ADList:add')">新增广告</el-button>
 		<!-- 新增广告 -->
 		<el-dialog :visible.sync="showAddAD" title="新增广告" @close="showAddAD = false" v-loading="loadingAdd">
-			<el-form ref="addAdData" :model="addAdData" label-position="left" label-width="120px"
-				style="width: 600px; margin-left:50px;" :rules="Rules" :append-to-body="true">
-        <el-form-item :label="'运营商'" prop="adminId">
-          <el-select style="width: 100%;" class="filter-item" v-model="addAdData.adminId" filterable clearable placeholder="请选择运营商">
-              <el-option
-                v-for="item in operatorList"
-                :key="item.id"
-                :label="item.adminFullname"
-                :value="item.id">
-              </el-option>
-          </el-select>
-        </el-form-item>
+			<el-form ref="addAdData" :model="addAdData" label-position="left" label-width="120px" style="width: 600px; margin-left:50px;" :rules="Rules" :append-to-body="true">
+				<!-- <el-form-item :label="'运营商'" prop="adminId">
+					<el-select style="width: 100%;" class="filter-item" v-model="addAdData.adminId" filterable clearable placeholder="请选择运营商">
+						<el-option
+							v-for="item in operatorList"
+							:key="item.id"
+							:label="item.adminFullname"
+							:value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item> -->
 				<el-form-item :label="'广告名称'" prop="imageTitle">
 					<el-input v-model="addAdData.imageTitle" placeholder="请输入广告名称" clearable />
 				</el-form-item>
 				<el-form-item :label="'排序号'" prop="sorting">
 					<el-input v-model="addAdData.sorting" placeholder="请输入排序号" clearable />
 				</el-form-item>
-				<el-form-item :label="'文件类型'" prop="sorting">
+				<el-form-item :label="'文件类型'" prop="types">
 					<el-select v-model="addAdData.types" style="width: 100%;margin-right: 20px ;" class="filter-item"
 						placeholder="请选上传文件类型" clearable @change="changeTypes">
 						<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -45,8 +44,6 @@
 				</el-form-item>
 			</el-form>
 		</el-dialog>
-
-	</div>
 	</div>
 </template>
 
@@ -73,13 +70,12 @@
 		data() {
 			return {
 				showAddAD: false,
-        operatorList: [],
+        		operatorList: [],
 				addAdData: {
 					imageTitle: '',
 					imageUrl: '',
 					imageLink: '',
 					sorting: '',
-          adminId: '',
 					types: 1
 				},
 				tags: [{
@@ -101,11 +97,16 @@
 						message: '请上传图片或者视频',
 						trigger: 'change'
 					}],
-          adminId: [{
-          	required: true,
-          	message: '请选择运营商',
-          	trigger: 'blur',
-          }]
+					sorting: [{
+						required: true,
+						message: '请输入排序序号',
+						trigger: 'blur',
+					}],
+					types: [{
+						required: true,
+						message: '请选择文件类型',
+						trigger: 'blur',
+					}]
 				},
 			}
 		},
@@ -118,15 +119,15 @@
 			},
 		},
 		methods: {
-      getOperator() {
-      	getOperator().then(res => {
-      		if (res.code == 200) {
-      			this.operatorList = res.data
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			getOperator() {
+				getOperator().then(res => {
+					if (res.code == 200) {
+						this.operatorList = res.data
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 			changeTypes(e) {
 				console.log(e)
 				this.addAdData.imageUrl = ''
@@ -135,7 +136,7 @@
 			},
 			onShowAddAD() {
 				this.showAddAD = true
-        this.getOperator()
+        		this.getOperator()
 				this.$nextTick(() => {
 					this.$refs.upload.getType(1)
 				})
