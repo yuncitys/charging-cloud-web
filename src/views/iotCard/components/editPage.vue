@@ -16,12 +16,12 @@
 				<el-form-item :label="'msisdn'" prop="msisdn">
 					<el-input v-model="editData.msisdn" placeholder="请输入MSISDN" disabled />
 				</el-form-item>
-        <el-form-item :label="'归属'" prop="adminId">
-        	<el-autocomplete class="filter-item" v-model="editData.adminName" :fetch-suggestions="querySearch"
-        		placeholder="请选择归属" @select="selectOperator" clearable :debounce='0' style="width: 100%;"
-        		@change="changeOperatorName">
-          </el-autocomplete>
-        </el-form-item>
+				<!-- <el-form-item :label="'归属'" prop="adminId">
+					<el-autocomplete class="filter-item" v-model="editData.adminName" :fetch-suggestions="querySearch"
+						placeholder="请选择归属" @select="selectOperator" clearable :debounce='0' style="width: 100%;"
+						@change="changeOperatorName">
+					</el-autocomplete>
+				</el-form-item> -->
 				<el-form-item :label="'渠道商'" prop="channelName">
 					<el-input v-model="editData.channelName" placeholder="请输入渠道商" clearable />
 				</el-form-item>
@@ -58,52 +58,54 @@
 		data() {
 			return {
 				showEdit: false,
-        operatorList:[],
+        		operatorList:[],
 				editData: {
-          id: '',
-          iccid: '',
-          imsi: '',
-          msisdn: '',
+					id: '',
+					iccid: '',
+					imsi: '',
+					msisdn: '',
 					channelName:'',
-					remark:'',
-					adminId:'',
-          adminName:''
+					remark:''
 				},
-        iotCardRules: {
-          iccid: [{
-          	required: true,
-          	message: '请输入iccid',
-          	trigger: 'blur'
-          }],
-        	imsi: [{
-        		required: true,
-        		message: '请输入imsi',
-        		trigger: 'blur'
-        	}],
-        	msisdn: [{
-        		required: true,
-        		message: '请输入msisdn',
-        		trigger: 'blur'
-        	}],
-          adminId: [{
-          	required: true,
-          	message: '请选择归属',
-          	trigger: 'change'
-          }],
-        },
+				iotCardRules: {
+					iccid: [{
+						required: true,
+						message: '请输入iccid',
+						trigger: 'blur'
+					}],
+					imsi: [{
+						required: true,
+						message: '请输入imsi',
+						trigger: 'blur'
+					}],
+					msisdn: [{
+						required: true,
+						message: '请输入msisdn',
+						trigger: 'blur'
+					}],
+					channelName: [{
+						required: true,
+						message: '请输入卡渠道商',
+						trigger: 'blur'
+					}],
+					remark: [{
+						required: true,
+						message: '请输入卡备注',
+						trigger: 'blur'
+					}],
+				},
 			}
 		},
 		methods: {
 			onShowEdit() {
-        this.getOperator()
+        		// this.getOperator()
 				let item = this.row_data
-        this.editData.id = item.id
-        this.editData.iccid = item.iccid
-        this.editData.imsi = item.imsi
-        this.editData.msisdn = item.msisdn
+				this.editData.id = item.id
+				this.editData.iccid = item.iccid
+				this.editData.imsi = item.imsi
+				this.editData.msisdn = item.msisdn
 				this.editData.channelName = item.channelName
 				this.editData.remark = item.remark
-				this.editData.adminId = item.adminId
 				this.showEdit = true
 			},
 			onEdit(formName) {
@@ -122,59 +124,59 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-      //选择代理商
-      selectOperator(item) {
-      	this.editData.adminId = item.operatorId + ''
-      	this.editData.adminName = item.value + ''
-      },
-      changeOperatorName() {
-      	if (this.editData.adminName == '') {
-      		this.editData.adminId = ''
-      	}
-        this.getOperator()
-      },
-      querySearch(queryString, cb) {
-      	var restaurants = this.restaurants;
-        console.log("restaurants：",restaurants)
-      	let restaurantsText = []
-      	if (restaurants.length != '') {
-      		restaurants.forEach((item, index) => {
-      			let obj = {
-      				value: '',
-      				operatorId: ''
-      			}
-      			let value = item.adminName + "(" + item.adminFullname + ")"
-      			obj.value = value
-      			obj.operatorId = item.id
-      			restaurantsText.push(obj)
-      		})
-      	}
-      	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
-        console.log("results：",results)
-      	// 调用 callback 返回建议列表的数据
-      	cb(results);
-      },
-      createFilter(queryString) {
-      	return (restaurant) => {
-      		return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
-      	};
-      },
-      //代理商列表
-      getOperator() {
-      	getOperator().then(res => {
-      		if (res.code == 200) {
-      			this.operatorList = res.data
-      			this.restaurants = this.operatorList
-      			this.restaurants.forEach((item, index) => {
-      				if (Number(this.editData.adminId) === Number(item.id)) {
-      					this.editData.adminName = item.adminName + "(" + item.adminFullname + ")"
-      				}
-      			})
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			//选择代理商
+			selectOperator(item) {
+				this.editData.adminId = item.operatorId + ''
+				this.editData.adminName = item.value + ''
+			},
+			changeOperatorName() {
+				if (this.editData.adminName == '') {
+					this.editData.adminId = ''
+				}
+				this.getOperator()
+			},
+			querySearch(queryString, cb) {
+				var restaurants = this.restaurants;
+				console.log("restaurants：",restaurants)
+				let restaurantsText = []
+				if (restaurants.length != '') {
+					restaurants.forEach((item, index) => {
+						let obj = {
+							value: '',
+							operatorId: ''
+						}
+						let value = item.adminName + "(" + item.adminFullname + ")"
+						obj.value = value
+						obj.operatorId = item.id
+						restaurantsText.push(obj)
+					})
+				}
+				var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
+				console.log("results：",results)
+				// 调用 callback 返回建议列表的数据
+				cb(results);
+			},
+			createFilter(queryString) {
+				return (restaurant) => {
+					return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
+				};
+			},
+			//代理商列表
+			getOperator() {
+				getOperator().then(res => {
+					if (res.code == 200) {
+						this.operatorList = res.data
+						this.restaurants = this.operatorList
+						this.restaurants.forEach((item, index) => {
+							if (Number(this.editData.adminId) === Number(item.id)) {
+								this.editData.adminName = item.adminName + "(" + item.adminFullname + ")"
+							}
+						})
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 		},
 		created() {
 
