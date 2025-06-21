@@ -17,7 +17,7 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column prop="organizationName" label="互联客户" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="organizationName" label="互联机构" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -38,7 +38,7 @@
 				<el-table-column label="操作" align="center" width="310">
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: center;align-items: center;">
-							<!-- <el-button type="primary" size = "mini" @click="chareStationPushHandle(scope.row)">站点推送</el-button> -->
+							<el-button type="primary" size = "mini" @click="chareStationPushHandle(scope.row)">站点推送</el-button>
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)">编辑</el-button>
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
 							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)">删除</el-button>
@@ -61,7 +61,7 @@
 	import {
 		getOrganizeSecretKeyList,
         deleteOrganizeSecretKey
-	} from '@/api/interconnection/organization.js'
+	} from '@/api/organization/organization.js'
 	import {
 		parseTime
 	} from '@/utils/index'
