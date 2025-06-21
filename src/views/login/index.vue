@@ -4,9 +4,9 @@
       <div class="login-logo img">
       </div>
       <!-- 国际化 -->
-      <div class="login-logo lang">
+      <!-- <div class="login-logo lang">
         <lang-select class="set-language" />
-      </div>
+      </div> -->
       <div class="login-form-item">
         <el-form ref="loginForm" :model="loginForm" :rules="loginRules" autocomplete="on" label-position="left">
           <!-- 标题 -->
