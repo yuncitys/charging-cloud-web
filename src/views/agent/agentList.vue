@@ -142,7 +142,6 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-          unRoleId: 3,
 					adminName: '',
 					adminPhone: ''
 				},
