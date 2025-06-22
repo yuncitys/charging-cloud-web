@@ -4,10 +4,10 @@
 <template>
 	<div style="display: inline-block;">
 		<el-button type="primary" size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:admin:updateAdminUser')" @click='showDidlaoEditData()' >
-      编辑
+      		编辑
 		</el-button>
 		<!-- 编辑代理商-->
-		<el-dialog :visible.sync="showEdit" title="编辑代理商" @close="showEdit = false" style="width: 100%;"
+		<el-dialog :visible.sync="showEdit" title="编辑" @close="showEdit = false" style="width: 100%;"
 			:append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="120px"
 				style="margin-left:50px;width: 450px;" :rules="rules">
@@ -37,18 +37,9 @@
 
 <script>
 	import {
-		getList,
 		updateAdminUser,
-		deleteAdminUser,
-		addAdminUser,
-		editPasswordAdminUser,
-		findAdminUserSonList,
 		findRoleList,
-		freezeAdminUser
 	} from '@/api/agent/agentList.js'
-	import {
-		findDealerList,
-	} from '@/api/device/deviceList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
