@@ -1,113 +1,62 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
-			<el-input v-model="listQuery.adminName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入登录账号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<el-input v-model="listQuery.adminPhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入手机号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.name" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入商户名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.manageName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入管理员名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.managePhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入联系方式" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.companyName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入公司名称名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.socialCreditCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入社会统一信用代码" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
-				icon="el-icon-search">查询</el-button>
+				icon="el-icon-search">
+				查询
+			</el-button>
 
-			<!-- 添加代理商 -->
-			<addOperatorPage @getLists="getLists" />
+			<!-- 添加运营商户 -->
+			<div style="margin: 15px 0;">
+				<el-button type="primary" @click="addOrUpdateHandle()">添加</el-button>
+			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
 				highlight-current-row style="width: 100%;" align="center">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column  prop="adminName" label="登录账号" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="name" label="运营商户名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="adminFullname" label="姓名" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="companyName" label="公司名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="adminPhone" label="手机号" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="socialCreditCode" label="社会信用代码" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="roleName" label="角色" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="manageName" label="机构管理员" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="wxName" label="小程序名称" align="center" width="100" :show-overflow-tooltip="isPc">
+				<el-table-column prop="contactInfo" label="联系方式" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="wxAppId" label="小程序AppId" align="center" width="120" :show-overflow-tooltip="isPc">
+				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="freezeStatus" label="运营状态" align="center" :show-overflow-tooltip='isPc'>
-					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.freezeStatus == 0">正常</el-tag>
-						<el-tag type="danger" v-if="scope.row.freezeStatus == 1">冻结</el-tag>
-					</template>
+				<el-table-column prop="updateUser" label="更新用户" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="totalAmount" label="总收益" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="balenceAmount" label="余额" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="createTime" label="创建时间" align="center" sortable :show-overflow-tooltip="isPc">
+				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最后登录时间" align="center" width="120" sortable :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.lastLoginTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
-				<el-table-column label="操作" align="center" width="360">
+				<el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-            <div style="display: flex;align-items: center;justify-content: space-around;">
-            	<div>
-                <div>
-                  <!-- 编辑 -->
-                  <editOperatorPage :row_data="scope.row" @getLists="getLists" />
-                </div>
-
-                <div class="top10" v-if="btnAuthen.permsVerifAuthention(':sys:admin:deleteAdminUser')">
-                  <el-button type="danger" size="mini" @click='del(scope.row.id)'>
-                    删除
-                  </el-button>
-                </div>
-              </div>
-
-              <div>
-                <div v-if="btnAuthen.permsVerifAuthention(':sys:admin:freezeAdminUser')">
-                    <el-button type="danger" @click='onfreezeAdminUser(scope.row,1)' size="mini" v-if="scope.row.freezeStatus == 0">
-                    	冻结账户
-                    </el-button>
-                    <el-button type="success" @click='onfreezeAdminUser(scope.row,0)' size="mini" v-if="scope.row.freezeStatus == 1 ">
-                    	解封账户
-                    </el-button>
-                </div>
-                <div class="top10">
-                  <el-button type="primary" @click='editPassword(scope.row.id)' size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:admin:editPasswordAdminUser')">
-                    重置密码
-                  </el-button>
-                </div>
-              </div>
-
-              <!-- <div >
-                <div>
-                  <el-button type="primary" size="mini"
-                    @click='addIndividual()'>
-                  	个体开户
-                  </el-button>
-                </div>
-                <div class="top10">
-                  <el-button type="primary" size="mini"
-                    @click='addIndividual()'>
-                  	企业开户
-                  </el-button>
-                </div>
-              </div> -->
-
-              <div>
-                <!-- style="margin-left: 10px;margin-top: 10px;"-->
-                <!-- 名下所有代理商 -->
-                <div class="top10">
-                  <childsPage :row_data="scope.row" />
-                </div>
-              </div>
-            </div>
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="操作" align="center" width="230">
+					<template slot-scope="scope">
+						<div style="display: flex;justify-content: center;align-items: center;">
+							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)">编辑</el-button>
+							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
+							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.operatorId)">删除</el-button>
+						</div>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -117,35 +66,23 @@
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</div>
 		</div>
+		<operatorDialog ref="operatorForm" @getLists="getLists" />
 	</div>
 </template>
 
 <script>
 	import {
-		getList,
-		updateAdminUser,
-		deleteAdminUser,
-		addAdminUser,
-		editPasswordAdminUser,
-		findAdminUserSonList,
-		findRoleList,
-		freezeAdminUser
-	} from '@/api/agent/agentList.js'
-	import {
-		findDealerList,
-	} from '@/api/device/deviceList.js'
+		getOperatorList,
+		deleteOperator
+	} from '@/api/operator/operator.js'
 	import {
 		parseTime
 	} from '@/utils/index'
-	import addOperatorPage from './components/addOperatorPage.vue'
-	import editOperatorPage from './components/editOperatorPage.vue'
-	import childsPage from './components/childsPage.vue'
+	import operatorDialog from './components/operatorDialog.vue'
 	export default {
 		name: 'operatorList',
 		components: {
-			addOperatorPage,
-			editOperatorPage,
-			childsPage
+			operatorDialog
 		},
 		data() {
 			return {
@@ -157,9 +94,11 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-          roleId: 3,
-					adminName: '',
-					adminPhone: ''
+					name: '',
+					manageName: '',
+					managePhone: '',
+					companyName: '',
+					socialCreditCode: '',
 				},
 				tableKey: 0,
 			}
@@ -176,15 +115,15 @@
 
 		},
 		methods: {
-      //个体开户
-      addIndividual() {
-      	this.$router.push({
-      		name: "addIndividual"
-      	});
-      },
+			addOrUpdateHandle(row,isDetail) {
+				this.formVisible = true
+				this.$nextTick(() => {
+					this.$refs.operatorForm.openDialog(row,isDetail)
+				})
+      		},
 			getLists() {
 				this.listLoading = true
-				getList(this.listQuery).then(res => {
+				getOperatorList(this.listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
 						this.list = res.data
@@ -210,55 +149,13 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-			//冻结账户
-			onfreezeAdminUser(item, freezeStatus, str) {
-				let title = ''
-				let message
-				if (freezeStatus == 1) {
-					title = '将会冻结此账户！'
-					message = '冻结成功'
-				} else {
-					title = '将会解封此账户！'
-					message = '解封成功'
-				}
-				this.$confirm(title, '警告', {
-					confirmButtonText: '是',
-					cancelButtonText: '否',
-					type: 'warning'
-				}).then(() => {
-					let data = {
-						adminId: item.id,
-						freezeStatus: freezeStatus
-					}
-					console.log(data)
-					freezeAdminUser(data).then(res => {
-						if (res.code == 200) {
-							this.$message({
-								type: 'success',
-								message: message
-							})
-							if (str == 'next') {
-								this.AdminUserSonList()
-							} else {
-								this.getLists()
-							}
-						} else {
-							this.$message.error(res.msg)
-						}
-					})
-				})
-			},
-			del(id) {
+			handleDelete(id) {
 				this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
 					confirmButtonText: '是',
 					cancelButtonText: '否',
 					type: 'warning'
 				}).then(() => {
-					let data = {
-						adminUserId: id
-					}
-					console.log(data)
-					deleteAdminUser(data).then(res => {
+					deleteOperator(id).then(res => {
 						if (res.code == 200) {
 							this.$message({
 								type: 'success',
@@ -271,37 +168,6 @@
 					})
 				})
 			},
-			//初始化密码
-			editPassword(adminUserId) {
-				this.$confirm('是否初始化密码?', '警告', {
-					confirmButtonText: '是',
-					cancelButtonText: '否',
-					type: 'warning'
-				}).then(() => {
-					let data = {
-						adminUserId
-					}
-					editPasswordAdminUser(data).then(res => {
-						if (res.code == 200) {
-							this.$message.success(res.msg)
-							this.getLists()
-						} else {
-							this.$message.error(res.msg)
-						}
-					})
-				})
-			},
-			// getRoleList() {
-			// 	let data = {
-			// 		page: 1,
-			// 		limit: 1000
-			// 	}
-			// 	findRoleList(data).then(res => {
-			// 		if (res.code == 200) {
-			// 			this.restaurants = res.data
-			// 		}
-			// 	})
-			// },
 			stopF5Refresh() {
 				document.onkeydown = function(e) {
 					var evt = window.event || e;
