@@ -35,33 +35,33 @@
 				<el-form-item :label="'商户秘钥V2'" prop="wxMchKey" v-if="addData.roleId == 3">
 					<el-input v-model="addData.wxMchKey" placeholder="请输入商户V2秘钥" clearable type="password" />
 				</el-form-item>
-        <el-form-item :label="'商户秘钥V3'" prop="wxMchKeyV3" v-if="addData.roleId == 3">
-        	<el-input v-model="addData.wxMchKeyV3" placeholder="请输入商户V3秘钥" clearable type="password" />
-        </el-form-item>
-        <el-form-item :label="'域名'" prop="domainName" v-if="addData.roleId == 3">
-        	<el-input v-model="addData.domainName" placeholder="请输入域名" clearable />
-        </el-form-item>
-        <el-form-item :label="'证书序列号'" prop="certSerialNo" v-if="addData.roleId == 3">
-        	<el-input v-model="addData.certSerialNo" placeholder="请输入微信证书序列号" clearable />
-        </el-form-item>
-        <el-form-item :label="'API证书'">
-        	<el-upload class="upload-demo" ref="uploadCertificateFile" :on-remove="handleRemoveCertificateFile" :file-list="certificateFileList"
-        		:http-request="uploadCertificateFile" action='' :on-change="handleChangeCertificateFile">
-        		<el-button slot="trigger" size="small" type="text" >选取.p12文件</el-button>
-        		<el-button style="margin-left: 120px;" size="small"  @click="submitUpload('certificateFile')"
-        			:loading="loading">开始上传
-        		</el-button>
-        	</el-upload>
-        </el-form-item>
-        <el-form-item :label="'私钥文件'">
-        	<el-upload class="upload-demo" ref="uploadCertificateKeyFile" :on-remove="handleRemoveCertificateKeyFile" :file-list="certificateKeyFileList"
-        		:http-request="uploadCertificateKeyFile" action='' :on-change="handleChangeCertificateKeyFile">
-        		<el-button slot="trigger" size="small" type="text">选取.pem文件</el-button>
-        		<el-button style="margin-left: 120px;" size="small" @click="submitUpload('certificateKeyFile')"
-        			:loading="loading">开始上传
-        		</el-button>
-        	</el-upload>
-        </el-form-item>
+				<el-form-item :label="'商户秘钥V3'" prop="wxMchKeyV3" v-if="addData.roleId == 3">
+					<el-input v-model="addData.wxMchKeyV3" placeholder="请输入商户V3秘钥" clearable type="password" />
+				</el-form-item>
+				<el-form-item :label="'域名'" prop="domainName" v-if="addData.roleId == 3">
+					<el-input v-model="addData.domainName" placeholder="请输入域名" clearable />
+				</el-form-item>
+				<el-form-item :label="'证书序列号'" prop="certSerialNo" v-if="addData.roleId == 3">
+					<el-input v-model="addData.certSerialNo" placeholder="请输入微信证书序列号" clearable />
+				</el-form-item>
+				<el-form-item :label="'API证书'">
+					<el-upload class="upload-demo" ref="uploadCertificateFile" :on-remove="handleRemoveCertificateFile" :file-list="certificateFileList"
+						:http-request="uploadCertificateFile" action='' :on-change="handleChangeCertificateFile">
+						<el-button slot="trigger" size="small" type="text" >选取.p12文件</el-button>
+						<el-button style="margin-left: 120px;" size="small"  @click="submitUpload('certificateFile')"
+							:loading="loading">开始上传
+						</el-button>
+					</el-upload>
+				</el-form-item>
+				<el-form-item :label="'私钥文件'">
+					<el-upload class="upload-demo" ref="uploadCertificateKeyFile" :on-remove="handleRemoveCertificateKeyFile" :file-list="certificateKeyFileList"
+						:http-request="uploadCertificateKeyFile" action='' :on-change="handleChangeCertificateKeyFile">
+						<el-button slot="trigger" size="small" type="text">选取.pem文件</el-button>
+						<el-button style="margin-left: 120px;" size="small" @click="submitUpload('certificateKeyFile')"
+							:loading="loading">开始上传
+						</el-button>
+					</el-upload>
+				</el-form-item>
 				<el-form-item :label="'开始充电模板推送ID'" prop="templateKscdId" v-if="addData.roleId == 3">
 					<el-input v-model="addData.templateKscdId" placeholder="开始充电模板推送ID" clearable />
 				</el-form-item>
@@ -141,19 +141,19 @@
 					adminFullname: '',
 					adminPhone: '',
 					roleId: 3,
-          domainName: '',
+          			domainName: '',
 					wxAppId: '',
 					wxSecret: '',
 					wxName: '',
 					wxMchId: '',
 					wxMchKey: '',
-          wxMchKeyV3: '',
+          			wxMchKeyV3: '',
 					wxQrcode: '',
 					templateKscdId: '',
 					templateJscdId: '',
-          certSerialNo: '',
-          certificateFile: '',
-          certificateKeyFile: ''
+					certSerialNo: '',
+					certificateFile: '',
+					certificateKeyFile: ''
 				},
 				rules: {
 					adminName: [{
@@ -174,52 +174,52 @@
 						validator: checkPhone,
 						trigger: 'blur'
 					}],
-          domainName: [{
-          	required: true,
-          	message: '请输入域名',
-          	trigger: 'blur'
-          }],
-          wxName: [{
-          	required: true,
-          	message: '请输入小程序名称',
-          	trigger: 'blur'
-          }],
-          wxAppId: [{
-          	required: true,
-          	message: '请输入小程序APPID',
-          	trigger: 'blur'
-          }],
-          wxSecret: [{
-          	required: true,
-          	message: '请输入小程序密钥',
-          	trigger: 'blur'
-          }],
-          wxMchId: [{
-          	required: true,
-          	message: '请输入商户号',
-          	trigger: 'blur'
-          }],
-          wxMchKey: [{
-          	required: true,
-          	message: '请输入微信支付API密钥',
-          	trigger: 'blur'
-          }],
-          wxMchKeyV3: [{
-          	required: true,
-          	message: '请输入微信支付APIV3密钥',
-          	trigger: 'blur'
-          }],
-          certSerialNo: [{
-          	required: true,
-          	message: '请输入微信证书序列号',
-          	trigger: 'blur'
-          }],
+					domainName: [{
+						required: true,
+						message: '请输入域名',
+						trigger: 'blur'
+					}],
+					wxName: [{
+						required: true,
+						message: '请输入小程序名称',
+						trigger: 'blur'
+					}],
+					wxAppId: [{
+						required: true,
+						message: '请输入小程序APPID',
+						trigger: 'blur'
+					}],
+					wxSecret: [{
+						required: true,
+						message: '请输入小程序密钥',
+						trigger: 'blur'
+					}],
+					wxMchId: [{
+						required: true,
+						message: '请输入商户号',
+						trigger: 'blur'
+					}],
+					wxMchKey: [{
+						required: true,
+						message: '请输入微信支付API密钥',
+						trigger: 'blur'
+					}],
+					wxMchKeyV3: [{
+						required: true,
+						message: '请输入微信支付APIV3密钥',
+						trigger: 'blur'
+					}],
+					certSerialNo: [{
+						required: true,
+						message: '请输入微信证书序列号',
+						trigger: 'blur'
+					}],
 				},
-        certificateFileList: [],
-        certificateKeyFileList: [],
-        certificateFile: null,
-        certificateKeyFile: null,
-        loading: false,
+				certificateFileList: [],
+				certificateKeyFileList: [],
+				certificateFile: null,
+				certificateKeyFile: null,
+				loading: false,
 			}
 		},
 		filters: {
@@ -234,67 +234,67 @@
 
 		},
 		methods: {
-      //选择文件
-      uploadCertificateFile(files) {
-      	console.log(files)
-      	this.certificateFile = files
-      },
-      //选择文件
-      uploadCertificateKeyFile(files) {
-      	console.log(files)
-      	this.certificateKeyFile = files
-      },
-      //上传服务器
-      submitUpload(type) {
-      	if (this.certificateFile == null && type == 'certificateFile') {
-      		this.$message.error('请选择文件')
-      		return false
-      	}
-        if (this.certificateKeyFile == null && type == 'certificateKeyFile'){
-          this.$message.error('请选择文件')
-          return false
-        }
-      	this.loading = true
-      	let param = new FormData()
-        if (type == 'certificateFile') {
-          param.append('file', this.certificateFile.file)
-        }else{
-          param.append('file', this.certificateKeyFile.file)
-        }
-      	console.log(param, "上传文件")
-      	upload('PaymentFile',param).then(res => {
-      		this.loading = false
-      		if (res.code == 200) {
-            if (type == 'certificateFile') {
-              this.addData.certificateFile = res.data.url
-            }else{
-              this.addData.certificateKeyFile = res.data.url
-            }
-            this.$message.success('上传成功')
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	}).catch((err) => {
-      		this.loading = false
-      		this.$message.error('上传失败，请重试')
-      	})
-      },
-      handleRemoveCertificateFile(file, certificateFileList) {
-      	this.certificateFile = null
-      },
-      handleChangeCertificateFile(file, certificateFileList) {
-      	if (certificateFileList.length > 1) {
-      		certificateFileList.splice(0, 1);
-      	}
-      },
-      handleRemoveCertificateKeyFile(file, certificateKeyFileList) {
-      	this.certificatekeyFile = null
-      },
-      handleChangeCertificateKeyFile(file, certificateKeyFileList) {
-      	if (certificateKeyFileList.length > 1) {
-      		certificateKeyFileList.splice(0, 1);
-      	}
-      },
+			//选择文件
+			uploadCertificateFile(files) {
+				console.log(files)
+				this.certificateFile = files
+			},
+			//选择文件
+			uploadCertificateKeyFile(files) {
+				console.log(files)
+				this.certificateKeyFile = files
+			},
+			//上传服务器
+			submitUpload(type) {
+				if (this.certificateFile == null && type == 'certificateFile') {
+					this.$message.error('请选择文件')
+					return false
+				}
+				if (this.certificateKeyFile == null && type == 'certificateKeyFile'){
+				this.$message.error('请选择文件')
+				return false
+				}
+				this.loading = true
+				let param = new FormData()
+				if (type == 'certificateFile') {
+				param.append('file', this.certificateFile.file)
+				}else{
+				param.append('file', this.certificateKeyFile.file)
+				}
+				console.log(param, "上传文件")
+				upload('PaymentFile',param).then(res => {
+					this.loading = false
+					if (res.code == 200) {
+					if (type == 'certificateFile') {
+					this.addData.certificateFile = res.data.url
+					}else{
+					this.addData.certificateKeyFile = res.data.url
+					}
+					this.$message.success('上传成功')
+					} else {
+						this.$message.error(res.msg)
+					}
+				}).catch((err) => {
+					this.loading = false
+					this.$message.error('上传失败，请重试')
+				})
+			},
+			handleRemoveCertificateFile(file, certificateFileList) {
+				this.certificateFile = null
+			},
+			handleChangeCertificateFile(file, certificateFileList) {
+				if (certificateFileList.length > 1) {
+					certificateFileList.splice(0, 1);
+				}
+			},
+			handleRemoveCertificateKeyFile(file, certificateKeyFileList) {
+				this.certificatekeyFile = null
+			},
+			handleChangeCertificateKeyFile(file, certificateKeyFileList) {
+				if (certificateKeyFileList.length > 1) {
+					certificateKeyFileList.splice(0, 1);
+				}
+			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
