@@ -23,55 +23,53 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column label="小程序名称" prop="wxName" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column label="购买用户" prop="userName" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column label="手机号" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column label="月卡编号" prop="monthCardCode" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="支付单号" prop="payCode" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="购买月数" prop="months" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="购买金额" prop="money" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.renewType == 0">常规续费</span>
-          	<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="operationWay" label="操作路径" align="center" :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-          	<span type="success" v-if="scope.row.operationWay == 0">用户自助</span>
-          	<span type="success" v-if="scope.row.operationWay == 1">管理平台</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="续费前有效期" prop="renewBeforeTime" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="续费后有效期" prop="renewAfterTime" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="备注" prop="remark" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column label="月卡编号" prop="monthCardCode" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column label="支付单号" prop="payCode" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column label="购买月数" prop="months" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column label="购买金额" prop="money" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="renewType" label="续费规则" align="center" :show-overflow-tooltip="isPc">
+				<template slot-scope="scope">
+					<span type="success" v-if="scope.row.renewType == 0">常规续费</span>
+					<span type="success" v-if="scope.row.renewType == 1">从过期时间开始续费</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="operationWay" label="操作路径" align="center" :show-overflow-tooltip="isPc">
+				<template slot-scope="scope">
+					<span type="success" v-if="scope.row.operationWay == 0">用户自助</span>
+					<span type="success" v-if="scope.row.operationWay == 1">管理平台</span>
+				</template>
+				</el-table-column>
+				<el-table-column label="续费前有效期" prop="renewBeforeTime" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column label="续费后有效期" prop="renewAfterTime" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column label="备注" prop="remark" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="startTime" label="创建时间" align="center" sortable :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="endTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="endTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 				<!-- <el-table-column label="操作" align="center" width="320" fixed="right">
 					<template slot-scope="scope">
-            <div style="display: flex;justify-content: center;align-items: center;">
+						<div style="display: flex;justify-content: center;align-items: center;">
 
-            </div>
+						</div>
 					</template>
 				</el-table-column> -->
 			</el-table>
@@ -105,11 +103,11 @@
 				total: 10,
 				list: [],
 				listQuery: {
-          userCode: '',
+          			userCode: '',
 					userName: '',
-          phoneNumber: '',
-          payCode: '',
-          monthCardCode: '',
+					phoneNumber: '',
+					payCode: '',
+					monthCardCode: '',
 					createTimeStart: '',
 					createTimeEnd: '',
 					page: 1,
@@ -172,14 +170,14 @@
 			},
 		},
 		created() {
-      const userId = this.$route.query.userId;
-      this.isPc = !this.$common.isMobile()
-      if (userId !== undefined && userId != '') {
-        this.listQuery.userCode = userId;
-        this.getLists();
-      } else {
-        this.getLists();
-      }
+			const userId = this.$route.query.userId;
+			this.isPc = !this.$common.isMobile()
+			if (userId !== undefined && userId != '') {
+				this.listQuery.userCode = userId;
+				this.getLists();
+			} else {
+				this.getLists();
+			}
 		},
 	}
 </script>
