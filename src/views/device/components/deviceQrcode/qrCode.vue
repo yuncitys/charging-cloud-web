@@ -102,16 +102,15 @@
 
 			},
 			//显示二维码
-			showQrcode(deviceCode, appId, domainName) {
-				this.appId = appId
+			showQrcode(deviceCode, domainName) {
 				this.showqrCode = true
 				this.titleStr = deviceCode
 				this.deviceCode = deviceCode
 				this.domainName = domainName || ''
-				console.log(this.domainName, "this.domainName")
-				this.$nextTick(() => {
-					this.getCodeUrl()
-				})
+				this.codeUrl = domainName
+				// this.$nextTick(() => {
+				// 	this.getCodeUrl()
+				// })
 			},
 			//生成二维码内容
 			getCodeUrl() {
