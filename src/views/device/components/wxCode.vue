@@ -125,16 +125,14 @@
 
 			},
 			//显示二维码
-			showQrcode(deviceCode, appId, portCount, networkDotId, domainName, ruleId) {
+			showQrcode(deviceCode, portCount, networkDotId, domainName, ruleId) {
 				console.log(portCount)
-				this.appId = appId
 				this.showqrCode = true
 				this.codeUrl = deviceCode
 				this.networkDotId = networkDotId || ''
 				this.portCount = portCount || 10
 				this.domainName = domainName || ''
 				this.ruleId = ruleId
-				console.log(this.domainName, "this.domainName")
 				this.titleStr = "设备号:" + deviceCode
 				this.deviceCode = deviceCode
 				this.$nextTick(() => {
@@ -145,9 +143,10 @@
 				for (let i = 0; i < this.portCount + 1; i++) {
 					let str = 'qrCode' + i
 					let domainName = this.domainName
-					domainName = this.getFormat(domainName)
-					let ruleId = this.ruleId
-					let baseUrl = domainName + `weixin${ruleId}/miniprogram`
+					// domainName = this.getFormat(domainName)
+					// let ruleId = this.ruleId
+					// let baseUrl = domainName + `weixin${ruleId}/miniprogram`
+					let baseUrl = domainName
 					let url = ''
 					if (i == 0) {
 						url = baseUrl + '?qrcode=' + this.deviceCode + '&networkDotId=' + this
