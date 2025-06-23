@@ -2,7 +2,7 @@
 	<div style="display: inline-block;">
 		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onShowConfig'
 			icon="el-icon-download" v-if="btnAuthen.permsVerifAuthention(':device:deviceList:generate')">
-      生成设备
+      		生成设备
 		</el-button>
 		<el-dialog :visible.sync="showConfig" title="生成设备" @close="showConfig = false" :append-to-body="true">
 			<el-form ref="configData" :model="configData" :rules="configrules" label-position="left" label-width="100px"
@@ -13,9 +13,12 @@
 						<el-radio :label="2">汽车</el-radio>
 					</el-radio-group>
 				</el-form-item>
-        <el-form-item :label="'导出条数'" prop="number">
-        	<el-input v-model="configData.number" clearable placeholder="请输入导出条数" type="number" />
-        </el-form-item>
+				<el-form-item :label="'导出条数'" prop="number">
+					<el-input v-model="configData.number" clearable placeholder="请输入导出条数" type="number" />
+				</el-form-item>
+				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
+					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码前缀"/>
+				</el-form-item>
 				<el-form-item :label="'设备类型'" prop="deviceTypeId">
 					<el-select v-model="configData.deviceTypeId" placeholder="请选择端口数" style="width: 100%;">
 						<el-option v-for="item in dectinoType" :key="item.deviceTypeId" :label="item.deviceTypeName" :value="item.deviceTypeId"
@@ -23,38 +26,38 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
-        <el-form-item :label="'编号长度'" prop="length">
-        	<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
-        		<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
-        			:disabled="item.disabled">
-        		</el-option>
-        	</el-select>
-        </el-form-item>
-		<el-form-item label="计费规则" prop="deviceChagePattern" v-if="configData.ruleId === 1">
-        	<el-radio-group v-model="configData.deviceChagePattern" @change="changeChagePattern">
-        		<el-radio :label="0">时间</el-radio>
-        		<el-radio :label="1">电量</el-radio>
-        		<el-radio :label="2">功率</el-radio>
-        	</el-radio-group>
-        </el-form-item>
-        <el-form-item :label="'收费方案'" prop="devicePriceId">
-        	<el-select v-model="configData.devicePriceId" class="filter-item" placeholder="请选择收费方案"
-        		clearable style="width: 100%">
-        		<el-option v-for="item in devicePriceList" :key="item.id" :label="item.feeName"
-        			:value="item.id" />
-        	</el-select>
-        </el-form-item>
-        <el-form-item :label="'运营商'" prop="adminId">
-          <el-select style="width: 100%;" class="filter-item" v-model="configData.adminId" filterable clearable placeholder="请选择运营商">
-              <el-option
-                v-for="item in operatorList"
-                :key="item.id"
-                :label="item.adminFullname"
-                :value="item.id"
-                @click.native="handleOptionClick(item)">
-              </el-option>
-          </el-select>
-        </el-form-item>
+				<el-form-item :label="'编号长度'" prop="length">
+					<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
+						<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
+							:disabled="item.disabled">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item label="计费规则" prop="deviceChagePattern" v-if="configData.ruleId === 1">
+					<el-radio-group v-model="configData.deviceChagePattern" @change="changeChagePattern">
+						<el-radio :label="0">时间</el-radio>
+						<el-radio :label="1">电量</el-radio>
+						<el-radio :label="2">功率</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item :label="'收费方案'" prop="devicePriceId">
+					<el-select v-model="configData.devicePriceId" class="filter-item" placeholder="请选择收费方案"
+						clearable style="width: 100%">
+						<el-option v-for="item in devicePriceList" :key="item.id" :label="item.feeName"
+							:value="item.id" />
+					</el-select>
+				</el-form-item>
+				<!-- <el-form-item :label="'运营商'" prop="adminId">
+					<el-select style="width: 100%;" class="filter-item" v-model="configData.adminId" filterable clearable placeholder="请选择运营商">
+						<el-option
+							v-for="item in operatorList"
+							:key="item.id"
+							:label="item.adminFullname"
+							:value="item.id"
+							@click.native="handleOptionClick(item)">
+						</el-option>
+					</el-select>
+				</el-form-item> -->
 				<el-form-item>
 					<el-button type="primary" @click="DownloadConfig('configData')" v-loading.fullscreen.lock="loading">
 						确定</el-button>
@@ -68,30 +71,9 @@
 
 <script>
 	import {
-		getList,
-		findDeviceCommand,
-		openAllPort,
-		openOnePort,
-		closePort,
-		deleteDevice,
-		queryDeviceToCommand,
-		chargeOnePort,
-		addDevice,
 		findDeviceType,
-		updateDevice,
-		findDeviceInfoById,
-		findDealerList,
-		findOrderInfo,
-		deviceAllocation,
-		batchUpdateNetworkDot,
-		uploadExcel,
-		downloadExcel,
-		addDevicePrice,
-		batchAddDevicePrice,
 		findDevicePriceByPriceType,
 		downLoadDeviceCodes,
-		updateDeviceStatus,
-		operationDevice
 	} from '@/api/device/deviceList.js'
   import {
     getOperator
@@ -122,10 +104,10 @@
 				configData: {
 					length: '',
 					number: '',
+					deviceQrLink: '',
 					deviceTypeId: '',
 					deviceChagePattern: 0,
 					devicePriceId: '',
-					adminId: '',
 					ruleId: 1
 				},
         		domainName: '',
@@ -168,7 +150,12 @@
 						message: '请选择设备号长度',
 						trigger: 'blur',
 					}],
-					},
+					deviceQrLink: [{
+						required: true,
+						message: '请输入设备二维码前缀',
+						trigger: 'blur',
+					}],
+				},
 				dectinoType: [],
 				operatorList: [],
 				devicePriceList: [],
@@ -318,9 +305,10 @@
 											obj.deviceCode = deviceCode[index]
 											obj.userName = userName[index]
 											obj.upTopic = upTopic[index]
-											let domainName = this.getFormat(this.domainName)
-											let ruleId = this.configData.ruleId
-											let baseUrl = domainName + `weixin${ruleId}/miniprogram`
+											// let domainName = this.getFormat(this.domainName)
+											// let ruleId = this.configData.ruleId
+											// let baseUrl = domainName + `weixin${ruleId}/miniprogram`
+											let baseUrl = this.configData.deviceQrLink
 											let urls = deviceCode[index]
 											for (let i = 0; i <= port; i++) {
 												if (i == 0) {

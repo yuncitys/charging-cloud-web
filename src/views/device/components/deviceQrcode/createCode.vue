@@ -2,13 +2,16 @@
 	<div style="display: inline-block;">
 		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onShowConfig'
 			v-if="btnAuthen.permsVerifAuthention(':sys:qr:generate')">
-      批量生产二维码
+      			批量生产二维码
 		</el-button>
 		<el-dialog :visible.sync="showConfig" title="批量生产二维码" @close="showConfig = false" :append-to-body="true">
 			<el-form ref="configData" :model="configData" :rules="configrules" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;">
 				<el-form-item :label="'生成数量'" prop="number">
 					<el-input v-model="configData.number" clearable placeholder="请输入生成数量" type="number" />
+				</el-form-item>
+				<el-form-item :label="'二维码前缀'" prop="qrText">
+					<el-input v-model="configData.qrText" clearable placeholder="请输入生成的二维码前缀" />
 				</el-form-item>
 				<el-form-item :label="'导出格式'" prop="type">
 					<el-select v-model="configData.type" placeholder="请选择导出格式" style="width: 100%;">
@@ -17,19 +20,19 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
-				<el-form-item :label="'运营商'" prop="adminId">
+				<!-- <el-form-item :label="'运营商户'" prop="adminId">
 					<el-autocomplete style="width: 100%;margin-right: 20px ;" class="filter-item" v-model="adminName"
 						:fetch-suggestions="querySearch" placeholder="请选择运营商" @select="handleSelect" clearable
 						:debounce='0' @change="changeName">
-          </el-autocomplete>
-				</el-form-item>
+          			</el-autocomplete>
+				</el-form-item> -->
 				<el-form-item>
 					<el-button type="primary" @click="DownloadConfig('configData')" v-loading.fullscreen.lock="loading">
 						确定
-          </el-button>
+          			</el-button>
 					<el-button @click="showConfig = false">
-            取消
-          </el-button>
+						取消
+					</el-button>
 				</el-form-item>
 			</el-form>
 		</el-dialog>
@@ -68,29 +71,26 @@
 				loading: false,
 				configData: {
 					number: '',
-					type: "",
-          adminId:''
+					type: '',
+          			qrText: ''
 				},
-				adminId: '',
-				adminName: '',
-				wxAppId: '',
 				configrules: {
 					number: [{
 						required: true,
 						message: '请输入生成数量',
 						trigger: 'blur',
-					}, {
-						validator: checkNum,
-						trigger: 'blur'
+						}, {
+							validator: checkNum,
+							trigger: 'blur'
 					}],
 					type: [{
 						required: true,
 						message: '请选择导出格式',
 						trigger: 'blur',
 					}],
-					adminId: [{
+					qrText: [{
 						required: true,
-						message: '请选择运营商',
+						message: '请输入二维码前缀',
 						trigger: 'blur',
 					}]
 				},
@@ -184,11 +184,11 @@
 					this.$message.error('请选择运营商')
 					return false
 				}
-        let number = configData.number
-        if (number > 1000) {
-        	this.$message.error('最多导出1000条数据')
-        	return false
-        }
+				let number = configData.number
+				if (number > 1000) {
+					this.$message.error('最多导出1000条数据')
+					return false
+				}
 				configData.adminId = this.adminId
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
