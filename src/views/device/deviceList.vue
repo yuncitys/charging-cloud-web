@@ -7,50 +7,50 @@
 				placeholder="请输入站点名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.networkAddress" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入设备地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" /> -->
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
-        @change="handleFilter()" placeholder="请选择充电站">
-          <el-option
-            v-for="item in chargingStationList"
-            :key="item.id"
-            :label="item.networkName"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+				@change="handleFilter()" placeholder="请选择充电站">
+				<el-option
+					v-for="item in chargingStationList"
+					:key="item.id"
+					:label="item.networkName"
+					:value="item.id">
+				</el-option>
+			</el-select>
 			<el-select v-model="listQuery.deviceStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择设备状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()" placeholder="请选择代理商">
-          <el-option
-            v-for="item in dealerList"
-            :key="item.id"
-            :label="item.adminFullname"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()" placeholder="请选择代理商">
+				<el-option
+					v-for="item in dealerList"
+					:key="item.id"
+					:label="item.adminFullname"
+					:value="item.id">
+				</el-option>
+			</el-select>
 
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
-        查询
-      </el-button>
+				查询
+			</el-button>
 
 			<div style="margin: 15px 0;">
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="batchUpdate"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchAllocation')">
-          批量分配站点
+          			批量分配站点
 				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='batchAddDevicePrice'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allCharge')">
-          批量设置收费标准
+          			批量设置收费标准
 				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onBatchSetPower'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchSetPower')">
-          批量设置设备参数
+          			批量设置设备参数
 				</el-button>
 				<!--导出Excel  -->
 				<downExcel :queryData="listQuery" />
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onupdateDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
-          同步设备状态
+          			同步设备状态
 				</el-button>
 			</div>
 
@@ -77,8 +77,8 @@
 				<el-checkbox v-model="formThead.deviceStatus" label="设备状态">设备状态</el-checkbox>
 				<el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox>
 				<el-checkbox v-model="formThead.feeName" label="计费标准">计费标准</el-checkbox>
-        <el-checkbox v-model="formThead.activateStatus" label="激活状态">激活状态</el-checkbox>
-        <el-checkbox v-model="formThead.activateTime" label="激活时间">激活时间</el-checkbox>
+				<el-checkbox v-model="formThead.activateStatus" label="激活状态">激活状态</el-checkbox>
+				<el-checkbox v-model="formThead.activateTime" label="激活时间">激活时间</el-checkbox>
 				<el-checkbox v-model="formThead.createTime" label="创建时间">创建时间</el-checkbox>
 			</div>
 
@@ -100,16 +100,16 @@
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-        		<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
-        	:show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
+						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -149,13 +149,13 @@
 				<el-table-column prop="feeName" label="计费标准" v-if="formThead.feeName" align="center"
 					:show-overflow-tooltip='isPc' width="150">
 				</el-table-column>
-        <el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-        		<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
+						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
@@ -168,7 +168,7 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="420">
+				<el-table-column label="操作" align="center" width="420" fixed="right">
 					<template slot-scope="scope">
 						<div style="display: flex;align-items: center;justify-content: space-around;">
 							<div>
@@ -188,7 +188,7 @@
 								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')"
 									style="margin-left: 0px;">
 									<el-button type="primary" @click="showallocation(scope.row)" size='mini'>
-                    分配设备
+                    					分配设备
 									</el-button>
 								</div>
 								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
@@ -202,28 +202,28 @@
 							<div>
 								<div v-if="scope.row.operationState == 0 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')">
 									<el-button type="danger" @click="onOperationDevice(scope.row.id,1)" size='mini'>
-                    禁用
+                    					禁用
 									</el-button>
-                </div>
+                				</div>
 
-                <div v-if="scope.row.operationState == 1 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')">
-                  <el-button type="primary" @click="onOperationDevice(scope.row.id,0)" size='mini'>
-                    启用
-                  </el-button>
-                </div>
+								<div v-if="scope.row.operationState == 1 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')">
+								<el-button type="primary" @click="onOperationDevice(scope.row.id,0)" size='mini'>
+									启用
+								</el-button>
+								</div>
 
-                <div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
-                  style="margin-top: 10px;margin-left: 0px;">
-                  <el-button type="danger" @click="del(scope.row.id)" size='mini'>
-                    删除
-                  </el-button>
-                </div>
-              </div>
+								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
+								style="margin-top: 10px;margin-left: 0px;">
+								<el-button type="danger" @click="del(scope.row.id)" size='mini'>
+									删除
+								</el-button>
+								</div>
+							</div>
 
 							<div>
 								<div>
 									<el-button type="primary" @click="showWXQrcode(scope.row)" size='mini'>
-                    二维码
+                    					二维码
 									</el-button>
 								</div>
 								<div v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')" class="top10">
@@ -235,7 +235,7 @@
 								<editDeviceType :row_data="scope.row" @getLists="getLists"></editDeviceType>
 								<div class="top10">
 									<el-button type="primary" @click="upDownRecord(scope.row)" size='mini'>
-                    上下线记录
+                    					上下线记录
 									</el-button>
 								</div>
 							</div>
@@ -341,12 +341,12 @@
 		findDevicePriceByPriceType,
 		updateDeviceStatus,
 		operationDevice,
-    setDeviceChargeModel,
-    batchSetDeviceChargeModel
+		setDeviceChargeModel,
+		batchSetDeviceChargeModel
 	} from '@/api/device/deviceList.js'
-  import {
-    getChargingStationList
-  } from '@/api/netWorkDot/netWorkDotList.js'
+	import {
+		getChargingStationList
+	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -377,13 +377,13 @@
 		data() {
 			return {
 				activeName: '1',
-        ruleIdList: [{
-        	id: '1',
-        	title: '单车'
-        }, {
-        	id: '2',
-        	title: '汽车'
-        }],
+				ruleIdList: [{
+					id: '1',
+					title: '单车'
+				}, {
+					id: '2',
+					title: '汽车'
+				}],
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -432,7 +432,7 @@
 				}],
 				//分配设备
 				dealerList: [],
-        chargingStationList: [],
+        		chargingStationList: [],
 				showAllocation: false,
 				allocation: {
 					deviceId: '',
@@ -560,8 +560,7 @@
 			},
 			//显示二维码
 			showWXQrcode(item) {
-				this.$refs.wxCodes.showQrcode(item.deviceCode, item.appId, item.portCount, item.networkDotId, item
-					.domainName, item.ruleId)
+				this.$refs.wxCodes.showQrcode(item.deviceCode, item.portCount, item.networkDotId, item.deviceQrcodeLink, item.ruleId)
 			},
 			//设置表格一页数量
 			handleSizeChange(val) {
