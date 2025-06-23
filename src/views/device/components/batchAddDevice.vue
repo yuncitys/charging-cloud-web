@@ -1,7 +1,8 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onShowDevice"
-			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allAdd')">批量导入设备
+		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" 
+			icon="el-icon-upload2" @click="onShowDevice" v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allAdd')">
+			批量导入设备
 		</el-button>
 		<el-dialog :visible.sync="showDevice" title="批量导入设备" @close="showDevice = false" :append-to-body="true">
 			<el-form ref="addDeviceData" :model="addDeviceData" :rules="deviceRules" label-position="left"

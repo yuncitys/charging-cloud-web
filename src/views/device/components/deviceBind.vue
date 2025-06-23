@@ -1,30 +1,31 @@
 <template>
 	<div>
 		<div style="display: inline-block;">
-			<el-button type="primary" @click='onShowDialog' size="mini">绑定二维码
+			<el-button type="primary" @click='onShowDialog' size="mini">
+				码绑定
 			</el-button>
 			<el-dialog :visible.sync="showDialog" title="绑定二维码" @close="showDialog=false" :append-to-body="true">
 				<el-form ref="bindingData" :model="bindingData" :rules="bindingRules" label-position="left" label-width="100px"
 					style="width: 600px; margin-left:50px;">
 					<h2 class="deviceCode">设备号{{deviceCode}}</h2>
-          <el-form-item :label="'二维码编号'" prop="qrCode">
-          	<div style="display: flex;">
-          		<div>
-          			<el-input v-model="bindingData.qrCode" clearable placeholder="请输入二维码编号" />
-          		</div>
-          		<div style="margin-left: 20px;">
-          			<el-button type="primary" @click='onBindingQRCode'>二维码绑定
-          			</el-button>
-          		</div>
-          	</div>
-          </el-form-item>
-          <el-form-item :label="'选择类型'" prop="port">
-          	<el-select v-model="bindingData.port" placeholder="请选择绑定类型" style="width: 70%;">
-          		<el-option v-for="item in bindingPort" :key="item.value" :label="item.label" :value="item.value"
-          			:disabled="item.disabled">
-          		</el-option>
-          	</el-select>
-          </el-form-item>
+					<el-form-item :label="'二维码编号'" prop="qrCode">
+						<div style="display: flex;">
+							<div>
+								<el-input v-model="bindingData.qrCode" clearable placeholder="请输入二维码编号" />
+							</div>
+							<div style="margin-left: 20px;">
+								<el-button type="primary" @click='onBindingQRCode'>二维码绑定
+								</el-button>
+							</div>
+						</div>
+					</el-form-item>
+					<el-form-item :label="'选择类型'" prop="port">
+						<el-select v-model="bindingData.port" placeholder="请选择绑定类型" style="width: 70%;">
+							<el-option v-for="item in bindingPort" :key="item.value" :label="item.label" :value="item.value"
+								:disabled="item.disabled">
+							</el-option>
+						</el-select>
+					</el-form-item>
 					<el-form-item :label="'上传二维码'">
 						<el-upload class="upload-demo" drag action="" :show-file-list="false" :http-request="resolveQR"
 							multiple>
