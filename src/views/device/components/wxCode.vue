@@ -149,12 +149,10 @@
 					let baseUrl = domainName
 					let url = ''
 					if (i == 0) {
-						url = baseUrl + '?qrcode=' + this.deviceCode + '&networkDotId=' + this
-							.networkDotId
+						url = baseUrl + '?qrcode=' + this.deviceCode + '&networkDotId=' + this.networkDotId
 						this.codeUrl = url
 					} else {
-						url = baseUrl + '?qrcode=' + this.deviceCode + '&port=' + i +
-							'&networkDotId=' + this.networkDotId
+						url = baseUrl + '?qrcode=' + this.deviceCode + '&port=' + i + '&networkDotId=' + this.networkDotId
 						this.urls.push(url)
 					}
 				}
