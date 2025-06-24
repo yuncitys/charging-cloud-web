@@ -481,20 +481,20 @@
 
 		},
 		methods: {
-      getChargingStationList() {
-      	getChargingStationList().then(res => {
-      		if (res.code == 200) {
-      			this.chargingStationList = res.data;
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			getChargingStationList() {
+				getChargingStationList(0).then(res => {
+					if (res.code == 200) {
+						this.chargingStationList = res.data;
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 			//切换导航
 			handleClick(tab, event) {
 				this.listQuery.ruleId = tab.name
-        this.listQuery.page = 1,
-        this.listQuery.limit = 10,
+				this.listQuery.page = 1,
+				this.listQuery.limit = 10,
 				this.getLists()
 			},
 			//禁用/启用设备

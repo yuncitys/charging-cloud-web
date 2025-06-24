@@ -473,7 +473,7 @@
       },
     },
     mounted() {
-      getChargingStationList().then(res => {
+      getChargingStationList(0).then(res => {
       	if (res.code == 200) {
       		this.chargingStationList = res.data;
       	} else {
