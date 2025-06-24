@@ -25,7 +25,7 @@
 						<span>{{ scope.row.realTimeCharging==0?'实时1分钟收费':"实时30分钟收费" }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="config.AutostopConfig.isAutostop" label="是否开启充满自停" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="config.AutostopConfig.isAutostop" label="充满自停" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span v-if="scope.row.config.AutostopConfig.isAutostop === 1">是</span>
 						<span v-if="scope.row.config.AutostopConfig.isAutostop === 0">否</span>
