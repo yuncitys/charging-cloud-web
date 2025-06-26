@@ -29,16 +29,16 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column prop="wxName" label="小程序名称" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column label="运营商户" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column label="付款编号" prop="payCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="用户id" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="用户电话" prop="phoneNumber" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column label="用户电话" prop="phoneNumber" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<!-- <el-table-column prop="headImg" label="用户头像" align="center">
 					<template slot-scope="scope" style="text-align: center;">
 						<imgView :imgSrc="scope.row.headImg" />
@@ -53,14 +53,14 @@
 						<el-tag v-if="scope.row.type == 0">充电缴费</el-tag>
 						<el-tag v-if="scope.row.type == 1">充值余额</el-tag>
 						<el-tag v-if="scope.row.type == 2">充值IC卡</el-tag>
-            <el-tag v-if="scope.row.type == 3">充值月卡</el-tag>
+            			<el-tag v-if="scope.row.type == 3">充值月卡</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="payStatus" label="状态" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
 						<el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
-            <el-tag type="success" v-if="scope.row.payStatus == 2">支付失败</el-tag>
+            			<el-tag type="success" v-if="scope.row.payStatus == 2">支付失败</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
@@ -127,10 +127,10 @@
 						id: '2',
 						title: '充值IC卡'
 					},
-          {
-          	id: '3',
-          	title: '充值月卡'
-          }
+					{
+						id: '3',
+						title: '充值月卡'
+					}
 				],
 				time: ''
 			}

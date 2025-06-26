@@ -9,7 +9,7 @@
 				placeholder="请输入付款编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.type" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择交易类型" clearable @change="handleFilter">
-        <el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
+        		<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
@@ -19,7 +19,7 @@
 			<div style="margin: 15px 0;">
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 					icon="el-icon-search">查询
-        </el-button>
+        		</el-button>
 			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -27,16 +27,16 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column label="小程序名称" prop="wxName" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column label="运营商户" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column label="付款编号" prop="payCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="用户电话" prop="phoneNumber" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column label="用户电话" prop="phoneNumber" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column prop="payMoney" label="付款金额" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="refundMoney" label="已退金额" align="center" :show-overflow-tooltip='isPc'>
@@ -46,7 +46,7 @@
 						<span v-if="scope.row.payType == 0">充电缴费</span>
 						<span v-if="scope.row.payType == 1">充值余额</span>
 						<span v-if="scope.row.payType == 2">充值IC卡</span>
-            <span v-if="scope.row.payType == 3">充值月卡</span>
+            			<span v-if="scope.row.payType == 3">充值月卡</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createTime" label="支付时间" align="center" sortable :show-overflow-tooltip='isPc'>
@@ -54,14 +54,14 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column label="操作" align="center" width="200">
-        	<template slot-scope="scope">
-            <refund-page :row_data="scope.row" @getLists="getLists"/>
-            <el-button
-              type="primary" size='mini' style="margin-left: 10px;"
-              @click="handleRefundRecord(scope.row)">详情</el-button>
-        	</template>
-        </el-table-column>
+				<el-table-column label="操作" align="center" width="200">
+					<template slot-scope="scope">
+					<refund-page :row_data="scope.row" @getLists="getLists"/>
+					<el-button
+					type="primary" size='mini' style="margin-left: 10px;"
+					@click="handleRefundRecord(scope.row)">详情</el-button>
+					</template>
+				</el-table-column>
 			</el-table>
 			<div class="pagination-container">
 				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"

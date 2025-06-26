@@ -5,8 +5,8 @@
 				placeholder="请输入用户ID" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.refundCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入退款编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-      <el-input v-model="listQuery.payCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入支付编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.payCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入支付编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -26,14 +26,14 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column label="小程序名称" prop="wxName"  align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+        		<el-table-column label="运营商户" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column label="退款编号" prop="refundCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="支付编号" prop="payCode" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column label="第三方退款编号" prop="thirdRefundCode" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column label="支付编号" prop="payCode" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column label="第三方退款编号" prop="thirdRefundCode" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
@@ -45,50 +45,49 @@
 				</el-table-column> -->
 				<el-table-column label="退款金额" prop="refundMoney" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-            <el-tag v-if="scope.row.refundSource == 'CHARGING_ORDER'">订单退款</el-tag>
-            <el-tag v-if="scope.row.refundSource == 'WALLET_BALANCE'">余额退款</el-tag>
-          </template>
-        </el-table-column>
+				<el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<el-tag v-if="scope.row.refundSource == 'CHARGING_ORDER'">订单退款</el-tag>
+					<el-tag v-if="scope.row.refundSource == 'WALLET_BALANCE'">余额退款</el-tag>
+				</template>
+				</el-table-column>
 				<el-table-column label="退款渠道" prop="channel" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-            <el-tag v-if="scope.row.channel == 'ORIGINAL'">原路退回</el-tag>
-            <el-tag v-if="scope.row.channel == 'BALANCE'">退回余额</el-tag>
-            <el-tag v-if="scope.row.channel == 'OTHER_BALANCE'">原账户异常退到其他余额账户</el-tag>
-            <el-tag v-if="scope.row.channel == 'OTHER_BANKCARD'">原银行卡异常退到其他银行卡</el-tag>
-          </template>
+					<template slot-scope="scope">
+						<el-tag v-if="scope.row.channel == 'ORIGINAL'">原路退回</el-tag>
+						<el-tag v-if="scope.row.channel == 'BALANCE'">退回余额</el-tag>
+						<el-tag v-if="scope.row.channel == 'OTHER_BALANCE'">原账户异常退到其他余额账户</el-tag>
+						<el-tag v-if="scope.row.channel == 'OTHER_BANKCARD'">原银行卡异常退到其他银行卡</el-tag>
+					</template>
 				</el-table-column>
 				<el-table-column label="退款状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-            <el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
+            			<el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
 						<el-tag v-if="scope.row.status == 'PROCESSING'">处理中</el-tag>
 						<el-tag type="success"v-if="scope.row.status == 'SUCCESS'">退款成功</el-tag>
 						<el-tag type="danger" v-if="scope.row.status == 'ABNORMAL'">退款失败</el-tag>
-            <el-tag v-if="scope.row.status == 'CLOSED'">退款关闭</el-tag>
+            			<el-tag v-if="scope.row.status == 'CLOSED'">退款关闭</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="result" label="处理结果" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="remark" label="退款说明" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column prop="remark" label="退款说明" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column prop="createTime" label="退款时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="updateTime" label="成功时间" align="center" sortable :show-overflow-tooltip='isPc'>
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="updateTime" label="成功时间" align="center" sortable :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 			</el-table>
 			<div class="pagination-container">
 				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
 					:total="total" background layout="total, sizes, prev, pager, next, jumper"
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</div>
-
 		</div>
 	</div>
 </template>
@@ -116,11 +115,10 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-          payCode:'',
-          refundCode:'',
+					payCode:'',
+					refundCode:'',
 					userCode: '',
 					status: '',
-          wxName: '',
 					createTimeStart: '',
 					createTimeEnd: ''
 				},
