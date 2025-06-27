@@ -634,6 +634,22 @@ export const constantRoutes = [{
         title: '退款中心',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'paymentChannel',
+      component: () => import('@/views/paymentChannel/index'),
+      name: 'paymentChannel',
+      meta: {
+        title: '支付渠道',
+        icon: 'el-icon-document',
+      }
+    }, {
+      path: 'paymentInfo',
+      component: () => import('@/views/paymentChannelInfo/index'),
+      name: 'paymentInfo',
+      meta: {
+        title: '支付方式',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
@@ -900,6 +916,32 @@ export const constantRoutes = [{
       meta: {
         title: '互联推送管理',
         icon: 'el-icon-s-check',
+      }
+    }, {
+      path: 'merchantList',
+      component: () => import('@/views/interconnection/merchantList'),
+      name: 'merchantList',
+      meta: {
+        title: '互联商户管理',
+        icon: 'el-icon-s-check',
+      }
+    }, {
+      path: 'chargeStationList',
+      component: () => import('@/views/interconnection/chargeStationList'),
+      name: 'chargeStationList',
+      hidden: true,
+      meta: {
+        title: '互联电站管理',
+        icon: 'el-icon-setting',
+      }
+    }, {
+      path: 'chargePileList',
+      component: () => import('@/views/interconnection/chargePileList'),
+      name: 'chargePileList',
+      hidden: true,
+      meta: {
+        title: '互联电桩管理',
+        icon: 'el-icon-setting',
       }
     }]
   },
