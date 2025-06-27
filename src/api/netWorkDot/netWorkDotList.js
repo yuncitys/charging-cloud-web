@@ -26,20 +26,10 @@ export function getList(data) {
 export function updateNetworkDot(data) {
 	return request({
 		url: '/api/web/networkDot/updateNetworkDot',
-		method: 'post',
+		method: 'put',
 		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+			"Content-Type": "application/json; charset=UTF-8",
 		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
 	})
 }
@@ -72,18 +62,8 @@ export function addNetworkDot(data) {
 		url: '/api/web/networkDot/addNetworkDot',
 		method: 'post',
 		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+			"Content-Type": "application/json; charset=UTF-8",
 		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
 	})
 }
@@ -111,23 +91,9 @@ export function downloadExcel(data) {
 }
 
 //所有站点
-export function getChargingStationList(data) {
+export function getChargingStationList(tenantId) {
 	return request({
-		url: '/api/web/networkDot/list',
-		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
-		data
+		url: '/api/web/networkDot/list/' + tenantId,
+		method: 'get'
 	})
 }
