@@ -20,8 +20,8 @@
         <el-form-item label="信用代码" prop="socialCreditCode">
           <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled = "isDetail"></el-input>
         </el-form-item>
-        <el-form-item label="机构管理员" prop="manageName">
-          <el-input v-model="form.manageName" placeholder="请输入机构管理员" :disabled = "isDetail"></el-input>
+        <el-form-item label="管理员" prop="manageName">
+          <el-input v-model="form.manageName" placeholder="请输入租户管理员" :disabled = "isDetail"></el-input>
         </el-form-item>
         <el-form-item label="联系方式" prop="contactInfo">
           <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :disabled = "isDetail"></el-input>
