@@ -64,7 +64,7 @@
 		updateOperator
 	} from '@/api/operator/operator.js'
   import {
-  	getAgent as getRoleList,
+  	findRoleAllList as getRoleList,
   } from '@/api/permission/role.js'
   import {
 		addAdminUser
@@ -164,7 +164,7 @@
     methods: {
       openDialog(formData,isDetail) {
         this.dialogVisible = true;
-        this.getAgentRoleList()
+        this.findRoleAllList()
         if(formData == null){
           this.isDetail = false
           this.visibleStep = true
@@ -202,7 +202,7 @@
           this.form = formData
         }
       },
-      getAgentRoleList() {
+      findRoleAllList() {
 				getRoleList().then(res => {
 					if (res.code == 200) {
 						this.roleList = res.data

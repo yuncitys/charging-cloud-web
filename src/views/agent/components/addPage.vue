@@ -39,9 +39,9 @@
 	import {
 		addAdminUser
 	} from '@/api/agent/agentList.js'
-  import {
-  	getAgent,
-  } from '@/api/permission/role.js'
+	import {
+		findRoleAllList,
+	} from '@/api/permission/role.js'
 	import {
 		uploadImg
 	} from '@/api/AD/ADList.js'
@@ -131,8 +131,8 @@
 				this.$refs[formName].resetFields();
 			},
 			onShowAdd() {
-				this.getAgentRoleList()
 				this.showAdd = true
+				this.findRoleAllList()
 			},
 			onaddData(formName) {
 				let addData = JSON.parse(JSON.stringify(this.addData))
@@ -155,8 +155,8 @@
 					}
 				})
 			},
-			getAgentRoleList() {
-				getAgent().then(res => {
+			findRoleAllList() {
+				findRoleAllList().then(res => {
 					if (res.code == 200) {
 						this.agentList = res.data
 					}
