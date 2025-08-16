@@ -111,9 +111,9 @@ export function deleteRole(data) {
 }
 
 //获取代理商角色
-export function getAgent() {
+export function findRoleAllList() {
 	return request({
-		url: '/api/permission/role/agent',
+		url: '/api/permission/role/findRoleAllList',
 		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
