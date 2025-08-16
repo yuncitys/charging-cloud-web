@@ -37,6 +37,12 @@
 				</el-table-column>
 				<el-table-column prop="balenceAmount" label="余额" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
+				<el-table-column prop="openId" label="绑定状态" align="center" :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.bindingStatus == 0">未绑定</el-tag>
+						<el-tag type="success" v-if="scope.row.bindingStatus == 1">已绑定</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="parentName" label="上级名称" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" sortable :show-overflow-tooltip="isPc">
@@ -44,55 +50,60 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最后登录时间" align="center" width="120" sortable :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.lastLoginTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column prop="lastLoginTime" label="最后登录时间" align="center" width="120" sortable :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span>{{ scope.row.lastLoginTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="操作" align="center" width="260">
 					<template slot-scope="scope">
-            <div style="display: flex;align-items: center;justify-content: space-around;">
-              <div>
-                <div>
-                  <!-- 编辑 -->
-                  <editPage :row_data="scope.row" @getLists="getLists" />
-                </div>
+						<div style="display: flex;align-items: center;justify-content: space-around;">
+						<div>
+							<div>
+							<!-- 编辑 -->
+							<editPage :row_data="scope.row" @getLists="getLists" />
+							</div>
 
-                <div class="top10" v-if="btnAuthen.permsVerifAuthention(':sys:admin:deleteAdminUser')">
-                  <el-button type="danger" size="mini" @click='del(scope.row.id)'>
-                    删除
-                  </el-button>
-                </div>
-              </div>
+							<div class="top10" v-if="btnAuthen.permsVerifAuthention(':sys:admin:deleteAdminUser')">
+							<el-button type="danger" size="mini" @click='del(scope.row.id)'>
+								删除
+							</el-button>
+							</div>
+						</div>
 
-              <div>
-                <div v-if="btnAuthen.permsVerifAuthention(':sys:admin:freezeAdminUser')">
-                    <el-button type="danger" @click='onfreezeAdminUser(scope.row,1)' size="mini" v-if="scope.row.freezeStatus == 0">
-                    	冻结账户
-                    </el-button>
-                    <el-button type="success" @click='onfreezeAdminUser(scope.row,0)' size="mini" v-if="scope.row.freezeStatus == 1 ">
-                    	解封账户
-                    </el-button>
-                </div>
-                <div class="top10">
-                  <el-button type="primary" @click='editPassword(scope.row.id)' size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:admin:editPasswordAdminUser')">
-                    重置密码
-                  </el-button>
-                </div>
-              </div>
+						<div>
+							<div v-if="btnAuthen.permsVerifAuthention(':sys:admin:freezeAdminUser')">
+								<el-button type="danger" @click='onfreezeAdminUser(scope.row,1)' size="mini" v-if="scope.row.freezeStatus == 0">
+									冻结账户
+								</el-button>
+								<el-button type="success" @click='onfreezeAdminUser(scope.row,0)' size="mini" v-if="scope.row.freezeStatus == 1 ">
+									解封账户
+								</el-button>
+							</div>
+							<div class="top10">
+							<el-button type="primary" @click='editPassword(scope.row.id)' size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:admin:editPasswordAdminUser')">
+								重置密码
+							</el-button>
+							</div>
+						</div>
 
-              <div>
-                <!-- 名下所有代理商 -->
-                <div class="top10">
-                  <childsPage :row_data="scope.row" />
-                </div>
-              </div>
-            </div>
+						<div>
+							<!-- 名下所有代理商 -->
+							<div>
+							<childsPage :row_data="scope.row" />
+							</div>
+							<div class="top10" v-if="btnAuthen.permsVerifAuthention(':sys:admin:unbindingAccount')">
+							<el-button type="warning" size="mini" @click='unbindingAccount(scope.row.id)'>
+								解绑账户
+							</el-button>
+							</div>
+						</div>
+						</div>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -114,10 +125,10 @@
 		editPasswordAdminUser,
 		findAdminUserSonList,
 		findRoleList,
-		freezeAdminUser
+		freezeAdminUser,unbindingAccount
 	} from '@/api/agent/agentList.js'
 	import {
-		getAgent,
+		findRoleAllList,
 	} from '@/api/permission/role.js'
 	import {
 		parseTime
@@ -196,17 +207,17 @@
 				getList(this.listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
-            let list = res.data || []
-            this.list = list
-            // let agentList = []
-            // list.forEach((item, index) => {
-            //   if(item.roleId != 3){
-            //     agentList.push(item)
-            //     // list.splice(index, 1);
-            //     // console.log("remove",item)
-            //   }
-            // })
-            // this.list = agentList
+						let list = res.data || []
+						this.list = list
+						// let agentList = []
+						// list.forEach((item, index) => {
+						//   if(item.roleId != 3){
+						//     agentList.push(item)
+						//     // list.splice(index, 1);
+						//     // console.log("remove",item)
+						//   }
+						// })
+						// this.list = agentList
 						this.total = res.count
 						this.listLoading = false
 					} else {
@@ -290,6 +301,29 @@
 					})
 				})
 			},
+			unbindingAccount(id) {
+				this.$confirm('这一操作将将会解绑此账户。你想继续吗?', '警告', {
+					confirmButtonText: '是',
+					cancelButtonText: '否',
+					type: 'warning'
+				}).then(() => {
+					let data = {
+						adminId: id
+					}
+					console.log(data)
+					unbindingAccount(data).then(res => {
+						if (res.code == 200) {
+							this.$message({
+								type: 'success',
+								message: res.msg
+							})
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+				})
+			},
 			//初始化密码
 			editPassword(adminUserId) {
 				this.$confirm('是否初始化密码?', '警告', {
@@ -310,8 +344,8 @@
 					})
 				})
 			},
-			getAgentRoleList() {
-				getAgent().then(res => {
+			findRoleAllList() {
+				findRoleAllList().then(res => {
 					if (res.code == 200) {
 						this.restaurants = res.data
 					}
@@ -344,7 +378,7 @@
 		},
 		created() {
 			this.getLists()
-			this.getAgentRoleList()
+			this.findRoleAllList()
 			// this.stopF5Refresh()
 		},
 	}
