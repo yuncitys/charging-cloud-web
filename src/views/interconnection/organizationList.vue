@@ -17,7 +17,7 @@
 			<!-- 新增互联机构 -->
 			<!-- <organizationDialog @getOrganizeList="getOrganizeList" /> -->
 			<div style="margin: 15px 0;">
-				<el-button type="primary" @click="addOrUpdateHandle()">添加</el-button>
+				<el-button type="primary" @click="addOrUpdateHandle()" v-if="btnAuthen.permsVerifAuthention(':interconnection:organization:add')">添加</el-button>
 			</div>
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
@@ -56,9 +56,11 @@
 				<el-table-column label="操作" align="center" width="230">
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: center;align-items: center;">
-							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)">编辑</el-button>
+							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)" 
+							v-if="btnAuthen.permsVerifAuthention(':interconnection:organization:edit')">编辑</el-button>
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
-							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)">删除</el-button>
+							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)"
+							v-if="btnAuthen.permsVerifAuthention(':interconnection:organization:delete')">删除</el-button>
 						</div>
 					</template>
 				</el-table-column>

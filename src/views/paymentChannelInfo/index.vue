@@ -10,7 +10,8 @@
         查询
       </el-button>
 
-      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" icon="el-icon-plus" @click="add">
+      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" icon="el-icon-plus" @click="add"
+        v-if="btnAuthen.permsVerifAuthention(':payment:method:add')">
         新增
       </el-button>
 
@@ -37,10 +38,10 @@
         <el-table-column prop="createTime" label="创建时间"></el-table-column>
         <el-table-column label="操作" width="150" align="center">
             <template v-slot="{row}">
-                <el-tooltip class="item" effect="dark" content="修改" placement="top">
+                <el-tooltip class="item" effect="dark" content="修改" placement="top" v-if="btnAuthen.permsVerifAuthention(':payment:method:edit')">
                     <el-button type="primary" size="mini" icon="el-icon-edit" @click="edit(row)"></el-button>
                 </el-tooltip>
-                <el-tooltip class="item" effect="dark" content="删除本条数据" placement="top">
+                <el-tooltip class="item" effect="dark" content="删除本条数据" placement="top" v-if="btnAuthen.permsVerifAuthention(':payment:method:delete')">
                     <el-button @click="del(row)" icon="el-icon-delete"  size="mini" type="danger"></el-button>
                 </el-tooltip>
             </template>
