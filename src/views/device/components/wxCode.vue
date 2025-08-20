@@ -136,25 +136,33 @@
 				this.titleStr = "设备号:" + deviceCode
 				this.deviceCode = deviceCode
 				this.$nextTick(() => {
-					this.getCodeUrl()
+					this.getCodeUrl(this.ruleId)
 				})
 			},
-			getCodeUrl(url) {
+			getCodeUrl(ruleId) {
 				for (let i = 0; i < this.portCount + 1; i++) {
-					let str = 'qrCode' + i
 					let domainName = this.domainName
-					// domainName = this.getFormat(domainName)
-					// let ruleId = this.ruleId
-					// let baseUrl = domainName + `weixin${ruleId}/miniprogram`
 					let baseUrl = domainName
 					let url = ''
 					if (i == 0) {
-						url = baseUrl + '?qrcode=' + this.deviceCode + '&networkDotId=' + this.networkDotId
+						url = baseUrl + this.deviceCode + '&networkDotId=' + this.networkDotId
 						this.codeUrl = url
 					} else {
-						url = baseUrl + '?qrcode=' + this.deviceCode + '&port=' + i + '&networkDotId=' + this.networkDotId
-						this.urls.push(url)
+						if (ruleId === 1){
+							url = baseUrl + this.deviceCode + '&port=' + i + '&networkDotId=' + this.networkDotId
+							this.urls.push(url)
+						} else {
+							url = baseUrl + this.deviceCode + (i.toString().padStart(2, '0')) + '&networkDotId=' + this.networkDotId
+							this.urls.push(url)
+						}
 					}
+					// if (i == 0) {
+					// 	url = baseUrl + '?qrcode=' + this.deviceCode + '&networkDotId=' + this.networkDotId
+					// 	this.codeUrl = url
+					// } else {
+					// 	url = baseUrl + '?qrcode=' + this.deviceCode + '&port=' + i + '&networkDotId=' + this.networkDotId
+					// 	this.urls.push(url)
+					// }
 				}
 			},
 			getFormat(str) {
