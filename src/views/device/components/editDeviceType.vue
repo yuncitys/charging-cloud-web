@@ -6,7 +6,7 @@
 		<el-dialog :visible.sync="showDevice" title="编辑设备" @close="showDevice = false" :append-to-body="true">
 			<el-form ref="formData" :model="formData" :rules="deviceRules" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;">
-				<el-form-item :label="'设备号'" prop="deviceCode">
+				<el-form-item :label="'设备编号'" prop="deviceCode">
 					<el-input v-model="formData.deviceCode" clearable placeholder="请输入设备号" disabled />
 				</el-form-item>
 				<el-form-item :label="'归属系列'" prop="ruleId">
@@ -45,7 +45,7 @@
 					</el-select>
 				</el-form-item> -->
 				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
-					<el-input v-model="formData.deviceQrLink" clearable placeholder="请输入设备二维码前缀" />
+					<el-input v-model="formData.deviceQrLink" clearable placeholder="请输入设备二维码前缀" :disabled="formData.ruleId === 2"/>
 				</el-form-item>
 				<el-form-item :label="'总功率/W'" prop="deviceTotalPower">
 					<el-input v-model="formData.deviceTotalPower" clearable placeholder="请输入设备总功率" />
