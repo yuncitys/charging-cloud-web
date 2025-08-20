@@ -66,17 +66,22 @@
 								<el-form-item :label="'设备信号'" prop="deviceSignal">
 									<el-input v-model="deviceInfo.deviceSignal" disabled="" />
 								</el-form-item>
+								<el-form-item :label="'二维码规则'" prop="deviceQrcodeLink" style="width: 520px;">
+									<el-input v-model="deviceInfo.deviceQrcodeLink" disabled="" />
+								</el-form-item>
 							</el-form>
 						</div>
 					</el-col>
 					<el-col :xs="24"  :lg="12">
 						<div class="left10">
 							<el-form ref="deviceInfo" :model="deviceInfo" label-position="left" label-width="100px"
-								style="width: 200px; margin-left:50px;">
+								style="width: 200px; margin-left:220px;">
 								<div v-for="(item,index) in ports" :key="index">
 									<el-form-item :label="`端口${index+1}`">
 										<el-tag type="success" v-if="item == 0">空闲</el-tag>
 										<el-tag type="danger" v-if="item == 1">占用</el-tag>
+										<el-tag type="success" v-if="item == 2">离线</el-tag>
+										<el-tag type="danger" v-if="item == 3">故障</el-tag>
 									</el-form-item>
 								</div>
 							</el-form>
