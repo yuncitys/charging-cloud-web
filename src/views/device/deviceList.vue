@@ -52,6 +52,11 @@
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
 				</el-button>
+				<!--更新二维码-->
+				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleBatchSyncQRCode"
+					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncQR')">
+          			同步二维码
+				</el-button>
 			</div>
 
 			<el-tabs v-model="activeName" type="card" @tab-click="handleClick">
@@ -327,6 +332,9 @@
 
 			<!-- 批量设置功率 -->
 			<batchPower ref="batchPower" />
+
+			<!-- 同步二维码 -->
+			<SyncQRCodeBox v-if="syncQRCodeBoxVisible" ref="SyncQRCodeBox" @syncQRCode="syncQRCode"/>
 		</div>
 	</div>
 </template>
@@ -342,7 +350,8 @@
 		updateDeviceStatus,
 		operationDevice,
 		setDeviceChargeModel,
-		batchSetDeviceChargeModel
+		batchSetDeviceChargeModel,
+		batchSetDeviceQr
 	} from '@/api/device/deviceList.js'
 	import {
 		getChargingStationList
@@ -360,6 +369,7 @@
 	import deviceAdmin from './components/deviceAdmin.vue'
 	import editDeviceType from './components/editDeviceType.vue'
 	import batchPower from './components/batchPower.vue'
+	import SyncQRCodeBox from './components/SyncQRCodeBox'
 	export default {
 		components: {
 			wxCode,
@@ -371,7 +381,8 @@
 			deviceBind,
 			deviceAdmin,
 			editDeviceType,
-			batchPower
+			batchPower,
+			SyncQRCodeBox
 		},
 		name: 'deviceList',
 		data() {
@@ -465,7 +476,9 @@
 				deviceCodes: '',
 				deviceChagePattern: 0,
 				ruleId: 1,
-				priceTypeDialog: ''
+				priceTypeDialog: '',
+				//同步设备二维码
+				syncQRCodeBoxVisible: false
 			}
 		},
 		filters: {
@@ -684,11 +697,11 @@
 					this.$message.error("请选择要设置收费方案的设备")
 					return false
 				}
-        let deviceArray =  this.deviceCodes.split(",");
-        if (deviceArray.length > 30){
-          this.$message.error("单次下发最大支持30个设备")
-          return false
-        }
+				let deviceArray =  this.deviceCodes.split(",");
+				if (deviceArray.length > 30){
+					this.$message.error("单次下发最大支持30个设备")
+					return false
+				}
 				this.showPriceTypes = true
 				this.PriceTypes.devicePriceId = ''
 				this.PriceTypes.deviceCodes = this.deviceCodes
@@ -710,29 +723,29 @@
 					ruleId: this.ruleId
 				}
 				console.log(data)
-			  if (this.ruleId === 1) {
-			    batchAddDevicePrice(data).then(res => {
-			    	if (res.code == 200) {
-			    		this.showPriceTypes = false
-			    		this.resetForm(formName)
-			    		this.$message.success(res.msg)
-			    		this.getLists()
-			    	} else {
-			    		this.$message.error(res.msg)
-			    	}
-			    })
-			  }else if(this.ruleId === 2){
-			    batchSetDeviceChargeModel(data).then(res => {
-			    	if (res.code == 200) {
-			    		this.showPriceTypes = false
-			    		this.resetForm(formName)
-			    		this.$message.success(res.msg)
-			    		this.getLists()
-			    	} else {
-			    		this.$message.error(res.msg)
-			    	}
-			    })
-			  }
+			  	if (this.ruleId === 1) {
+					batchAddDevicePrice(data).then(res => {
+						if (res.code == 200) {
+							this.showPriceTypes = false
+							this.resetForm(formName)
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+			  	}else if(this.ruleId === 2){
+					batchSetDeviceChargeModel(data).then(res => {
+						if (res.code == 200) {
+							this.showPriceTypes = false
+							this.resetForm(formName)
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+			  	}
 			},
 			//显示收费方案
 			showonPriceType(item) {
@@ -755,35 +768,35 @@
 					this.$message.error("请选择要设置的收费方案")
 					return false
 				}
-			  let data = {
-			  	deviceCode: this.PriceType.deviceCode,
-			  	devicePriceId: this.PriceType.devicePriceId,
-			  	devicePriceType: this.deviceChagePattern,
-			  	ruleId: this.ruleId
-			  }
-			  if(this.ruleId === 1){
-			    addDevicePrice(data).then(res => {
-			    	if (res.code == 200) {
-			    		this.showPriceType = false
-			    		this.resetForm(formName)
-			    		this.$message.success(res.msg)
-			    		this.getLists()
-			    	} else {
-			    		this.$message.error(res.msg)
-			    	}
-			    })
-			  }else if (this.ruleId === 2){
-			    setDeviceChargeModel(data).then(res => {
-			    	if (res.code == 200) {
-			    		this.showPriceType = false
-			    		this.resetForm(formName)
-			    		this.$message.success(res.msg)
-			    		this.getLists()
-			    	} else {
-			    		this.$message.error(res.msg)
-			    	}
-			    })
-			  }
+				let data = {
+					deviceCode: this.PriceType.deviceCode,
+					devicePriceId: this.PriceType.devicePriceId,
+					devicePriceType: this.deviceChagePattern,
+					ruleId: this.ruleId
+				}
+				if(this.ruleId === 1){
+					addDevicePrice(data).then(res => {
+						if (res.code == 200) {
+							this.showPriceType = false
+							this.resetForm(formName)
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+				}else if (this.ruleId === 2){
+					setDeviceChargeModel(data).then(res => {
+						if (res.code == 200) {
+							this.showPriceType = false
+							this.resetForm(formName)
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
+				}
 			},
 			//选择收费类型
 			changeChagePattern(e) {
@@ -829,11 +842,40 @@
 					}
 				})
 			},
+			//同步设备二维码
+			handleBatchSyncQRCode() {
+				if (this.deviceCodes == '' || this.deviceCodes == null || this.deviceCodes == undefined) {
+					this.$message.error("请选择要设置同步的设备")
+					return false
+				}
+				let deviceArray =  this.deviceCodes.split(",");
+				if (deviceArray.length > 30){
+					this.$message.error("单次下发最大支持30个设备")
+					return false
+				}
+				this.syncQRCodeBoxVisible = true
+				this.$nextTick(() => {
+					this.$refs.SyncQRCodeBox.init(deviceArray)
+				})
+			},
+			syncQRCode(data) {
+				console.log("data：",data)
+				batchSetDeviceQr(data).then(res => {
+					if (res.code == 200) {
+						this.$message.success(res.msg)
+						this.$refs.SyncQRCodeBox.visible = false
+						this.syncQRCodeBoxVisible = false
+						this.getLists()
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 		},
 		created() {
 			this.getLists()
 			this.findDealerList()
-      this.getChargingStationList()
+      		this.getChargingStationList()
 			this.getfindDevicePriceByPriceType()
 		},
 	}
