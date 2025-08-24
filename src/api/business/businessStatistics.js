@@ -108,6 +108,27 @@ export function chargingTrendList(data) {
     data
   })
 }
+// 导出充电趋势详情
+export function exportChargingTrendList(data) {
+	return request({
+		url: '/api/web/reports/chargingTrend/export',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
 
 // 充电趋势曲线
 export function chargingTrend(data) {
@@ -152,11 +173,51 @@ export function chargingStationSection(data) {
     data
   })
 }
+export function exportChargingStationStatistics(data) {
+  return request({
+    url: '/api/web/reports/chargingStationSection/export',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
 
 // 充电站趋势
 export function chargingStationSingle(data) {
   return request({
     url: '/api/web/reports/chargingStationSingle',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+export function exportChargingStationSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingStationSingle/export',
     method: 'post',
     headers: {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -196,6 +257,27 @@ export function chargingStationFund(data) {
     data
   })
 }
+export function exportChargingStationFund(data) {
+  return request({
+    url: '/api/web/reports/chargingStationFund/export',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
 
 // 交易趋势
 export function chargingUserTradingCurve(data) {
@@ -219,7 +301,7 @@ export function chargingUserTradingCurve(data) {
   })
 }
 
-// 交易趋势
+// 交易汇总
 export function chargingUserTradingSection(data) {
   return request({
     url: '/api/web/reports/chargingUserTradingSection',
@@ -240,11 +322,51 @@ export function chargingUserTradingSection(data) {
     data
   })
 }
+export function exportChargingUserTradingSection(data) {
+  return request({
+    url: '/api/web/reports/chargingUserTradingSection/export',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
 
-// 交易趋势
+// 交易明细
 export function chargingUserTradingSingle(data) {
   return request({
     url: '/api/web/reports/chargingUserTradingSingle',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+export function exportChargingUserTradingSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingUserTradingSingle/export',
     method: 'post',
     headers: {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -285,12 +407,51 @@ export function chargingUserChargeSingle(data) {
     data
   })
 }
-
+export function exportChargingUserChargeSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingUserChargeSingle/export',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
 
 // 用户充电汇总
 export function chargingUserChargeSection(data) {
   return request({
     url: '/api/web/reports/chargingUserChargeSection',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+export function exportChargingUserChargeSection(data) {
+  return request({
+    url: '/api/web/reports/chargingUserChargeSection/export',
     method: 'post',
     headers: {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -353,12 +514,51 @@ export function chargingOrderSplitSingle(data) {
     data
   })
 }
-
+export function exportChargingOrderSplitSingle(data) {
+  return request({
+    url: '/api/web/reports/chargingOrderSplitSingle/export',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
 
 // 分账汇总
 export function chargingOrderSplitSection(data) {
   return request({
     url: '/api/web/reports/chargingOrderSplitSection',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+export function exportChargingOrderSplitSection(data) {
+  return request({
+    url: '/api/web/reports/chargingOrderSplitSection/export',
     method: 'post',
     headers: {
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
