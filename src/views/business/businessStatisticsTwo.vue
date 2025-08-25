@@ -66,7 +66,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingTrendStatistics :queryData="listQuery" />
       </div>
 
       <el-table v-loading="listLoading" :key="chargingTrendList.datetime" :data="chargingTrendList" element-loading-text="拼命加载中......"
@@ -100,6 +101,7 @@
 
 <script>
   import ChargingTrendLineChart from './components/ChargingTrendLineChart'
+  import DownChargingTrendStatistics from './components/DownChargingTrendStatistics'
   import {
     findDealerList,
     chargingTrend,
@@ -121,6 +123,7 @@
     name: 'chargingTrendStatistics',
     components: {
       ChargingTrendLineChart,
+      DownChargingTrendStatistics
     },
     data() {
       return {

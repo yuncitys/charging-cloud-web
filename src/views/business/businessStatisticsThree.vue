@@ -66,7 +66,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingStationSingleStatistics :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading" :key="chargingStationSectionList.networkName" :data="chargingStationSingleList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -77,7 +78,7 @@
         </el-table-column>
         <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="归属运营商" prop="adminFullname" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="归属运营商" prop="operatorName" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="总设备数(台)" prop="totalDevice" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
@@ -110,7 +111,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingStationFundStatistics :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading2" :key="chargingStationSectionList.networkName" :data="chargingStationFundList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox2">
@@ -166,7 +168,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingStationStatistics :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading1" :key="chargingStationSectionList.networkName" :data="chargingStationSectionList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox1">
@@ -177,7 +180,7 @@
         </el-table-column>
         <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="归属运营商" prop="adminFullname" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="归属运营商" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="总设备数(台)" prop="totalDevice" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
@@ -205,6 +208,9 @@
 
 <script>
   import ChargingTrendLineChart from './components/ChargingTrendLineChart'
+  import DownChargingStationStatistics from './components/DownChargingStationStatistics'
+  import DownChargingStationFundStatistics from './components/DownChargingStationFundStatistics'
+  import DownChargingStationSingleStatistics from './components/DownChargingStationSingleStatistics'
   import {
     findDealerList,
     chargingTrend,
@@ -227,6 +233,9 @@
     name: 'chargingStationStatistics',
     components: {
       ChargingTrendLineChart,
+      DownChargingStationStatistics,
+      DownChargingStationFundStatistics,
+      DownChargingStationSingleStatistics
     },
     data() {
       return {

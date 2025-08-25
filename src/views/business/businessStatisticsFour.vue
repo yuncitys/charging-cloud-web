@@ -62,7 +62,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingUserTradingSingle :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading1" :key="chargingUserTradingSingleList.userCode" :data="chargingUserTradingSingleList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -102,7 +103,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingUserTradingSection :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading" :key="chargingUserTradingList.userCode" :data="chargingUserTradingList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -138,6 +140,8 @@
 <script>
   import UserTradingLineChart from './components/UserTradingLineChart.vue'
   import UserTradingLineStackedAreaChart from './components/UserTradingLineStackedAreaChart.vue'
+  import DownChargingUserTradingSingle from './components/DownChargingUserTradingSingle'
+  import DownChargingUserTradingSection from './components/DownChargingUserTradingSection'
   import {
     findDealerList,
     chargingUserTradingCurve,
@@ -154,7 +158,9 @@
     name: 'chargingUserTradingStatistics',
     components: {
       UserTradingLineChart,
-      UserTradingLineStackedAreaChart
+      UserTradingLineStackedAreaChart,
+      DownChargingUserTradingSingle,
+      DownChargingUserTradingSection
     },
     data() {
       return {

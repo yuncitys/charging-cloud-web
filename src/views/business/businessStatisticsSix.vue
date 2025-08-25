@@ -57,7 +57,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingOrderSplitSingle :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading1" :key="singleList.adminId" :data="singleList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -95,7 +96,8 @@
           </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
-        <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button>
+        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
+        <DownChargingOrderSplitSection :queryData="listQuery" />
       </div>
       <el-table v-loading="listLoading2" :key="sectionList.adminId" :data="sectionList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -128,6 +130,8 @@
 
 <script>
   import OrderSplitLineStackedAreaChart from './components/OrderSplitLineStackedAreaChart.vue'
+  import DownChargingOrderSplitSingle from './components/DownChargingOrderSplitSingle'
+  import DownChargingOrderSplitSection from './components/DownChargingOrderSplitSection'
   import {
     findDealerList,
     chargingOrderSplitCurve,
@@ -143,7 +147,9 @@
   export default {
     name: 'chargingSplitTradingStatistics',
     components: {
-      OrderSplitLineStackedAreaChart
+      OrderSplitLineStackedAreaChart,
+      DownChargingOrderSplitSingle,
+      DownChargingOrderSplitSection
     },
     data() {
       return {
