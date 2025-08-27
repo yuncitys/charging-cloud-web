@@ -120,27 +120,33 @@
             </el-col>
           </el-row>
           <el-row>
-          <el-col :span="8">
-            <el-form-item label="API证书文件">
+          <el-col :span="12">
+            <!-- <el-form-item label="API证书文件">
                 <el-upload class="upload-demo" ref="uploadCertificateFile" :on-remove="handleRemoveCertificateFile" :file-list="certificateFileList"
                   :http-request="uploadCertificateFile" action='' :on-change="handleChangeCertificateFile">
                   <el-button slot="trigger" size="small" type="text" >选取.p12文件</el-button>
                 </el-upload>
+            </el-form-item> -->
+            <el-form-item label="API证书文件">
+              <el-input v-model="wxConfig.cert" clearable placeholder=".p12文件"></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
-            <el-form-item label="API私钥文件">
+          <el-col :span="12">
+            <!-- <el-form-item label="API私钥文件">
               <el-upload class="upload-demo" ref="uploadCertificateKeyFile" :on-remove="handleRemoveCertificateKeyFile" :file-list="certificateKeyFileList"
                 :http-request="uploadCertificateKeyFile" action='' :on-change="handleChangeCertificateKeyFile">
                 <el-button slot="trigger" size="small" type="text">选取.pem文件</el-button>
               </el-upload>
+            </el-form-item> -->
+            <el-form-item label="API私钥文件">
+              <el-input v-model="wxConfig.pemCert" clearable placeholder=".pem文件"></el-input>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <!-- <el-col :span="8">
             <el-button size="small" type="primary" @click="submitUpload()" :loading="loading">
               上传文件
             </el-button>
-          </el-col>
+          </el-col> -->
         </el-row>
         </div>
         <div class="aliConfig" v-else-if="form.channelName === '支付宝'">
