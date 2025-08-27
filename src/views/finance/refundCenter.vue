@@ -87,7 +87,7 @@
 		components: {
 			imgView,
 			downExcel,
-      refundPage
+      		refundPage
 		},
 		data() {
 			return {
@@ -120,10 +120,10 @@
 						id: '2',
 						title: '充值IC卡'
 					},
-          {
-          	id: '3',
-          	title: '充值月卡'
-          }
+					{
+						id: '3',
+						title: '充值月卡'
+					}
 				],
 				time: ''
 			}
@@ -185,15 +185,15 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-      handleRefundRecord(row){
-        const payCode = row.payCode || '';
-        this.$router.push({
-        	name: 'refundRecord',
-        	query: {
-        		payCode: payCode
-        	}
-        })
-      }
+			handleRefundRecord(row){
+				const payCode = row.payCode || '';
+				this.$router.push({
+					name: 'refundRecord',
+					query: {
+						payCode: payCode
+					}
+				})
+			}
 		},
 		created() {
 			this.getLists();
