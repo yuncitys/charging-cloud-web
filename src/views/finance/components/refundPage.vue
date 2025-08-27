@@ -101,6 +101,7 @@
 				loading: false, // 表格加载状态
 				tableData: [], // 表格数据
         refundData: {
+          "tradingType":'',
           "payCode": '',
           "tradingOrders": [],
           "refundMoney": '',
@@ -122,8 +123,10 @@
 		methods: {
 			showDialog() {
 				let scope = this.row_data
+        console.log("this.row_data:",scope)
 				this.dialogVisible = true
         this.refundData.payCode = scope.payCode
+        this.refundData.tradingType = scope.payType
         this.getTradingOrder(scope.payCode)
 			},
       getTradingOrder(payCode) {
