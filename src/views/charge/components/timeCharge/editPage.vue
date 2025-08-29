@@ -38,7 +38,6 @@
 						</div>
 						<div style="margin: 30px 0;">
 							<div v-for="(item, index) in formArr" :key="index" style="margin: 5px 0;">
-
 								<div class="flex" style="align-items: center;" v-if="isPc">
 									<div class="flex" style="align-items: center;">
 										<div style="margin-right: 20px;">时间</div>
@@ -46,8 +45,8 @@
 											<el-select v-model="editData.duration[index]"
 												style="min-width: 100px;margin-right: 20px ;" class="filter-item"
 												placeholder="请选择时间" clearable @keyup.enter.native="handleFilter">
-												<el-option v-for="item in tags" :key="item.id" :label="item.title"
-													:value="item.id" />
+												<el-option v-for="item in tags" :key="item.id + ''" :label="item.title"
+													:value="item.id + ''" />
 											</el-select>
 										</div>
 									</div>
@@ -77,8 +76,8 @@
 											<el-select v-model="editData.duration[index]"
 												style="min-width: 100px;margin-right: 20px ;" class="filter-item"
 												placeholder="请选择时间" clearable @keyup.enter.native="handleFilter">
-												<el-option v-for="item in tags" :key="item.id" :label="item.title"
-													:value="item.id" />
+												<el-option v-for="item in tags" :key="item.id + ''" :label="item.title"
+													:value="item.id + ''" />
 											</el-select>
 										</div>
 									</div>
@@ -100,14 +99,52 @@
 										<el-button type="danger" @click="delForm(index,'edit')">删除</el-button>
 									</div>
 								</div>
-
 							</div>
 						</div>
 					</div>
 				</div>
-				<div
-					style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
-					<h2>是否开启充满自停</h2>
+				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
+					<h2>车主显示档位 (充电车主选择支付金额的页面)</h2>
+					<div style="display: flex;align-items: center;margin-left: 20px;">
+						<div>
+							<h3>档位显示方式</h3>
+						</div>
+						<div style="margin-left: 30px;">
+							<el-radio-group v-model="pageType">
+								<el-radio :label="2">金额</el-radio>
+								<el-radio :label="1">电量</el-radio>
+								<el-radio :label="0">时间</el-radio>
+							</el-radio-group>
+						</div>
+					</div>
+					<div v-if="pageType === 2"
+						style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
+						<div v-for="(item,index) in moneyList" :key="index" style="width: 30%;">
+							<el-input placeholder="请输入金额" v-model="item.id" type="number"
+								style="width: 200px;margin-bottom: 10px;">
+								<template slot="append">元</template>
+							</el-input>
+						</div>
+					</div>
+					<div v-if="pageType === 1"
+						style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
+						<div v-for="(item,index) in electricityList" :key="index" style="width: 30%;">
+							<el-input placeholder="请输入电量" v-model="item.id" type="number"
+								style="width: 200px;margin-bottom: 10px;">
+								<template slot="append">度</template>
+							</el-input>
+						</div>
+					</div>
+					<div v-if="pageType === 0"
+						style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
+						<div v-for="(item,index) in timeList" :key="index" style="width: 30%;">
+							<el-input placeholder="请输入时间" v-model="item.id" type="number"
+								style="width: 200px;margin-bottom: 10px;">
+								<template slot="append">小时</template>
+							</el-input>
+						</div>
+					</div>
+					<h2>更多设置</h2>
 					<div style="margin-left: 20px;">
 						<div>
 							<span style="display: inline-block;margin-right:20px">
@@ -188,15 +225,16 @@
 				showEdit: false,
 				editData: {
 					tdpId: '',
-          ruleId: 1,
-          feeName: '',
-          remark: '',
+					ruleId: 1,
+					feeName: '',
+					remark: '',
 					electricityPrice: 0,
 					realTimeCharging: 0,
 					status: '1',
 					realTimeCharging: 0,
-          config: '',
-          priceView: '',
+
+					config: '',
+					priceView: '',
 					duration: [],
 					money: [],
 				},
@@ -211,6 +249,67 @@
 					realTimeCharging: 1,
 					title: "按30分钟收费"
 				}],
+				pageType: 0,
+				moneyList: [
+				{
+					id: 1
+				},
+				{
+					id: 2
+				},
+				{
+					id: 3
+				},
+				{
+					id: 5
+				},
+				{
+					id: 10
+				},
+				{
+					id: 15
+				},
+				],
+				timeList: [
+				{
+					id: 2
+				},
+				{
+					id: 4
+				},
+				{
+					id: 6
+				},
+				{
+					id: 8
+				},
+				{
+					id: 10
+				},
+				{
+					id: 12
+				}
+				],
+				electricityList: [
+				{
+					id: 1
+				},
+				{
+					id: 2
+				},
+				{
+					id: 3
+				},
+				{
+					id: 4
+				},
+				{
+					id: 5
+				},
+				{
+					id: 6
+				}
+				],
 				isAutostop: false,
 				chco: 0,
 				fixedMoney: 5,
@@ -230,7 +329,6 @@
 					this.addData.money.push(0.5)
 					// this.addData.electricityPrice.push(1)
 				}
-
 			},
 			delForm(index, type) {
 				if (type == 'edit') {
@@ -247,35 +345,63 @@
 			},
 			showDidlaoEditData() {
 				let item = this.row_data
-				console.log(item)
+				console.log("编辑数据：",item)
+				if(item.priceView != ''){
+					let priceViewDetail = {};
+					if(typeof(item.priceView) == 'string'){
+						priceViewDetail = JSON.parse(item.priceView);
+					}else{
+						priceViewDetail = item.priceView;
+					}
+					item.priceView = priceViewDetail;
+					console.log("充电档位配置：",priceViewDetail)
+					let priceViewArr = item.priceView.view.split(',')
+					console.log("充电档位：",priceViewArr)
+					let priceViewObj = []
+					priceViewArr.forEach((item, index) => {
+						let obj = {id: item}
+						priceViewObj.push(obj)
+					})
+					let priceUnit = item.priceView.unit
+					if (priceUnit === 0) {
+						this.timeList = priceViewObj
+					} else if (priceUnit === 1) {
+						this.electricityList = priceViewObj
+					} else if (priceUnit === 2) {
+						this.moneyList = priceViewObj
+					}
+					this.pageType = priceUnit
+        		}
+				if (item.config != '') {
+					let autostopConfigDetail = {}
+					if(typeof(item.config) == 'string'){
+						autostopConfigDetail = JSON.parse(item.config);
+					}else{
+						autostopConfigDetail = item.config;
+					}
+					console.log("充满自停配置：{}",autostopConfigDetail)
+					this.isAutostop = autostopConfigDetail.AutostopConfig.isAutostop ? true : false
+					this.chco = autostopConfigDetail.AutostopConfig.details.chco
+					this.fixedMoney = autostopConfigDetail.AutostopConfig.details.money
+					this.maxChargeTime = autostopConfigDetail.AutostopConfig.details.maxChargeTime
+				}
 				this.editData.tdpId = item.id
 				this.editData.feeName = item.feeName
 				this.editData.realTimeCharging = item.realTimeCharging
 				this.editData.remark = item.remark || ''
-				let ids = []
-				let duration = []
-				let money = []
+				this.editData.electricityPrice = item.electricityPrice
+				this.editData.config = item.config
+				this.editData.priceView = item.priceView
+				let duration = [];	let money = []
 				if (item.priceContents != 0) {
 					item.priceContents.forEach((val, index) => {
-						ids.push(val.id)
-						console.log(val.id)
-						duration.push(parseInt(val.duration))
+						duration.push(val.duration)
 						money.push(val.money)
 					})
-          //duration.sort();
-          //money.sort();
 				}
-				this.formArr = item.priceContents
-				console.log(this.formArr, '222')
 				this.editData.duration = duration
 				this.editData.money = money
-				this.editData.electricityPrice = item.electricityPrice
-
-				this.isAutostop = item.config.AutostopConfig.isAutostop ? true : false
-				this.chco = item.config.AutostopConfig.details.chco ? item.config.AutostopConfig.details.chco : 0
-				this.fixedMoney = item.config.AutostopConfig.details.money ? item.config.AutostopConfig.details.money : 5
-				this.maxChargeTime = item.config.AutostopConfig.details.maxChargeTime ? item.config.AutostopConfig.details.maxChargeTime : 12
-
+				this.formArr = item.priceContents
 				this.showEdit = true
 			},
 			onEditData(formName) {
@@ -294,23 +420,49 @@
 					maxChargeTime
 				} = this
 				isAutostop = isAutostop ? 1 : 0
-        chco = chco ? chco : 0
+        		chco = chco ? chco : 0
 				fixedMoney = fixedMoney ? fixedMoney : 5
 				maxChargeTime = maxChargeTime ? maxChargeTime : 12
 
-        var config = {};
-        var isAutostopConfig = {};
-        isAutostopConfig['isAutostop'] = isAutostop;
-        config['AutostopConfig'] = isAutostopConfig;
-        var details = {};
-        var detailsConfig = {};
-        detailsConfig['chco'] = this.chco;
-        detailsConfig['money'] = this.fixedMoney;
-        detailsConfig['maxChargeTime'] = this.maxChargeTime
-        isAutostopConfig['details'] = detailsConfig;
-        var configJson = JSON.stringify(config);
-        console.log(configJson);
-        this.editData.config = configJson;
+				var config = {};
+				var isAutostopConfig = {};
+				isAutostopConfig['isAutostop'] = isAutostop;
+				config['AutostopConfig'] = isAutostopConfig;
+				var detailsConfig = {};
+				detailsConfig['chco'] = this.chco;
+				detailsConfig['money'] = this.fixedMoney;
+				detailsConfig['maxChargeTime'] = this.maxChargeTime
+				isAutostopConfig['details'] = detailsConfig;
+				var configJson = JSON.stringify(config);
+				console.log("充满自停配置：",configJson);
+				this.editData.config = configJson;
+
+				var priceView = {};
+				let priceViewArr = [];
+				let priceUnit = this.pageType
+				let moneyList = this.moneyList
+				let electricityList = this.electricityList
+				let timeList = this.timeList
+				if( priceUnit === 0 ){
+					timeList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+					})
+				} else if (priceUnit === 1){
+					electricityList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+					})
+				} else if (priceUnit === 2){
+					moneyList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+					})
+				}
+				let priceViewStr = priceViewArr.join(',')
+				priceView['view'] = priceViewStr
+				priceView['unit'] = priceUnit
+				priceView['preMoney'] = fixedMoney
+				var priceViewJson = JSON.stringify(priceView);
+				console.log("充电档位：",priceViewJson);
+				this.editData.priceView = priceViewJson;
 
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
@@ -338,7 +490,7 @@
 		},
 		created() {
 			let tags = []
-			for (let i = 1; i <= 48; i++) {
+			for (let i = 1; i <= 24; i++) {
 				let obj = {
 					id: i,
 					title: i + '小时'
