@@ -172,18 +172,18 @@
 										</el-input>
 									</div>
 								</div>
-                <div style="display: flex;align-items: center;" v-if="pageType===0 && chco===1">
-                	<div style="width: 120px;">
-                		<h3 v-if="chco===0">预收金额</h3>
-                		<h3 v-if="chco===1">固定金额</h3>
-                	</div>
-                	<div>
-                		<el-input placeholder="请输入金额" v-model="fixedMoney" type="number"
-                			style="width: 250px;">
-                			<template slot="append">元</template>
-                		</el-input>
-                	</div>
-                </div>
+								<div style="display: flex;align-items: center;" v-if="pageType===0 && chco===1">
+									<div style="width: 120px;">
+										<h3 v-if="chco===0">预收金额</h3>
+										<h3 v-if="chco===1">固定金额</h3>
+									</div>
+									<div>
+										<el-input placeholder="请输入金额" v-model="fixedMoney" type="number"
+											style="width: 250px;">
+											<template slot="append">元</template>
+										</el-input>
+									</div>
+								</div>
 								<div style="display: flex;align-items: center;">
 									<div style="width: 120px;">
 										<h3>最长充电时长</h3>
@@ -223,17 +223,17 @@
 			return {
 				showDialog: false,
 				formData: {
-          ruleId: 1,
+          			ruleId: 1,
 					feeName: '',
 					priceType: 2,
-          realTimeCharging: 0,
-          chargeType: 0,
-          remark: '',
-          priceView: '',
-          config: '',
-          electricityPrice: 0,
+					realTimeCharging: 0,
+					chargeType: 0,
+					remark: '',
+					priceView: '',
+					config: '',
+					electricityPrice: 0,
 					duration: [{
-						left: 1,
+						left: 0,
 						right: ''
 					}],
 					money: [{
@@ -317,7 +317,7 @@
 				}]
 				// this.formData.electricityPrice = [1]
 				this.formData.duration = [{
-					left: 1,
+					left: 0,
 					right: 100
 				}]
 				this.showDialog = true
@@ -325,34 +325,35 @@
 			addForm(type) {
 				let index = this.formData.duration.length - 1
 				let duration = this.formData.duration[index]
-        let index_money = this.formData.money.length - 1
-        let money = this.formData.money[index_money]
+				let index_money = this.formData.money.length - 1
+				let money = this.formData.money[index_money]
 				let right = duration.right
 				if (right == '') {
 					this.$message.error('请输入最大功率值')
 					return false
 				}
-        if (Number(right) <= Number(duration.left)){
-          this.$message.error('功率范围值异常')
-          return false
-        }
-        if (money.hour === ''){
-          this.$message.error('时长不能为空')
-          return false
-        }
-        if (Number(money.hour) <= 0 ){
-          this.$message.error('时长不能小于0')
-          return false
-        }
-        if (money.money === ''){
-          this.$message.error('金额不能为空')
-          return false
-        }
-        if (Number(money.money) < 0 ){
-          this.$message.error('金额不能小于0')
-          return false
-        }
-				right = parseInt(right) + 1
+				if (Number(right) <= Number(duration.left)){
+				this.$message.error('功率范围值异常')
+				return false
+				}
+				if (money.hour === ''){
+				this.$message.error('时长不能为空')
+				return false
+				}
+				if (Number(money.hour) <= 0 ){
+				this.$message.error('时长不能小于0')
+				return false
+				}
+				if (money.money === ''){
+				this.$message.error('金额不能为空')
+				return false
+				}
+				if (Number(money.money) < 0 ){
+				this.$message.error('金额不能小于0')
+				return false
+				}
+				// right = parseInt(right) + 1
+				right = parseInt(right)
 				console.log(duration, right)
 				this.formArr.push("")
 				let obj = {
@@ -396,32 +397,32 @@
 					this.$message.error('请至少添加一种方案')
 					return false
 				}
-        const endDuration = this.formData.duration.slice(-1)[0]
-        const endMoney = this.formData.money.slice(-1)[0]
-        if ( endDuration.right == '') {
-        	this.$message.error('最大功率范围不能为空')
-        	return false
-        }
-        if (Number(endDuration.right) <= Number(endDuration.left)){
-          this.$message.error('功率范围值异常')
-          return false
-        }
-        if (endMoney.hour === ''){
-          this.$message.error('时长不能为空')
-          return false
-        }
-        if (Number(endMoney.hour) <= 0 ){
-          this.$message.error('时长不能小于0')
-          return false
-        }
-        if (endMoney.money === ''){
-          this.$message.error('金额不能为空')
-          return false
-        }
-        if (Number(endMoney.money) < 0 ){
-          this.$message.error('金额不能小于0')
-          return false
-        }
+				const endDuration = this.formData.duration.slice(-1)[0]
+				const endMoney = this.formData.money.slice(-1)[0]
+				if ( endDuration.right == '') {
+					this.$message.error('最大功率范围不能为空')
+					return false
+				}
+				if (Number(endDuration.right) <= Number(endDuration.left)){
+				this.$message.error('功率范围值异常')
+				return false
+				}
+				if (endMoney.hour === ''){
+				this.$message.error('时长不能为空')
+				return false
+				}
+				if (Number(endMoney.hour) <= 0 ){
+				this.$message.error('时长不能小于0')
+				return false
+				}
+				if (endMoney.money === ''){
+				this.$message.error('金额不能为空')
+				return false
+				}
+				if (Number(endMoney.money) < 0 ){
+				this.$message.error('金额不能小于0')
+				return false
+				}
 				if (this.formData.electricityPrice == '') {
 					this.$message.error('请输入电费单价')
 					return false
@@ -433,7 +434,7 @@
 					maxChargeTime
 				} = this
 				isAutostop = isAutostop ? 1 : 0
-        chco = chco ? chco : 0
+        		chco = chco ? chco : 0
 				fixedMoney = fixedMoney ? fixedMoney : 5
 				maxChargeTime = maxChargeTime ? maxChargeTime : 12
 
@@ -454,21 +455,21 @@
 				this.formData.config = configJson;
 
 				var priceView = {};
-        let priceViewArr = [];
+        		let priceViewArr = [];
 				let priceUnit = this.pageType
-        let moneyList = this.moneyList
-        let timeList = this.timeList
+				let moneyList = this.moneyList
+				let timeList = this.timeList
 				if( priceUnit === 0 ){
-          timeList.forEach((item, index) => {
-          		priceViewArr.push(item.id)
-          })
+          			timeList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+					})
 				} else if (priceUnit === 2){
 				  moneyList.forEach((item, index) => {
 				  		priceViewArr.push(item.id)
 				  })
 				}
-        let priceViewStr = priceViewArr.join(',')
-        priceView['view'] = priceViewStr
+				let priceViewStr = priceViewArr.join(',')
+				priceView['view'] = priceViewStr
 				priceView['unit'] = priceUnit
 				priceView['preMoney'] = fixedMoney
 				var priceViewJson = JSON.stringify(priceView);
@@ -503,13 +504,13 @@
 				resultData.money = money
 				resultData.powerSectionBefore = powerSectionBefore
 				resultData.powerSectionAfter = powerSectionAfter
-        resultData.electricityPrice = formData.electricityPrice
+        		resultData.electricityPrice = formData.electricityPrice
 				resultData.realTimeCharging = formData.realTimeCharging
 				resultData.chargeType = formData.chargeType
-        resultData.priceView = formData.priceView
-        resultData.config = formData.config
-        resultData.remark = formData.remark || ''
-        resultData.ruleId = formData.ruleId
+				resultData.priceView = formData.priceView
+				resultData.config = formData.config
+				resultData.remark = formData.remark || ''
+				resultData.ruleId = formData.ruleId
 
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
