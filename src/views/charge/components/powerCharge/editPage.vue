@@ -10,7 +10,7 @@
 						class="feeName" />
 				</el-form-item>
 				<el-form-item :label="'收费说明'" prop="remark">
-					<el-input v-model="formData.remark" placeholder="请输入收费金额" clearable
+					<el-input v-model="formData.remark" placeholder="请输入收费说明" clearable
 						type="textarea" :rows="2" />
 				</el-form-item>
 				<el-form-item :label="'计时类型'" prop="realTimeCharging">
@@ -279,13 +279,13 @@
 				    id: 3,
 				  },
 				  {
+				    id: 4
+				  },
+				  {
 				    id: 5
 				  },
 				  {
-				    id: 10
-				  },
-				  {
-				    id: 15
+				    id: 6
 				  },
 				],
 				timeList: [
@@ -323,11 +323,11 @@
 					}, {
 						id: 3
 					}, {
+						id: 4
+					}, {
 						id: 5
 					}, {
-						id: 10
-					}, {
-						id: 15
+						id: 6
 				}],
 				this.timeList = [{
 						id: 2
@@ -361,7 +361,8 @@
 						}
 						let obj1 = {
 							hour: val.duration,
-							money: val.money
+							money: val.serviceChargePrice
+							// money: val.money
 						}
 						duration.push(obj)
 						money.push(obj1)
@@ -384,9 +385,7 @@
 					console.log("充电档位：",priceViewArr)
 					let priceViewObj = []
 					priceViewArr.forEach((item, index) => {
-						let obj = {
-						id: item
-						}
+						let obj = { id: item }
 						priceViewObj.push(obj)
 					})
 					let priceUnit = item.priceView.unit
@@ -494,24 +493,24 @@
 					return false
 				}
 				if (Number(endDuration.right) <= Number(endDuration.left)){
-				this.$message.error('功率范围值异常')
-				return false
+					this.$message.error('功率范围值异常')
+					return false
 				}
 				if (endMoney.hour === ''){
-				this.$message.error('时长不能为空')
-				return false
+					this.$message.error('时长不能为空')
+					return false
 				}
 				if (Number(endMoney.hour) <= 0 ){
-				this.$message.error('时长不能小于0')
-				return false
+					this.$message.error('时长不能小于0')
+					return false
 				}
 				if (endMoney.money === ''){
-				this.$message.error('金额不能为空')
-				return false
+					this.$message.error('金额不能为空')
+					return false
 				}
 				if (Number(endMoney.money) < 0 ){
-				this.$message.error('金额不能小于0')
-				return false
+					this.$message.error('金额不能小于0')
+					return false
 				}
 				if (this.formData.electricityPrice == '') {
 					this.$message.error('请输入电费单价')
@@ -532,14 +531,13 @@
 				var isAutostopConfig = {};
 				isAutostopConfig['isAutostop'] = isAutostop;
 				config['AutostopConfig'] = isAutostopConfig;
-				var details = {};
 				var detailsConfig = {};
 				detailsConfig['chco'] = this.chco;
 				detailsConfig['money'] = this.fixedMoney;
 				detailsConfig['maxChargeTime'] = this.maxChargeTime
 				isAutostopConfig['details'] = detailsConfig;
 				var configJson = JSON.stringify(config);
-				console.log(configJson);
+				console.log("充满自停配置：",configJson);
 				this.formData.config = configJson;
 
 				var priceView = {};
@@ -548,20 +546,20 @@
 				let moneyList = this.moneyList
 				let timeList = this.timeList
 				if( priceUnit === 0 ){
-				timeList.forEach((item, index) => {
+					timeList.forEach((item, index) => {
 						priceViewArr.push(item.id)
-				})
+					})
 				} else if (priceUnit === 2){
-				moneyList.forEach((item, index) => {
+					moneyList.forEach((item, index) => {
 						priceViewArr.push(item.id)
-				})
+					})
 				}
 				priceViewArr = priceViewArr.join(',')
 				priceView['view'] = priceViewArr
 				priceView['unit'] = priceUnit
 				priceView['preMoney'] = fixedMoney
 				var priceViewJson = JSON.stringify(priceView);
-				console.log(priceViewJson);
+				console.log("充电档位：",priceViewJson);
 				this.formData.priceView = priceViewJson;
 
 				let formData = this.formData
@@ -618,7 +616,7 @@
 									money: 1
 								}]
 								this.formData.duration = [{
-									left: 1,
+									left: 0,
 									right: ''
 								}]
 								this.$emit('getLists')
