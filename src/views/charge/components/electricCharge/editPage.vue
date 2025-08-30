@@ -10,7 +10,7 @@
 						class="feeName" />
 				</el-form-item>
 				<el-form-item :label="'收费说明'" prop="remark">
-					<el-input v-model="editData.remark" placeholder="请输入收费金额" clearable
+					<el-input v-model="editData.remark" placeholder="请输入收费说明" clearable
 						type="textarea" :rows="2" />
 				</el-form-item>
 				<el-form-item :label="'计费周期'" prop="realTimeCharging">
@@ -26,7 +26,7 @@
 					<div style="margin-left: 20px;">
 						<div class="flex" style="align-items: center;">
 							<div>
-								<el-button type="primary" @click="addForm">添加详情</el-button>
+								<el-button type="primary" @click="addForm('edit')">添加详情</el-button>
 							</div>
 							<div class="flex" style="align-items: center;margin-left:30px">
 								<div style="margin-right: 10px;">电费单价</div>
@@ -274,7 +274,6 @@
 					realTimeCharging: 1,
 					title: "按30分钟收费"
 				}],
-
 				pageType: 0,
 				moneyList: [
 				{
@@ -287,13 +286,13 @@
 					id: 3
 				},
 				{
+					id: 4
+				},
+				{
 					id: 5
 				},
 				{
-					id: 10
-				},
-				{
-					id: 15
+					id: 6
 				},
 				],
 				timeList: [
@@ -413,12 +412,13 @@
 				if (item.priceContents != 0) {
 					item.priceContents.forEach((val, index) => {
 						duration.push(val.duration)
-						money.push(val.money)
+						money.push(val.serviceChargePrice)
+						// money.push(val.money)
 					})
 				}
 				this.editData.duration = duration
 				this.editData.money = money
-				this.formArr = item.priceContents
+				this.formArr.splice(0, this.formArr.length, ...item.priceContents);
 				this.showEdit = true
 			},
 			onEditData(formName) {

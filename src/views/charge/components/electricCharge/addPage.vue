@@ -9,7 +9,7 @@
 						class="feeName" />
 				</el-form-item>
 				<el-form-item :label="'收费说明'" prop="remark">
-					<el-input v-model="addData.remark" placeholder="请输入收费金额" clearable
+					<el-input v-model="addData.remark" placeholder="请输入收费说明" clearable
 						type="textarea" :rows="2" />
 				</el-form-item>
 				<el-form-item :label="'计费周期'" prop="realTimeCharging">
@@ -279,13 +279,13 @@
 					id: 3
 				},
 				{
+					id: 4
+				},
+				{
 					id: 5
 				},
 				{
-					id: 10
-				},
-				{
-					id: 15
+					id: 6
 				},
 				],
 				timeList: [
