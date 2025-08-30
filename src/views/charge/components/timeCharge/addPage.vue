@@ -104,7 +104,7 @@
 				</div>
 
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
-					<h2>车主显示档位 (充电车主选择支付金额的页面)</h2>
+					<!-- <h2>车主显示档位 (充电车主选择支付金额的页面)</h2>
 					<div style="display: flex;align-items: center;margin-left: 20px;">
 						<div>
 							<h3>档位显示方式</h3>
@@ -143,9 +143,20 @@
 								<template slot="append">小时</template>
 							</el-input>
 						</div>
-					</div>
+					</div> -->
 					<h2>更多设置</h2>
 					<div style="margin-left: 20px;">
+						<!-- <div style="display: flex;align-items: center;" v-if="pageType === 0 || pageType === 1">
+							<div style="width: 80px;">
+								<h3>预收金额</h3>
+							</div>
+							<div>
+								<el-input placeholder="请输入金额" v-model="fixedMoney" type="number"
+									style="width: 250px;">
+									<template slot="append">元</template>
+								</el-input>
+							</div>
+						</div> -->
 						<div>
 							<span style="display: inline-block;margin-right:20px">
 								<h3>充满自停档位</h3>
@@ -256,13 +267,13 @@
 					id: 3
 				},
 				{
+					id: 4
+				},
+				{
 					id: 5
 				},
 				{
-					id: 10
-				},
-				{
-					id: 15
+					id: 6
 				},
 				],
 				timeList: [
@@ -390,9 +401,10 @@
 				let electricityList = this.electricityList
 				let timeList = this.timeList
 				if( priceUnit === 0 ){
-					timeList.forEach((item, index) => {
-						priceViewArr.push(item.id)
-					})
+					// timeList.forEach((item, index) => {
+					// 	priceViewArr.push(item.id)
+					// })
+					priceViewArr = this.addData.duration
 				} else if (priceUnit === 1){
 					electricityList.forEach((item, index) => {
 						priceViewArr.push(item.id)
