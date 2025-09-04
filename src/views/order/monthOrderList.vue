@@ -225,7 +225,6 @@
           <template slot-scope="scope">
             <el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
             <el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
-            <el-tag type="warning" v-if="scope.row.payStatus == 2">已退款 </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="orderStatus" label="订单状态" v-if="formThead.orderStatus" align="center" min-width="120"
