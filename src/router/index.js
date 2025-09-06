@@ -579,7 +579,7 @@ export const constantRoutes = [{
   {
     path: '/finance',
     component: Layout,
-    redirect: '/finance/orderList',
+    redirect: '/finance/record',
     alwaysShow: true,
     name: 'finance',
     meta: {
@@ -866,7 +866,7 @@ export const constantRoutes = [{
   {
     path: '/monitor',
     component: Layout,
-    redirect: '/monitor/job/index',
+    redirect: '/monitor/job',
     alwaysShow: true,
     name: 'monitor',
     meta: {
