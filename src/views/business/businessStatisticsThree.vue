@@ -123,7 +123,7 @@
         </el-table-column>
         <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="归属运营商" prop="adminFullname" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="归属运营商" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="运营设备总数(台)" prop="deviceCount" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
