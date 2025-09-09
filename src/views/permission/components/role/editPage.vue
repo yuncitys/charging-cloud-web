@@ -138,7 +138,7 @@
 							this.$refs.editTree.setCheckedKeys(this.ger_role_id)
 						})
 					}else {
-            this.$message.error(res.msg)
+            			this.$message.error(res.msg)
 					}
 				})
 			},
@@ -156,7 +156,7 @@
 				console.log(this.editData)
 				const keys = [
 					...this.$refs.editTree.getCheckedKeys(),
-					...this.$refs.editTree.getHalfCheckedKeys()
+					// ...this.$refs.editTree.getHalfCheckedKeys()
 				];
 				if (keys.length == 0) {
 					this.$message.error('请选择功能权限')
