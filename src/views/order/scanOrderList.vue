@@ -239,7 +239,8 @@
           <template slot-scope="scope">
             <el-tag type="danger" v-if="scope.row.orderStatus == 0">故障</el-tag>
             <el-tag type="warning" v-if="scope.row.orderStatus == 1">进行中</el-tag>
-            <el-tag type="success" v-if="scope.row.orderStatus == 2">已完成 </el-tag>
+            <el-tag type="success" v-if="scope.row.orderStatus == 2">已完成</el-tag>
+            <el-tag type="warning" v-if="scope.row.orderStatus == 3">待结算</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="stopReason" label="停止原因" v-if="formThead.stopReason" align="center"
