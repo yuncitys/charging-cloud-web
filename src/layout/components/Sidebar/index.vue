@@ -25,7 +25,57 @@
           </div>
         </div>
       </div>
-      <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
+      <el-menu
+        :default-active="activeMenu"
+        :collapse="isCollapse"
+        :background-color="variables.menuBg"
+        :text-color="variables.menuText"
+        :unique-opened="false"
+        :active-text-color="variables.menuActiveText"
+        :collapse-transition="false"
+        mode="vertical"
+        class="leftElmenuClass">
+        <template v-for="item in leftmeunList">
+          <el-submenu v-if="item.children && item.children.length" :index="item.href || `item-${item.id}`" :key="item.id">
+            <template #title>
+              <div @click="onClick(item.href)">
+                <i :class="item.icon"></i>
+                <span>{{ item.title }}</span>
+              </div>
+            </template>
+            <el-menu-item
+              v-for="subItem in item.children"
+              :key="subItem.id"
+              :index="subItem.href || `subitem-${subItem.id}`" v-if="!subItem.perms.startsWith(':')">
+              <div @click="onClick(subItem.href)">
+                <i :class="subItem.icon"></i>
+                <span>{{ subItem.title }}</span>
+              </div>
+            </el-menu-item>
+          </el-submenu>
+          <!-- <el-menu-item v-else :index="item.href" :key="item.title">
+            <div @click="onClick(item.href)">
+              <i :class="item.icon"></i>
+              <span>{{ item.title }}</span>
+            </div>
+          </el-menu-item> -->
+          <el-submenu v-else :index="item.href || `item-${item.id}`" :key="item.id">
+            <template #title>
+              <div @click="onClick(item.href)">
+                <i :class="item.icon"></i>
+                <span>{{ item.title }}</span>
+              </div>
+            </template>
+            <!-- <el-menu-item :index="item.href" :key="item.id">
+              <div @click="onClick(item.href)">
+                <i :class="item.icon"></i>
+                <span>{{ item.title }} (href: {{ item.href }})</span>
+              </div>
+            </el-menu-item> -->
+          </el-submenu>
+        </template>
+      </el-menu>
+      <!-- <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
         :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
         :collapse-transition="false" mode="vertical" class="leftElmenuClass">
         <template v-for="item in leftmeunList">
@@ -36,7 +86,7 @@
             </div>
           </el-menu-item>
         </template>
-      </el-menu>
+      </el-menu> -->
     </el-scrollbar>
   </div>
 </template>
@@ -67,7 +117,7 @@
       if (list) {
         this.$store.commit('permission/setleftMeunList', JSON.parse(list));
       }else{
-         this.$store.commit('permission/setleftMeunList', []);
+        this.$store.commit('permission/setleftMeunList', []);
       }
       this.activeMenu = window.sessionStorage.getItem("activeMenu");
     },
@@ -109,13 +159,11 @@
   }
 
 </script>
-<style>
-  #app .hideSidebar .el-submenu>.el-submenu__title {
-    padding-left: 20px !important;
-  }
-
-</style>
 <style scoped lang="scss">
+  // #app .hideSidebar .el-submenu>.el-submenu__title {
+  //   padding-left: 20px !important;
+  // }
+
   @import "~@/styles/variables.scss";
 
   .logoBox {
@@ -144,7 +192,6 @@
     }
   }
 
-
   .active {
     color: #1890FF;
   }
@@ -156,18 +203,19 @@
   // .el-menu-item {
   // 	padding-left: 40px !important;
   // }
+
   .leftElmenuClass {
     border: none !important;
 
     & .el-menu-item {
-      padding-left: revert !important;
-      ;
-      padding: 0 3px;
+      // padding-left: revert !important;
+      padding-left: 20px !important;
+      // padding: 0 3px;
       line-height: normal;
       color: $menuText !important;
 
       &>div {
-        padding: 14px 22px;
+        // padding: 14px 22px;
         margin: 3px 15px;
         border-radius: 10px;
       }
@@ -185,18 +233,19 @@
         background: $menuActiveBg !important;
         color: white;
         font-weight: 600;
-
       }
     }
 
+    // .el-submenu.is-opened{
+    // }
+
   }
+
 
   .el-menu--collapse {
     .el-menu-item {
       display: flex;
       justify-content: center;
-
     }
   }
-
 </style>
