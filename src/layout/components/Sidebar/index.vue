@@ -75,6 +75,7 @@
           </el-submenu>
         </template>
       </el-menu>
+
       <!-- <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
         :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
         :collapse-transition="false" mode="vertical" class="leftElmenuClass">
@@ -201,7 +202,7 @@
   }
 
   // .el-menu-item {
-  // 	padding-left: 40px !important;
+  // 	padding-left: 40px !important; //二级
   // }
 
   .leftElmenuClass {
@@ -215,8 +216,8 @@
       color: $menuText !important;
 
       &>div {
-        // padding: 14px 22px;
-        margin: 3px 15px;
+        // padding: 14px 22px; //二级
+        margin: 3px 15px; //三极
         border-radius: 10px;
       }
 
