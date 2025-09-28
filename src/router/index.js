@@ -650,6 +650,30 @@ export const constantRoutes = [{
         title: '支付方式',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'customerInvoice',
+      component: () => import('@/views/customerInvoice/index'),
+      name: 'customerInvoice',
+      meta: {
+        title: '发票抬头',
+        icon: 'el-icon-document',
+      }
+    }, {
+      path: 'invoiceConfig',
+      component: () => import('@/views/invoiceConf/index'),
+      name: 'invoiceConfig',
+      meta: {
+        title: '发票配置',
+        icon: 'el-icon-document',
+      }
+    }, {
+      path: 'invoiceRecord',
+      component: () => import('@/views/invoiceRecord/index'),
+      name: 'invoiceRecord',
+      meta: {
+        title: '开票记录',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
