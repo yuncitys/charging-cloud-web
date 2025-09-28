@@ -2,18 +2,18 @@
 
 <div align="center">
 
-## YunCharge开源充电桩收费管理平台
+## YunCharge充电桩收费管理平台
 
 </div>
 
 <div align="center" >
-    <a href="http://wenhui.huizhidata.com">
+    <a href="">
         <img src="https://img.shields.io/badge/Licence-GPL3.0-green.svg?style=flat" />
     </a>
-    <a href="http://wenhui.huizhidata.com">
+    <a href="">
         <img src="https://img.shields.io/badge/Edition-5.2-blue.svg" />
     </a>
-     <a href="https://github.com/roinli/huige-ChargeOS-cloud/repository/archive/master.zip">
+     <a href="">
         <img src="https://img.shields.io/badge/Download-240m-red.svg" />
     </a>
 </div>
@@ -162,6 +162,15 @@ npm install --registry=https://registry.npm.taobao.org
 
 # 启动服务
 npm run dev
+
+# 更换GD地图key
+src/views/netWorkDot/components/chargeStationDialog.vue文件中539行中替换
+
+# 更换服务域名
+src/utils/global_variable.js文件中替换APIURl参数
+
+# 本地启动
+vue.config.js文件中更换本地服务地址
 ```
 
 
@@ -171,6 +180,3 @@ npm run dev
 # 构建生产环境
 npm run build:prod
 ```
-
-### YunCitys#2 交流群
-QQ群：955562455 
