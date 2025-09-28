@@ -25,7 +25,7 @@
           </div>
         </div>
       </div>
-      <el-menu
+      <!-- <el-menu
         :default-active="activeMenu"
         :collapse="isCollapse"
         :background-color="variables.menuBg"
@@ -52,31 +52,31 @@
                 <span>{{ subItem.title }}</span>
               </div>
             </el-menu-item>
-          </el-submenu>
+          </el-submenu> -->
           <!-- <el-menu-item v-else :index="item.href" :key="item.title">
             <div @click="onClick(item.href)">
               <i :class="item.icon"></i>
               <span>{{ item.title }}</span>
             </div>
           </el-menu-item> -->
-          <el-submenu v-else :index="item.href || `item-${item.id}`" :key="item.id">
+          <!-- <el-submenu v-else :index="item.href || `item-${item.id}`" :key="item.id">
             <template #title>
               <div @click="onClick(item.href)">
                 <i :class="item.icon"></i>
                 <span>{{ item.title }}</span>
               </div>
-            </template>
+            </template> -->
             <!-- <el-menu-item :index="item.href" :key="item.id">
               <div @click="onClick(item.href)">
                 <i :class="item.icon"></i>
                 <span>{{ item.title }} (href: {{ item.href }})</span>
               </div>
             </el-menu-item> -->
-          </el-submenu>
+          <!-- </el-submenu>
         </template>
-      </el-menu>
+      </el-menu> -->
 
-      <!-- <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
+      <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
         :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
         :collapse-transition="false" mode="vertical" class="leftElmenuClass">
         <template v-for="item in leftmeunList">
@@ -87,7 +87,7 @@
             </div>
           </el-menu-item>
         </template>
-      </el-menu> -->
+      </el-menu>
     </el-scrollbar>
   </div>
 </template>
@@ -216,8 +216,8 @@
       color: $menuText !important;
 
       &>div {
-        // padding: 14px 22px; //二级
-        margin: 3px 15px; //三极
+        padding: 14px 22px; //二级
+        // margin: 3px 15px; //三极
         border-radius: 10px;
       }
 
