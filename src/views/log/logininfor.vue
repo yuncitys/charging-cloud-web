@@ -24,12 +24,12 @@
 				</el-table-column>
 				<el-table-column prop="loginLocation" label="登录地点" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column prop="browser" label="浏览器类型" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="os" label="操作系统" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="msg" label="提示消息" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column prop="browser" label="浏览器类型" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="os" label="操作系统" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="msg" label="提示消息" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column prop="status" label="登录状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<el-tag type="success" v-if="scope.row.status == 0">成功</el-tag>

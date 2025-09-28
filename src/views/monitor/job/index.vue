@@ -69,7 +69,6 @@
             @click="handleJobLog"
             v-if="btnAuthen.permsVerifAuthention(':monitor:job:query')"
           >日志</el-button>
-        </el-col>
       </div>
 
 
