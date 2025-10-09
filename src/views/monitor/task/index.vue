@@ -1,10 +1,14 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
+			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
+				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
+				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+			</el-date-picker>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">
-        查询
-      </el-button>
+				查询
+			</el-button>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
 				highlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -13,40 +17,39 @@
 				</el-table-column>
 				<el-table-column prop="taskName" label="下载任务" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column prop="percentage" label="下载进度" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-            <el-progress :text-inside="true" :stroke-width="20" :percentage="scope.row.percentage" status="success"></el-progress>
-          </template>
-        </el-table-column>
-				<el-table-column prop="fileSize" label="文件大小" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-          	<span>{{ (scope.row.fileSize / 1000) || 0}} KB</span>
-          </template>
+				<el-table-column prop="percentage" label="下载进度" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<el-progress :text-inside="true" :stroke-width="20" :percentage="scope.row.percentage" status="success"></el-progress>
+				</template>
 				</el-table-column>
-        <el-table-column prop="useTime" label="耗时" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-          	<span>{{ scope.row.useTime}} s</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="creatTime" label="创建时间" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-          	<span>{{ scope.row.creatTime | formatDate }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="endTime" label="结束时间" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-          	<span>{{ scope.row.endTime | formatDate }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="adminName" label="创建人" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+						<el-table-column prop="fileSize" label="文件大小" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<span>{{ (scope.row.fileSize / 1000) || 0}} KB</span>
+				</template>
+						</el-table-column>
+				<el-table-column prop="useTime" label="耗时" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<span>{{ scope.row.useTime}} s</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="creatTime" label="创建时间" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<span>{{ scope.row.creatTime | formatDate }}</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="endTime" label="结束时间" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<span>{{ scope.row.endTime | formatDate }}</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="adminName" label="创建人" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 
 				<el-table-column label="操作" align="center" width="200">
 					<template slot-scope="scope">
-            <el-button
-              type="primary" size='mini'
-              @click="handleDownload(scope.row.taskName,scope.row.result)"
-              v-if="btnAuthen.permsVerifAuthention(':monitor:task:download') && scope.row.status === 1">下载</el-button>
+						<el-button type="primary" size='mini' @click="handleDownload(scope.row.taskName,scope.row.result)"
+							v-if="btnAuthen.permsVerifAuthention(':monitor:task:download') && scope.row.status === 1">下载
+						</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -75,18 +78,18 @@
 				page: 1,
 				limit: 10,
 				total: 10,
-        list: [],
-        tags: [{
-        	title: '下载中',
-        	id: 0,
-        }, {
-        	title: '已完成',
-        	id: 1,
-        }],
+				list: [],
+				tags: [{
+					title: '下载中',
+					id: 0,
+				}, {
+					title: '已完成',
+					id: 1,
+				}],
 				listQuery: {
 					page: 1,
 					limit: 10,
-          status:'',
+          			status:'',
 				},
 				tableKey: 0,
 				time: ''
@@ -104,9 +107,20 @@
 
 		},
 		methods: {
+			dateChange(e) {
+				console.log(e)
+				if (e) {
+				this.listQuery.createTimeStart = e[0]
+				this.listQuery.createTimeEnd = e[1]
+				} else {
+				this.listQuery.createTimeStart = ''
+				this.listQuery.createTimeEnd = ''
+				}
+				this.handleFilter()
+			},
 			getList() {
 				this.listLoading = true
-        let listQuery = this.listQuery
+        		let listQuery = this.listQuery
 				getList(listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
@@ -118,18 +132,18 @@
 					}
 				})
 			},
-      handleDownload(fileName,fileUrl){
-        if (!fileUrl) {
-          return;
-        }
-        let a = document.createElement('a')
-        a.href = this.Global.APIURl + fileUrl
-        a.click();
-      },
-      handleFilter() {
-      	this.listQuery.page = 1
-      	this.getList()
-      },
+			handleDownload(fileName,fileUrl){
+				if (!fileUrl) {
+				return;
+				}
+				let a = document.createElement('a')
+				a.href = this.Global.APIURl + fileUrl
+				a.click();
+			},
+			handleFilter() {
+				this.listQuery.page = 1
+				this.getList()
+			},
 			handleSizeChange(val) {
 				this.listQuery.limit = val
 				this.getList()
