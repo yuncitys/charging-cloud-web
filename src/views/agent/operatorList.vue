@@ -8,7 +8,7 @@
 			<el-input v-model="listQuery.managePhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入联系方式" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.companyName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入公司名称名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+				placeholder="请输入公司名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.socialCreditCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入社会统一信用代码" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
