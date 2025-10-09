@@ -71,7 +71,7 @@
       <!-- 表格底部操作 -->
       <div style="margin: 10px 0;">
         <el-button type="primary" @click="addRow">+ 新增分成人员</el-button>
-        <el-link type="primary" style="margin-left: 10px;">点击此处去创建收款账号</el-link>
+        <el-link type="primary" style="margin-left: 10px;" @click="toAddAccount">点击此处去创建收款账号</el-link>
       </div>
 
       <!-- 弹窗底部 -->
@@ -124,6 +124,12 @@
 
 		},
 		methods: {
+      toAddAccount() {
+				this.$router.push({
+					name: 'agentList'
+				})
+				this.dialogVisible = false
+			},
 			showformData() {
 				let scope = this.row_data
 				this.dialogVisible = true
