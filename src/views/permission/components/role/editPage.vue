@@ -156,7 +156,7 @@
 				console.log(this.editData)
 				const keys = [
 					...this.$refs.editTree.getCheckedKeys(),
-					// ...this.$refs.editTree.getHalfCheckedKeys()
+					...this.$refs.editTree.getHalfCheckedKeys()
 				];
 				if (keys.length == 0) {
 					this.$message.error('请选择功能权限')

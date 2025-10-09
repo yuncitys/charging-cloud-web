@@ -110,7 +110,7 @@
 			onaddData(formName) {
 				const keys = [
 					...this.$refs.addTree.getCheckedKeys(),
-					// ...this.$refs.addTree.getHalfCheckedKeys()
+					...this.$refs.addTree.getHalfCheckedKeys()
 				];
 				if (keys.length == 0) {
 					this.$message.error('请选择功能权限')
