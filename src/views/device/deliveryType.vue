@@ -1,6 +1,17 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
+			<el-select v-model="listQuery.ruleId" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请选择归属系列" clearable @change="handleFilter">
+				<el-option v-for="item in ruleIds" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
+			<el-select v-model="listQuery.electricOut" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请选择电流输出类型" clearable @change="handleFilter">
+				<el-option v-for="item in electricOuts" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
+			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
+				icon="el-icon-search">查询
+      		</el-button>
 			<!-- 新增 -->
 			<addPage @getLists="getLists" />
 
@@ -9,20 +20,20 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        <el-table-column prop="deviceTypeId" label="设备类型ID" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="deviceTypeName" label="设备类型名称" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="deviceTypeId" label="设备类型ID" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="deviceTypeName" label="设备类型名称" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="ruleId" label="归属系列" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
 					</template>
 				</el-table-column>
-        <el-table-column prop="electricOut" label="电流输出" align="center" :show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		{{scope.row.electricOut === 1 ? '直流充电桩' : '交流充电桩'}}
-        	</template>
-        </el-table-column>
+				<el-table-column prop="electricOut" label="电流输出" align="center" :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						{{scope.row.electricOut === 1 ? '直流充电桩' : '交流充电桩'}}
+					</template>
+				</el-table-column>
 				<el-table-column prop="portCount" label="设备端口数" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column label="操作" align="center" width="200">
@@ -71,8 +82,28 @@
 				list: [],
 				listQuery: {
 					page: 1,
-					limit: 10
+					limit: 10,
+					ruleId: '',
+					electricOut: '',
 				},
+				ruleIds:[
+					{
+						title: '单车',
+						id: 1,
+					}, {
+						title: '汽车',
+						id: 2,
+					}
+				],
+				electricOuts:[
+					{
+						title: '交流',
+						id: 0,
+					}, {
+						title: '直流',
+						id: 1,
+					}
+				]
 			}
 		},
 		mounted() {
@@ -87,6 +118,10 @@
 			//设置表格页数
 			handleCurrentChange(val) {
 				this.listQuery.page = val
+				this.getLists()
+			},
+			handleFilter() {
+				this.listQuery.page = 1
 				this.getLists()
 			},
 			getLists() {
