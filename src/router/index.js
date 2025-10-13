@@ -234,7 +234,7 @@ export const constantRoutes = [{
       component: () => import('@/views/device/delivery'),
       name: 'delivery',
       meta: {
-        title: '未安装设备',
+        title: '安装设备',
         icon: 'el-icon-goods',
       }
     }, {
@@ -460,7 +460,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'netWorkDot',
     meta: {
-      title: '行政区域管理',
+      title: '站点管理',
       icon: 'el-icon-s-help',
     },
     children: [{
