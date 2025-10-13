@@ -4,7 +4,7 @@
 			<el-button type="primary"
 				v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:carCharge:edit')"
 				@click="showDidlaoEditData">
-        编辑方案
+        		编辑方案
 			</el-button>
 			<!-- 编辑方案 style="margin-right: 20px ;"-->
 			<el-dialog :visible.sync="showEdit" title="编辑方案" @close="showEdit = false" class="scheme-dialog"
@@ -68,64 +68,64 @@
 						</div>
 					</el-form-item>
 
-          <div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
-          	<h2>车主显示档位 (充电车主选择支付金额的页面)</h2>
-          	<div style="display: flex;align-items: center;margin-left: 20px;">
-          		<div>
-          			<h3>档位显示方式</h3>
-          		</div>
-          		<div style="margin-left: 30px;">
-          			<el-radio-group v-model="unit">
-          				<el-radio :label="2">金额</el-radio>
-                  <el-radio :label="1">电量</el-radio>
-          				<el-radio :label="0">时间</el-radio>
-          			</el-radio-group>
-          		</div>
-          	</div>
-          	<div v-if="unit === 2"
-          		style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
-          		<div v-for="(item,index) in moneyList" :key="index" style="width: 30%;">
-          			<el-input placeholder="请输入金额" v-model="item.id" type="number"
-          				style="width: 200px;margin-bottom: 10px;">
-          				<template slot="append">元</template>
-          			</el-input>
-          		</div>
-          	</div>
-            <div v-if="unit === 1"
-            	style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
-            	<div v-for="(item,index) in electricList" :key="index" style="width: 30%;">
-            		<el-input placeholder="请输入电量" v-model="item.id" type="number"
-            			style="width: 200px;margin-bottom: 10px;">
-            			<template slot="append">度</template>
-            		</el-input>
-            	</div>
-            </div>
-          	<div v-if="unit === 0"
-          		style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
-          		<div v-for="(item,index) in timeList" :key="index" style="width: 30%;">
-          			<el-input placeholder="请输入时间" v-model="item.id" type="number"
-          				style="width: 200px;margin-bottom: 10px;">
-          				<template slot="append">小时</template>
-          			</el-input>
-          		</div>
-          	</div>
-          	<div>
-          		<h2>更多设置</h2>
-          		<div style="margin-left: 20px;">
-                <div style="display: flex;align-items: center;" v-if="unit === 0">
-                	<div style="width: 80px;">
-                		<h3>预收金额</h3>
-                	</div>
-                	<div>
-                		<el-input placeholder="请输入金额" v-model="preMoney" type="number"
-                			style="width: 250px;">
-                			<template slot="append">元</template>
-                		</el-input>
-                	</div>
-                </div>
-              </div>
-            </div>
-          </div>
+					<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
+						<h2>车主显示档位 (充电车主选择支付金额的页面)</h2>
+						<div style="display: flex;align-items: center;margin-left: 20px;">
+							<div>
+								<h3>档位显示方式</h3>
+							</div>
+							<div style="margin-left: 30px;">
+								<el-radio-group v-model="unit">
+									<el-radio :label="2">金额</el-radio>
+							<el-radio :label="1">电量</el-radio>
+									<el-radio :label="0">时间</el-radio>
+								</el-radio-group>
+							</div>
+						</div>
+						<div v-if="unit === 2"
+							style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
+							<div v-for="(item,index) in moneyList" :key="index" style="width: 30%;">
+								<el-input placeholder="请输入金额" v-model="item.id" type="number"
+									style="width: 200px;margin-bottom: 10px;">
+									<template slot="append">元</template>
+								</el-input>
+							</div>
+						</div>
+						<div v-if="unit === 1"
+							style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
+							<div v-for="(item,index) in electricList" :key="index" style="width: 30%;">
+								<el-input placeholder="请输入电量" v-model="item.id" type="number"
+									style="width: 200px;margin-bottom: 10px;">
+									<template slot="append">度</template>
+								</el-input>
+							</div>
+						</div>
+						<div v-if="unit === 0"
+							style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
+							<div v-for="(item,index) in timeList" :key="index" style="width: 30%;">
+								<el-input placeholder="请输入时间" v-model="item.id" type="number"
+									style="width: 200px;margin-bottom: 10px;">
+									<template slot="append">小时</template>
+								</el-input>
+							</div>
+						</div>
+						<div>
+							<h2>更多设置</h2>
+							<div style="margin-left: 20px;">
+							<div style="display: flex;align-items: center;" v-if="unit === 0">
+								<div style="width: 80px;">
+									<h3>预收金额</h3>
+								</div>
+								<div>
+									<el-input placeholder="请输入金额" v-model="preMoney" type="number"
+										style="width: 250px;">
+										<template slot="append">元</template>
+									</el-input>
+								</div>
+							</div>
+						</div>
+						</div>
+					</div>
 
 					<el-form-item>
 						<el-button type="primary" @click="onEditData('editData')">确定</el-button>
@@ -157,47 +157,47 @@
 		},
 		data() {
 			return {
-        preMoney: 50,
-        unit: 0,
-        moneyList: [{
-        	id: 20
-        }, {
-        	id: 50
-        }, {
-        	id: 80
-        }, {
-        	id: 100
-        }, {
-        	id: 120
-        }, {
-        	id: 150
-        }],
-        electricList: [{
-        	id: 10
-        }, {
-        	id: 20
-        }, {
-        	id: 30
-        }, {
-        	id: 40
-        }, {
-        	id: 50
-        }, {
-        	id: 80
-        }],
-        timeList: [{
-        	id: 2
-        }, {
-        	id: 4
-        }, {
-        	id: 6
-        }, {
-        	id: 8
-        }, {
-        	id: 10
-        }, {
-        	id: 12
-        }],
+				preMoney: 50,
+				unit: 0,
+				moneyList: [{
+					id: 20
+				}, {
+					id: 50
+				}, {
+					id: 80
+				}, {
+					id: 100
+				}, {
+					id: 120
+				}, {
+					id: 150
+				}],
+				electricList: [{
+					id: 10
+				}, {
+					id: 20
+				}, {
+					id: 30
+				}, {
+					id: 40
+				}, {
+					id: 50
+				}, {
+					id: 80
+				}],
+				timeList: [{
+					id: 2
+				}, {
+					id: 4
+				}, {
+					id: 6
+				}, {
+					id: 8
+				}, {
+					id: 10
+				}, {
+					id: 12
+				}],
 				periodTimeArray: [{
 					value: 0,
 					label: '00:00'
@@ -589,35 +589,35 @@
 					this.editData.periodTimePrices.periodPriceList.push(obj)
 				})
 
-        let priceViewDetail = {};
-        if(typeof(item.priceView)=='string'){
-          priceViewDetail = JSON.parse(item.priceView);
-        }else{
-          priceViewDetail = item.priceView;
-        }
-        item.priceView = priceViewDetail;
-        console.log(item.priceView,"挡位")
-        let priceViewArr = []
-        priceViewArr = item.priceView.view.split(',')
-        console.log(priceViewArr,"view")
-        let priceViewObj = []
-        priceViewArr.forEach((item, index) => {
-          let obj = {
-            id: item
-          }
-          priceViewObj.push(obj)
-        })
-        let priceUnit = item.priceView.unit
-        this.unit = priceUnit
-        this.preMoney = item.priceView.preMoney
-        console.log(priceUnit,"unit")
-        if (priceUnit === 0) {
-        	this.timeList = priceViewObj
-        } else if (priceUnit === 2) {
-        	this.moneyList = priceViewObj
-        } else if (priceUnit === 1) {
-        	this.electricList = priceViewObj
-        }
+				let priceViewDetail = {};
+				if(typeof(item.priceView)=='string'){
+				priceViewDetail = JSON.parse(item.priceView);
+				}else{
+				priceViewDetail = item.priceView;
+				}
+				item.priceView = priceViewDetail;
+				console.log(item.priceView,"挡位")
+				let priceViewArr = []
+				priceViewArr = item.priceView.view.split(',')
+				console.log(priceViewArr,"view")
+				let priceViewObj = []
+				priceViewArr.forEach((item, index) => {
+				let obj = {
+					id: item
+				}
+				priceViewObj.push(obj)
+				})
+				let priceUnit = item.priceView.unit
+				this.unit = priceUnit
+				this.preMoney = item.priceView.preMoney
+				console.log(priceUnit,"unit")
+				if (priceUnit === 0) {
+					this.timeList = priceViewObj
+				} else if (priceUnit === 2) {
+					this.moneyList = priceViewObj
+				} else if (priceUnit === 1) {
+					this.electricList = priceViewObj
+				}
 
 			},
 			onEditData(formName) {
@@ -719,33 +719,33 @@
 				let tdpId = returnData.id
 				console.log(bill, beginTime, endTime, flag)
 
-        var priceView = {};
-        let priceViewArr = [];
-        let priceUnit = this.unit
-        let moneyList = this.moneyList
-        let timeList = this.timeList
-        let electricList = this.electricList
-        if( priceUnit === 0 ){
-          timeList.forEach((item, index) => {
-          		priceViewArr.push(item.id)
-          })
-        } else if (priceUnit === 2){
-          moneyList.forEach((item, index) => {
-          		priceViewArr.push(item.id)
-          })
-        } else if (priceUnit === 1){
-          electricList.forEach((item, index) => {
-          		priceViewArr.push(item.id)
-          })
-        }
-        priceViewArr = priceViewArr.join(',')
-        priceView['view'] = priceViewArr
-        priceView['unit'] = priceUnit
-        priceView['preMoney'] = this.unit === 0 ? Number(this.preMoney) : 0
-        var priceViewJson = JSON.stringify(priceView);
-        console.log(priceViewJson);
+				var priceView = {};
+				let priceViewArr = [];
+				let priceUnit = this.unit
+				let moneyList = this.moneyList
+				let timeList = this.timeList
+				let electricList = this.electricList
+				if( priceUnit === 0 ){
+				timeList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+				})
+				} else if (priceUnit === 2){
+				moneyList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+				})
+				} else if (priceUnit === 1){
+				electricList.forEach((item, index) => {
+						priceViewArr.push(item.id)
+				})
+				}
+				priceViewArr = priceViewArr.join(',')
+				priceView['view'] = priceViewArr
+				priceView['unit'] = priceUnit
+				priceView['preMoney'] = this.unit === 0 ? Number(this.preMoney) : 0
+				var priceViewJson = JSON.stringify(priceView);
+				console.log(priceViewJson);
 
-        //请求参数
+        		//请求参数
 				let data = {
 					feeName,
 					bill,
@@ -753,7 +753,7 @@
 					endTime,
 					flag,
 					remainFlag,
-          priceView: priceViewJson,
+          			priceView: priceViewJson,
 					ruleId: 2,
 					priceType: 1,
 					tdpId,
