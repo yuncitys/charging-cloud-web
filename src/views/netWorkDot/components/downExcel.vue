@@ -54,14 +54,8 @@
 					this.downloadLoading = false
 					if (res.code == 200) {
 						import('@/vendor/Export2Excel').then(excel => {
-							const tHeader = ['充电站名称', '省', '市', '区', '投放地', '代理商', '地址经度',
-								'地址纬度',
-								'创建时间', '更新时间'
-							]
-							const filterVal = ['networkName', 'networkProvince', 'networkCity',
-								'networkRegion', 'networkAddress', 'adminFullname',
-								'networkLongitude', 'networkLatitude', 'createTime', 'updateTime',
-							]
+							const tHeader = ['充电站名称', '省', '市', '区', '投放地', '站点运营商', '地址经度','地址纬度', '创建时间', '更新时间']
+							const filterVal = ['networkName', 'networkProvince', 'networkCity','networkRegion', 'networkAddress', 'operatorName','networkLongitude', 'networkLatitude', 'createTime', 'updateTime',]
 							const list = res.data || []
 							const data = this.formatJson(filterVal, list)
 							let filename = '区域列表' + getNowTime()
