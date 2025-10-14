@@ -168,7 +168,7 @@
       addRow() {
         let previous = this.tableData.length - 1 < 0 ? 0 : this.tableData.length - 1;
         if(this.tableData[previous].adminId == ''){
-          this.$message.error('请选择收款帐号')
+          this.$message.error('请选择收款账号')
           return false
         }
         if(this.tableData[previous].splitRate == ''){

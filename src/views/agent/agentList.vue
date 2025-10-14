@@ -27,7 +27,7 @@
 				</el-table-column>
 				<el-table-column prop="roleName" label="角色" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="freezeStatus" label="帐号状态" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="freezeStatus" label="账号状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<el-tag type="success" v-if="scope.row.freezeStatus == 0">正常</el-tag>
 						<el-tag type="danger" v-if="scope.row.freezeStatus == 1">冻结</el-tag>

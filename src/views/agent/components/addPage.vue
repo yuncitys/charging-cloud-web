@@ -4,10 +4,10 @@
 <template>
 	<div style="display: inline-block;">
 		<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click='onShowAdd'
-			v-if="btnAuthen.permsVerifAuthention(':sys:admin:addAdminUser')">添加帐号
+			v-if="btnAuthen.permsVerifAuthention(':sys:admin:addAdminUser')">添加账号
 		</el-button>
 		<!-- 添加代理商-->
-		<el-dialog :visible.sync="showAdd" title="添加帐号" @close="showAdd = false" style="width: 100%;"
+		<el-dialog :visible.sync="showAdd" title="添加账号" @close="showAdd = false" style="width: 100%;"
 			:append-to-body="true">
 			<el-form ref="addData" :model="addData" label-position="left" label-width="120px"
 				style="margin-left:50px;width: 450px;" :rules="rules">

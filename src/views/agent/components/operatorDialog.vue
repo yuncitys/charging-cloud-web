@@ -7,7 +7,7 @@
       <div style="width: 100%; height:100px;" v-show="visibleStep">
         <el-steps :active="currentStep" align-center>
           <el-step title="主体信息"></el-step>
-          <el-step title="帐号信息"></el-step>
+          <el-step title="账号信息"></el-step>
         </el-steps>
       </div>
       <el-form ref="form" v-show="currentStep === 1" :model="form" :rules="rules" label-width="100px" label-position="left" style="width: 600px; margin-left:80px;">

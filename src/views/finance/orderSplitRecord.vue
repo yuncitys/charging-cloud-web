@@ -7,15 +7,15 @@
 				placeholder="请选择状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
-        placeholder="请选择分账用户">
-          <el-option
-            v-for="item in dealerList"
-            :key="item.id"
-            :label="item.adminFullname + '(' + item.adminName + ')'"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
+				placeholder="请选择分账用户">
+				<el-option
+					v-for="item in dealerList"
+					:key="item.id"
+					:label="item.adminFullname + '(' + item.adminName + ')'"
+					:value="item.id">
+				</el-option>
+			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
 				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
@@ -34,26 +34,26 @@
 				</el-table-column>
 				<el-table-column label="结算订单" prop="orderCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="分账订单" prop="splitOrderCode" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column label="收款帐号" prop="adminFullname" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column label="分账订单" prop="splitOrderCode" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column label="收款账号" prop="adminFullname" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column label="分账金额(元)" prop="splitAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column label="分账比例(%)" prop="splitRate" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-            <el-tag v-if="scope.row.splitType === 0">分成</el-tag>
-          </template>
-        </el-table-column>
+				<el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column label="分账比例(%)" prop="splitRate" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<el-tag v-if="scope.row.splitType === 0">分成</el-tag>
+				</template>
+				</el-table-column>
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-            <el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
+            			<el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
 						<el-tag v-if="scope.row.status == 'RPOCESSED'">处理中</el-tag>
 						<el-tag type="success"v-if="scope.row.status == 'FINISH'">已完成</el-tag>
 						<el-tag type="danger" v-if="scope.row.status == 'FAIL'">分账失败</el-tag>
@@ -61,20 +61,20 @@
 				</el-table-column>
 				<el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="failReason" label="失败原因" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="failReason" label="失败原因" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="createTime" label="分账时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip='isPc'>
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.updateTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 			</el-table>
 			<div class="pagination-container">
 				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"

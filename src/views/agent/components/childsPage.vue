@@ -18,7 +18,7 @@
 				</el-table-column>
 				<el-table-column prop="roleName" label="角色" align="center" :show-overflow-tooltip='true'>
 				</el-table-column>
-				<el-table-column prop="freezeStatus" label="帐号状态" align="center" :show-overflow-tooltip='true'>
+				<el-table-column prop="freezeStatus" label="账号状态" align="center" :show-overflow-tooltip='true'>
 					<template slot-scope="scope">
 						<el-tag type="success" v-if="scope.row.freezeStatus == 0">正常</el-tag>
 						<el-tag type="danger" v-if="scope.row.freezeStatus == 1">冻结</el-tag>
@@ -35,28 +35,28 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-        <el-table-column prop="createTime" label="更新时间" align="center" sortable :show-overflow-tooltip="true">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.createTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最后登录时间" align="center" sortable
-        	:show-overflow-tooltip="true">
-        	<template slot-scope="scope">
-        		<span>{{ scope.row.lastLoginTime | formatDate }}</span>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="createTime" label="更新时间" align="center" sortable :show-overflow-tooltip="true">
+					<template slot-scope="scope">
+						<span>{{ scope.row.createTime | formatDate }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column prop="lastLoginTime" label="最后登录时间" align="center" sortable
+					:show-overflow-tooltip="true">
+					<template slot-scope="scope">
+						<span>{{ scope.row.lastLoginTime | formatDate }}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="操作" align="center"  width="300">
 					<template slot-scope="scope">
 						<!-- 编辑 -->
 						<editPage :row_data="scope.row" @getLists="getLists" />
 						<el-button type="danger" style="margin-left: 10px;" size="mini"
 							v-if="btnAuthen.permsVerifAuthention(':agent:agentList:delete')" @click='del(scope.row.id)'>
-              删除
+              				删除
 						</el-button>
 						<el-button type="primary" style="margin-left: 10px;" size="mini"
 							@click='editPassword(scope.row.id)'>
-              重置密码
+              				重置密码
 						</el-button>
 						<el-button type="danger" style="margin-left: 10px;" size="mini"
 							@click="onfreezeAdminUser(scope.row,1,'next')" v-if="scope.row.freezeStatus == 0 && btnAuthen.permsVerifAuthention(':sys:admin:freezeAdminUser')">
@@ -67,9 +67,9 @@
 							解封账户
 						</el-button>
 						<!-- 名下所有代理商 -->
-            <div style="margin-top: 10px;">
-              <childsPage :row_data="scope.row"/>
-            </div>
+						<div style="margin-top: 10px;">
+							<childsPage :row_data="scope.row"/>
+						</div>
 					</template>
 				</el-table-column>
 			</el-table>
