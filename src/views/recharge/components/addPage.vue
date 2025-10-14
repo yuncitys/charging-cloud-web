@@ -115,7 +115,7 @@
 			},
 		},
 		created() {
-      this.getOperator()
+      		// this.getOperator()
 		},
 	}
 </script>

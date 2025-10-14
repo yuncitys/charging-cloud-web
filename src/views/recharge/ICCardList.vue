@@ -1,8 +1,8 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
-			<el-input v-model="listQuery.wxName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入所属小程序" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
+			<el-input v-model="listQuery.operatorName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入所属运营商户" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 

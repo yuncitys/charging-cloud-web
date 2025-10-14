@@ -137,19 +137,19 @@
 				page(this.listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
-            let list = res.data || []
-            list.forEach((item, index) => {
-              let unit = ''
-              if(item.chargingMonthType === 1){
-                unit = '次';
-              } else {
-                unit = '分钟'
-              }
-            	let monthTotalStr = item.monthTotal === undefined ? 0 + unit : item.monthTotal  + unit
-            	let dayTotalStr = item.dayTotal === undefined ? 0 + unit : item.dayTotal + unit
-            	item.monthTotalStr = monthTotalStr;
-            	item.dayTotalStr = dayTotalStr;
-            })
+						let list = res.data || []
+						list.forEach((item, index) => {
+						let unit = ''
+						if(item.chargingMonthType === 1){
+							unit = '次';
+						} else {
+							unit = '分钟'
+						}
+							let monthTotalStr = item.monthTotal === undefined ? 0 + unit : item.monthTotal  + unit
+							let dayTotalStr = item.dayTotal === undefined ? 0 + unit : item.dayTotal + unit
+							item.monthTotalStr = monthTotalStr;
+							item.dayTotalStr = dayTotalStr;
+						})
 						this.list = list
 						this.total = res.count
 						this.listLoading = false

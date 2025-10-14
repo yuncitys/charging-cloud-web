@@ -1,13 +1,13 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
-			<el-input v-model="listQuery.wxName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入所属小程序" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
+			<el-input v-model="listQuery.operatorName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入所属运营商户" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
 			<!-- 新增方案 type:0 (IC卡)   1(余额)-->
-      <addPage :recharge_type="recharge_type" @getLists="getLists"/>
+      		<addPage :recharge_type="recharge_type" @getLists="getLists"/>
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
 				highlight-current-row style="width: 100%;" align="center" row-key="id"
 				:tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
