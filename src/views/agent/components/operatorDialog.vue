@@ -113,6 +113,9 @@
 						required: true,
 						message: '请输入联系方式',
 						trigger: 'blur'
+					}, {
+						validator: checkPhone,
+						trigger: 'blur'
 					}]
         },
         currentStep: 1,
