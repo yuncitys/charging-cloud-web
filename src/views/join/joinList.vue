@@ -1,6 +1,12 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
+			<el-input v-model="listQuery.phone" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入手机号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
+				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
+				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+			</el-date-picker>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
@@ -8,6 +14,8 @@
 				highlight-current-row style="width: 100%;" align="center" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
+				</el-table-column>
+				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="userName" label="姓名" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
@@ -59,8 +67,12 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
+					phone: '',
+					createTimeStart: '',
+					createTimeEnd: ''
 				},
 				tableKey: 0,
+				time: ''
 			}
 		},
 		filters: {
@@ -102,6 +114,17 @@
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
+			},
+			dateChange(e) {
+				console.log(e)
+				if (e) {
+					this.listQuery.createTimeStart = e[0]
+					this.listQuery.createTimeEnd = e[1]
+				} else {
+					this.listQuery.createTimeStart = ''
+					this.listQuery.createTimeEnd = ''
+				}
+				this.handleFilter()
 			},
 		},
 		created() {
