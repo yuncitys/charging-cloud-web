@@ -12,7 +12,7 @@
       </div>
       <el-form ref="form" v-show="currentStep === 1" :model="form" :rules="rules" label-width="100px" label-position="left" style="width: 600px; margin-left:80px;">
         <el-form-item label="主体名称" prop="name">
-          <el-input v-model="form.name" placeholder="中文,英文,数字(长度1-30字数),不可重复" :disabled = "isDetail"></el-input>
+          <el-input v-model="form.name" placeholder="中文,英文,数字(长度1-30字数),不可重复" :disabled = "isDetail" maxlength="30"></el-input>
         </el-form-item>
         <el-form-item label="公司名称" prop="companyName">
           <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled = "isDetail"></el-input>
@@ -84,6 +84,14 @@
         } else {
           callback()
         }
+      };
+      let checkNameLength = (rule, value, callback) => {
+        if (value.length > 30) {
+          callback(new Error('中文,英文,数字(长度1-30字数),不可重复'))
+          return false;
+        } else {
+          callback()
+        }
       }
       return {
         dialogVisible: false,
@@ -92,6 +100,9 @@
 					name: [{
 						required: true,
 						message: '请输入商户名称',
+						trigger: 'blur'
+					}, {
+						validator: checkNameLength,
 						trigger: 'blur'
 					}],
 					companyName: [{
