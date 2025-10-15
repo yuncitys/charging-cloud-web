@@ -26,15 +26,15 @@
 							:value="item.deviceTypeId" :disabled="showDeviceType"/>
 					</el-select>
 				</el-form-item>
-						<el-form-item :label="'设备号'" prop="deviceCode">
-							<el-input v-model="addDeviceData.deviceCode" clearable placeholder="请输入设备号" />
-						</el-form-item>
-						<!-- <el-form-item :label="'设备名称'" prop="deviceName">
-							<el-input v-model="addDeviceData.deviceName" clearable placeholder="请输入设备名称" />
-						</el-form-item> -->
-						<el-form-item :label="'imei号'" prop="deviceImei">
-							<el-input v-model="addDeviceData.deviceImei" clearable placeholder="请输入imei号" />
-						</el-form-item>
+				<el-form-item :label="'设备号'" prop="deviceCode">
+					<el-input v-model="addDeviceData.deviceCode" clearable placeholder="请输入设备号" />
+				</el-form-item>
+				<!-- <el-form-item :label="'设备名称'" prop="deviceName">
+					<el-input v-model="addDeviceData.deviceName" clearable placeholder="请输入设备名称" />
+				</el-form-item> -->
+				<el-form-item :label="'imei号'" prop="deviceImei">
+					<el-input v-model="addDeviceData.deviceImei" clearable placeholder="请输入imei号" />
+				</el-form-item>
 				<el-form-item label="收费类型" prop="deviceChagePattern" v-if="addDeviceData.ruleId === 1">
 					<el-radio-group v-model="addDeviceData.deviceChagePattern" @change="changeChagePattern">
 						<el-radio :label="0">时间</el-radio>
@@ -74,22 +74,22 @@
 		getList,
 		addDevice,
 		findDeviceType,
-    findDevicePriceByPriceType
+    	findDevicePriceByPriceType
 	} from '@/api/device/deviceList.js'
 	export default {
 		data() {
-      let checkNum = (rule, value, callback) => {
-      	if (!value) {
-      		return new Error('必填信息')
-      	} else {
-      		let regx = /(^[1-9]\d*$)/;
-      		if (!regx.test(value)) {
-      			callback(new Error('请输入正整数'))
-      		} else {
-      			callback()
-      		}
-      	}
-      }
+			let checkNum = (rule, value, callback) => {
+				if (!value) {
+					return new Error('必填信息')
+				} else {
+					let regx = /(^[1-9]\d*$)/;
+					if (!regx.test(value)) {
+						callback(new Error('请输入正整数'))
+					} else {
+						callback()
+					}
+				}
+			}
 			return {
 				showDevice: false,
         		showDeviceType: true,
