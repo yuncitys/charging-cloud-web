@@ -73,9 +73,13 @@
 							<editPage :row_data="scope.row" @getLists="getLists" />
 							<!-- 充值 -->
 							<addMoney :row_data="scope.row" @getLists="getLists" />
-							<el-button type="warning" style="margin-left: 10px;" @click="onlossCard(scope.row.cardNo)"
+							<el-button type="warning" style="margin-left: 10px;" @click="onlossCard(scope.row.cardNo,1)"
 								v-if="scope.row.cardStatus == 0 && btnAuthen.permsVerifAuthention(':card:cardList:loss')"
 								size="mini">挂失
+							</el-button>
+							<el-button type="primary" style="margin-left: 10px;" @click="onlossCard(scope.row.cardNo,0)"
+								v-if="scope.row.cardStatus == 1 && btnAuthen.permsVerifAuthention(':card:cardList:loss')"
+								size="mini">恢复
 							</el-button>
 							<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
 								icon="el-icon-delete" v-if="btnAuthen.permsVerifAuthention(':card:cardList:delete')"
@@ -200,14 +204,15 @@
 					}
 				})
 			},
-			onlossCard(cardNo) {
-				this.$confirm('是否挂失充电卡?', '警告', {
+			onlossCard(cardNo,status) {
+				this.$confirm(status === 1 ? '是否挂失充电卡?' : '是否恢复该电卡?恢复后可正常使用', '警告', {
 					confirmButtonText: '是',
 					cancelButtonText: '否',
 					type: 'warning'
 				}).then(() => {
 					let data = {
-						cardNo
+						cardNo,
+						status
 					}
 					console.log(data)
 					lossCard(data).then(res => {
