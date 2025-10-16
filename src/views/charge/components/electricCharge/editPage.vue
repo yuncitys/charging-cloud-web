@@ -13,14 +13,14 @@
 					<el-input v-model="editData.remark" placeholder="请输入收费说明" clearable
 						type="textarea" :rows="2" />
 				</el-form-item>
-				<el-form-item :label="'计费周期'" prop="realTimeCharging">
+				<!-- <el-form-item :label="'计费周期'" prop="realTimeCharging">
 					<div id="">
 						<el-radio-group v-model="editData.realTimeCharging">
 							<el-radio v-for="(item,index) in payType" :key="index" :label="index">{{item.title}}
 							</el-radio>
 						</el-radio-group>
 					</div>
-				</el-form-item>
+				</el-form-item> -->
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;">
 					<h2>收费标准</h2>
 					<div style="margin-left: 20px;">
@@ -507,7 +507,7 @@
 		},
 		created() {
 			let tags = []
-			for (let i = 1; i <= 48; i++) {
+			for (let i = 1; i <= 1; i++) {
 				let obj = {
 					id: i,
 					title: i + '度'

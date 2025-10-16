@@ -126,21 +126,21 @@
 								if (item.priceContents.length != 0) {
 									let arr = []
 									item.priceContents.forEach((item1, index1) => {
-										let detail = item1.powerSectionBefore + '-' + item1.powerSectionAfter + 'W,' + item1.duration + '小时' + "/" + item1.money + "元"
+										let detail = item1.powerSectionBefore + '-' + item1.powerSectionAfter + 'W,' + item1.duration + '小时' + "/" + item1.serviceChargePrice + "元"
 										arr[index1] = detail
 									})
-                  item.detail = arr.join(";")
+                  					item.detail = arr.join(";")
 								} else {
 									item.datail = ''
 								}
-                // if(item.priceView !=''){
-                //   let priceViewDetail = JSON.parse(item.priceView);
-                //   item.priceView = priceViewDetail
-                // }
-                if(item.config !=''){
-                  let configDetail = JSON.parse(item.config);
-                  item.config = configDetail
-                }
+								// if(item.priceView !=''){
+								//   let priceViewDetail = JSON.parse(item.priceView);
+								//   item.priceView = priceViewDetail
+								// }
+								if(item.config !=''){
+									let configDetail = JSON.parse(item.config);
+									item.config = configDetail
+								}
 							})
 						}
 						this.list = list
