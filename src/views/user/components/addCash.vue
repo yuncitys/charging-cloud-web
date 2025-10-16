@@ -60,12 +60,12 @@
 			},
 			// 充值金额
 			updNumBer() {
-				// var reg = /^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/;
-				// if (!reg.test(this.uptNumber)) {
-				// 	this.$message.error("请输入正整数或者最多2位正小数")
-				// 	this.uptNumber = ''
-				// 	return false
-				// }
+				var reg = /^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/;
+				if (!reg.test(this.uptNumber)) {
+					this.$message.error("请输入正整数或者最多2位正小数")
+					this.uptNumber = ''
+					return false
+				}
 				if (this.uptNumber == 0 || this.uptNumber == "") {
 					this.$message.error("请输入充值金额")
 					return
