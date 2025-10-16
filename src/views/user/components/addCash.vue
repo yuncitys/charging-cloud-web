@@ -87,6 +87,7 @@
 								message: res.msg
 							})
 							this.uptNumber = ''
+							this.remark = ''
 							this.updMoneydialog = false
 							this.$emit('getLists')
 						} else {
