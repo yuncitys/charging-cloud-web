@@ -20,10 +20,10 @@
 					<template slot-scope="scope"><span>{{scope.row.adminPhone}} </span></template>
 				</el-table-column>
 				<el-table-column label="角色" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope"><span>{{scope.row.roleName}} </span></template>
+					<template slot-scope="scope"><span>{{scope.row.role.roleName}} </span></template>
 				</el-table-column>
 				<el-table-column label="角色备注" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope"><span>{{scope.row.roleRemark}} </span></template>
+					<template slot-scope="scope"><span>{{scope.row.role.remark}} </span></template>
 				</el-table-column>
 			</el-table>
 		</el-dialog>
