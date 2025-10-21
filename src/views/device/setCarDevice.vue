@@ -80,8 +80,7 @@
 										</div>
 									</div>
 								</div>
-								<div
-									style="margin: 28px auto;display: flex;width: 98%;align-items: center;flex-wrap: wrap;">
+								<div style="margin: 28px auto;display: flex;width: 98%;align-items: center;flex-wrap: wrap;">
 									<el-row :gutter="20">
 										<el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
 											<div style="text-align: right;line-height: 36px;">
@@ -118,19 +117,19 @@
 											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
 											v-if="btnAuthen.permsVerifAuthention(':device:controller:query')">端口检测
 										</el-button>
-                    <el-button type="primary" @click='onRestartDevice' size="mini"
-                    	style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
-                    	v-if="btnAuthen.permsVerifAuthention(':device:controller:restart')">远程重启
-                    </el-button>
-                    <el-button type="primary" @click='onQueryRate' size="mini"
-                    	style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询费率
-                    </el-button>
-                    <el-button type="primary" @click='onQuerySwipeCard' size="mini"
-                    	style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询刷卡模式
-                    </el-button>
-                    <el-button type="primary" @click='onQueryDevice' size="mini"
-                    	style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询设备参数
-                    </el-button>
+										<el-button type="primary" @click='onRestartDevice' size="mini"
+											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
+											v-if="btnAuthen.permsVerifAuthention(':device:controller:restart')">远程重启
+										</el-button>
+										<el-button type="primary" @click='onQueryRate' size="mini"
+											style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询费率
+										</el-button>
+										<el-button type="primary" @click='onQuerySwipeCard' size="mini"
+											style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询刷卡模式
+										</el-button>
+										<el-button type="primary" @click='onQueryDevice' size="mini"
+											style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询设备参数
+										</el-button>
 										<!-- <el-button type="primary" @click='showUpdateCash=true' size="mini"
 											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
 											v-if="btnAuthen.permsVerifAuthention(':device:command:updateCash')">账户余额更新
@@ -165,7 +164,7 @@
 										<el-select v-model="devicePriceId" style="margin-right: 20px ;width: 100%;"
 											class="filter-item" placeholder="请选择类型收费方案" clearable>
 											<el-option v-for="item in devicePriceList" :key="item.id" :label="item.feeName" :value="item.id"
-                      @select="changeDevciePrice"/>
+                      							@select="changeDevciePrice"/>
 										</el-select>
 									</el-form-item>
 									<el-form-item label=" ">
@@ -190,31 +189,31 @@
 										<el-input placeholder="请输入最大充电时长" v-model="maxPower" type="number">
 										</el-input>
 									</el-form-item>
-                  <el-form-item label="最大充电电流：" prop="maxPower">
-                  	<el-input placeholder="请输入最大充电电流" v-model="maxPower" type="number">
-                  	</el-input>
-                  </el-form-item>
-                  <el-form-item label="最小电流检测开关：" prop="maxPower">
-                  	<el-input placeholder="请选择电流检测开关" v-model="maxPower" type="number">
-                  	</el-input>
-                  </el-form-item>
-                  <el-form-item label="最小充电电流：" prop="maxPower">
-                  	<el-input placeholder="请输入最小充电电流" v-model="maxPower" type="number">
-                  	</el-input>
-                  </el-form-item>
-                  <el-form-item label="最小电流检测时间：" prop="maxPower">
-                  	<el-input placeholder="请输入最小充电电流" v-model="maxPower" type="number">
-                  	</el-input>
-                  </el-form-item>
-                  <el-form-item label="最大环境温度：" prop="maxPower">
-                  	<el-input placeholder="请输入最大环境温度" v-model="maxPower" type="number">
-                  	</el-input>
-                  </el-form-item> -->
+									<el-form-item label="最大充电电流：" prop="maxPower">
+										<el-input placeholder="请输入最大充电电流" v-model="maxPower" type="number">
+										</el-input>
+									</el-form-item>
+									<el-form-item label="最小电流检测开关：" prop="maxPower">
+										<el-input placeholder="请选择电流检测开关" v-model="maxPower" type="number">
+										</el-input>
+									</el-form-item>
+									<el-form-item label="最小充电电流：" prop="maxPower">
+										<el-input placeholder="请输入最小充电电流" v-model="maxPower" type="number">
+										</el-input>
+									</el-form-item>
+									<el-form-item label="最小电流检测时间：" prop="maxPower">
+										<el-input placeholder="请输入最小充电电流" v-model="maxPower" type="number">
+										</el-input>
+									</el-form-item>
+									<el-form-item label="最大环境温度：" prop="maxPower">
+										<el-input placeholder="请输入最大环境温度" v-model="maxPower" type="number">
+										</el-input>
+									</el-form-item> -->
 
-                  <!-- <el-form-item label="最大功率比率：" prop="maxPower">
-                  	<el-input placeholder="请输入最大功率比率" v-model="maxPower" type="number">
-                  	</el-input>
-                  </el-form-item>
+									<!-- <el-form-item label="最大功率比率：" prop="maxPower">
+										<el-input placeholder="请输入最大功率比率" v-model="maxPower" type="number">
+										</el-input>
+									</el-form-item>
 									<el-form-item label="运营设置：" prop="isWork">
 										<el-select v-model="isWork" style="margin-right: 20px ;width: 100%;"
 											class="filter-item" placeholder="请选择运营方式" clearable>
@@ -356,7 +355,7 @@
 				}],
 				devicePriceList: [],
 				devicePriceId: '',
-        devicePriceName: '',
+        		devicePriceName: '',
 
 
 				maxPower: 100,
@@ -400,11 +399,11 @@
 					}
 				})
 			},
-      //选择计费方案
-      changeDevciePrice(item) {
-        this.devicePriceId = item.id,
-        this.devicePriceName = item.feeName
-      },
+			//选择计费方案
+			changeDevciePrice(item) {
+				this.devicePriceId = item.id,
+				this.devicePriceName = item.feeName
+			},
 			//设置计费方案
 			onSetDeviceChargeModel() {
 				let devicePriceId = this.devicePriceId
@@ -434,27 +433,27 @@
 				}
 				findDevicePriceByPriceType(data).then(res => {
 					if (res.code == 200) {
-            this.devicePriceList = res.data
-            this.devicePriceList.forEach((item, index) => {
-              console.log("设备方案",item)
-            	if (Number(this.devicePriceId) === Number(item.id)) {
-            		this.devicePriceName = item.feeName
-                console.log("设备方案名称",this.devicePriceName)
-            	}
-              console.log("设备方案名称",this.devicePriceName)
-            })
+						this.devicePriceList = res.data
+						this.devicePriceList.forEach((item, index) => {
+							console.log("设备方案",item)
+							if (Number(this.devicePriceId) === Number(item.id)) {
+								this.devicePriceName = item.feeName
+								console.log("设备方案名称",this.devicePriceName)
+							}
+							console.log("设备方案名称",this.devicePriceName)
+						})
 					}
 				})
 			},
 			//启动充电
 			onOpenDevice() {
 				let data = {
-          userId: 1,
+          			userId: 1,
 					deviceCode: this.deviceCode,
 					port: this.partIndex + 1,
 					mod: 1,//手动定时
 					value: this.time,
-          totalPrice: 100
+          			totalPrice: 100
 				}
 				openDevice(data).then(res => {
 					if (res.code === 200) {
@@ -492,76 +491,76 @@
 					}
 				})
 			},
-      //远程重启
-      onRestartDevice() {
-      	let data = {
-      		deviceCode: this.deviceCode,
-      	}
-      	restartDevice(data).then(res => {
-      		if (res.code === 200) {
-      			this.$message.success(res.msg)
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
-      //查询费率模式
-      onQueryRate(){
-        let data = {
-          deviceCode: this.deviceCode,
-          cmd: "85"
-        }
-        queryParams(data).then(res => {
-      		if (res.code === 200) {
-      			this.$message.success(res.msg)
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
-      //查询刷卡模式
-      onQuerySwipeCard(){
-        let data = {
-          deviceCode: this.deviceCode,
-          cmd: "92"
-        }
-        queryParams(data).then(res => {
-      		if (res.code === 200) {
-      			this.$message.success(res.msg)
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
-      //查询设备参数
-      onQueryDevice(){
-        let data = {
-          deviceCode: this.deviceCode,
-          cmd: "93"
-        }
-        queryParams(data).then(res => {
-      		if (res.code === 200) {
-      			this.$message.success(res.msg)
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
-      //端口检测
-      readData(){
-        let data = {
-          deviceCode: this.deviceCode,
-          port: this.partIndex + 1,
-          cmd: "12"
-        }
-        readData(data).then(res => {
-      		if (res.code === 200) {
-      			this.$message.success(res.msg)
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			//远程重启
+			onRestartDevice() {
+				let data = {
+					deviceCode: this.deviceCode,
+				}
+				restartDevice(data).then(res => {
+					if (res.code === 200) {
+						this.$message.success(res.msg)
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
+			//查询费率模式
+			onQueryRate(){
+				let data = {
+				deviceCode: this.deviceCode,
+				cmd: "85"
+				}
+				queryParams(data).then(res => {
+					if (res.code === 200) {
+						this.$message.success(res.msg)
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
+			//查询刷卡模式
+			onQuerySwipeCard(){
+				let data = {
+				deviceCode: this.deviceCode,
+				cmd: "92"
+				}
+				queryParams(data).then(res => {
+					if (res.code === 200) {
+						this.$message.success(res.msg)
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
+			//查询设备参数
+			onQueryDevice(){
+				let data = {
+				deviceCode: this.deviceCode,
+				cmd: "93"
+				}
+				queryParams(data).then(res => {
+					if (res.code === 200) {
+						this.$message.success(res.msg)
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
+			//端口检测
+			readData(){
+				let data = {
+				deviceCode: this.deviceCode,
+				port: this.partIndex + 1,
+				cmd: "12"
+				}
+				readData(data).then(res => {
+					if (res.code === 200) {
+						this.$message.success(res.msg)
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 
 			// //账户余额更新
 			// onUpdateCash() {
@@ -693,7 +692,7 @@
 				findDeviceInfoById(data).then(res => {
 					if (res.code == 200) {
 						this.deviceInfo = res.data
-            this.devicePriceId = this.deviceInfo.devicePriceId
+            			this.devicePriceId = this.deviceInfo.devicePriceId
 						let portList = []
 						for (let i = 0; i < this.deviceInfo.portCount; i++) {
 							let str = "port" + (i + 1)
@@ -731,8 +730,8 @@
 			},
 			//WebSocket连接
 			connection() {
-        //线下
-        //let sockJS = new SockJS(`${process.env.VUE_APP_BASE_API}/api/message/websocket`);
+				//线下
+				//let sockJS = new SockJS(`${process.env.VUE_APP_BASE_API}/api/message/websocket`);
 				// 线上
 				let sockJS = new SockJS(`/api/message/websocket`);
 				this.stompClient = Stomp.over(sockJS);
@@ -909,7 +908,7 @@
 	}
 
 	.control_btn_box {
-		width: 98%;
+		width: 100%;
 		margin: 22px auto;
 		/* margin-top: 10px; */
 		justify-content: space-between;
