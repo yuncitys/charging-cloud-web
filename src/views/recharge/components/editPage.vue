@@ -83,6 +83,7 @@
 				let item = this.row_data
 				this.showEdit = true
 				this.editData.id = item.id
+				this.editData.type = item.type
         		this.editData.adminId = item.adminId
 				this.editData.giftAmount = item.giftAmount
 				this.editData.rechargeAmount = item.rechargeAmount
