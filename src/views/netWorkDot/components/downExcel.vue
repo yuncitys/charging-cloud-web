@@ -48,7 +48,8 @@
 				let downloadData = {
 					networkAddress: this.queryData.networkAddress,
 					adminId: this.queryData.adminId,
-					ruleId: this.queryData.ruleId
+					ruleId: this.queryData.ruleId,
+					type: this.queryData.type
 				}
 				downloadExcel(downloadData).then(res => {
 					this.downloadLoading = false

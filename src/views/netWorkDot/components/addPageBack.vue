@@ -2,27 +2,27 @@
 	<div style="display: inline-block;">
 		<el-button style="margin-right: 20px ;" type="primary" @click="onshowAdd" class="filter-item"
 			v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:add')">
-      新增充电站
+      		新增充电站
 		</el-button>
 
 		<!-- 新增充电站 -->
 		<el-dialog :visible.sync="showAdd" title="新增充电站" @close="showAdd = false" :append-to-body="true" width="60%">
 			<el-form ref="formData" :model="formData" label-position="left" label-width="100px"
 				style="width: 800px; margin-left:50px;" :rules="rules">
-        <el-form-item :label="'运营商'" prop="adminId">
-        	<!-- <el-autocomplete class="filter-item" v-model="formData.adminName" :fetch-suggestions="querySearch"
-        		placeholder="请选择运营商" @select="addchangeDealer" clearable :debounce='0' style="width: 100%;"
-        		@change="changeName">
-          </el-autocomplete> -->
-          <el-select style="width: 100%;" class="filter-item" v-model="formData.adminId" filterable clearable placeholder="请选择运营商">
-              <el-option
-                v-for="item in operatorList"
-                :key="item.id"
-                :label="item.adminFullname"
-                :value="item.id">
-              </el-option>
-          </el-select>
-        </el-form-item>
+				<el-form-item :label="'运营商'" prop="adminId">
+					<!-- <el-autocomplete class="filter-item" v-model="formData.adminName" :fetch-suggestions="querySearch"
+						placeholder="请选择运营商" @select="addchangeDealer" clearable :debounce='0' style="width: 100%;"
+						@change="changeName">
+					</el-autocomplete> -->
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.adminId" filterable clearable placeholder="请选择运营商">
+						<el-option
+							v-for="item in operatorList"
+							:key="item.id"
+							:label="item.adminFullname"
+							:value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item>
 				<el-form-item :label="'充电站类型'" prop="ruleId">
 					<el-radio-group v-model="formData.ruleId">
 						<el-radio :label="1">单车充电站</el-radio>
@@ -32,10 +32,10 @@
 				<el-form-item :label="'充电站名称'" prop="networkName">
 					<el-input v-model="formData.networkName" placeholder="请输入充电站名称" clearable />
 				</el-form-item>
-        <el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
-        	<el-input v-model="formData.startingPrice" placeholder="请输入充电站最低起充电价(元)" clearable type = "number"/>
-          <template slot="append">元</template>
-        </el-form-item>
+				<el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
+					<el-input v-model="formData.startingPrice" placeholder="请输入充电站最低起充电价(元)" clearable type = "number"/>
+				<template slot="append">元</template>
+				</el-form-item>
 				<el-form-item :label="'充电站位置'" prop="networkAddress">
 					<el-input v-model="formData.networkAddress" placeholder="请在下方投放地输入地址查询或者手动输入" clearable />
 				</el-form-item>
@@ -45,15 +45,15 @@
 				<el-form-item :label="'充电站纬度'" prop="networkLatitude">
 					<el-input v-model="formData.networkLatitude" placeholder="请在下方投放地输入地址查询" clearable type="number" />
 				</el-form-item>
-        <el-form-item :label="'省'" prop="networkProvince">
-        	<el-input v-model="formData.networkProvince" placeholder="请在下方投放地输入地址查询" clearable disabled />
-        </el-form-item>
-        <el-form-item :label="'市'" prop="networkCity">
-        	<el-input v-model="formData.networkCity" placeholder="请在下方投放地输入地址查询" clearable disabled />
-        </el-form-item>
-        <el-form-item :label="'区'" prop="networkRegion">
-        	<el-input v-model="formData.networkRegion" placeholder="请在下方投放地输入地址查询" clearable disabled />
-        </el-form-item>
+				<el-form-item :label="'省'" prop="networkProvince">
+					<el-input v-model="formData.networkProvince" placeholder="请在下方投放地输入地址查询" clearable disabled />
+				</el-form-item>
+				<el-form-item :label="'市'" prop="networkCity">
+					<el-input v-model="formData.networkCity" placeholder="请在下方投放地输入地址查询" clearable disabled />
+				</el-form-item>
+				<el-form-item :label="'区'" prop="networkRegion">
+					<el-input v-model="formData.networkRegion" placeholder="请在下方投放地输入地址查询" clearable disabled />
+				</el-form-item>
 				<el-form-item :label="'投放地查询'" prop="">
 					<input id="tipinput" placeholder="请输入大概地址查询" type="text" v-model="mapInput" autocomplete="off"
 						v-if="showAdd" />
@@ -121,14 +121,14 @@
 						message: '请输入充电站纬度',
 						trigger: 'blur'
 					}],
-          startingPrice: [{
-          	required: true,
-          	message: '请输入充电站最低起充电价',
-          	trigger: 'blur'
-          }],
+					startingPrice: [{
+						required: true,
+						message: '请输入充电站最低起充电价',
+						trigger: 'blur'
+					}],
 				},
 				showAdd: false,
-        operatorList: [],
+        		operatorList: [],
 				formData: {
 					networkAddress: '',
 					networkName: '',
@@ -139,7 +139,7 @@
 					networkProvince: '',
 					networkCity: '',
 					networkRegion: '',
-          startingPrice: 0.0,
+          			startingPrice: 0.0,
 					ruleId: 1
 				},
 				mapInput: "",
