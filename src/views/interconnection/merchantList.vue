@@ -1,11 +1,11 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
-			<el-input v-model="listQuery.name" style="width: 200px;margin-right: 20px ;" class="filter-item"
+			<el-input v-model="listQuery.organizationName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入商户名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<el-input v-model="listQuery.manageName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+			<el-input v-model="listQuery.administratorName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入管理员名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<el-input v-model="listQuery.managePhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
+			<el-input v-model="listQuery.administratorPhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入联系方式" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.companyName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入公司名称名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
@@ -95,10 +95,10 @@
 					page: 1,
 					limit: 10,
 					operatorType: 2,
-					name: '',
-					manageName: '',
-					managePhone: '',
+					organizationName: '',
 					companyName: '',
+					administratorName: '',
+					administratorPhone: '',
 					socialCreditCode: '',
 				},
 				tableKey: 0,
