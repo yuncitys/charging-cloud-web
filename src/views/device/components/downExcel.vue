@@ -45,8 +45,6 @@
 			//导出设备
 			handleDownload() {
 				this.downloadLoading = true
-				let deviceChargePattern = this.queryData.deviceChargePattern != undefined ? this.queryData
-					.deviceChargePattern : ''
 				let downloadData = {
 					deviceCode: this.queryData.deviceCode,
 					networkName: this.queryData.networkName,
@@ -55,24 +53,16 @@
 					dealerId: this.queryData.dealerId,
 					allocationStatus: this.queryData.allocationStatus,
 					ruleId: this.queryData.ruleId,
-					deviceChargePattern: deviceChargePattern
+					chargingStationIds: this.queryData.chargingStationIds != undefined ? this.queryData.chargingStationIds : '',
+					deviceChargePattern: this.queryData.deviceChargePattern != undefined ? this.queryData.deviceChargePattern : '',
+					devicePurpose: this.queryData.devicePurpose != undefined ? this.queryData.devicePurpose : ''
 				}
 				downloadExcel(downloadData).then(res => {
 					this.downloadLoading = false
 					if (res.code == 200) {
 						import('@/vendor/Export2Excel').then(excel => {
-							const tHeader = ['设备号', '设备类型', '设备信号', '设备版本', 'imei号', 'sim号', '网点名称',
-								'设备地址',
-								'设备状态', '收费方案类型', '收费方案', '激活时间', '创建时间',
-
-							]
-							const filterVal = ['deviceCode', 'deviceTypeName', 'deviceSignal',
-								'deviceVersion', 'deviceImei', 'deviceSim',
-								'networkName', 'networkAddress', 'deviceStatusText',
-								'priceTypeText',
-								'feeName',
-								'activateTime', 'createTime',
-							]
+							const tHeader = ['设备号', '设备类型', '设备信号', '设备版本', 'imei号', 'sim号', '站点名称','设备地址','设备状态', '收费方案类型', '收费方案', '激活时间', '创建时间',]
+							const filterVal = ['deviceCode', 'deviceTypeName', 'deviceSignal','deviceVersion', 'deviceImei', 'deviceSim','networkName', 'networkAddress', 'deviceStatusText','priceTypeText','feeName','activateTime', 'createTime',]
 							const list = res.data || []
 							list.forEach((item, index) => {
 								if (item.deviceStatus == 0) {

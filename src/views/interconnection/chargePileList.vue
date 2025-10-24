@@ -368,6 +368,7 @@
 					networkAddress: '',
 					deviceStatus: '',
 					activateStatus: '',
+					allocationStatus: 1,
 					dealerId: '',
 					page: 1,
 					limit: 10,
