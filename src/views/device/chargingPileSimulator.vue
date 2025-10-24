@@ -26,7 +26,7 @@
 
                 <!-- ChargePoint ID -->
                 <el-form-item label="设备编号">
-                  <el-input v-model="form.chargePointId"></el-input>
+                  <el-input v-model="form.chargePointId" placeholder="请输入14位编号"></el-input>
                 </el-form-item>
 
                 <!-- ChargePoint Model -->
@@ -100,7 +100,7 @@
 
                 <!-- 保存按钮 -->
                 <el-form-item>
-                  <el-button type="primary" @click="saveForm" v-if="!serverConnected">Save</el-button>
+                  <el-button type="primary" @click="saveForm" v-if="!serverConnected">保存</el-button>
                 </el-form-item>
               </el-form>
             </el-card>
@@ -185,7 +185,7 @@
                     :type="serverConnected ? 'danger' : 'primary'"
                     @click="toggleConnection"
                   >
-                    {{ serverConnected ? "Connected" : "Connect" }}
+                    {{ serverConnected ? "断开" : "连接" }}
                   </el-button>
                 </el-form-item>
               </el-form>
@@ -225,7 +225,7 @@
 
                 <!-- 状态通知 -->
                 <el-form-item>
-                  <el-button type="primary" @click="statusNotification(1)">Status Notification</el-button>
+                  <el-button type="primary" @click="statusNotification(1)">状态通知</el-button>
                 </el-form-item>
               </el-form>
             </el-card>
@@ -264,7 +264,7 @@
 
                 <!-- 状态通知 -->
                 <el-form-item>
-                  <el-button type="primary" @click="statusNotification(2)">Status Notification</el-button>
+                  <el-button type="primary" @click="statusNotification(2)">状态通知</el-button>
                 </el-form-item>
               </el-form>
             </el-card>
@@ -366,7 +366,7 @@
         serverConnected: false, // 模拟服务器连接状态
         showDeviceType: false,
         form: {
-          chargePointServer: "127.0.0.1:9000",
+          chargePointServer: "127.0.0.1:5003",
           chargePointId: "24102413849856",
           chargePointModel: 1,
           chargingPointTypeId: "",//设备类型
@@ -400,10 +400,10 @@
         },
 
         availabilityOptions: [
-          { label: "Operative", value: "Operative" },
-          { label: "Inoperative", value: "Inoperative" },
-          // { label: "有效的", value: "Operative" },
-          // { label: "无效的", value: "Inoperative" },
+          // { label: "Operative", value: "Operative" },
+          // { label: "Inoperative", value: "Inoperative" },
+          { label: "有效", value: "Operative" },
+          { label: "无效", value: "Inoperative" },
         ],
         chargePointStatusOptions: [
           // { label: "Available", value: 0 },
@@ -521,7 +521,12 @@
           this.$message.error('请输入设备号')
           return false
         }
+        if (this.form.chargePointId.length < 14){
+          this.$message.error('设备编号长度需为14位数字')
+          return false
+        }
         let saveForm = {
+          ruleId: 2,
           deviceCode: this.form.chargePointId,
           deviceTypeId: this.form.chargingPointTypeId,
           deviceVersion: this.form.firmwareVersion,
@@ -573,6 +578,9 @@
       //获取连接状态
       getConnectStatus(){
         let deviceId = this.form.chargePointId
+        if (deviceId === '' || deviceId === undefined){
+          return;
+        }
         connectStatus(deviceId).then(res => {
         	if (res.code === 200) {
             if (!res.data){
