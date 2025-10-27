@@ -164,8 +164,11 @@
             this.$store.dispatch('user/login', loginForm)
               .then((res) => {
                 this.loading = false
-                window.sessionStorage.setItem("activeMenu", "");
-                window.sessionStorage.setItem("pActiveMenu", "首页");
+                // window.sessionStorage.setItem("activeMenu", "");
+                // window.sessionStorage.setItem("pActiveMenu", "首页");
+                window.localStorage.setItem("pActiveMenu", "首页");
+                window.localStorage.setItem("activeMenu", "");
+                window.localStorage.setItem("leftMeunList", "");
                 getRouter().then(res => {
                   if (res.code == 200) {
                     let menuList = res.data.menuList

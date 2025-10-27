@@ -35,7 +35,7 @@
         :collapse-transition="false"
         mode="vertical"
         class="leftElmenuClass">
-        <template v-for="item in leftmeunList">
+        <template v-for="item in leftMeunList">
           <el-submenu v-if="item.children && item.children.length" :index="item.href || `item-${item.id}`" :key="item.id">
             <template #title>
               <div @click="onClick(item.href)">
@@ -79,7 +79,7 @@
       <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
         :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
         :collapse-transition="false" mode="vertical" class="leftElmenuClass">
-        <template v-for="item in leftmeunList">
+        <template v-for="item in leftMeunList">
           <el-menu-item :index="item.href" :key="item.title">
             <div @click="onClick(item.href)">
               <i :class="item.icon"></i>
@@ -103,7 +103,7 @@
   export default {
     data() {
       return {
-        activeMenu: '',
+        activeMenu: ''
       }
     },
     //监听执行
@@ -114,21 +114,24 @@
       },
     },
     created() {
-      let list = window.sessionStorage.getItem("leftmeunList");
+      // let list = window.sessionStorage.getItem("leftmeunList");
+      let list = window.localStorage.getItem("leftMeunList");
       if (list) {
-        this.$store.commit('permission/setleftMeunList', JSON.parse(list));
+        this.$store.commit('permission/setLeftMeunList', JSON.parse(list));
       }else{
-        this.$store.commit('permission/setleftMeunList', []);
+        this.$store.commit('permission/setLeftMeunList', []);
       }
-      this.activeMenu = window.sessionStorage.getItem("activeMenu");
+      // this.activeMenu = window.sessionStorage.getItem("activeMenu");
+      this.activeMenu = window.localStorage.getItem("activeMenu") || this.$route.path;
     },
     methods: {
       onClick(name) {
         this.$router.push({
           path: name
         })
-        window.sessionStorage.setItem("activeMenu", name);
         this.activeMenu = name;
+        // window.sessionStorage.setItem("activeMenu", name);
+        window.localStorage.setItem("activeMenu", name);
       }
     },
     components: {
@@ -150,8 +153,8 @@
       isCollapse() {
         return !this.sidebar.opened
       },
-      leftmeunList() {
-        return this.$store.getters.leftmeunList
+      leftMeunList() {
+        return this.$store.getters.leftMeunList
       },
       logoData() {
         return this.$store.getters.logoData

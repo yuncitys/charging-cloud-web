@@ -59,7 +59,6 @@
 <script>
   import Screenfull from '@/components/Screenfull'
   import LangSelect from '@/components/LangSelect'
-
   import {
     mapGetters
   } from 'vuex';
@@ -81,8 +80,11 @@
       }
     },
     created() {
-      if (window.sessionStorage.getItem("pActiveMenu")) {
-        this.pActiveMenu = window.sessionStorage.getItem("pActiveMenu")
+      // if (window.sessionStorage.getItem("pActiveMenu")) {
+      //   this.pActiveMenu = window.sessionStorage.getItem("pActiveMenu")
+      // };
+      if (window.localStorage.getItem("pActiveMenu")) {
+        this.pActiveMenu = window.localStorage.getItem("pActiveMenu")
       };
     },
     computed: {
@@ -106,23 +108,26 @@
       rightMoreMeunList() {
         return this.$store.getters.rightMoreMeunList
       },
-
     },
     methods: {
       onClick(item) {
-        window.sessionStorage.setItem("pActiveMenu", item.title);
+        // window.sessionStorage.setItem("pActiveMenu", item.title);
+        window.localStorage.setItem("pActiveMenu", item.title);
         this.pActiveMenu = item.title;
         if (item.children.length > 0) {
-          this.$store.commit('permission/setleftMeunList', item.children);
+          this.$store.commit('permission/setLeftMeunList', item.children);
           this.$store.dispatch('app/openSideBar')
           this.$router.push({
             path: item.children[0].href
           });
-          window.sessionStorage.setItem("activeMenu", item.children[0].href);
-          window.sessionStorage.setItem("leftmeunList", JSON.stringify(item.children));
+          // window.sessionStorage.setItem("activeMenu", item.children[0].href);
+          // window.sessionStorage.setItem("leftMeunList", JSON.stringify(item.children));
+          window.localStorage.setItem("activeMenu", item.children[0].href);
+          window.localStorage.setItem("leftMeunList", JSON.stringify(item.children));
         } else {
-          window.sessionStorage.removeItem("leftmeunList", item.title);
-          this.$store.commit('permission/setleftMeunList', []);
+          // window.sessionStorage.removeItem("leftMeunList", item.title);
+          window.localStorage.removeItem("leftMeunList", item.title);
+          this.$store.commit('permission/setLeftMeunList', []);
           this.$store.dispatch('app/closeSideBar', {
             withoutAnimation: false
           })
@@ -130,17 +135,6 @@
             path: item.href
           })
         }
-
-      },
-      // 数组拆分
-      // size每组数组多少个，如：8
-      // array需要拆分的数组
-      arrayChunk(array, size) {
-        let data = []
-        for (let i = 0; i < array.length; i += size) {
-          data.push(array.slice(i, i + size))
-        }
-        return data
       },
       async logout() {
         let logoutFrom = {
@@ -150,9 +144,12 @@
           if (res.code == 200) {
             this.$store.dispatch('user/resetToken')
             this.$router.push(`/login?redirect=${this.$route.fullPath}`);
-            window.sessionStorage.removeItem("activeMenu");
-            window.sessionStorage.removeItem("pActiveMenu");
-            window.sessionStorage.removeItem("leftmeunList");
+            // window.sessionStorage.removeItem("activeMenu");
+            // window.sessionStorage.removeItem("pActiveMenu");
+            // window.sessionStorage.removeItem("leftMeunList");
+            window.localStorage.removeItem("activeMenu");
+            window.localStorage.removeItem("pActiveMenu");
+            window.localStorage.removeItem("leftMeunList");
             this.$store.dispatch('app/closeSideBar', {
               withoutAnimation: false
             })
@@ -182,8 +179,6 @@
     mounted() {
       this.$store.commit('permission/setTopOffsetWidth', this.$refs.divElmenu.offsetWidth);
     },
-
-
   }
 
 </script>
