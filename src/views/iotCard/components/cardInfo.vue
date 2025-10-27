@@ -110,6 +110,7 @@
 				const identify = this.row_data.msisdn
 				if (identify === '' || identify === undefined){
 					this.$message.error('msisdn不能为空');
+					return;
 				}
 				let data = {
 					identify: identify
@@ -120,7 +121,7 @@
 						this.cardInfo = cardInfo
 						this.showInfo = true
 					} else {
-					this.showInfo = false
+						this.showInfo = false
 						this.$message.error(res.msg)
 					}
 				})
