@@ -33,7 +33,6 @@ function hasPermission(roles, route) {
  * @param roles
  */
 export function filterAsyncRoutes(routes, roles) {
-
   const accessedRouters = constantRoutes.filter(route => {
     console.log()
     // if (route.component === 'Layout') {
@@ -56,7 +55,7 @@ export function filterAsyncRoutes(routes, roles) {
 
 const state = {
   meunList: [],
-  leftmeunList: [],
+  leftMeunList: [],
   rightMoreMeunList: [],
   topOffsetWidth: [],
   authentionList: [],
@@ -74,8 +73,8 @@ const mutations = {
   setMeunList(state, meunList) {
     state.meunList = meunList
   },
-  setleftMeunList(state, leftmeunList) {
-    state.leftmeunList = leftmeunList
+  setLeftMeunList(state, leftMeunList) {
+    state.leftMeunList = leftMeunList
   },
   setRightMoreMeunList(state, rightMoreMeunList) {
     state.rightMoreMeunList = rightMoreMeunList
@@ -106,11 +105,11 @@ const actions = {
           let authentionList = res.data.authorizationList
           let adminUser = res.data.adminUser
           let logoData = res.data.sysConfig;
+
           let arr = disassembleArr(meunList, state.topOffsetWidth);
+          console.log("arr:",arr)
 
-          let arr2 = addRouterInfo(arr[0]);
-
-          commit('setMeunList', arr2)
+          commit('setMeunList', addRouterInfo(arr[0]))
           commit('setRightMoreMeunList', arr[1])
           commit('setAuthentionList', authentionList)
           commit('setAdminUser', adminUser)
