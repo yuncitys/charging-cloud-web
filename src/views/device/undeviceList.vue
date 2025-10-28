@@ -58,7 +58,6 @@
 
 			<div class="filter-container">
 				<el-checkbox v-model="formThead.deviceCode" label="设备号">设备号</el-checkbox>
-				<el-checkbox v-model="formThead.deviceName" label="设备名称">设备名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceTypeName" label="设备类型">设备类型</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSignal" label="设备信号">设备信号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceVersion" label="设备版本">设备版本</el-checkbox>
@@ -102,9 +101,6 @@
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="deviceSim" label="sim号" v-if="formThead.deviceSim" align="center"
-					:show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="deviceName" label="设备名称"  v-if="formThead.deviceName" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
@@ -297,7 +293,6 @@
 	import {
 		parseTime
 	} from '@/utils/index'
-	import QRCode from 'qrcodejs2'
 	import wxCode from './components/wxCode.vue'
 	import deviceDetail from './components/deviceDetail.vue'
 	import miniCode from './components/miniAppCode.vue'
