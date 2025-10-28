@@ -891,6 +891,17 @@ export function batchSetDeviceQr(data) {
 	})
 }
 
+export function syncDeviceStatus(data) {
+  return request({
+  	url: '/api/message/device/syncDeviceStatus',
+  	method: 'post',
+  	headers: {
+  		"Content-Type": "application/json; charset=UTF-8",
+  	},
+  	data
+  })
+}
+
 //上传文件
 export function uploadExcel(data) {
 	return request({

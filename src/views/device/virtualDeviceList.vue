@@ -50,7 +50,7 @@
 				</el-button>
 				<!--导出Excel  -->
 				<downExcel :queryData="listQuery" />
-				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onupdateDeviceStatus"
+				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onSyncDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
 				</el-button>
@@ -361,6 +361,7 @@
 		batchAddDevicePrice,
 		findDevicePriceByPriceType,
 		updateDeviceStatus,
+		syncDeviceStatus,
 		operationDevice,
 		setDeviceChargeModel,
 		batchSetDeviceChargeModel
@@ -873,14 +874,29 @@
 				})
 			},
 			//同步设备状态
-			onupdateDeviceStatus() {
-				updateDeviceStatus().then(res => {
-					if (res.code == 200) {
-						this.$message.success(res.msg)
-						this.getLists()
-					} else {
-						this.$message.error(res.msg)
-					}
+			onSyncDeviceStatus() {
+				if (this.deviceCodes == '' || this.deviceCodes == null || this.deviceCodes == undefined) {
+					this.$message.error("请选择需要同步的设备")
+					return false
+				}
+				let deviceArray =  this.deviceCodes.split(",");
+				if (deviceArray.length > 30){
+					this.$message.error("单次最大支持30个设备")
+					return false
+				}
+				this.$confirm('这一操作将同步设备在线状态。你想继续吗?', '警告', {
+					confirmButtonText: '是',
+					cancelButtonText: '否',
+					type: 'warning'
+				}).then(() => {
+					syncDeviceStatus(deviceArray).then(res => {
+						if (res.code == 200) {
+							this.$message.success(res.msg)
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					})
 				})
 			},
 		},

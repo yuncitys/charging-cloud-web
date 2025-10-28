@@ -29,17 +29,17 @@
 			    </el-option>
 			</el-select>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
-        查询
-      </el-button>
+				查询
+			</el-button>
 
 			<div style="margin: 15px 0;">
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="batchUpdate"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchAllocation')">
-          批量分配站点
+          			批量分配站点
 				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onBatchSetPower'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchSetPower')">
-          批量设置设备参数
+          			批量设置设备参数
 				</el-button>
 				<!-- 导出Excel -->
 				<downExcel :queryData="listQuery" />
@@ -89,16 +89,16 @@
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-        		<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
-        	:show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
+						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -121,13 +121,13 @@
 						</div>
 					</template>
 				</el-table-column>
-        <el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-        		<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
-        	</template>
-        </el-table-column>
+				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
+						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
@@ -148,7 +148,7 @@
 									<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
 										style="margin-top: 0px;margin-left: 0px;">
 										<el-button type="danger" @click="del(scope.row.id)" size='mini'>
-                      删除
+                      						删除
 										</el-button>
 									</div>
 								</div>
@@ -167,14 +167,14 @@
 								<div style="margin-top: 10px;"
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')">
 									<el-button type="primary" @click="showallocation(scope.row)" size='mini'>
-                    分配设备
+                    					分配设备
 									</el-button>
 								</div>
 							</div>
 							<div>
 								<div>
 									<el-button type="primary" @click="showWXQrcode(scope.row)" size='mini'>
-                    二维码
+                    					二维码
 									</el-button>
 								</div>
 								<div v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')" class="top10">
@@ -214,9 +214,9 @@
 		deleteDevice,
 		findDealerList,
 	} from '@/api/device/deviceList.js'
-  import {
-    getChargingStationList
-  } from '@/api/netWorkDot/netWorkDotList.js'
+	import {
+		getChargingStationList
+	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -267,8 +267,8 @@
           			chargingStationIds: '',
 					devicePurpose: 'DIRECT_CONNECTION'
 				},
-        dealerList: [],
-        chargingStationList: [],
+				dealerList: [],
+				chargingStationList: [],
 				formThead: {
 					deviceCode: true,
 					deviceTypeName: true,
@@ -320,20 +320,20 @@
 					this.$message.error(res.msg)
 				}
 			}),
-      getChargingStationList(0).then(res => {
-      	if (res.code == 200) {
-      		this.chargingStationList = res.data;
-      	} else {
-      		this.$message.error(res.msg)
-      	}
-      })
+			getChargingStationList(0).then(res => {
+				if (res.code == 200) {
+					this.chargingStationList = res.data;
+				} else {
+					this.$message.error(res.msg)
+				}
+			})
 		},
 		methods: {
 			//切换导航
 			handleClick(tab, event) {
 				this.listQuery.ruleId = tab.name
-        this.listQuery.page = 1,
-        this.listQuery.limit = 10,
+				this.listQuery.page = 1,
+				this.listQuery.limit = 10,
 				this.getLists()
 			},
 			selectionChange(row) {
