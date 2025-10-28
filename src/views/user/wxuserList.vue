@@ -13,7 +13,7 @@
 			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="注册开始日期" end-placeholder="注册结束日期" @change="dateChange"
-				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
 			</el-date-picker>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
@@ -110,7 +110,7 @@
 		parseTime
 	} from '@/utils/index'
 	import addCash from './components/addCash.vue'
-  import subtractCash from './components/subtractCash.vue'
+  	import subtractCash from './components/subtractCash.vue'
 	import imgView from '@/components/Common/imgView.vue'
 	export default {
 		components: {

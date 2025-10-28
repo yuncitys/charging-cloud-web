@@ -1,13 +1,13 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
-      <el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
-      	placeholder="登录状态" clearable @change="handleFilter">
-      	<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
-      </el-select>
+			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="登录状态" clearable @change="handleFilter">
+				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
-				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
 			</el-date-picker>
       
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"

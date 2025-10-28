@@ -15,7 +15,7 @@
 				icon="el-icon-search">查询</el-button>
 
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="showDialog=true">
-        提现
+        		提现
 			</el-button>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit

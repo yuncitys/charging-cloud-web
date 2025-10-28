@@ -1,17 +1,17 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
-      <el-select v-model="listQuery.businessType" style="width: 200px;margin-right: 20px ;" class="filter-item"
-      	placeholder="业务类型" clearable @change="handleFilter">
-      	<el-option v-for="item in businessType" :key="item.id" :label="item.title" :value="item.id" />
-      </el-select>
-      <el-select v-model="listQuery.operatorType" style="width: 200px;margin-right: 20px ;" class="filter-item"
-      	placeholder="操作类别" clearable @change="handleFilter">
-      	<el-option v-for="item in operatorType" :key="item.id" :label="item.title" :value="item.id" />
-      </el-select>
+			<el-select v-model="listQuery.businessType" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="业务类型" clearable @change="handleFilter">
+				<el-option v-for="item in businessType" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
+			<el-select v-model="listQuery.operatorType" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="操作类别" clearable @change="handleFilter">
+				<el-option v-for="item in operatorType" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
-				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
 			</el-date-picker>
 
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
@@ -25,44 +25,44 @@
 				<el-table-column prop="title" label="操作功能" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="businessType" label="业务类型" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-            <span v-if="scope.row.businessType == 0">其它</span>
-            <span v-if="scope.row.businessType == 1">新增</span>
-            <span v-if="scope.row.businessType == 2">修改</span>
-            <span v-if="scope.row.businessType == 3">删除</span>
-            <span v-if="scope.row.businessType == 4">授权</span>
-            <span v-if="scope.row.businessType == 5">导出</span>
-            <span v-if="scope.row.businessType == 6">导入</span>
-            <span v-if="scope.row.businessType == 7">强退</span>
-            <span v-if="scope.row.businessType == 8">生成代码</span>
-            <span v-if="scope.row.businessType == 9">清空数据</span>
-          </template>
+					<template slot-scope="scope">
+						<span v-if="scope.row.businessType == 0">其它</span>
+						<span v-if="scope.row.businessType == 1">新增</span>
+						<span v-if="scope.row.businessType == 2">修改</span>
+						<span v-if="scope.row.businessType == 3">删除</span>
+						<span v-if="scope.row.businessType == 4">授权</span>
+						<span v-if="scope.row.businessType == 5">导出</span>
+						<span v-if="scope.row.businessType == 6">导入</span>
+						<span v-if="scope.row.businessType == 7">强退</span>
+						<span v-if="scope.row.businessType == 8">生成代码</span>
+						<span v-if="scope.row.businessType == 9">清空数据</span>
+					</template>
 				</el-table-column>
 				<el-table-column prop="method" label="方法名称" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-        <el-table-column prop="requestMethod" label="请求方式" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="operatorType" label="操作类别" align="center" :show-overflow-tooltip='isPc'>
-          <template slot-scope="scope">
-            <span v-if="scope.row.operatorType == 0">其它</span>
-            <span v-if="scope.row.operatorType == 1">后台用户</span>
-            <span v-if="scope.row.operatorType == 2">手机端用户</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="operName" label="操作人员" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="operUrl" label="请求地址" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="operIp" label="操作IP" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="operLocation" label="操作地点" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="operParam" label="请求参数" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="jsonResult" label="返回参数" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
-        <el-table-column prop="errorMsg" label="错误消息" align="center" :show-overflow-tooltip='isPc'>
-        </el-table-column>
+				<el-table-column prop="requestMethod" label="请求方式" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="operatorType" label="操作类别" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<span v-if="scope.row.operatorType == 0">其它</span>
+					<span v-if="scope.row.operatorType == 1">后台用户</span>
+					<span v-if="scope.row.operatorType == 2">手机端用户</span>
+				</template>
+				</el-table-column>
+				<el-table-column prop="operName" label="操作人员" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="operUrl" label="请求地址" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="operIp" label="操作IP" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="operLocation" label="操作地点" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="operParam" label="请求参数" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="jsonResult" label="返回参数" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="errorMsg" label="错误消息" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column prop="status" label="操作状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<el-tag type="success" v-if="scope.row.status == 0">成功</el-tag>
@@ -107,51 +107,51 @@
 				limit: 10,
 				list: [],
 				total: 10,
-        businessType: [{
-        	title: '其它',
-        	id: 0,
-        }, {
-        	title: '新增',
-        	id: 1,
-        }, {
-        	title: '修改',
-        	id: 2,
-        }, {
-        	title: '删除',
-        	id: 3,
-        }, {
-        	title: '授权',
-        	id: 4,
-        }, {
-        	title: '导出',
-        	id: 5,
-        }, {
-        	title: '导入',
-        	id: 6,
-        }, {
-        	title: '强退',
-        	id: 7,
-        }, {
-        	title: '生成代码',
-        	id: 8,
-        }, {
-        	title: '清空数据',
-        	id: 9,
-        }],
-        operatorType: [{
-        	title: '其它',
-        	id: 0,
-        }, {
-        	title: '后台用户',
-        	id: 1,
-        }, {
-        	title: '手机端用户',
-        	id: 2,
-        }],
+				businessType: [{
+					title: '其它',
+					id: 0,
+				}, {
+					title: '新增',
+					id: 1,
+				}, {
+					title: '修改',
+					id: 2,
+				}, {
+					title: '删除',
+					id: 3,
+				}, {
+					title: '授权',
+					id: 4,
+				}, {
+					title: '导出',
+					id: 5,
+				}, {
+					title: '导入',
+					id: 6,
+				}, {
+					title: '强退',
+					id: 7,
+				}, {
+					title: '生成代码',
+					id: 8,
+				}, {
+					title: '清空数据',
+					id: 9,
+				}],
+				operatorType: [{
+					title: '其它',
+					id: 0,
+				}, {
+					title: '后台用户',
+					id: 1,
+				}, {
+					title: '手机端用户',
+					id: 2,
+				}],
 				listQuery: {
 					page: 1,
 					limit: 10,
-          status:'',
+          			status:'',
 					createTimeStart: '',
 					createTimeEnd: ''
 				},

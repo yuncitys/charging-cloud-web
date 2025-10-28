@@ -9,7 +9,7 @@
 				placeholder="请输入用户ID" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
-				format="yyyy-MM-dd" value-format="yyyy-MM-dd">
+				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
 			</el-date-picker>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
@@ -181,12 +181,12 @@
 						console.log(res)
 						let list = res.data || []
 						list.forEach((item, index) => {
-						let unit = ''
-						if(item.chargingMonthType === 1){
-							unit = '次';
-						} else {
-							unit = '分钟'
-						}
+							let unit = ''
+							if(item.chargingMonthType === 1){
+								unit = '次';
+							} else {
+								unit = '分钟'
+							}
 							let monthTotalStr = item.monthTotal === undefined ? 0 + unit : item.monthTotal  + unit
 							let dayTotalStr = item.dayTotal === undefined ? 0 + unit : item.dayTotal + unit
 							item.monthTotalStr = monthTotalStr;
