@@ -7,15 +7,15 @@
 				placeholder="请输入站点名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.networkAddress" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入设备地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" /> -->
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
-        @change="handleFilter()" placeholder="请选择充电站">
-          <el-option
-            v-for="item in chargingStationList"
-            :key="item.id"
-            :label="item.networkName"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+				@change="handleFilter()" placeholder="请选择充电站">
+				<el-option
+					v-for="item in chargingStationList"
+					:key="item.id"
+					:label="item.networkName"
+					:value="item.id">
+				</el-option>
+			</el-select>
 			<el-select v-model="listQuery.deviceStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择设备在线状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -55,6 +55,7 @@
 			</el-tabs>
 
 			<div class="filter-container">
+				<el-checkbox v-model="formThead.ruleId" label="产品名称">产品名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceCode" label="设备号">设备号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceName" label="设备名称">设备名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceTypeName" label="设备类型">设备类型</el-checkbox>
@@ -78,13 +79,13 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column  prop="deviceCode" label="设备号" v-if="formThead.deviceCode" align="center"
-					:show-overflow-tooltip="isPc">
-				</el-table-column>
 				<el-table-column prop="ruleId" label="产品名称" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
 					</template>
+				</el-table-column>
+				<el-table-column  prop="deviceCode" label="设备号" v-if="formThead.deviceCode" align="center"
+					:show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
@@ -269,7 +270,9 @@
 				},
 				dealerList: [],
 				chargingStationList: [],
+				cacheKey: 'deliveryList',
 				formThead: {
+					ruleId: true,
 					deviceCode: true,
 					deviceTypeName: true,
 					deviceSignal: true,
@@ -277,15 +280,13 @@
 					deviceSim: true,
 					deviceImei: true,
 					allocationStatus: false,
-					networkName: true,
-					networkAddress: true,
 					activateStatus: false,
 					activateTime: false,
 					createTime: false,
 					deviceStatus: true,
 					priceType: true,
 					feeName: true,
-					deviceName: true,
+					deviceName: false,
 					adminId: false,
 				},
 				tags: [{
@@ -311,6 +312,15 @@
 				}
 				return parseTime(time)
 			},
+		},
+		watch: {
+			formThead: {
+				handler(newVal) {
+					// 这里做持久化或别的业务
+					window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
+				},
+				deep: true   // 监听内部任意属性变化
+			}
 		},
 		mounted() {
 			findDealerList().then(res => {
@@ -368,8 +378,7 @@
 			},
 			//显示二维码
 			showWXQrcode(item) {
-				this.$refs.wxCodes.showQrcode(item.deviceCode, item.appId, item.portCount, item.networkDotId, item
-					.domainName, item.ruleId)
+				this.$refs.wxCodes.showQrcode(item.deviceCode, item.appId, item.portCount, item.networkDotId, item.domainName, item.ruleId)
 			},
 			handleSizeChange(val) {
 				this.listQuery.limit = val
@@ -463,6 +472,15 @@
 			},
 		},
 		created() {
+			// 进入页面时读缓存
+			const raw = localStorage.getItem(this.cacheKey)
+			if (raw) {
+				try {
+					this.formThead = JSON.parse(raw)
+				} catch (e) {
+					console.warn('parse cache error', e)
+				}
+			}
 			this.getLists()
 		},
 	}

@@ -7,15 +7,15 @@
 				placeholder="请输入站点名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.networkAddress" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入设备地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" /> -->
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
-        @change="handleFilter()" placeholder="请选择充电站">
-          <el-option
-            v-for="item in chargingStationList"
-            :key="item.id"
-            :label="item.networkName"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+				@change="handleFilter()" placeholder="请选择充电站">
+				<el-option
+					v-for="item in chargingStationList"
+					:key="item.id"
+					:label="item.networkName"
+					:value="item.id">
+				</el-option>
+			</el-select>
 			<el-select v-model="listQuery.deviceStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择设备状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -30,17 +30,17 @@
 			</el-select>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">
-        查询
-      </el-button>
+				查询
+			</el-button>
 
 			<div style="margin: 15px 0;">
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="batchUpdate"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchAllocation')">
-          批量分配站点
+          			批量分配站点
 				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onBatchSetPower'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchSetPower')">
-          批量设置设备参数
+          			批量设置设备参数
 				</el-button>
 				<!-- 导出Excel -->
 				<downExcel :queryData="listQuery" />
@@ -56,16 +56,17 @@
 			</el-tabs>
 
 			<div class="filter-container">
+				<el-checkbox v-model="formThead.ruleId" label="产品名称">产品名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceCode" label="设备号">设备号</el-checkbox>
-				<el-checkbox v-model="formThead.deviceName" label="设备名称">设备名称</el-checkbox>
+				<!-- <el-checkbox v-model="formThead.deviceName" label="设备名称">设备名称</el-checkbox> -->
 				<el-checkbox v-model="formThead.deviceTypeName" label="设备类型">设备类型</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSignal" label="设备信号">设备信号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceVersion" label="设备版本">设备版本</el-checkbox>
 				<el-checkbox v-model="formThead.deviceImei" label="imei号">imei号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSim" label="sim号">sim号</el-checkbox>
 				<el-checkbox v-model="formThead.adminId" label="代理商">代理商</el-checkbox>
-				<el-checkbox v-model="formThead.networkName" label="所属站点">所属站点</el-checkbox>
-				<el-checkbox v-model="formThead.networkAddress" label="设备地址">设备地址</el-checkbox>
+				<!-- <el-checkbox v-model="formThead.networkName" label="所属站点">所属站点</el-checkbox>
+				<el-checkbox v-model="formThead.networkAddress" label="设备地址">设备地址</el-checkbox> -->
 				<el-checkbox v-model="formThead.deviceStatus" label="设备状态">设备状态</el-checkbox>
 				<el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox>
 				<el-checkbox v-model="formThead.feeName" label="计费标准">计费标准</el-checkbox>
@@ -81,27 +82,27 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column label="设备号" prop="deviceCode" v-if="formThead.deviceCode" align="center"
-					:show-overflow-tooltip="isPc">
-				</el-table-column>
 				<el-table-column prop="ruleId" label="产品名称" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
 					</template>
 				</el-table-column>
+				<el-table-column label="设备号" prop="deviceCode" v-if="formThead.deviceCode" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
-        <el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-        		<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
-        	</template>
-        </el-table-column>
-        <el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
-        	:show-overflow-tooltip="isPc">
-        </el-table-column>
+				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
+						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+					</template>
+				</el-table-column>
+				<!-- <el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
+					:show-overflow-tooltip="isPc">
+				</el-table-column> -->
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -124,19 +125,19 @@
 						</div>
 					</template>
 				</el-table-column>
-				<el-table-column prop="networkName" label="所属站点" v-if="formThead.networkName" align="center"
+				<!-- <el-table-column prop="networkName" label="所属站点" v-if="formThead.networkName" align="center"
 					:show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="networkAddress" label="设备地址" v-if="formThead.networkAddress" align="center"
 					:show-overflow-tooltip='isPc'>
+				</el-table-column> -->
+				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
+						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+					</template>
 				</el-table-column>
-        <el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
-        	:show-overflow-tooltip="isPc">
-        	<template slot-scope="scope">
-        		<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-        		<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
-        	</template>
-        </el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
@@ -157,7 +158,7 @@
 									<div style="margin-top: 0px;margin-left: 0px;"
 										v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')">
 										<el-button type="danger" @click="del(scope.row.id)" size='mini'>
-                      删除
+                      						删除
 										</el-button>
 									</div>
 								</div>
@@ -176,7 +177,7 @@
 								<div style="margin-top: 10px;margin-left: 0px;"
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')">
 									<el-button type="primary" @click="showallocation(scope.row)" size='mini'>
-                    分配设备
+                    					分配设备
 									</el-button>
 								</div>
 							</div>
@@ -223,9 +224,9 @@
 		updateDeviceStatus,
 		operationDevice
 	} from '@/api/device/deviceList.js'
-  import {
-    getChargingStationList
-  } from '@/api/netWorkDot/netWorkDotList.js'
+	import {
+		getChargingStationList
+	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -277,9 +278,11 @@
           			chargingStationIds: '',
 					devicePurpose: 'DIRECT_CONNECTION'
 				},
-        dealerList: [],
-        chargingStationList: [],
+				dealerList: [],
+				chargingStationList: [],
+				cacheKey: 'warehousingList',
 				formThead: {
+					ruleId: true,
 					deviceCode: true,
 					deviceTypeName: true,
 					deviceSignal: true,
@@ -287,8 +290,8 @@
 					deviceSim: true,
 					deviceImei: true,
 					allocationStatus: false,
-					networkName: true,
-					networkAddress: true,
+					// networkName: true,
+					// networkAddress: true,
 					activateStatus: false,
 					activateTime: false,
 					createTime: false,
@@ -322,6 +325,13 @@
 				return parseTime(time)
 			},
 		},
+		formThead: {
+			handler(newVal) {
+				// 这里做持久化或别的业务
+				window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
+			},
+			deep: true   // 监听内部任意属性变化
+		},
 		mounted() {
 			findDealerList().then(res => {
 				if (res.code == 200) {
@@ -330,20 +340,20 @@
 					this.$message.error(res.msg)
 				}
 			}),
-      getChargingStationList(0).then(res => {
-      	if (res.code == 200) {
-      		this.chargingStationList = res.data;
-      	} else {
-      		this.$message.error(res.msg)
-      	}
-      })
+			getChargingStationList(0).then(res => {
+				if (res.code == 200) {
+					this.chargingStationList = res.data;
+				} else {
+					this.$message.error(res.msg)
+				}
+			})
 		},
 		methods: {
 			//切换导航
 			handleClick(tab, event) {
 				this.listQuery.ruleId = tab.name
-        this.listQuery.page = 1,
-        this.listQuery.limit = 10,
+				this.listQuery.page = 1,
+				this.listQuery.limit = 10,
 				this.getLists()
 			},
 			//表格选择行
@@ -472,6 +482,15 @@
 			},
 		},
 		created() {
+			// 进入页面时读缓存
+			const raw = localStorage.getItem(this.cacheKey)
+			if (raw) {
+				try {
+					this.formThead = JSON.parse(raw)
+				} catch (e) {
+					console.warn('parse cache error', e)
+				}
+			}
 			this.getLists()
 		},
 

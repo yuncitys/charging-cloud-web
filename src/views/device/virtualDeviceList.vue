@@ -66,6 +66,7 @@
 			</el-tabs>
 
 			<div class="filter-container">
+				<el-checkbox v-model="formThead.ruleId" label="产品名称">产品名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceCode" label="设备号">设备号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceName" label="设备名称">设备名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceTypeName" label="设备类型">设备类型</el-checkbox>
@@ -91,13 +92,13 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column label="设备号" prop="deviceCode" v-if="formThead.deviceCode" align="center"
-					:show-overflow-tooltip="isPc">
-				</el-table-column>
 				<el-table-column prop="ruleId" label="产品名称" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
 					</template>
+				</el-table-column>
+				<el-table-column label="设备号" prop="deviceCode" v-if="formThead.deviceCode" align="center"
+					:show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
@@ -428,7 +429,9 @@
           			chargingStationIds: '',
 					devicePurpose: 'VIRTUAL_CONNECTION'
 				},
+				cacheKey: 'virtualDeviceList',
 				formThead: {
+					ruleId: true,
 					deviceCode: true,
 					deviceTypeName: true,
 					deviceSignal: true,
@@ -500,6 +503,15 @@
 				}
 				return parseTime(time)
 			},
+		},
+		watch: {
+			formThead: {
+				handler(newVal) {
+					// 这里做持久化或别的业务
+					window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
+				},
+				deep: true   // 监听内部任意属性变化
+			}
 		},
 		mounted() {
 
@@ -901,6 +913,15 @@
 			},
 		},
 		created() {
+			// 进入页面时读缓存
+			const raw = localStorage.getItem(this.cacheKey)
+			if (raw) {
+				try {
+					this.formThead = JSON.parse(raw)
+				} catch (e) {
+					console.warn('parse cache error', e)
+				}
+			}
 			this.getLists()
 			this.findDealerList()
       		this.getChargingStationList()

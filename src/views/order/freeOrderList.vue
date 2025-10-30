@@ -56,7 +56,7 @@
         <el-row>
           <el-col :span="1"> <span style="color:#08d374;font-weight:600;font-size:15px">用户：</span> </el-col>
           <el-col :span="2">
-            <el-checkbox v-model="formThead.userName" label="昵称">昵称</el-checkbox>
+            <el-checkbox v-model="formThead.userName" label="用户昵称">用户昵称</el-checkbox>
           </el-col>
           <el-col :span="2">
             <el-checkbox v-model="formThead.phoneNumber" label="手机号">手机号</el-checkbox>
@@ -66,9 +66,6 @@
           </el-col>
           <el-col :span="2">
             <el-checkbox v-model="formThead.headImg" label="微信头像">微信头像</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.wxName" label="小程序名称">小程序名称</el-checkbox>
           </el-col>
           <el-col :span="2">
             <el-checkbox v-model="formThead.actualPrice" label="消费金额">消费金额</el-checkbox>
@@ -123,7 +120,7 @@
             <el-checkbox v-model="formThead.payStatus" label="支付状态">支付状态</el-checkbox>
           </el-col>
           <el-col :span="2">
-            <el-checkbox v-model="formThead.priceType" label="收费类型">收费类型</el-checkbox>
+            <el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox>
           </el-col>
           <el-col :span="2">
             <el-checkbox v-model="formThead.electricityPrice" label="电费">电费</el-checkbox>
@@ -170,7 +167,7 @@
         <el-table-column prop="devicePort" label="端口号" v-if="formThead.devicePort" align="center"
           :show-overflow-tooltip="isPc" fixed="left">
         </el-table-column>
-        <el-table-column label="昵称" prop="userName" v-if="formThead.userName" align="center"
+        <el-table-column prop="userName" label="用户昵称" v-if="formThead.userName" align="center"
           :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column prop="headImg" label="微信头像" v-if="formThead.headImg" align="center"
@@ -178,9 +175,6 @@
           <template slot-scope="scope" style="text-align: center;">
             <imgView :imgSrc="scope.row.headImg" />
           </template>
-        </el-table-column>
-        <el-table-column prop="wxName" label="小程序名称" v-if="formThead.wxName" align="center"
-          :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column prop="avgPower" label="平均功率" v-if="formThead.avgPower" align="center"
           :show-overflow-tooltip="isPc">
@@ -209,9 +203,10 @@
             <el-tag type="success" v-if="scope.row.orderType == 0">刷卡充电</el-tag>
             <el-tag type="success" v-if="scope.row.orderType == 1">扫码充电</el-tag>
             <el-tag type="success" v-if="scope.row.orderType == 2">免费充电</el-tag>
+            <el-tag type="success" v-if="scope.row.orderType == 3">包月充电</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="priceType" label="收费类型" v-if="formThead.priceType" align="center"
+        <el-table-column prop="priceType" label="计费类型" v-if="formThead.priceType" align="center"
           :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
             <el-tag type="danger" v-if="scope.row.priceType == 0">计时</el-tag>
@@ -240,9 +235,9 @@
         <el-table-column prop="hours" label="工作时长/电量" v-if="formThead.hours" align="center"
           :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
-            <span v-if="scope.row.priceType == 0">{{ scope.row.hours}}</span>
-            <span v-if="scope.row.priceType == 1">{{ scope.row.eleNum}}</span>
-            <span v-if="scope.row.priceType == 2">{{ scope.row.hours}}</span>
+            <span v-if="scope.row.chargeMod == 0">{{ scope.row.hours}}分钟</span>
+            <span v-if="scope.row.chargeMod == 1">{{ scope.row.hours}}KW/h</span>
+            <span v-if="scope.row.chargeMod == 2">{{ scope.row.hours}}元</span>
           </template>
         </el-table-column>
         <el-table-column prop="userdTime" label="实际时长" v-if="formThead.userdTime" align="center"
@@ -255,11 +250,8 @@
         <el-table-column prop="hasTime" label="剩余时间" v-if="formThead.hasTime" align="center"
           :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
-            <span v-if="scope.row.orderStatus != 0">
-              <span v-if="scope.row.orderStatus == 2">0分钟</span>
-              <span v-if="scope.row.orderStatus != 2">{{ scope.row.hasTime}}</span>
-            </span>
-            <span v-if="scope.row.orderStatus == 0">{{ scope.row.hours}}</span>
+            <span v-if="scope.row.orderStatus != 0">{{ scope.row.hasTime}}</span>
+            <span v-if="scope.row.orderStatus == 0">{{ scope.row.hour}}</span>
           </template>
         </el-table-column>
         <el-table-column prop="startTimeAll" label="开始时间" v-if="formThead.startTime" align="center"
@@ -384,6 +376,7 @@
           ruleId: 1,
           chargingStationIds: ''
         },
+        cacheKey: 'freeOrderList',
         formThead: {
           orderCode: true,
           deviceCode: true,
@@ -406,7 +399,6 @@
           endTime: true,
           createTime: false,
           actualPrice: true,
-          proxyMoneyStatus: false,
           realityPayMoney: true,
           avgPower: false,
           maxPower: false,
@@ -414,8 +406,6 @@
           power: true,
           userCode: true,
           phoneNumber: true,
-          wxName: false,
-          wxAppId: false,
           priceType: false
         },
         payTags: [{
@@ -443,6 +433,10 @@
             id: 2,
             title: '已完成'
           },
+          {
+            id: 3,
+            title: '待结算'
+          }
         ],
         time: ''
       }
@@ -454,6 +448,15 @@
         }
         return parseTime(time)
       },
+    },
+    watch: {
+      formThead: {
+        handler(newVal) {
+          // 这里做持久化或别的业务
+          window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
+        },
+        deep: true   // 监听内部任意属性变化
+      }
     },
     mounted() {
       getChargingStationList(0).then(res => {
@@ -531,12 +534,13 @@
                   userdTime = numTime(nowDate, item.startTimeAll, 1) || '00:00:00'
                   item.userdTime = numTime(nowDate, item.startTimeAll, 0)
                 }
-                userdTime = userdTime.split(':')
-                let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(userdTime[1]) * 60 + parseFloat(userdTime[2])
-                let num2 = parseFloat(item.hours) * 60
-                let num3 = num2 - num1
-                item.hasTime = formatSeconds(num3)
-                item.hours = formatSeconds(num2)
+                if (item.chargeMod == 0){ //时间
+                  userdTime = userdTime.split(':')
+                  let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(userdTime[1]) * 60 + parseFloat(userdTime[2])
+                  let num2 = parseFloat(item.hours) * 60
+                  let num3 = num2 - num1
+                  item.hasTime = formatSeconds(num3); item.hour = formatSeconds(num2) //剩余时长
+                }
               })
             }
             this.list = list
@@ -640,6 +644,15 @@
       },
     },
     created() {
+      // 进入页面时读缓存
+      const raw = localStorage.getItem(this.cacheKey)
+      if (raw) {
+        try {
+          this.formThead = JSON.parse(raw)
+        } catch (e) {
+          console.warn('parse cache error', e)
+        }
+      }
       this.getLists()
       this.findDealerList()
     },
