@@ -6,12 +6,14 @@ export function isMobile() {
   let flag = navigator.userAgent.match(/(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i)
   return flag;
 }
+
 /*
 去除字符串两边的空白
 */
 export function trim(str) {
   return str.replace(/(^\s*)|(\s*$)/g, "")
 }
+
 /**
  * Parse the time to string
  * @param {(Object|string|number)} time
@@ -77,7 +79,12 @@ export function getNowTime() {
 
 //获取两个时间差
 export function numTime(end_time, now_time, str) {
-
+  if (end_time === undefined || end_time === ''){
+    return false;
+  }
+  if (now_time === undefined || now_time === ''){
+    return false;
+  }
   // direct_time格式为yyyy-mm-dd hh:mm:ss 指定时间
   var now_time = Date.parse(new Date(now_time)); //指定时间的时间戳
   var end_time = Date.parse(new Date(end_time)); //指定时间的时间戳
@@ -115,6 +122,7 @@ export function numTime(end_time, now_time, str) {
     }
   }
 }
+
 //秒转时分秒
 export function formatSeconds(value) {
   value = value > 0 ? value : 0
@@ -129,6 +137,7 @@ export function formatSeconds(value) {
   // res += `${s}秒`;
   return res;
 }
+
 /**
  * @param {number} time
  * @param {string} option
