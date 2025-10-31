@@ -192,6 +192,15 @@
       saveData() {
         let data = this.tableData
         let networkDotId = this.row_data.id
+        let previous = data.length - 1 < 0 ? 0 : data.length - 1;
+        if(data[previous].adminId == '' || data[previous].adminId == undefined){
+          this.$message.error('请选择收款账号')
+          return false
+        }
+        if(data[previous].splitRate == '' || data[previous].splitRate == undefined){
+          this.$message.error('请设置分成比例')
+          return false
+        }
         console.log('充电站',networkDotId,'保存的数据：',this.tableData);
         saveOrUpdate(networkDotId,data).then(res => {
         	if (res.code == 200) {
