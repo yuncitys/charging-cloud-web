@@ -40,7 +40,7 @@
 				</el-table-column>
 				<el-table-column prop="cardCash" label="余额" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="realityPayMoney" label="实际支付金额" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="realityPayMoney" label="支付金额" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="giveMoney" label="赠送金额" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
