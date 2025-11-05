@@ -5,7 +5,7 @@
 			v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:export')">导出Excel
 		</el-button>
 
-    <downloadProgress ref="downloadProgress" />
+    	<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -20,12 +20,12 @@
 		formatSeconds,
 		getNowTime
 	} from '@/utils/index'
-  import downloadProgress from '@/components/Common/downloadProgress.vue'
+  	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	export default {
 		name: 'downExcel',
-    components: {
-    	downloadProgress
-    },
+		components: {
+			downloadProgress
+		},
 		props: {
 			queryData: {
 				type: Object,
@@ -46,31 +46,32 @@
 
 		},
 		methods: {
-      //订单导出（进度条
-      downloadOrder() {
-      	let downloadData = {
-          payStatus: this.queryData.payStatus,
-      		orderStatus: this.queryData.orderStatus,
-      		orderCode: this.queryData.orderCode,
-      		deviceCode: this.queryData.deviceCode,
-      		orderType: this.queryData.orderType,
-      		userCode: this.queryData.userCode,
-      		phoneNumber: this.queryData.phoneNumber,
-          adminId: this.queryData.adminId,
-      		createTimeStart: this.queryData.createTimeStart,
-      		createTimeEnd: this.queryData.createTimeEnd,
-      		networkProvince: this.queryData.networkProvince,
-      		networkName: this.queryData.networkName,
-      		ruleId: this.queryData.ruleId
-      	}
-      	downloadExcel(downloadData).then(res => {
-      		if (res.code == 200) {
-      			let taskId = res.data.id
-      			this.$refs.downloadProgress.open(taskId)
-      		}
-      	})
-      },
-      //导出订单（流
+			//订单导出（进度条
+			downloadOrder() {
+				let downloadData = {
+					limit: 1000,
+					payStatus: this.queryData.payStatus,
+					orderStatus: this.queryData.orderStatus,
+					orderCode: this.queryData.orderCode,
+					deviceCode: this.queryData.deviceCode,
+					orderType: this.queryData.orderType,
+					userCode: this.queryData.userCode,
+					phoneNumber: this.queryData.phoneNumber,
+					adminId: this.queryData.adminId,
+					createTimeStart: this.queryData.createTimeStart,
+					createTimeEnd: this.queryData.createTimeEnd,
+					networkProvince: this.queryData.networkProvince,
+					networkName: this.queryData.networkName,
+					ruleId: this.queryData.ruleId
+				}
+				downloadExcel(downloadData).then(res => {
+					if (res.code == 200) {
+						let taskId = res.data.id
+						this.$refs.downloadProgress.open(taskId)
+					}
+				})
+			},
+			//导出订单（流
 			handleDownloadNew() {
 				this.downloadLoading = true
 				let downloadData = {
