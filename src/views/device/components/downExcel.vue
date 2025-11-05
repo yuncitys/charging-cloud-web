@@ -1,9 +1,11 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleDownload"
+		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="downloadDevice"
 			:loading="downloadLoading" icon="el-icon-download"
 			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:download')">导出Excel
 		</el-button>
+
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -17,8 +19,12 @@
 		formatSeconds,
 		getNowTime
 	} from '@/utils/index'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	export default {
 		name: 'downExcel',
+		components: {
+			downloadProgress
+		},
 		props: {
 			queryData: {
 				type: Object,
@@ -26,9 +32,6 @@
 					return {}
 				}
 			}
-		},
-		components: {
-
 		},
 		data() {
 			return {
@@ -42,7 +45,29 @@
 
 		},
 		methods: {
-			//导出设备
+			//设备导出（进度条
+			downloadDevice() {
+				let downloadData = {
+					limit: 300,
+					deviceCode: this.queryData.deviceCode,
+					networkName: this.queryData.networkName,
+					networkAddress: this.queryData.networkAddress,
+					deviceStatus: this.queryData.deviceStatus,
+					dealerId: this.queryData.dealerId,
+					allocationStatus: this.queryData.allocationStatus,
+					ruleId: this.queryData.ruleId,
+					chargingStationIds: this.queryData.chargingStationIds != undefined ? this.queryData.chargingStationIds : '',
+					deviceChargePattern: this.queryData.deviceChargePattern != undefined ? this.queryData.deviceChargePattern : '',
+					devicePurpose: this.queryData.devicePurpose != undefined ? this.queryData.devicePurpose : ''
+				}
+				downloadExcel(downloadData).then(res => {
+					if (res.code == 200) {
+						let taskId = res.data.id
+						this.$refs.downloadProgress.open(taskId)
+					}
+				})
+			},
+			//导出设备(流)
 			handleDownload() {
 				this.downloadLoading = true
 				let downloadData = {

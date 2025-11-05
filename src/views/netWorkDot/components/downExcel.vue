@@ -1,9 +1,10 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleDownload"
+		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="downloadStation"
 			:loading="downloadLoading" icon="el-icon-download"
 			v-if="btnAuthen.permsVerifAuthention(':sys:networkDot:exportNetworkDot')">导出Excel
 		</el-button>
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -17,6 +18,7 @@
 		formatSeconds,
 		getNowTime
 	} from '@/utils/index'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	export default {
 		name: 'downExcel',
 		props: {
@@ -28,7 +30,7 @@
 			}
 		},
 		components: {
-
+			downloadProgress
 		},
 		data() {
 			return {
@@ -42,7 +44,23 @@
 
 		},
 		methods: {
-			//导出设备
+			//站点导出（进度条
+			downloadStation() {
+				let downloadData = {
+					limit: 500,
+					networkAddress: this.queryData.networkAddress,
+					adminId: this.queryData.adminId,
+					ruleId: this.queryData.ruleId,
+					type: this.queryData.type
+				}
+				downloadExcel(downloadData).then(res => {
+					if (res.code == 200) {
+						let taskId = res.data.id
+						this.$refs.downloadProgress.open(taskId)
+					}
+				})
+			},
+			//导出站点(流)
 			handleDownload() {
 				this.downloadLoading = true
 				let downloadData = {
