@@ -84,7 +84,7 @@
 			}
 		},
 		destroyed() {
-
+			clearInterval(this.setInt)
 		}
 	}
 </script>
