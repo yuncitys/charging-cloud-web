@@ -1,9 +1,11 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleDownload"
+		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="exportExcel"
 			:loading="downloadLoading" icon="el-icon-download"
 			v-if="btnAuthen.permsVerifAuthention(':sys:payDetails:downloadPayDetails')">导出Excel
 		</el-button>
+
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -11,6 +13,7 @@
 	import {
 		downloadExcel,
 	} from '@/api/finance/rechargeRecord.js'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	import {
 		parseTime,
 		numTime,
@@ -28,7 +31,7 @@
 			}
 		},
 		components: {
-
+			downloadProgress
 		},
 		data() {
 			return {
@@ -42,6 +45,25 @@
 
 		},
 		methods: {
+			//交易记录导出（进度条
+			exportExcel() {
+				let downloadData = {
+					limit: 3000,
+					payCode: this.queryData.payCode,
+					userName: this.queryData.userName,
+					userId:this.queryData.userId,
+					phone: this.queryData.phone,
+					type: this.queryData.type,
+					createTimeStart: this.queryData.createTimeStart,
+					createTimeEnd: this.queryData.createTimeEnd
+				}
+				downloadExcel(downloadData).then(res => {
+					if (res.code == 200) {
+						let taskId = res.data.id
+						this.$refs.downloadProgress.open(taskId)
+					}
+				})
+			},
 			//导出订单
 			handleDownload() {
 				this.downloadLoading = true

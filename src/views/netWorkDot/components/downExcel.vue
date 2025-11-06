@@ -47,7 +47,7 @@
 			//站点导出（进度条
 			downloadStation() {
 				let downloadData = {
-					limit: 500,
+					limit: 2000,
 					networkAddress: this.queryData.networkAddress,
 					adminId: this.queryData.adminId,
 					ruleId: this.queryData.ruleId,

@@ -2,26 +2,18 @@
 	<div style="display: inline-block;">
 		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="exportExcel"
 			:loading="downloadLoading" icon="el-icon-download"
-			v-if="btnAuthen.permsVerifAuthention(':web:splitRecord:export')">
-			导出Excel
+			v-if="btnAuthen.permsVerifAuthention(':monitor:job:export')">导出Excel
 		</el-button>
 
-    	<downloadProgress ref="downloadProgress" />
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
 <script>
-	import {
-		exportExcel
-	} from '@/api/finance/orderSplitRecord.js';
-
-  	import downloadProgress from '@/components/Common/downloadProgress.vue'
-
+	import { downloadExcel } from "@/api/monitor/jobLog";
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	export default {
-		name: 'exportSplitRecordExcel',
-		components: {
-			downloadProgress
-		},
+		name: 'downExcel',
 		props: {
 			queryData: {
 				type: Object,
@@ -30,9 +22,12 @@
 				}
 			}
 		},
+		components: {
+			downloadProgress
+		},
 		data() {
 			return {
-				downloadLoading: false,	
+				downloadLoading: false,
 			}
 		},
 		mounted() {
@@ -42,27 +37,29 @@
 
 		},
 		methods: {
-			//订单导出（进度条
+			//任务日志导出（进度条
 			exportExcel() {
 				let downloadData = {
-					limit: 5000,
-					orderCode: this.queryData.orderCode,
+					limit: 8000,
+					jobName: this.queryData.jobName,
+					jobGroup: this.queryData.jobGroup,
 					status: this.queryData.status,
-					adminId: this.queryData.adminId,
 					createTimeStart: this.queryData.createTimeStart,
 					createTimeEnd: this.queryData.createTimeEnd
 				}
-				exportExcel(downloadData).then(res => {
+				downloadExcel(downloadData).then(res => {
 					if (res.code == 200) {
 						let taskId = res.data.id
 						this.$refs.downloadProgress.open(taskId)
+					} else {
+						this.$message.error('下载失败')
 					}
 				})
 			},
-			created() {
+		},
+		created() {
 
-			},
-		}
+		},
 	}
 </script>
 

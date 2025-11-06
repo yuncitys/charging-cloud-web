@@ -1,9 +1,11 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleDownload"
+		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="exportExcel"
 			:loading="downloadLoading" icon="el-icon-download"
 			v-if="btnAuthen.permsVerifAuthention(':sys:deviceLog:downLoadDeviceLogList')">导出Excel
 		</el-button>
+
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -11,6 +13,7 @@
 	import {
 		downLoadDeviceLogList,
 	} from '@/api/upDownRecord/upDownRecordList.js'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	import {
 		parseTime,
 		numTime,
@@ -28,7 +31,7 @@
 			}
 		},
 		components: {
-
+			downloadProgress
 		},
 		data() {
 			return {
@@ -42,6 +45,21 @@
 
 		},
 		methods: {
+			//设备日志导出（进度条
+			exportExcel() {
+				let downloadData = {
+					limit: 5000,
+					deviceCode: this.queryData.deviceCode,
+					createTimeStart: this.queryData.createTimeStart,
+					createTimeEnd: this.queryData.createTimeEnd
+				}
+				downLoadDeviceLogList(downloadData).then(res => {
+					if (res.code == 200) {
+						let taskId = res.data.id
+						this.$refs.downloadProgress.open(taskId)
+					}
+				})
+			},
 			//导出
 			handleDownload() {
 				this.downloadLoading = true

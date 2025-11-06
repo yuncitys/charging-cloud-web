@@ -48,13 +48,13 @@
 			//设备导出（进度条
 			downloadDevice() {
 				let downloadData = {
-					limit: 300,
+					limit: 2000,
 					deviceCode: this.queryData.deviceCode,
 					networkName: this.queryData.networkName,
 					networkAddress: this.queryData.networkAddress,
 					deviceStatus: this.queryData.deviceStatus,
 					dealerId: this.queryData.dealerId,
-					allocationStatus: this.queryData.allocationStatus,
+					allocationStatus: this.queryData.allocationStatus != undefined ? this.queryData.allocationStatus : '',
 					ruleId: this.queryData.ruleId,
 					chargingStationIds: this.queryData.chargingStationIds != undefined ? this.queryData.chargingStationIds : '',
 					deviceChargePattern: this.queryData.deviceChargePattern != undefined ? this.queryData.deviceChargePattern : '',

@@ -47,11 +47,13 @@
           icon="el-icon-delete"
           @click="handleClean"
         >清空</el-button>
-        <el-button
+        <!-- 导出Excel -->
+			  <downExcel :queryData="queryParams" />
+        <!-- <el-button
           style="margin-right: 20px ;" type="warning" class="filter-item"
           icon="el-icon-download"
           @click="handleExport"
-        >导出</el-button>
+        >导出</el-button> -->
         <!-- <el-button
           style="margin-right: 20px ;" type="warning" class="filter-item"
           icon="el-icon-close"
@@ -144,17 +146,22 @@
 <script>
 import { getJob} from "@/api/monitor/job";
 
-import { listJobLog, delJobLog, cleanJobLog,exportExcel} from "@/api/monitor/jobLog";
+import downExcel from './components/downJobLogExcel.vue'
+
+import { listJobLog, delJobLog, cleanJobLog, exportExcel} from "@/api/monitor/jobLog";
 
 import {
-		parseTime,
-		numTime,
-		formatSeconds,
-		getNowTime
-	} from '@/utils/index'
+  parseTime,
+  numTime,
+  formatSeconds,
+  getNowTime
+} from '@/utils/index'
 
 export default {
   name: "JobLog",
+  components: {
+    downExcel
+  },
   data() {
     return {
       //时间查询

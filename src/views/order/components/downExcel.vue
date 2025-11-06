@@ -49,7 +49,7 @@
 			//订单导出（进度条
 			downloadOrder() {
 				let downloadData = {
-					limit: 1000,
+					limit: 5000,
 					payStatus: this.queryData.payStatus,
 					orderStatus: this.queryData.orderStatus,
 					orderCode: this.queryData.orderCode,
