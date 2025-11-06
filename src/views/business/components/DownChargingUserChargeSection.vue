@@ -47,6 +47,7 @@
 			//订单导出（进度条
 			exportChargingUserChargeSection() {
 				let downloadData = JSON.parse(JSON.stringify(this.queryData))
+				downloadData.limit = 2000
 				exportChargingUserChargeSection(downloadData).then(res => {
 					if (res.code == 200) {
 						let taskId = res.data.id
