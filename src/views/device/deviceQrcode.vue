@@ -328,126 +328,126 @@
 					}
 				})
 			},
-		//查询搜索代理商
-		// querySearch(queryString, cb) {
-		// 	var restaurants = this.restaurants;
-		// 	let restaurantsText = []
-		// 	if (restaurants.length != '') {
-		// 		restaurants.forEach((item, index) => {
-		// 			let obj = {
-		// 				value: '',
-		// 				adminId: '',
-		//         domain: '',
-		// 				wxAppId: ''
-		// 			}
-		// 			let value = item.adminName + "(" + item.adminFullname + ")"
-		// 			obj.value = value
-		// 			obj.adminId = item.id
-		//       obj.domain = item.domainName
-		// 			obj.wxAppId = item.wxAppId
-		// 			restaurantsText.push(obj)
-		// 		})
-		// 	}
-		// 	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
-		// 	// 调用 callback 返回建议列表的数据
-		// 	cb(results);
-		// },
-		// //筛选
-		// createFilter(queryString) {
-		// 	return (restaurant) => {
-		// 		return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
-		// 	};
-		// },
-		// //选择运营商
-		// handleSelect(item) {
-		// 	console.log(item)
-		// 	let adminId = item.adminId ? item.adminId : ''
-		//   let domain = item.domain ? item.domain : ''
-		//   this.configData.adminId = adminId
-		//   this.configData.qrText = domain
+			//查询搜索代理商
+			// querySearch(queryString, cb) {
+			// 	var restaurants = this.restaurants;
+			// 	let restaurantsText = []
+			// 	if (restaurants.length != '') {
+			// 		restaurants.forEach((item, index) => {
+			// 			let obj = {
+			// 				value: '',
+			// 				adminId: '',
+			//         domain: '',
+			// 				wxAppId: ''
+			// 			}
+			// 			let value = item.adminName + "(" + item.adminFullname + ")"
+			// 			obj.value = value
+			// 			obj.adminId = item.id
+			//       obj.domain = item.domainName
+			// 			obj.wxAppId = item.wxAppId
+			// 			restaurantsText.push(obj)
+			// 		})
+			// 	}
+			// 	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
+			// 	// 调用 callback 返回建议列表的数据
+			// 	cb(results);
+			// },
+			// //筛选
+			// createFilter(queryString) {
+			// 	return (restaurant) => {
+			// 		return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
+			// 	};
+			// },
+			// //选择运营商
+			// handleSelect(item) {
+			// 	console.log(item)
+			// 	let adminId = item.adminId ? item.adminId : ''
+			//   let domain = item.domain ? item.domain : ''
+			//   this.configData.adminId = adminId
+			//   this.configData.qrText = domain
 
-		// 	this.adminName = item.value + ''
-		// 	this.wxAppId = item.wxAppId + ''
-		// },
-		// //清除已选择运营商
-		// changeName() {
-		// 	if (this.adminName == '') {
-		//     this.configData.adminId = ''
-		//     this.configData.qrText = ''
-		// 	}
-		// },
-		//显示弹窗
-		onShowConfig() {
-			this.showConfig = true
-			this.percentage = 0
-			this.configData.qrText = ''
-			this.getOperator()
-		},
-		//清除表单
-		resetForm(formName) {
-			this.$refs[formName].resetFields();
-		},
-      //导出设备配置
-		DownloadConfig(formName) {
-			let configData = this.configData
-			// if (!configData.adminId) {
-			// 	this.$message.error('请选择运营商')
-			// 	return false
-			// }
-			let number = configData.number
-			if (number > 1000) {
-				this.$message.error('最多导出1000条数据')
-				return false
-			}
-			this.$refs[formName].validate(valid => {
-				console.log(valid)
-				if (valid) {
-					console.log("通过")
-					// this.loading = true
-					this.showConfig = false
-					this.showProgress = true
-					generateQR(configData).then(res => {
-						this.resetForm(formName)
-						// this.loading = false
-						// this.$emit('getLists')
-						let task = res.data
-						console.log("任务详情：",res.data)
-						this.percentage = task.percentage || 0
-						if(task.status === 1){
-							this.showProgress = false
-							window.open(this.Global.APIURl + task.result)
-						}else{
-							this.getProgress = setInterval(() => {
-								this.getTask(task.id)
-							}, 1000)
-						}
-					})
-				} else {
-					this.loading = false
-					console.log("不通过")
+			// 	this.adminName = item.value + ''
+			// 	this.wxAppId = item.wxAppId + ''
+			// },
+			// //清除已选择运营商
+			// changeName() {
+			// 	if (this.adminName == '') {
+			//     this.configData.adminId = ''
+			//     this.configData.qrText = ''
+			// 	}
+			// },
+			//显示弹窗
+			onShowConfig() {
+				this.showConfig = true
+				this.percentage = 0
+				this.configData.qrText = ''
+				this.getOperator()
+			},
+			//清除表单
+			resetForm(formName) {
+				this.$refs[formName].resetFields();
+			},
+			//导出设备配置
+			DownloadConfig(formName) {
+				let configData = this.configData
+				// if (!configData.adminId) {
+				// 	this.$message.error('请选择运营商')
+				// 	return false
+				// }
+				let number = configData.number
+				if (number > 1000) {
+					this.$message.error('最多导出1000条数据')
 					return false
 				}
-			})
-		},
-		getTask(taskId){
-			let data = {
-			taskId:taskId
-			}
-			getTask(data).then(res => {
-			let task = res.data
-			this.percentage = task.percentage
-			if(task.status === 1){
-				clearInterval(this.getProgress)
+				this.$refs[formName].validate(valid => {
+					console.log(valid)
+					if (valid) {
+						console.log("通过")
+						this.showConfig = false
+						generateQR(configData).then(res => {
+							this.resetForm(formName)
+							if (res.code == 200){
+								let task = res.data
+								this.percentage = task.percentage || 0
+								if(task.status === 1){
+									this.showProgress = false
+									window.open(this.Global.APIURl + task.result)
+								}else{
+									this.showProgress = true
+									this.getProgress = setInterval(() => {
+										this.getTask(task.id)
+									}, 1000)
+								}
+							} else {
+								this.$message.error(res.msg)
+							}
+						})
+					} else {
+						this.loading = false
+						console.log("不通过")
+						return false
+					}
+				})
+			},
+			getTask(taskId){
+				let data = {
+				taskId:taskId
+				}
+				getTask(data).then(res => {
+				let task = res.data
+				this.percentage = task.percentage
+				if(task.status === 1){
+					clearInterval(this.getProgress)
+					this.showProgress = false
+					window.open(this.Global.APIURl + task.result)
+				}
+				})
+			},
+			handleClose(){
 				this.showProgress = false
-				window.open(this.Global.APIURl + task.result)
+				this.getLists()
+				clearInterval(this.getProgress)
 			}
-			})
-		},
-		handleClose(){
-			this.showProgress = false
-			this.getLists()
-			clearInterval(this.getProgress)
-		}
 		},
 		created() {
 			this.getLists()
