@@ -367,7 +367,7 @@ export function findDevicePriceByPriceType(data) {
 // 设备配置导出
 export function downLoadDeviceCodes(data) {
 	return request({
-		url: '/api/web/device/downLoadDeviceCodes',
+		url: '/api/web/device/downloadDeviceCodes',
 		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",

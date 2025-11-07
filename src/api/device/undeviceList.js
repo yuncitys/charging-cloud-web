@@ -486,7 +486,7 @@
 // // 设备配置导出
 // export function downLoadDeviceCodes(data) {
 // 	return request({
-// 		url: '/sys/device/downLoadDeviceCodes',
+// 		url: '/sys/device/downloadDeviceCodes',
 // 		method: 'post',
 // 		headers: {
 // 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
