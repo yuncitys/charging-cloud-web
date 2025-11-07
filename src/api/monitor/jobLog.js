@@ -77,3 +77,26 @@ export function exportExcel(data) {
 		data
 	})
 }
+
+// 导出excel
+export function downloadExcel(data) {
+	return request({
+		url: '/api/monitor/job/log/download',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
