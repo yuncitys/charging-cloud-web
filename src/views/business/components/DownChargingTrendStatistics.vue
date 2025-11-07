@@ -1,7 +1,7 @@
 <template>
 	<div style="display: inline-block;">
 		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="exportChargingTrend"
-			:loading="downloadLoading" icon="el-icon-download" v-if="btnAuthen.permsVerifAuthention(':web:reports:export')">
+			:loading="downloadLoading" icon="el-icon-download" v-if="btnAuthen.permsVerifAuthention(':reports:chargingTrend:export')">
       		导出
 		</el-button>
     <downloadProgress ref="downloadProgress" />
