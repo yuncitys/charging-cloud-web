@@ -100,9 +100,6 @@
 						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
 					</template>
 				</el-table-column>
-				<!-- <el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
-					:show-overflow-tooltip="isPc">
-				</el-table-column> -->
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -115,6 +112,17 @@
 				<el-table-column prop="deviceSim" label="sim号" v-if="formThead.deviceSim" align="center"
 					:show-overflow-tooltip="isPc">
 				</el-table-column>
+				<el-table-column prop="priceType" label="计费类型" v-if="formThead.priceType" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span v-if="scope.row.priceType == 0">计时</span>
+						<span v-if="scope.row.priceType == 1">电量</span>
+						<span v-if="scope.row.priceType == 2">功率</span>
+					</template>
+				</el-table-column>
+				<el-table-column prop="feeName" label="计费标准" v-if="formThead.feeName" align="center"
+					:show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<el-table-column prop="adminId" label="代理商" v-if="formThead.adminId" align="center" width="120">
 					<template slot-scope="scope">
 						<div v-if="scope.row.adminId">
@@ -125,12 +133,6 @@
 						</div>
 					</template>
 				</el-table-column>
-				<!-- <el-table-column prop="networkName" label="所属站点" v-if="formThead.networkName" align="center"
-					:show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="networkAddress" label="设备地址" v-if="formThead.networkAddress" align="center"
-					:show-overflow-tooltip='isPc'>
-				</el-table-column> -->
 				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
