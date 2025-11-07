@@ -9,8 +9,8 @@
 				</el-form-item>
 				<el-form-item label="收费类型：" prop="chargeType">
 					<el-radio-group v-model="formData.chargeType">
-						<el-radio :label="0">按时间收费</el-radio>
-						<el-radio :label="1">按电量收费</el-radio>
+						<!-- <el-radio :label="0">按时间收费</el-radio>
+						<el-radio :label="1">按电量收费</el-radio> -->
 						<el-radio :label="2">免费</el-radio>
 					</el-radio-group>
 				</el-form-item>
