@@ -51,8 +51,9 @@
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button v-if="currentStep > 1" @click="prevStep">上一步</el-button>
-        <el-button v-if="currentStep < 2 && visibleStep" @click="nextStep">下一步</el-button>
-        <el-button v-if="isSave" type="primary" @click="saveOrUpdate">保存</el-button>
+        <el-button v-if="currentStep < 2 && visibleStep" type="primary" @click="nextStep">下一步</el-button>
+        <el-button v-if="currentStep == 2 && isSave" type="primary" @click="saveOrUpdate">保存</el-button>
+        <el-button v-if="!isSave && !isDetail" type="primary" @click="saveOrUpdate">保存</el-button>
       </span>
     </el-dialog>
   </div>
@@ -92,6 +93,14 @@
         } else {
           callback()
         }
+      };
+      let checkSocialCreditCodeLength = (rule, value, callback) => {
+        if (value.length < 18) {
+          callback(new Error('英文,数字(长度不能低于18位字数),不可重复'))
+          return false;
+        } else {
+          callback()
+        }
       }
       return {
         dialogVisible: false,
@@ -113,6 +122,9 @@
           socialCreditCode: [{
 						required: true,
 						message: '请输入统一社会信用代码',
+						trigger: 'blur'
+					}, {
+						validator: checkSocialCreditCodeLength,
 						trigger: 'blur'
 					}],
           manageName: [{
@@ -205,7 +217,7 @@
           this.currentStep = 1
           this.isDetail = false
           this.visibleStep = false
-          this.isSave = true
+          this.isSave = false
           this.form = JSON.parse(JSON.stringify(formData));
         } else {
           this.title = '详情'
