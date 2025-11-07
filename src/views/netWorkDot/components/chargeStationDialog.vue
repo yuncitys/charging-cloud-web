@@ -99,20 +99,20 @@
 				</el-form-item>
 				<el-form-item :label="'人员值守'" prop="isDuty">
 					<el-radio-group v-model="formData.isDuty" :disabled = "isDetail">
-						<el-radio :label="0">否</el-radio>
-						<el-radio :label="1">是</el-radio>
+						<el-radio :label="false">否</el-radio>
+						<el-radio :label="true">是</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'独立报装'" prop="isAloneApply">
 					<el-radio-group v-model="formData.isAloneApply" :disabled = "isDetail">
-						<el-radio :label="0">否</el-radio>
-						<el-radio :label="1">是</el-radio>
+						<el-radio :label="false">否</el-radio>
+						<el-radio :label="true">是</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'公共停车场'" prop="isPublicParkingLot">
 					<el-radio-group v-model="formData.isPublicParkingLot" :disabled = "isDetail">
-						<el-radio :label="0">否</el-radio>
-						<el-radio :label="1">是</el-radio>
+						<el-radio :label="false">否</el-radio>
+						<el-radio :label="true">是</el-radio>
 					</el-radio-group>
 				</el-form-item>
 			</el-form>
