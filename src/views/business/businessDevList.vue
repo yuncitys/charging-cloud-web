@@ -8,20 +8,20 @@
 			<!-- <el-autocomplete style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminName"
 				:fetch-suggestions="querySearch" placeholder="请选择代理商" @select="handleSelect" clearable :debounce='0'
 				@change="changeName" @clear="handleFilter()">
-      </el-autocomplete> -->
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()"
-        placeholder="请选择代理商">
-          <el-option
-            v-for="item in dealerList"
-            :key="item.id"
-            :label="item.adminFullname"
-            :value="item.id">
-          </el-option>
-      </el-select>
+			</el-autocomplete> -->
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()"
+				placeholder="请选择代理商">
+				<el-option
+					v-for="item in dealerList"
+					:key="item.id"
+					:label="item.adminFullname"
+					:value="item.id">
+				</el-option>
+			</el-select>
 			<el-form-item>
-        <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
-          查询
-        </el-button>
+				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
+				查询
+				</el-button>
 			</el-form-item>
 		</el-form>
 
@@ -32,14 +32,14 @@
 			</el-table-column>
 			<el-table-column prop="deviceCode" label="设备号" align="center" :show-overflow-tooltip="isPc">
 			</el-table-column>
-      <el-table-column prop="deviceName" label="设备名称" align="center" :show-overflow-tooltip="isPc">
-      </el-table-column>
-      <el-table-column prop="networkName" label="站点名称" align="center" :show-overflow-tooltip="isPc">
-      </el-table-column>
-      <el-table-column prop="networkAddress" label="站点地址" align="center" :show-overflow-tooltip="isPc">
-      </el-table-column>
-      <el-table-column prop="orderCount" label="订单总数" align="center" sortable :show-overflow-tooltip="isPc">
-      </el-table-column>
+			<el-table-column prop="deviceName" label="设备名称" align="center" :show-overflow-tooltip="isPc">
+			</el-table-column>
+			<el-table-column prop="networkName" label="站点名称" align="center" :show-overflow-tooltip="isPc">
+			</el-table-column>
+			<el-table-column prop="networkAddress" label="站点地址" align="center" :show-overflow-tooltip="isPc">
+			</el-table-column>
+			<el-table-column prop="orderCount" label="订单总数" align="center" sortable :show-overflow-tooltip="isPc">
+			</el-table-column>
 			<el-table-column prop="countCashByCard" label="刷卡收入" align="center" sortable :show-overflow-tooltip="isPc">
 			</el-table-column>
 			<el-table-column prop="countCashByScan" label="扫码收入" align="center" sortable :show-overflow-tooltip="isPc">
@@ -86,9 +86,13 @@
 					page: 1,
 					limit: 10,
 					dealerId: '',
-					deviceCode: ''
+					deviceCode: '',
+					allocationStatus: 1,
+					chargingStationIds: '',
+					createTimeStart: '',
+					createTimeEnd: ''
 				},
-        dealerList: [],
+        		dealerList: [],
 				tableKey: 0,
 			}
 		},

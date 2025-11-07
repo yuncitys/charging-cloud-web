@@ -44,7 +44,7 @@
 					format="yyyy-MM-dd" value-format="yyyy-MM-dd">
 				</el-date-picker>
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
-				查询
+					查询
 				</el-button>
 
 				<!-- 导出Excel -->
@@ -138,7 +138,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-					dearId: '',
+					dealerId: '',
 					deviceCode: '',
 					allocationStatus: 1,
 					chargingStationIds:'',
