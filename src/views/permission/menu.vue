@@ -4,45 +4,46 @@
 			<div style="margin: 15px 0;">
 				<addPage type="parent" @getLists="getLists"></addPage>
 			</div>
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
-				highlight-current-row style="width: 100%;" align="center" row-key="id"
-				:tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
-				<el-table-column prop="id" label="id" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="title" label="菜单名称" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="icon" label="图标" align="center" width="150">
-					<template slot-scope="scope" style="text-align: center;height: 40px;">
-						<i :class="scope.row.icon" style="font-size: 26px;"></i>
-					</template>
-				</el-table-column>
-				<el-table-column prop="href" label="资源地址" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="perms" label="权限标识" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="parentId" label="父级Id" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="sorting" label="排序" align="center" sortable :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="grade" label="菜单等级" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column label="操作" align="center"  width="260">
-					<template slot-scope="scope">
-						<div style="display: flex;justify-content: center;align-items: center;">
-							<editPage :row_data="scope.row" @getLists="getLists"></editPage>
-							<div>
-								<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;" size="mini"
-									 v-if="btnAuthen.permsVerifAuthention(':permission:menu:delete')">
-									删除
-								</el-button>
+			<div class="menu-table-wrapper">
+				<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" :fit="false" style="min-width: 960px" 
+					highlight-current-row align="center" row-key="id" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
+					<el-table-column prop="id" label="id" align="center" :show-overflow-tooltip="isPc" min-width="80">
+					</el-table-column>
+					<el-table-column prop="title" label="菜单名称" align="center" :show-overflow-tooltip="isPc" min-width="180">
+					</el-table-column>
+					<el-table-column prop="icon" label="图标" align="center" min-width="180">
+						<template slot-scope="scope" style="text-align: center;height: 40px;">
+							<i :class="scope.row.icon" style="font-size: 26px;"></i>
+						</template>
+					</el-table-column>
+					<el-table-column prop="href" label="资源地址" align="center" :show-overflow-tooltip="isPc" min-width="180">
+					</el-table-column>
+					<el-table-column prop="perms" label="权限标识" align="center" :show-overflow-tooltip="isPc" min-width="180">
+					</el-table-column>
+					<el-table-column prop="parentId" label="父级Id" align="center" :show-overflow-tooltip="isPc" min-width="180">
+					</el-table-column>
+					<el-table-column prop="sorting" label="排序" align="center" sortable :show-overflow-tooltip="isPc" min-width="180">
+					</el-table-column>
+					<el-table-column prop="grade" label="菜单等级" align="center" :show-overflow-tooltip="isPc" min-width="180">
+					</el-table-column>
+					<el-table-column label="操作" align="center" min-width="260">
+						<template slot-scope="scope">
+							<div style="display: flex;justify-content: center;align-items: center;">
+								<editPage :row_data="scope.row" @getLists="getLists"></editPage>
+								<div>
+									<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;" size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:menu:delete')">
+										删除
+									</el-button>
+								</div>
+								<div>
+									<addPage type="childern" :id="scope.row.id" @getLists="getLists"></addPage>
+								</div>
 							</div>
-							<div>
-								<addPage type="childern" :id="scope.row.id" @getLists="getLists"></addPage>
-							</div>
-						</div>
-					</template>
-				</el-table-column>
-			</el-table>
+						</template>
+					</el-table-column>
+				</el-table>
+			</div>
 		</div>
 	</div>
 </template>
@@ -141,5 +142,20 @@
 </script>
 
 <style scoped="scoped">
-
+/* 给表格包一层，强制横向滚动 */
+.menu-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+/* 确保表格内容不会溢出 */
+.el-table {
+  width: auto !important; /* 让表格宽度自动适应内容 */
+}
+/* 确保固定列正确显示 */
+.el-table .fixed-right {
+  position: sticky;
+  position: -webkit-sticky; /* 兼容 Safari 浏览器 */
+  right: 0;
+  z-index: 100;
+}
 </style>
