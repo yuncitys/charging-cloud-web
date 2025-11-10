@@ -513,11 +513,11 @@
         console.log("切换到选项卡:", tab.name);
       },
       saveForm() {
-        if (this.form.chargingPointTypeId == ''){
+        if (this.form.chargingPointTypeId == '' || this.form.chargePointId == undefined){
           this.$message.error('请选择设备类型')
           return false
         }
-        if (this.form.chargePointId == ''){
+        if (this.form.chargePointId == '' || this.form.chargePointId == undefined){
           this.$message.error('请输入设备号')
           return false
         }
