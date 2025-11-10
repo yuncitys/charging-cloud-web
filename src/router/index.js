@@ -86,7 +86,7 @@ export const constantRoutes = [{
       component: () => import('@/views/user/wxuserList'),
       name: 'wxuserList',
       meta: {
-        title: '微信用户列表',
+        title: '微信用户',
         icon: 'el-icon-s-check',
       }
     }, {
@@ -94,7 +94,7 @@ export const constantRoutes = [{
       component: () => import('@/views/user/monthuserList'),
       name: 'monthuserList',
       meta: {
-        title: '月卡用户列表',
+        title: '月卡用户',
         icon: 'el-icon-s-check',
       }
     }]
@@ -106,7 +106,7 @@ export const constantRoutes = [{
     alwaysShow: true, // will always show the root menu
     name: 'business',
     meta: {
-      title: '经营统计',
+      title: '数据统计',
       icon: 'peoples',
     },
     children: [{
@@ -202,7 +202,7 @@ export const constantRoutes = [{
     alwaysShow: true, // will always show the root menu
     name: 'device',
     meta: {
-      title: '设备管理',
+      title: '站点设备',
       icon: 'el-icon-s-goods',
     },
     children: [{
@@ -242,7 +242,7 @@ export const constantRoutes = [{
       component: () => import('@/views/device/upgrade'),
       name: 'upgrade',
       meta: {
-        title: '升级软件列表',
+        title: '远程OTA升级',
         icon: 'el-icon-goods',
       }
     }, {
@@ -308,7 +308,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'log',
     meta: {
-      title: '日志管理',
+      title: '运维管理',
       icon: 'el-icon-wallet',
     },
     children: [{
@@ -316,7 +316,7 @@ export const constantRoutes = [{
         component: () => import('@/views/log/upDownRecordList'),
         name: 'upDownRecordList',
         meta: {
-          title: '设备上下线记录',
+          title: '设备日志',
           icon: 'el-icon-full-screen',
         }
       },
@@ -356,7 +356,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'join',
     meta: {
-      title: '加盟合作',
+      title: '运营管理',
       icon: 'el-icon-wallet',
     },
     children: [{
@@ -384,7 +384,7 @@ export const constantRoutes = [{
       component: () => import('@/views/order/scanOrderList'),
       name: 'scanOrderList',
       meta: {
-        title: '扫码订单列表',
+        title: '扫码订单',
         icon: 'el-icon-full-screen',
       }
     }, {
@@ -392,7 +392,7 @@ export const constantRoutes = [{
       component: () => import('@/views/order/cardOrderList'),
       name: 'cardOrderList',
       meta: {
-        title: '刷卡订单列表',
+        title: '刷卡订单',
         icon: 'el-icon-postcard',
       }
     }, {
@@ -400,7 +400,7 @@ export const constantRoutes = [{
       component: () => import('@/views/order/freeOrderList'),
       name: 'freeOrderList',
       meta: {
-        title: '免费订单列表',
+        title: '免费订单',
         icon: 'el-icon-connection',
       }
     }, {
@@ -408,7 +408,7 @@ export const constantRoutes = [{
       component: () => import('@/views/order/monthOrderList'),
       name: 'monthOrderList',
       meta: {
-        title: '包月订单列表',
+        title: '包月订单',
         icon: 'el-icon-connection',
       }
     }, ]
@@ -420,7 +420,7 @@ export const constantRoutes = [{
     alwaysShow: true, // will always show the root menu
     name: 'command',
     meta: {
-      title: '指令管理',
+      title: '运维管理',
       icon: 'el-icon-notebook-1',
     },
     children: [{
@@ -428,7 +428,7 @@ export const constantRoutes = [{
       component: () => import('@/views/command/commandList'),
       name: 'commandList',
       meta: {
-        title: '指令列表',
+        title: '设备指令',
         icon: 'el-icon-notebook-2',
       }
     }, ]
@@ -448,7 +448,7 @@ export const constantRoutes = [{
       component: () => import('@/views/AD/ADList'),
       name: 'ADList',
       meta: {
-        title: '广告列表',
+        title: '广告轮播图',
         icon: 'el-icon-star-off',
       }
     }, ]
@@ -460,7 +460,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'netWorkDot',
     meta: {
-      title: '站点管理',
+      title: '站点设备',
       icon: 'el-icon-s-help',
     },
     children: [{
@@ -468,7 +468,7 @@ export const constantRoutes = [{
       component: () => import('@/views/netWorkDot/netWorkDotList'),
       name: 'netWorkDotList',
       meta: {
-        title: '区域管理',
+        title: '站点管理',
         icon: 'el-icon-help',
       }
     }, ]
@@ -479,7 +479,7 @@ export const constantRoutes = [{
     redirect: '/charge/timeCharge',
     name: 'charge',
     meta: {
-      title: '收费方案',
+      title: '运营管理',
       icon: 'el-icon-reading',
     },
     children: [{
@@ -527,7 +527,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'recharge',
     meta: {
-      title: '充值方案管理',
+      title: '运营管理',
       icon: 'el-icon-wallet',
     },
     children: [{
@@ -563,7 +563,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'card',
     meta: {
-      title: '充电卡管理',
+      title: '用户管理',
       icon: 'el-icon-wallet',
     },
     children: [{
@@ -571,7 +571,7 @@ export const constantRoutes = [{
       component: () => import('@/views/card/cardList'),
       name: 'cardList',
       meta: {
-        title: '充电卡列表',
+        title: '电卡用户',
         icon: 'el-icon-wallet',
       }
     }]
@@ -728,7 +728,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'report',
     meta: {
-      title: '故障管理',
+      title: '运维管理',
       icon: 'el-icon-copy-document',
     },
     children: [{
@@ -736,7 +736,7 @@ export const constantRoutes = [{
       component: () => import('@/views/report/reportList'),
       name: 'reportList',
       meta: {
-        title: '故障列表',
+        title: '报障反馈',
         icon: 'el-icon-set-up',
       }
     }]
@@ -748,7 +748,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'agent',
     meta: {
-      title: '运营商管理',
+      title: '财务管理',
       icon: 'el-icon-s-fold',
     },
     children: [{
@@ -756,7 +756,7 @@ export const constantRoutes = [{
         component: () => import('@/views/agent/agentList'),
         name: 'agentList',
         meta: {
-          title: '代理商列表',
+          title: '账号管理',
           icon: 'el-icon-s-operation',
         }
       },
@@ -765,7 +765,7 @@ export const constantRoutes = [{
         component: () => import('@/views/agent/operatorList'),
         name: 'operatorList',
         meta: {
-          title: '运营商列表',
+          title: '租户管理',
           icon: 'el-icon-s-operation',
         }
       },
@@ -787,7 +787,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'Permission',
     meta: {
-      title: '权限管理',
+      title: '系统管理',
       icon: 'lock',
     },
     children: [{
@@ -826,7 +826,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'ConfigAdmin',
     meta: {
-      title: '配置管理',
+      title: '运营管理',
       icon: 'lock',
     },
     children: [{
@@ -834,7 +834,7 @@ export const constantRoutes = [{
       component: () => import('@/views/configAdmin/configAdminIndex'),
       name: 'configAdminIndex',
       meta: {
-        title: '配置权限',
+        title: '全局业务配置',
         icon: 'el-icon-s-custom',
       }
     }, {
@@ -854,7 +854,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'platform',
     meta: {
-      title: '平台logo',
+      title: '系统管理',
       icon: 'lock',
     },
     children: [{
@@ -862,7 +862,7 @@ export const constantRoutes = [{
       component: () => import('@/views/platformConfig/platformConfig'),
       name: 'platformConfig',
       meta: {
-        title: '平台logo',
+        title: '平台配置',
         icon: 'el-icon-s-custom',
       }
     }, ]
@@ -874,7 +874,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'iotcard',
     meta: {
-      title: '流量卡管理',
+      title: '财务管理',
       icon: 'lock',
     },
     children: [{
@@ -882,7 +882,7 @@ export const constantRoutes = [{
       component: () => import('@/views/iotCard/iotCardList'),
       name: 'iotCardList',
       meta: {
-        title: '流量卡列表',
+        title: '流量卡管理',
         icon: 'el-icon-s-custom',
       }
     }, ]
@@ -894,7 +894,7 @@ export const constantRoutes = [{
     alwaysShow: true,
     name: 'monitor',
     meta: {
-      title: '系统监控',
+      title: '运维管理',
       icon: 'lock',
     },
     children: [{
