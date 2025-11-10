@@ -2,11 +2,11 @@
   <div class="app-container">
     <div class="filter-container" >
       <el-input v-model="searchForm.email" style="width: 150px;margin-right: 20px ;" class="filter-item"
-				placeholder="用户邮箱" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+        placeholder="用户邮箱" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-input maxlength="11" minlength="11" v-model="searchForm.email" style="width: 150px;margin-right: 20px ;" class="filter-item"
-				placeholder="用户电话" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+        placeholder="用户电话" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-input maxlength="30" v-model="searchForm.email" style="width: 150px;margin-right: 20px ;" class="filter-item"
-				placeholder="发票抬头" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+        placeholder="发票抬头" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-select v-model="searchForm.invoiceState" placeholder="开票状态" style="width: 150px;margin-right: 20px ;" class="filter-item" clearable>
         <el-option v-for="item in invoiceStateOption" :key="item.value" :value="item.value" :label="item.name"></el-option>
       </el-select>
@@ -19,19 +19,23 @@
         start-placeholder="开始日期" end-placeholder="结束日期">
       </el-date-picker>
 
-      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
-				icon="el-icon-search">
-        查询
-      </el-button>
+      <div style="margin: 15px 0;">
+				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
+          icon="el-icon-search">
+          查询
+        </el-button>
+        <el-button type="primary" style="margin-right: 20px ;" class="filter-item" icon="el-icon-plus" @click="electronInvoice(null, 0)"
+          v-if="btnAuthen.permsVerifAuthention(':invoice:electronInvoiceById')">
+          批量开票
+        </el-button>
+			</div>
 
-      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="invoiceStatus"
-        v-if="btnAuthen.permsVerifAuthention(':invoiceLoginConfig:validateLogin')">登录</el-button>
-      <el-button type="danger" style="margin-right: 20px ;" class="filter-item" @click="queryFaceRecognitionCode(1)"
-        v-if="btnAuthen.permsVerifAuthention(':invoiceLoginConfig:queryFaceRecognitionCode')">人脸验证</el-button>
-      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" icon="el-icon-plus" @click="electronInvoice(null, 0)"
-        v-if="btnAuthen.permsVerifAuthention(':invoice:electronInvoiceById')">
-        批量开票
-      </el-button>
+      <div style="display: flex; justify-content: flex-end;">
+        <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="invoiceStatus"
+          v-if="btnAuthen.permsVerifAuthention(':invoiceLoginConfig:validateLogin')">登录</el-button>
+        <el-button type="danger" style="margin-right: 20px ;" class="filter-item" @click="queryFaceRecognitionCode(1)"
+          v-if="btnAuthen.permsVerifAuthention(':invoiceLoginConfig:queryFaceRecognitionCode')">人脸验证</el-button>
+      </div>
     </div>
 
     <el-table v-loading="listLoading" :key="tableKey" :data="list" @selection-change="handleSelectionChange" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
@@ -133,6 +137,7 @@
     </div>
 
     <redApplyInvoice ref="redApplyInvoice"></redApplyInvoice>
+
     <el-dialog class="el-form-login"
                title="提示"
                :visible.sync="dialogLoginVisible"
@@ -155,6 +160,7 @@
         <el-button type="primary" @click="initLogin" :loading="isLogin">确 定</el-button>
       </span>
     </el-dialog>
+
     <el-dialog class="el-form-login" title="请人脸识别验证" :visible.sync="dialogFaceVisible" width="30%" :show-close="true">
       <div class="verification-tip" v-if="verificationFlag == 1 || verificationFlag == 2">
         <span class="success-tip" v-if="verificationFlag == 1">验证已通过，可关闭弹窗开票</span>
@@ -517,61 +523,4 @@ export default {
 
 
 <style lang="scss" scoped>
-.el-form-login{
-  >>> .el-form-item__content{
-    display: flex;
-    justify-content: space-between;
-    width: 300px;
-  }
-  >>>.el-form{
-    display: grid;
-    justify-content: center;
-
-    .el-dialog__body{
-      padding: 20px;
-    }
-  }
-}
-.dataCount{
-  width: 100%;
-  height: 48px;
-  font-size: 14px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  span{
-    padding: 0 20px;
-    color: #666;
-    em{
-      font-size: 16px;
-      font-style: normal;
-      font-weight: 700;
-    }
-  }
-}
-.default-qr{
-  width: 300px;
-  height: 300px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #eee;
-  margin-left: auto;
-  margin-right: auto;
-  .qrcode{
-    font-size: 32px;
-    color: #999;
-  }
-
-}
-.verification-tip{
-  text-align: center;
-  padding-bottom: 20px;
-  .success-tip{
-    color: #13CE66;
-  }
-  .fail-tip{
-    color: red;
-  }
-}
 </style>
