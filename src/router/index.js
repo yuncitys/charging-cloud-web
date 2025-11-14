@@ -175,26 +175,6 @@ export const constantRoutes = [{
       title: '',
     },
   },
-  // {
-  // 	path: '/businesstwo',
-  // 	component: Layout,
-  // 	redirect: '/business/businessStatisticstwo',
-  // 	alwaysShow: true, // will always show the root menu
-  // 	name: 'business',
-  // 	meta: {
-  // 		title: '经营统计',
-  // 		icon: 'peoples',
-  // 	},
-  // 	children: [{
-  // 		path: 'businessStatistics',
-  // 		component: () => import('@/views/business/businessStatisticstwo'),
-  // 		name: 'businessStatistics',
-  // 		meta: {
-  // 			title: '经营报表',
-  // 			icon: 'el-icon-s-check',
-  // 		}
-  // 	}]
-  // },
   {
     path: '/device',
     component: Layout,
