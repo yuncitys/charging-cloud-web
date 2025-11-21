@@ -47,7 +47,7 @@
           			批量设置设备参数
 				</el-button>
 				<!--导出Excel  -->
-				<downExcel :queryData="listQuery" />
+				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onSyncDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
@@ -415,7 +415,7 @@
 					limit: 10,
 					ruleId: 1,
           			chargingStationIds: '',
-					devicePurpose: 'DIRECT_CONNECTION'
+					devicePurpose: 'DIRECT_CONNECTION',
 				},
 				cacheKey: 'deviceList',
 				formThead: {
@@ -426,7 +426,6 @@
 					deviceVersion: true,
           			deviceSim: true,
 					deviceImei: true,
-					allocationStatus: false,
 					networkName: true,
 					networkAddress: true,
 					activateStatus: false,
@@ -482,7 +481,7 @@
 				ruleId: 1,
 				priceTypeDialog: '',
 				//同步设备二维码
-				syncQRCodeBoxVisible: false
+				syncQRCodeBoxVisible: false,
 			}
 		},
 		filters: {
@@ -501,10 +500,14 @@
 					window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
 				},
 				deep: true   // 监听内部任意属性变化
-			}
+			},
 		},
 		mounted() {
-
+		},
+		computed: {
+			exportKeys() {
+				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
 		},
 		methods: {
 			getChargingStationList() {

@@ -42,7 +42,7 @@
           			批量设置设备参数
 				</el-button>
 				<!-- 导出Excel -->
-				<downExcel :queryData="listQuery" />
+				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 			</div>
 
 			<el-tabs v-model="activeName" type="card" @tab-click="handleClick">
@@ -279,7 +279,6 @@
 					deviceVersion: true,
 					deviceSim: true,
 					deviceImei: true,
-					allocationStatus: false,
 					activateStatus: false,
 					activateTime: false,
 					createTime: false,
@@ -337,6 +336,11 @@
 					this.$message.error(res.msg)
 				}
 			})
+		},
+		computed: {
+			exportKeys() {
+				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
 		},
 		methods: {
 			//切换导航

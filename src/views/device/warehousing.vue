@@ -43,7 +43,7 @@
           			批量设置设备参数
 				</el-button>
 				<!-- 导出Excel -->
-				<downExcel :queryData="listQuery" />
+				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 			</div>
 
 			<el-tabs v-model="activeName" type="card" @tab-click="handleClick">
@@ -58,15 +58,12 @@
 			<div class="filter-container">
 				<el-checkbox v-model="formThead.ruleId" label="产品名称">产品名称</el-checkbox>
 				<el-checkbox v-model="formThead.deviceCode" label="设备号">设备号</el-checkbox>
-				<!-- <el-checkbox v-model="formThead.deviceName" label="设备名称">设备名称</el-checkbox> -->
 				<el-checkbox v-model="formThead.deviceTypeName" label="设备类型">设备类型</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSignal" label="设备信号">设备信号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceVersion" label="设备版本">设备版本</el-checkbox>
 				<el-checkbox v-model="formThead.deviceImei" label="imei号">imei号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSim" label="sim号">sim号</el-checkbox>
 				<el-checkbox v-model="formThead.adminId" label="代理商">代理商</el-checkbox>
-				<!-- <el-checkbox v-model="formThead.networkName" label="所属站点">所属站点</el-checkbox>
-				<el-checkbox v-model="formThead.networkAddress" label="设备地址">设备地址</el-checkbox> -->
 				<el-checkbox v-model="formThead.deviceStatus" label="设备状态">设备状态</el-checkbox>
 				<el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox>
 				<el-checkbox v-model="formThead.feeName" label="计费标准">计费标准</el-checkbox>
@@ -291,16 +288,12 @@
 					deviceVersion: true,
 					deviceSim: true,
 					deviceImei: true,
-					allocationStatus: false,
-					// networkName: true,
-					// networkAddress: true,
 					activateStatus: false,
 					activateTime: false,
 					createTime: false,
 					deviceStatus: true,
 					priceType: true,
 					feeName: true,
-					deviceName: true,
 					adminId: false,
 				},
 				tags: [{
@@ -349,6 +342,11 @@
 					this.$message.error(res.msg)
 				}
 			})
+		},
+		computed: {
+			exportKeys() {
+				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
 		},
 		methods: {
 			//切换导航

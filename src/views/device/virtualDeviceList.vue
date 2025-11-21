@@ -49,7 +49,7 @@
           			批量设置设备参数
 				</el-button>
 				<!--导出Excel  -->
-				<downExcel :queryData="listQuery" />
+				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onSyncDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
@@ -438,7 +438,6 @@
 					deviceVersion: true,
           			deviceSim: true,
 					deviceImei: true,
-					allocationStatus: false,
 					networkName: true,
 					networkAddress: true,
 					activateStatus: false,
@@ -515,6 +514,11 @@
 		},
 		mounted() {
 
+		},
+		computed: {
+			exportKeys() {
+				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
 		},
 		methods: {
 			closeConnection(deviceCode){

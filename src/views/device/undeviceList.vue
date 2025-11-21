@@ -44,7 +44,7 @@
 				<!-- 导出配置 -->
 				<device-config @getLists="getLists" />
 				<!--导出Excel  -->
-				<downExcel :queryData="listQuery" />
+				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 			</div>
 
 			<el-tabs v-model="activeName" type="card"  @tab-click="handleClick">
@@ -358,14 +358,12 @@
 					deviceVersion: true,
 					deviceSim: false,
 					deviceImei: false,
-					allocationStatus: false,
 					activateStatus: false,
 					activateTime: false,
 					createTime: false,
 					deviceStatus: true,
 					priceType: true,
 					feeName: true,
-					deviceName: true,
 					adminId: false,
 				},
 				tags: [{
@@ -430,6 +428,11 @@
 					this.$message.error(res.msg)
 				}
 			})
+		},
+		computed: {
+			exportKeys() {
+				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
 		},
 		methods: {
 			//模板下载

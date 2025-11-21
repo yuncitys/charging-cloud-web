@@ -31,15 +31,21 @@
 				default () {
 					return {}
 				}
+			},
+			exportKeys: {
+				type: Array,
+				default () {
+					return {}
+				}
 			}
 		},
 		data() {
 			return {
-				downloadLoading: false,
+				downloadLoading: false
 			}
 		},
 		mounted() {
-
+			
 		},
 		computed: {
 
@@ -58,7 +64,8 @@
 					ruleId: this.queryData.ruleId,
 					chargingStationIds: this.queryData.chargingStationIds != undefined ? this.queryData.chargingStationIds : '',
 					deviceChargePattern: this.queryData.deviceChargePattern != undefined ? this.queryData.deviceChargePattern : '',
-					devicePurpose: this.queryData.devicePurpose != undefined ? this.queryData.devicePurpose : ''
+					devicePurpose: this.queryData.devicePurpose != undefined ? this.queryData.devicePurpose : '',
+					exportKeys: this.exportKeys.join(',')
 				}
 				downloadExcel(downloadData).then(res => {
 					if (res.code == 200) {

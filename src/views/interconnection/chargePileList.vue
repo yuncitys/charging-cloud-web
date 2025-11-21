@@ -36,7 +36,7 @@
 
 			<div style="margin: 15px 0;">
 				<!--导出Excel  -->
-				<downExcel :queryData="listQuery" />
+				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onupdateDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
@@ -451,6 +451,11 @@
 		},
 		mounted() {
 
+		},
+		computed: {
+			exportKeys() {
+				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
 		},
 		methods: {
 			closeConnection(deviceCode){
