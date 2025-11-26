@@ -156,6 +156,14 @@
         }
 	  },
     data() {
+      let checkPhone = (rule, value, callback) => {
+        if (!(/^(?:1[3-9]\d{9}|0\d{2,3}[-#]?\d{7,8}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})$/.test(value))) {
+          callback(new Error('手机号码格式有误，请重填'))
+          return false;
+        } else {
+          callback()
+        }
+      };
       return {
         dialogVisible: false,
         currentStep: 1,
@@ -186,6 +194,9 @@
           contactInfo: [{
 						required: true,
 						message: '请输入联系方式',
+						trigger: 'blur'
+					}, {
+						validator: checkPhone,
 						trigger: 'blur'
 					}],
           startChargingMoney: [{
