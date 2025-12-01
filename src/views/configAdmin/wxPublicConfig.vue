@@ -18,22 +18,22 @@
 					<editor1 v-model="formData.ABOUT_AS" toref="Editorc2" />
 				</div>
 			</el-card>
-      <el-card>
-      	<div slot="header">
-      		<h3 style="text-align: center;">使用说明协议</h3>
-      	</div>
-      	<div>
-      		<editor1 v-model="formData.USE_INFO" toref="Editorc3" />
-      	</div>
-      </el-card>
-      <el-card>
-      	<div slot="header">
-      		<h3 style="text-align: center;">隐私声明协议</h3>
-      	</div>
-      	<div>
-      		<editor1 v-model="formData.PRIVATE_INFO" toref="Editorc4" />
-      	</div>
-      </el-card>
+			<el-card>
+				<div slot="header">
+					<h3 style="text-align: center;">使用说明协议</h3>
+				</div>
+				<div>
+					<editor1 v-model="formData.USE_INFO" toref="Editorc3" />
+				</div>
+			</el-card>
+			<el-card>
+				<div slot="header">
+					<h3 style="text-align: center;">隐私声明协议</h3>
+				</div>
+				<div>
+					<editor1 v-model="formData.PRIVATE_INFO" toref="Editorc4" />
+				</div>
+			</el-card>
 			<div class="" style="margin-top: 50px; display: flex; justify-content: center;">
 				<el-button type="primary" @click="onSubmit">保存</el-button>
 				<el-button>取消</el-button>
@@ -60,8 +60,8 @@
 				formData: {
 					JOIN_IN: '',
 					ABOUT_AS: '',
-          USE_INFO: '',
-          PRIVATE_INFO: '',
+					USE_INFO: '',
+					PRIVATE_INFO: '',
 				}
 			}
 		},
@@ -93,8 +93,8 @@
 						let formData = res.data
 						this.formData.JOIN_IN = formData.JOIN_IN || ''
 						this.formData.ABOUT_AS = formData.ABOUT_AS || ''
-            this.formData.USE_INFO = formData.USE_INFO || ''
-            this.formData.PRIVATE_INFO = formData.PRIVATE_INFO || ''
+						this.formData.USE_INFO = formData.USE_INFO || ''
+						this.formData.PRIVATE_INFO = formData.PRIVATE_INFO || ''
 					} else {
 						this.$message.error(res.msg)
 					}
