@@ -40,7 +40,7 @@ module.exports = {
 		},
 		proxy: {
 			[process.env.VUE_APP_BASE_API]: {
-        target: 'http://127.0.0.1:8868',
+				target: 'http://127.0.0.1:8868',
 				changeOrigin: true,
 				pathRewrite: {
 					['^' + process.env.VUE_APP_BASE_API]: ''
@@ -48,6 +48,16 @@ module.exports = {
 			}
 		},
 		// before: require('./mock/mock-server.js')
+	},
+	css: {
+		loaderOptions: {
+			sass: {
+				implementation: require('sass'),
+				sassOptions: {
+					outputStyle: 'expanded'// 生效代码,更换打包压缩方式解决elementUI打包上线后icon图标偶尔乱码的问题
+				}	
+			}
+		}
 	},
 	configureWebpack: {
 		// provide the app's title in webpack's name field, so that
