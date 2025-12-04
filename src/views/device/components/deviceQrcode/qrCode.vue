@@ -4,7 +4,7 @@
 			:append-to-body="true" width="30%">
 			<div v-if="showqrCode">
 				<div style="text-align: center;font-weight: bold;margin-bottom: 20px;font-size: 30px;">
-          {{titleStr}}
+          			{{titleStr}}
 				</div>
 				<div style="text-align: center;width: 150px;margin: 0 auto;">
 					<div style="width: 150px;height: 150px;">

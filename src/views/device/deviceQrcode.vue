@@ -149,7 +149,7 @@
 <script>
 	import {
 		getList,
-    generateQR,
+    	generateQR,
 		unBindingQRCode
 	} from '@/api/device/deviceQrcode.js'
 	import {
