@@ -36,16 +36,17 @@
 		}], // 缩进
 		// [{'direction': 'rtl'}],                         // 文本方向
 		[{
+			color: []
+		}, {
+			background: []
+		}], // 字体颜色、字体背景颜色
+		[{
 			size: ["small", false, "large", "huge"]
 		}], // 字体大小
 		[{
 			header: [1, 2, 3, 4, 5, 6, false]
 		}], // 标题
-		[{
-			color: []
-		}, {
-			background: []
-		}], // 字体颜色、字体背景颜色
+		
 		[{
 			font: []
 		}], // 字体种类
@@ -235,14 +236,64 @@
 	import "quill/dist/quill.snow.css";
 	import "quill/dist/quill.bubble.css";
 	import * as Quill from 'quill'  // 引入编辑器
-	 import ImageResize from 'quill-image-resize-module';
-	 Quill.register('modules/imageResize',ImageResize);
-	 // 这里引入修改过的video模块并注册
-	 import Video from './video.js'
-	 Quill.register(Video, true)
-	import {
-		Loading
-	} from "element-ui";
+
+	// 引入quill-image-resize-module模块并注册
+	import ImageResize from 'quill-image-resize-module';
+	Quill.register('modules/imageResize',ImageResize);
+
+	// 这里引入修改过的video模块并注册
+	import Video from './video.js'
+	Quill.register(Video, true)
+
+	/* ---------- 关键：把 class  attributor 换成 style attributor ---------- */
+	const SizeStyle   = Quill.import('attributors/style/size')   // 字号
+	const ColorStyle  = Quill.import('attributors/style/color')  // 字体/背景色
+	const AlignStyle  = Quill.import('attributors/style/align')  // 对齐
+	const FontStyle   = Quill.import('attributors/style/font')   // 字体
+	const DirectionStyle = Quill.import('attributors/style/direction') //方向
+	// const IndentStyle = Quill.import('attributors/style/indent')   // 缩进.当前版本不支持修改为内嵌样式quill 1.3.7 发行包 漏编译 了 style/indent
+
+	/* 自定义白名单（想给多少给多少） */
+	SizeStyle.whitelist = null //['12px','14px','16px','18px','20px','24px','32px']
+	ColorStyle.whitelist = null          // null=不限制
+	FontStyle.whitelist  = null //['SimSun','Microsoft-YaHei','KaiTi','Arial']
+
+	/* 自己造一个行内 padding-left 版本 */
+	/* 把默认的 class 格式卸掉 */
+	// const IndentClass = Quill.import('attributors/class/indent')
+	// Quill.register(IndentClass, false)
+
+	/* 1. 先拿到 Parchment 基类 */
+	const Parchment = Quill.import('parchment')
+
+	/* 2. 自己造一个行内 padding-left 版本 */
+	const IndentStyle = new Parchment.Attributor.Style('indent', 'padding-left', {
+		scope: Parchment.Scope.BLOCK,
+		whitelist: null          // 不限级别，0-8 都允许
+	})
+
+	/* 3. 保持与 quill.css 相同的倍数：1 级 = 3em */
+	IndentStyle.add = function (node, value) {
+		console.log(node, value)
+		const level = parseInt(value, 10) || 0
+		console.log(level)
+		node.style.paddingLeft = level ? level + 'em' : ''
+		return node
+	}
+	IndentStyle.remove = function (node) {
+		node.style.paddingLeft = ''
+	}
+
+	/* 4. 直接注册即可；因为名字一样（indent），会覆盖内部默认实现 */
+	Quill.register({ 'formats/indent': IndentStyle }, true)
+	Quill.register(SizeStyle, true)
+	Quill.register(ColorStyle, true)
+	Quill.register(AlignStyle, true)
+	Quill.register(FontStyle, true)
+	Quill.register(DirectionStyle, true)
+	// Quill.register(IndentStyle, true)	// 缩进.当前版本不支持修改为内嵌样式quill 1.3.7 发行包 漏编译 了 style/indent
+	/* ------------------------------------------------------------------ */
+
 	import {
 		uploadImg
 	} from '@/api/goods/goods.js'
@@ -406,7 +457,6 @@
 				})
 			},
 			
-			
 			uploadError() { // 富文本图片上传失败
 				console.log(1111)
 				// loading动画消失
@@ -423,7 +473,6 @@
 					tip.setAttribute('title', item.title);
 				}
 			};
-
 		},
 		computed: {
 			editor() {
