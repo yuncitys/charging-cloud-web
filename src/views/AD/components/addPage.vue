@@ -55,9 +55,9 @@
 		updateImageCarousel,
 		uploadImg
 	} from '@/api/AD/ADList.js'
-  import {
-    getOperator
-  } from '@/api/agent/agentList.js'
+	import {
+		getOperator
+	} from '@/api/agent/agentList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
