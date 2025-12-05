@@ -1,8 +1,8 @@
 <template>
 	<div class="editorBox" v-loading="quillUpdateImg">
-		<el-upload style="display:none" class="avatar-uploader1" :action="serverUrl" name="file" :show-file-list="false"
-			:on-error="uploadError" :before-upload="beforeUpload" :http-request="uploadSuccess"></el-upload>
-        <el-upload style="display:none" class="video-uploader1" :action="serverUrl" name="file" :show-file-list="false"
+		<el-upload style="display:none" class="avatar-uploader1" action="" name="file" :show-file-list="false"
+			:on-error="uploadError" :before-upload="beforeUpload"  :http-request="uploadRquest"></el-upload>
+        <el-upload style="display:none" class="video-uploader1" action="" name="file" :show-file-list="false"
         	:on-error="uploadError" :before-upload="VbeforeUpload" :http-request="VuploadSuccess"></el-upload>
 		
 		<quill-editor class="editor" v-model="detail" ref="myQuillEditor" :options="editorOption"
@@ -295,11 +295,14 @@
 	/* ------------------------------------------------------------------ */
 
 	import {
-		uploadImg
-	} from '@/api/goods/goods.js'
+		uploadFile
+	} from '@/api/file.js'
 	export default {
 		props: {
 			value: { // 编辑器的内容
+				type: String
+			},
+			toref: { //编辑器
 				type: String
 			},
 			maxSize: { //图片大小
@@ -363,26 +366,20 @@
 						}
 					}
 				},
-				serverUrl: "http://120.24.242.251:9001/storage/create", // 这里写你要上传的图片服务器地址
-				header: { // 有的图片服务器要求请求头需要有token
-					//token: sessionStorage.token
-					"Authentication": localStorage.getItem("token")
-				},
 				//index: 0,
 			};
 		},
 		methods: {
 			onEditorBlur() { //失去焦点事件
-				//console.log(this.detail);
+				// console.log("onEditorBlur",this.detail);
 			},
 			onEditorFocus(event) { //获得焦点事件
 				// let quill = this.$refs.myQuillEditor.quill;
-				// console.log(quill.getSelection())
+				// console.log("onEditorFocus",quill.getSelection())
 				// this.index = quill.getSelection().index;  // 获取注焦后光标所在的位置小标
 			},
 			onEditorChange() { //内容改变事件
 				this.$emit("input", this.detail);
-
 			},
 			// 富文本图片上传前
 			beforeUpload(file) { // 显示loading动画
@@ -391,26 +388,39 @@
 				const isLt2M = file.size / 1024 / 1024 < 2
 
 				if (!isRightType) {
+					this.quillUpdateImg = false;
 					this.$message.error('只能上传jgp和png格式!')
 				}
 				if (!isLt2M) {
+					this.quillUpdateImg = false;
 					this.$message.error('图片大小不能超过2M')
 				}
 				return isRightType && isLt2M
 			},
-			uploadSuccess(file) { // res为图片服务器返回的数据
+			uploadRquest(file) { // res为图片服务器返回的数据
 			    this.quillUpdateImg = true;
 				// 获取富文本组件实例
 				let quill = this.$refs.myQuillEditor.quill;
+				console.log('当前实例', this.toref, quill)
 				var formData = new FormData(); //构造一个 FormData，把后台需要发送的参数添加
 				formData.append("file", file.file); //接口需要传的参数
-				uploadImg(formData).then(res => {
+				uploadFile('WebAnnexFile',formData).then(res => {
 					this.quillUpdateImg = false;
 					if (res.code == 200) {
-                        
-						let url = res.data
+
+						let url = this.Global.APIURl + res.data.url
 						
-						let length = quill.getSelection().index;
+						// let length = quill.getSelection().index;
+
+						// const range = quill.getSelection()
+  						// const length = range ? range.index : quill.getLength()
+
+						// 1. 让当前编辑器聚焦
+						quill.focus()
+						// 2. 再拿光标（一定不会返回 null）
+						const range = quill.getSelection(true)   // true = 强制重新计算
+						const length = range.index
+
 						// 插入图片  res.url为服务器返回的图片地址
 						quill.insertEmbed(length, "image", url);
 						quill.setSelection(length + 1); // 调整光标到最后
@@ -422,15 +432,16 @@
 			// 富文本视频上传前
 			VbeforeUpload(file) { // 显示loading动画
 				this.quillUpdateImg = true;
-				const isRightType = (file.type === 'video/mp4') || (file.type === 'video/m4v') || (file.type ===
-					'video/3gp') || (file.type === 'video/mov') || (file.type === 'video/avi') || (file.type ===
-					'video/m3u8') || (file.type === 'video/webm')
+				const isRightType = (file.type === 'video/mp4') || (file.type === 'video/m4v') || (file.type === 'video/3gp') 
+					|| (file.type === 'video/mov') || (file.type === 'video/avi') || (file.type === 'video/m3u8') || (file.type === 'video/webm')
 				const isLt2M = file.size / 1024 / 1024 < 60
 			
 				if (!isRightType) {
+					this.quillUpdateImg = false;
 					this.$message.error('只能上传mp4,mov,m4v,3gp,avi,m3u8,webm和wmv格式!')
 				}
 				if (!isLt2M) {
+					this.quillUpdateImg = false;
 					this.$message.error('视频大小不能超过60M')
 				}
 				return isRightType && isLt2M
@@ -441,11 +452,11 @@
 				let quill = this.$refs.myQuillEditor.quill;
 				var formData = new FormData(); //构造一个 FormData，把后台需要发送的参数添加
 				formData.append("file", file.file); //接口需要传的参数
-				uploadImg(formData).then(res => {
+				uploadFile('WebAnnexFile',formData).then(res => {
 					this.quillUpdateImg = false;
 					if (res.code == 200) {
 			            
-						let url = res.data
+						let url = this.Global.APIURl + res.data.url
 						
 						let length = quill.getSelection().index;
 						// 插入图片  res.url为服务器返回的图片地址
@@ -458,10 +469,14 @@
 			},
 			
 			uploadError() { // 富文本图片上传失败
-				console.log(1111)
 				// loading动画消失
 				this.quillUpdateImg = false;
 				this.$message.error("图片插入失败");
+			},
+
+			uploadSuccess(res) {
+				let url = res.url
+				console.log("uploadSuccess:",url)
 			},
 		},
 		mounted() {
