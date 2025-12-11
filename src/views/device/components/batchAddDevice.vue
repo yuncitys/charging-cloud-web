@@ -4,7 +4,7 @@
 			icon="el-icon-upload2" @click="onShowDevice" v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allAdd')">
 			批量导入设备
 		</el-button>
-		<el-dialog :visible.sync="showDevice" title="批量导入设备" @close="showDevice = false" :append-to-body="true">
+		<el-dialog :visible.sync="showDevice" title="批量导入设备" @close="closeDialog()" :append-to-body="true">
 			<el-form ref="addDeviceData" :model="addDeviceData" :rules="deviceRules" label-position="left"
 				label-width="100px" style="width: 600px; margin-left:50px;">
 				<el-form-item :label="'归属系列'" prop="ruleId">
@@ -46,7 +46,7 @@
 				</el-form-item>
 				<el-form-item :label="'设备数据'" prop="deviceData" required>
 					<!-- :multiple="false" :show-file-list="false"  -->
-					<el-upload drag multiple
+					<el-upload drag multiple ref="myUpload"
 						:http-request="upload"
 						:limit="1"
 						:before-upload="beforeUpload" 
@@ -170,6 +170,10 @@
 			}
 		},
 		methods: {
+			closeDialog(){
+				this.showDevice = false
+				this.resetForm('addDeviceData')
+			},
 			beforeUpload(file) {
 				const isRightSize = file.size / 1024 < 500
 				if (!isRightSize) this.$message.error('文件大小不能超过500KB')
@@ -342,6 +346,7 @@
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
+				this.$refs.myUpload.clearFiles();
 			},
 			//监听修改事件
 			currElectricOutChange(){
