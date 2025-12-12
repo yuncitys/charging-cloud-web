@@ -521,9 +521,9 @@
           this.$message.error('请输入设备号')
           return false
         }
-        if (this.form.chargePointId.length < 14){
-          this.$message.error('设备编号长度需为14位数字')
-          return false
+        if (this.form.chargePointId.length != 14){
+            this.$message.error("设备号长度不能超过14位，仅限由14位数字组成");
+            return false
         }
         let saveForm = {
           ruleId: 2,
