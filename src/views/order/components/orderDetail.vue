@@ -22,6 +22,7 @@
                 <span v-if="orderInfo.orderStatus === 0" style="color: red;">故障</span>
                 <span v-if="orderInfo.orderStatus === 1" style="color: orange;">进行中</span>
                 <span v-if="orderInfo.orderStatus === 2" style="color: green;">已完成</span>
+                <span v-if="orderInfo.orderStatus === 3" style="color: green;">待结算</span>
               </el-col>
               <el-col :span="4">
                 <span v-if="orderInfo.payStatus === 0" style="color: red;">未支付</span>
@@ -72,7 +73,14 @@
       <el-card class="box-card charge-details">
         <h3>充电明细</h3>
         <el-table :data="chargeDetails" style="width: 100%">
-          <el-table-column prop="timeFrame" label="充电时段" ></el-table-column>
+          <el-table-column prop="timeFrame" label="充电时段" >
+            <template slot-scope="scope">
+              <span v-if="scope.row.timeFrame == '0'">尖</span>
+              <span v-if="scope.row.timeFrame == '1'">峰</span>
+              <span v-if="scope.row.timeFrame == '2'">平</span>
+              <span v-if="scope.row.timeFrame == '3'">谷</span>
+            </template>
+          </el-table-column>
           <el-table-column prop="timeInterval" label="计费区间" ></el-table-column>
           <el-table-column prop="electricityPrice" label="电费单价(元/度)"></el-table-column>
           <el-table-column prop="servicePrice" label="服务费单价(元/度)"></el-table-column>
