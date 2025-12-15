@@ -39,10 +39,10 @@
     </div>
 
     <el-table v-loading="listLoading" :key="tableKey" :data="list" @selection-change="handleSelectionChange" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
+      <el-table-column type="selection" :selectable="selectable" width="60" align="center"></el-table-column>
       <el-table-column type="index" width="55" label="序号" align="center">
         <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
       </el-table-column>
-      <el-table-column type="selection" :selectable="selectable" width="60" align="center"></el-table-column>
       <el-table-column prop="buyerTel" label="手机号" min-width="150"></el-table-column>
       <el-table-column prop="buyerEmail" label="收件邮箱" width="180">
         <template v-slot="scope">
@@ -142,16 +142,17 @@
                title="提示"
                :visible.sync="dialogLoginVisible"
                width="540px"
-               :show-close="false">
+               :show-close="true"
+               :append-to-body="true">
       <div style="text-align: center; line-height: 3;">登录已失效，请重新登录</div>
       <div>
         <el-form :model="invoice" :inline="false" label-width="80px">
           <el-form-item label="账号">
-            <el-input v-model="invoice.account" placeholder="请输入账号" maxlength="50" style="width: 300px;"></el-input>
+            <el-input v-model="invoice.account" placeholder="请输入账号" maxlength="50" style="width: 280px;"></el-input>
           </el-form-item>
           <el-form-item label="验证码">
-            <el-input v-model="invoice.sms" placeholder="请输入验证码" maxlength="8" style="width: 200px;"></el-input>
-            <el-button type="primary" @click="sendSms" :disabled="isSendSms">{{ isSendSms ? `已发送${timer}s` : '发送验证码'}}</el-button>
+            <el-input v-model="invoice.sms" placeholder="请输入验证码" maxlength="8" style="width: 280px;"></el-input>
+            <el-button type="primary" @click="sendSms" :disabled="isSendSms" style="margin-left: 10px;">{{ isSendSms ? `已发送${timer}s` : '发送验证码'}}</el-button>
           </el-form-item>
         </el-form>
       </div>
