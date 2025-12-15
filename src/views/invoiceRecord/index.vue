@@ -3,9 +3,9 @@
     <div class="filter-container" >
       <el-input v-model="searchForm.email" style="width: 150px;margin-right: 20px ;" class="filter-item"
         placeholder="用户邮箱" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-      <el-input maxlength="11" minlength="11" v-model="searchForm.email" style="width: 150px;margin-right: 20px ;" class="filter-item"
+      <el-input maxlength="11" minlength="11" v-model="searchForm.phone" style="width: 150px;margin-right: 20px ;" class="filter-item"
         placeholder="用户电话" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-      <el-input maxlength="30" v-model="searchForm.email" style="width: 150px;margin-right: 20px ;" class="filter-item"
+      <el-input maxlength="30" v-model="searchForm.buyerTaxName" style="width: 150px;margin-right: 20px ;" class="filter-item"
         placeholder="发票抬头" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-select v-model="searchForm.invoiceState" placeholder="开票状态" style="width: 150px;margin-right: 20px ;" class="filter-item" clearable>
         <el-option v-for="item in invoiceStateOption" :key="item.value" :value="item.value" :label="item.name"></el-option>
