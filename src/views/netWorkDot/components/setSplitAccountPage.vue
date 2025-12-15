@@ -37,7 +37,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column prop="isHost" label="是否主分成人" >
+        <el-table-column prop="isHost" label="是否主分成人" width="130">
           <template #default="scope">
             <el-radio
               :label="true"
@@ -57,7 +57,7 @@
           </template>
         </el-table-column>
 
-        <el-table-column label="操作" >
+        <el-table-column label="操作" width="80">
           <template #default="scope">
             <el-button
               type="danger"
@@ -155,7 +155,7 @@
       	getSplitAccount(data).then(res => {
       		if (res.code == 200) {
             if (res.data.length === 0){
-              this.tableData = [{networkDotId: networkDotId, adminId: '', splitRate: '', isHost: true, remark: '' }]
+              this.tableData = []
             }else{
               this.tableData = res.data
             }
@@ -166,14 +166,16 @@
       },
       // 添加一行
       addRow() {
-        let previous = this.tableData.length - 1 < 0 ? 0 : this.tableData.length - 1;
-        if(this.tableData[previous].adminId == ''){
-          this.$message.error('请选择收款账号')
-          return false
-        }
-        if(this.tableData[previous].splitRate == ''){
-          this.$message.error('请设置分成比例')
-          return false
+        if (this.tableData.length > 0){
+          let previous = this.tableData.length - 1 < 0 ? 0 : this.tableData.length - 1;
+          if(this.tableData[previous].adminId == '' || this.tableData[previous].adminId == null || this.tableData[previous].adminId == undefined){
+            this.$message.error('请选择收款账号')
+            return false
+          }
+          if(this.tableData[previous].splitRate == '' || this.tableData[previous].splitRate == null || this.tableData[previous].splitRate == undefined){
+            this.$message.error('请设置分成比例')
+            return false
+          }
         }
         this.tableData.push({networkDotId: this.row_data.id, adminId: '', splitRate: '', isHost: false, remark: '' });
       },
@@ -192,14 +194,20 @@
       saveData() {
         let data = this.tableData
         let networkDotId = this.row_data.id
-        let previous = data.length - 1 < 0 ? 0 : data.length - 1;
-        if(data[previous].adminId == '' || data[previous].adminId == undefined){
-          this.$message.error('请选择收款账号')
-          return false
-        }
-        if(data[previous].splitRate == '' || data[previous].splitRate == undefined){
+        if (data == null){
           this.$message.error('请设置分成比例')
           return false
+        }
+        if (data.length > 0) {
+          let previous = data.length - 1 < 0 ? 0 : data.length - 1;
+          if(data[previous].adminId == '' || data[previous].adminId == undefined){
+            this.$message.error('请选择收款账号')
+            return false
+          }
+          if(data[previous].splitRate == '' || data[previous].splitRate == undefined){
+            this.$message.error('请设置分成比例')
+            return false
+          }
         }
         console.log('充电站',networkDotId,'保存的数据：',this.tableData);
         saveOrUpdate(networkDotId,data).then(res => {
