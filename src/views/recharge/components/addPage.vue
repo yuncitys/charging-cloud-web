@@ -28,7 +28,7 @@
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onaddData('addData')">确定</el-button>
-					<el-button @click="showAdd = false">取消</el-button>
+					<el-button @click="cancelAdd('addData')">取消</el-button>
 				</el-form-item>
 			</el-form>
 		</el-dialog>
@@ -50,6 +50,14 @@
 			}
 		},
 		data() {
+			let checkNumber = (rule, value, callback) => {
+				if (!(/^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/.test(value))) {
+					callback(new Error('请输入正整数或者最多2位正小数'))
+					return false;
+				} else {
+					callback()
+				}
+			};
 			return {
 				showAdd: false,
 				addData: {
@@ -64,10 +72,16 @@
 						required: true,
 						message: '请输入充值金额',
 						trigger: 'blur'
+					}, {
+						validator: checkNumber,
+						trigger: 'blur'
 					}],
 					giftAmount: [{
 						required: true,
 						message: '请输入赠送金额',
+						trigger: 'blur'
+					}, {
+						validator: checkNumber,
 						trigger: 'blur'
 					}],
 					adminId: [{
@@ -79,6 +93,11 @@
 			}
 		},
 		methods: {
+			cancelAdd(formName){
+				this.showAdd = false
+				this.clearValidate(formName)
+				this.resetForm(formName)
+			},
       		getOperator() {
 				getOperator().then(res => {
 					if (res.code == 200) {
@@ -112,6 +131,9 @@
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
+			},
+			clearValidate(formName) {
+				this.$refs[formName].clearValidate();
 			},
 		},
 		created() {

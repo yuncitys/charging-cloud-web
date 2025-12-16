@@ -26,7 +26,7 @@
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onEditData('editData')">确定</el-button>
-					<el-button @click="showEdit = false">取消</el-button>
+					<el-button @click="cancelEdit('editData')">取消</el-button>
 				</el-form-item>
 			</el-form>
 		</el-dialog>
@@ -51,6 +51,14 @@
 			}
 		},
 		data() {
+			let checkNumber = (rule, value, callback) => {
+				if (!(/^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/.test(value))) {
+					callback(new Error('请输入正整数或者最多2位正小数'))
+					return false;
+				} else {
+					callback()
+				}
+			};
 			return {
 				showEdit: false,
 				editData: {
@@ -64,10 +72,16 @@
 						required: true,
 						message: '请输入充值金额',
 						trigger: 'blur'
+					}, {
+						validator: checkNumber,
+						trigger: 'blur'
 					}],
 					giftAmount: [{
 						required: true,
 						message: '请输入赠送金额',
+						trigger: 'blur'
+					}, {
+						validator: checkNumber,
 						trigger: 'blur'
 					}],
 					adminId: [{
@@ -79,6 +93,13 @@
 			}
 		},
 		methods: {
+			cancelEdit(formName){
+				this.showEdit = false
+				// 清空校验状态
+      			this.clearValidate(formName)
+				// 表单值重置
+				this.resetForm(formName)
+			},
 			showDidlaoEditData() {
 				let item = this.row_data
 				this.showEdit = true
@@ -120,6 +141,9 @@
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
+			},
+			clearValidate(formName) {
+				this.$refs[formName].clearValidate();
 			},
 		},
 		created() {
