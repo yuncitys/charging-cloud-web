@@ -5,9 +5,14 @@
 				placeholder="请输入登录账号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.adminPhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入手机号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<el-autocomplete style="width: 200px;margin-right: 20px ;" class="filter-item"
+			<!-- <el-autocomplete style="width: 200px;margin-right: 20px ;" class="filter-item"
 				v-model="listQuery.adminName1" :fetch-suggestions="querySearch" placeholder="请选择角色"
-				@select="handleSelect" clearable :debounce='0' @change="changeName"></el-autocomplete>
+				@select="handleSelect" clearable :debounce='0' @change="changeName"></el-autocomplete> -->
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.roleId" filterable
+				clearable @change="handleFilter()" placeholder="请选择角色">
+				<el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id">
+				</el-option>
+			</el-select>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">查询</el-button>
 
@@ -157,6 +162,7 @@
 					adminPhone: ''
 				},
 				tableKey: 0,
+				roleList: []
 			}
 		},
 		filters: {
@@ -348,6 +354,7 @@
 				findRoleAllList().then(res => {
 					if (res.code == 200) {
 						this.restaurants = res.data
+						this.roleList = res.data
 					}
 				})
 			},
