@@ -127,6 +127,8 @@
 				this.dialogVisible = true
         this.refundData.payCode = scope.payCode
         this.refundData.tradingType = scope.payType
+        this.refundData.refundMoney = '',
+        this.refundData.remark = '',
         this.getTradingOrder(scope.payCode)
 			},
       getTradingOrder(payCode) {
@@ -166,7 +168,9 @@
         this.refundData.tradingOrders = tradingOrders
         tradingRefund(this.refundData).then(res => {
         	if (res.code == 200) {
-              this.$message.success(res.msg)
+            this.$message.success(res.msg)
+            this.dialogVisible = false
+            this.$emit('getLists')
         	} else {
         		this.$message.error(res.msg)
         	}
