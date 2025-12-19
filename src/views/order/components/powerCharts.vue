@@ -79,14 +79,14 @@
 						{{OrderListData.networkName}}
 					</div>
 				</div>
-        <div class="borderItem">
-        	<div class="itemleft borsa itemdiv">
-        		设备地址
-        	</div>
-        	<div class="itemright  borsa itemdivs">
-        		{{OrderListData.networkAddress}}
-        	</div>
-        </div>
+				<div class="borderItem">
+					<div class="itemleft borsa itemdiv">
+						设备地址
+					</div>
+					<div class="itemright  borsa itemdivs">
+						{{OrderListData.networkAddress}}
+					</div>
+				</div>
 				<div class="borderItem ">
 					<div class="itemleft borsa itemdiv ">
 						总金额
@@ -101,14 +101,6 @@
 					</div>
 					<div class="itemright  borsa itemdivs">
 						{{OrderListData.actualPrice}}
-					</div>
-				</div>
-				<div class="borderItem ">
-					<div class="itemleft borsa itemdiv ">
-						小程序名称
-					</div>
-					<div class="itemright  borsa itemdivs">
-						{{OrderListData.wxName}}
 					</div>
 				</div>
 				<div class="borderItem">
@@ -131,7 +123,7 @@
 					<div class="itemleft borsa itemdiv ">
 						计费标准
 					</div>
-					<div class="itemright  borsa itemdivs" style="width: 510px;" v-if="OrderListData.ruleId === 1">
+					<div class="itemright  borsa itemdivs" style="width: 510px;">
 						{{details}}
 					</div>
 				</div>
@@ -243,25 +235,30 @@
 							this.feeName = priceData.feeName
 							let priceType = priceData.priceType
 							let priceContentList = priceData.priceContents
-              console.log(priceContentList,"方案详情")
+              				console.log("方案详情",priceContentList)
 							let details = ''
 							let arr = []
-							let priceTypeText = ''
-							priceContentList.forEach((item, index) => {
-								let detail
-								if (priceType === 0) {
-									detail = item.duration + '小时' + "/" + item.money + "元"
-									priceTypeText = '计时'
-								} else if (priceType === 1) {
-									priceTypeText = '电量'
-									detail = item.duration + '度电' + "/" + item.money + "元"
-								} else if (priceType === 2) {
-									priceTypeText = '功率'
-									detail = item.powerSectionBefore + '-' + item.powerSectionAfter + 'W,' + item.duration + '小时' + "/" + item.money + "元"
-								}
-								arr[index] = detail
-							})
-							details = arr.join(";")
+							let priceTypeText = (priceType === 0 ? '计时' : (priceType === 1 ? '电量' : '功率'))
+							if (priceData.ruleId == 1){
+								priceContentList.forEach((item, index) => {
+									let detail
+									if (priceType === 0) {
+										detail = item.duration + '小时' + "/" + item.money + "元"
+									} else if (priceType === 1) {
+										detail = item.duration + '度电' + "/" + item.money + "元"
+									} else if (priceType === 2) {
+										detail = item.powerSectionBefore + '-' + item.powerSectionAfter + 'W,' + item.duration + '小时' + "/" + item.money + "元"
+									}
+									arr[index] = detail
+								})
+								details = arr.join(";")
+							} else if (priceData.ruleId == 2){
+								const jsonBill = JSON.parse(priceData.bill);
+								details	= "尖电费:" + jsonBill.jian + "元/度;" + "尖服务费:" + jsonBill.jianEx + "元/度;" + "\n"
+										+ "峰电费:" + jsonBill.feng + "元/度;" + "峰服务费:" + jsonBill.fengEx + "元/度;" + "\n"
+										+ "平电费:" + jsonBill.ping + "元/度;" + "平服务费:" + jsonBill.pingEx + "元/度;" + "\n"
+										+ "谷电费:" + jsonBill.gu + "元/度;" + "谷服务费:" + jsonBill.guEx + "元/度"; + "\n"
+							}
 							this.details = details
 							this.priceTypeText = priceTypeText
 							console.log(details,"方案详情")
@@ -271,7 +268,7 @@
 			},
 			//功率图数据
 			DevicePowerDetails() {
-        let orderCode = this.OrderListData.orderCode;
+        		let orderCode = this.OrderListData.orderCode;
 				let data = {
 					orderCode: orderCode
 				}
@@ -282,18 +279,18 @@
 					if (res.code == 200) {
 						let time = []
 						let expectedData = []
-            let tip = []
+            			let tip = []
 						let listData = res.data || []
 						if (listData.length != 0) {
 							listData.forEach((item, index) => {
 								expectedData.push(item.power)
-                tip.push(item)
+                				tip.push(item)
 								let date = item.createTime.slice(11, 16)
 								time.push(date)
 							})
 						}
 						lineChartData.newVisitis.expectedData = expectedData
-            lineChartData.newVisitis.tip = tip
+            			lineChartData.newVisitis.tip = tip
 						lineChartData.newVisitis.time = time
 						this.$nextTick(() => {
 							this.$refs.lineChart.hideLoading()
