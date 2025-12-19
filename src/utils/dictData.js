@@ -10,6 +10,9 @@ class dictData {
 			case 2:
 				return '已完成'
 				break;
+			case 2:
+				return '待结算'
+				break;
 		}
 	}
 }
