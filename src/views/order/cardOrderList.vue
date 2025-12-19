@@ -452,15 +452,21 @@
       }
     },
     mounted() {
-      getChargingStationList(0).then(res => {
-      	if (res.code == 200) {
-      		this.chargingStationList = res.data;
-      	} else {
-      		this.$message.error(res.msg)
-      	}
-      })
+      this.getChargingStationList(this.activeName)
     },
     methods: {
+      getChargingStationList(ruleId){
+        const data = {
+          ruleId: ruleId
+        }
+        getChargingStationList(data).then(res => {
+          if (res.code == 200) {
+            this.chargingStationList = res.data;
+          } else {
+            this.$message.error(res.msg)
+          }
+        })
+      },
       // 更多操作触发
       handleCommand(command, row) {
         switch (command) {
@@ -482,6 +488,7 @@
       },
       //切换导航
       handleClick(tab, event) {
+        this.getChargingStationList(tab.name)
         this.listQuery.ruleId = tab.name
         this.listQuery.page = 1,
         this.listQuery.limit = 10,

@@ -93,7 +93,11 @@
         },
         methods: {
             initTreeData(operatorId,operatorName){
-              getChargingStationList(operatorId).then(res => {
+              const data = {
+                tenantId: operatorId,
+                ruleId: 2
+              }
+              getChargingStationList(data).then(res => {
                 let treeData = {
                   id: parseInt(operatorId),
                   networkName: operatorName,

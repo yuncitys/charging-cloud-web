@@ -503,6 +503,7 @@
 			},
 		},
 		mounted() {
+			this.getChargingStationList(this.activeName)
 		},
 		computed: {
 			exportKeys() {
@@ -510,8 +511,11 @@
 			},
 		},
 		methods: {
-			getChargingStationList() {
-				getChargingStationList(0).then(res => {
+			getChargingStationList(ruleId){
+				const data = {
+					ruleId: ruleId
+				}
+				getChargingStationList(data).then(res => {
 					if (res.code == 200) {
 						this.chargingStationList = res.data;
 					} else {
@@ -521,6 +525,7 @@
 			},
 			//切换导航
 			handleClick(tab, event) {
+				this.getChargingStationList(tab.name)
 				this.listQuery.ruleId = tab.name
 				this.listQuery.page = 1,
 				this.listQuery.limit = 10,
@@ -915,7 +920,6 @@
 			}
 			this.getLists()
 			this.findDealerList()
-      		this.getChargingStationList()
 			this.getfindDevicePriceByPriceType()
 		},
 	}
