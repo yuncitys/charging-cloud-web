@@ -71,6 +71,7 @@
 				<el-checkbox v-model="formThead.activateStatus" label="激活状态">激活状态</el-checkbox>
 				<el-checkbox v-model="formThead.activateTime" label="激活时间">激活时间</el-checkbox>
 				<el-checkbox v-model="formThead.createTime" label="创建时间">创建时间</el-checkbox>
+				<el-checkbox v-model="formThead.deviceChargePattern" label="是否免费">是否免费</el-checkbox>
 			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -109,6 +110,14 @@
 				</el-table-column>
 				<el-table-column prop="deviceVersion" label="设备版本" v-if="formThead.deviceVersion" align="center"
 					:show-overflow-tooltip="isPc">
+				</el-table-column>
+				<el-table-column prop="deviceChargePattern" label="是否免费" v-if="formThead.deviceChargePattern" align="center"
+					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span v-if="scope.row.deviceChargePattern == 0">否</span>
+						<span v-if="scope.row.deviceChargePattern == 1">否</span>
+						<span v-if="scope.row.deviceChargePattern == 2">是</span>
+					</template>
 				</el-table-column>
 				<el-table-column prop="priceType" label="计费类型" v-if="formThead.priceType" align="center"
 					:show-overflow-tooltip="isPc">
@@ -365,6 +374,7 @@
 					priceType: true,
 					feeName: true,
 					adminId: false,
+					deviceChargePattern: true
 				},
 				tags: [{
 					title: '离线',
