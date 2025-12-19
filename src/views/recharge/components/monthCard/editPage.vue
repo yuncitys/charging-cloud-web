@@ -14,20 +14,20 @@
 				<el-form-item :label="'运营商户'" prop="tenantId">
 					<el-select style="width: 100%;" class="filter-item" v-model="editData.tenantId" filterable clearable disabled placeholder="请选择运营商" @change="handleChange">
 						<el-option
-						v-for="item in operatorList"
-						:key="item.operatorId"
-						:label="item.name"
-						:value="item.operatorId">
+							v-for="item in operatorList"
+							:key="item.operatorId"
+							:label="item.name"
+							:value="item.operatorId">
 						</el-option>
 					</el-select>
 				</el-form-item>
 				<el-form-item :label="'运营充电站'" prop="chargingStationId">
-					<el-select style="width: 100%;" class="filter-item" v-model="editData.chargingStationId" filterable clearable :disabled="isDisabled" placeholder="请选择运营站点">
+					<el-select style="width: 100%;" class="filter-item" v-model="editData.chargingStationId" filterable clearable disabled placeholder="请选择运营站点">
 						<el-option
-						v-for="item in chargingStationList"
-						:key="item.id"
-						:label="item.networkName"
-						:value="item.id">
+							v-for="item in chargingStationList"
+							:key="item.id"
+							:label="item.networkName"
+							:value="item.id">
 						</el-option>
 					</el-select>
 				</el-form-item>
@@ -41,7 +41,7 @@
 				</el-form-item>
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;">
 					<h2 v-if="editData.monthCardType === 0">
-					仅充电
+						仅充电
 					</h2>
 					<h2 v-if="editData.monthCardType === 1">
 						仅停车
@@ -104,34 +104,37 @@
 					</div>
 				</el-form-item>
 				<el-form-item :label="'续费规则'" prop="renewType">
-				<el-radio-group v-model="editData.renewType">
-						<el-radio :label="0">常规续费</el-radio>
-						<el-radio :label="1">从过期时间开始续</el-radio>
-				</el-radio-group>
-				<el-alert
-					v-if="editData.renewType === 0"
-					title="常规续费：用户选择续费时长(月数X)，若当前已过期则从当前时间开始续费X个月，若当前未过期则按实际过期时间开始续费X个月。"
-					type="info"
-					show-icon/>
-				<el-alert
-					v-if="editData.renewType === 1"
-					title="从过期开始续费：从月卡当前的过期时间续费X个月（该方式相当于收取了空白期费用）"
-					type="info"
-					show-icon/>
+					<el-radio-group v-model="editData.renewType">
+							<el-radio :label="0">常规续费</el-radio>
+							<el-radio :label="1">从过期时间开始续</el-radio>
+					</el-radio-group>
+					<el-alert
+						v-if="editData.renewType === 0"
+						title="常规续费：用户选择续费时长(月数X)，若当前已过期则从当前时间开始续费X个月，若当前未过期则按实际过期时间开始续费X个月。"
+						type="info"
+						show-icon
+						:closable="false"/>
+					<el-alert
+						v-if="editData.renewType === 1"
+						title="从过期开始续费：从月卡当前的过期时间续费X个月（该方式相当于收取了空白期费用）"
+						type="info"
+						show-icon
+						:closable="false"/>
 				</el-form-item>
 				<el-form-item label-width="120px" label="是否开通虚拟卡" prop="virtualCardEnabled">
-				<el-switch
-					v-model="editData.virtualCardEnabled"
-					active-text="开启"
-					inactive-text="关闭"
-					active-color="#67c23a">
-				</el-switch>
-				<!-- 提示信息 -->
-				<el-alert
-					v-if="!editData.virtualCardEnabled"
-					title="关闭后购买该月卡需填写实体卡卡号"
-					type="info"
-					show-icon/> <!--style="display: inline-block; vertical-align: middle;"-->
+					<el-switch
+						v-model="editData.virtualCardEnabled"
+						active-text="开启"
+						inactive-text="关闭"
+						active-color="#67c23a">
+					</el-switch>
+					<!-- 提示信息 -->
+					<el-alert
+						v-if="!editData.virtualCardEnabled"
+						title="关闭后购买该月卡需填写实体卡卡号"
+						type="info"
+						show-icon
+						:closable="false"/>
 				</el-form-item>
 
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
@@ -381,7 +384,11 @@
 				})
 			},
 			getChargingStationList(tenantId) {
-				getChargingStationList(tenantId).then(res => {
+				const data = {
+					ruleId: 1,
+					tenantId: tenantId
+				}
+				getChargingStationList(data).then(res => {
 					if (res.code == 200) {
 						this.chargingStationList = res.data;
 					} else {

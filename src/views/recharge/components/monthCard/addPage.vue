@@ -41,99 +41,102 @@
 				</el-form-item>
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;">
 					<h2 v-if="addData.monthCardType === 0">
-					仅充电
-				</h2>
-				<h2 v-if="addData.monthCardType === 1">
-					仅停车
-				</h2>
-				<el-form-item :label="'包月方式'" prop="chargingMonthType">
-					<div id="">
-						<el-radio-group v-model="addData.chargingMonthType">
-							<el-radio :label="1">限次包月</el-radio>
-						<el-radio :label="2">限总时长包月</el-radio>
-						</el-radio-group>
-					</div>
-				</el-form-item>
+						仅充电
+					</h2>
+					<h2 v-if="addData.monthCardType === 1">
+						仅停车
+					</h2>
+					<el-form-item :label="'包月方式'" prop="chargingMonthType">
+						<div id="">
+							<el-radio-group v-model="addData.chargingMonthType">
+								<el-radio :label="1">限次包月</el-radio>
+								<el-radio :label="2">限总时长包月</el-radio>
+							</el-radio-group>
+						</div>
+					</el-form-item>
 
-				<el-form-item v-if="addData.chargingMonthType === 1">
-					<div style="display: flex;align-items: center;">
-					<div style="width: 100px;">
-						<span>单月总次数</span>
-					</div>
-					<div>
-						<el-input placeholder="请输入次数" v-model="addData.monthTotal" type="number" style="width: 180px;">
-							<template slot="append">次</template>
-						</el-input>
-					</div>
+					<el-form-item v-if="addData.chargingMonthType === 1">
+						<div style="display: flex;align-items: center;">
 						<div style="width: 100px;">
-							<span>单日总次数</span>
+							<span>单月总次数</span>
 						</div>
 						<div>
-							<el-input placeholder="请输入次数" v-model="addData.dayTotal" type="number" style="width: 180px;">
+							<el-input placeholder="请输入次数" v-model="addData.monthTotal" type="number" style="width: 180px;">
 								<template slot="append">次</template>
 							</el-input>
 						</div>
-					</div>
-				</el-form-item>
-				<el-form-item v-if="addData.chargingMonthType === 2">
-					<div style="display: flex;align-items: center;">
-					<div style="width: 100px;">
-						<span>单月总时长</span>
-					</div>
-					<div>
-						<el-input placeholder="请输入时长" v-model="addData.monthTotal" type="number" style="width: 180px;">
-							<template slot="append">分钟</template>
-						</el-input>
-					</div>
+							<div style="width: 100px;">
+								<span>单日总次数</span>
+							</div>
+							<div>
+								<el-input placeholder="请输入次数" v-model="addData.dayTotal" type="number" style="width: 180px;">
+									<template slot="append">次</template>
+								</el-input>
+							</div>
+						</div>
+					</el-form-item>
+					<el-form-item v-if="addData.chargingMonthType === 2">
+						<div style="display: flex;align-items: center;">
 						<div style="width: 100px;">
-							<span>单日总时长</span>
+							<span>单月总时长</span>
 						</div>
 						<div>
-							<el-input placeholder="请输入时长" v-model="addData.dayTotal" type="number" style="width: 180px;">
+							<el-input placeholder="请输入时长" v-model="addData.monthTotal" type="number" style="width: 180px;">
 								<template slot="append">分钟</template>
 							</el-input>
 						</div>
-					</div>
-				</el-form-item>
+							<div style="width: 100px;">
+								<span>单日总时长</span>
+							</div>
+							<div>
+								<el-input placeholder="请输入时长" v-model="addData.dayTotal" type="number" style="width: 180px;">
+									<template slot="append">分钟</template>
+								</el-input>
+							</div>
+						</div>
+					</el-form-item>
 				</div>
 
 				<el-form-item :label="'购买权限'" prop="buyLimit">
 					<div id="">
 						<el-radio-group v-model="addData.buyLimit">
 							<el-radio :label="0">无限制</el-radio>
-					<!-- <el-radio :label="1">仅小区用户</el-radio> -->
+							<!-- <el-radio :label="1">仅小区用户</el-radio> -->
 						</el-radio-group>
 					</div>
 				</el-form-item>
 				<el-form-item :label="'续费规则'" prop="renewType">
-				<el-radio-group v-model="addData.renewType">
-						<el-radio :label="0">常规续费</el-radio>
-						<el-radio :label="1">从过期时间开始续</el-radio>
-				</el-radio-group>
-				<el-alert
-					v-if="addData.renewType === 0"
-					title="常规续费：用户选择续费时长(月数X)，若当前已过期则从当前时间开始续费X个月，若当前未过期则按实际过期时间开始续费X个月。"
-					type="info"
-					show-icon/>
-				<el-alert
-					v-if="addData.renewType === 1"
-					title="从过期开始续费：从月卡当前的过期时间续费X个月（该方式相当于收取了空白期费用）"
-					type="info"
-					show-icon/>
+					<el-radio-group v-model="addData.renewType">
+							<el-radio :label="0">常规续费</el-radio>
+							<el-radio :label="1">从过期时间开始续</el-radio>
+					</el-radio-group>
+					<el-alert
+						v-if="addData.renewType === 0"
+						title="常规续费：用户选择续费时长(月数X)，若当前已过期则从当前时间开始续费X个月，若当前未过期则按实际过期时间开始续费X个月。"
+						type="info"
+						show-icon
+						:closable="false"/>
+					<el-alert
+						v-if="addData.renewType === 1"
+						title="从过期开始续费：从月卡当前的过期时间续费X个月（该方式相当于收取了空白期费用）"
+						type="info"
+						show-icon
+						:closable="false"/>
 				</el-form-item>
 				<el-form-item label-width="120px" label="是否开通虚拟卡" prop="virtualCardEnabled">
-				<el-switch
-					v-model="addData.virtualCardEnabled"
-					active-text="开启"
-					inactive-text="关闭"
-					active-color="#67c23a">
-				</el-switch>
-				<!-- 提示信息 -->
-				<el-alert
-					v-if="!addData.virtualCardEnabled"
-					title="关闭后购买该月卡需填写实体卡卡号"
-					type="info"
-					show-icon/> <!--style="display: inline-block; vertical-align: middle;"-->
+					<el-switch
+						v-model="addData.virtualCardEnabled"
+						active-text="开启"
+						inactive-text="关闭"
+						active-color="#67c23a">
+					</el-switch>
+					<!-- 提示信息 -->
+					<el-alert
+						v-if="!addData.virtualCardEnabled"
+						title="关闭后购买该月卡需填写实体卡卡号"
+						type="info"
+						show-icon
+						:closable="false"/>
 				</el-form-item>
 
 				<div style="border: 1px solid #eee;padding: 10px;border-radius: 10px;margin-bottom: 30px;margin-top: 10px;">
@@ -261,52 +264,54 @@
 					id: 1,
 					monthCardType: 0,
 					title: "仅充电"
-				},{
-					id: 2,
-					monthCardType: 1,
-					title: "仅停车"
-				}],
+				},
+				// {
+				// 	id: 2,
+				// 	monthCardType: 1,
+				// 	title: "仅停车"
+				// }
+				],
 			}
 		},
 		methods: {
-      // querySearch(queryString, cb) {
-      // 	var restaurants = this.restaurants;
-      // 	let restaurantsText = []
-      // 	if (restaurants.length != '') {
-      // 		restaurants.forEach((item, index) => {
-      // 			let obj = {
-      // 				value: '',
-      // 				dealerId: ''
-      // 			}
-      // 			let value = item.adminName + "(" + item.adminFullname + ")"
-      // 			obj.value = value
-      // 			obj.dealerId = item.id
-      // 			restaurantsText.push(obj)
-      // 		})
-      // 	}
-      // 	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
-      // 	// 调用 callback 返回建议列表的数据
-      // 	cb(results);
-      // },
-      // changeName() {
-      // 	if (this.addData.netWorkDotName == '') {
-      // 		this.addData.netWorkDotId = ''
-      // 	}
-      // },
-      // changeNetworkDot(item) {
-      // 	this.addData.netWorkDotId = item.id
-      // 	this.addData.netWorkDotName = item.netWorkDotName + ''
-      // },
-      // queryNetwoekDot(){
-      //   queryNetwoekDot().then(res => {
-      //   	if (res.code == 200) {
-      //   		this.dealerList = res.data
-      //   		this.restaurants = this.dealerList;
-      //   	} else {
-      //   		this.$message.error(res.msg)
-      //   	}
-      //   })
-      // },
+			// querySearch(queryString, cb) {
+			// 	var restaurants = this.restaurants;
+			// 	let restaurantsText = []
+			// 	if (restaurants.length != '') {
+			// 		restaurants.forEach((item, index) => {
+			// 			let obj = {
+			// 				value: '',
+			// 				dealerId: ''
+			// 			}
+			// 			let value = item.adminName + "(" + item.adminFullname + ")"
+			// 			obj.value = value
+			// 			obj.dealerId = item.id
+			// 			restaurantsText.push(obj)
+			// 		})
+			// 	}
+			// 	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
+			// 	// 调用 callback 返回建议列表的数据
+			// 	cb(results);
+			// },
+			// changeName() {
+			// 	if (this.addData.netWorkDotName == '') {
+			// 		this.addData.netWorkDotId = ''
+			// 	}
+			// },
+			// changeNetworkDot(item) {
+			// 	this.addData.netWorkDotId = item.id
+			// 	this.addData.netWorkDotName = item.netWorkDotName + ''
+			// },
+			// queryNetwoekDot(){
+			// 	queryNetwoekDot().then(res => {
+			// 		if (res.code == 200) {
+			// 			this.dealerList = res.data
+			// 			this.restaurants = this.dealerList;
+			// 		} else {
+			// 			this.$message.error(res.msg)
+			// 		}
+			// 	})
+			// },
 			onaddData(formName) {
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
@@ -405,7 +410,11 @@
 				})
 			},
 			getChargingStationList(tenantId) {
-				getChargingStationList(tenantId).then(res => {
+				const data = {
+					ruleId: 1,
+					tenantId: tenantId
+				}
+				getChargingStationList(data).then(res => {
 					if (res.code == 200) {
 						this.chargingStationList = res.data;
 					} else {
