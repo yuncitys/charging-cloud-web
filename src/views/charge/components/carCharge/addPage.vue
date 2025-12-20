@@ -517,10 +517,13 @@
 					this.$message.error('时间区段价格设置有误！')
 					return
 				}
-				console.log('.....this.addData.periodTimePrices.periodPriceList......', this.addData.periodTimePrices
-					.periodPriceList)
+				console.log('.....this.addData.periodTimePrices.periodPriceList......', this.addData.periodTimePrices.periodPriceList)
 				if (!this.validePeriodTime(this.addData.periodTimePrices.periodPriceList)) {
 					this.$message.error('时间区段时间值错误')
+					return
+				}
+				if (this.unit === 0 && Number(this.preMoney) <= 0){
+					this.$message.error('预收金额必须大于0')
 					return
 				}
 				// 传到后台数据
@@ -580,7 +583,7 @@
 				let beginTime = [],
 					endTime = [],
 					flag = []
-					returnData.carTimePeriodList.forEach((item, index) => {
+				returnData.carTimePeriodList.forEach((item, index) => {
 					let bTime = item.stTime.split(':')
 					let eTime = item.enTime.split(':')
 					beginTime.push(bTime[0] + bTime[1])

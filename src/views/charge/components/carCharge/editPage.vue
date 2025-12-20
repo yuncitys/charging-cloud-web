@@ -591,9 +591,9 @@
 
 				let priceViewDetail = {};
 				if(typeof(item.priceView)=='string'){
-				priceViewDetail = JSON.parse(item.priceView);
+					priceViewDetail = JSON.parse(item.priceView);
 				}else{
-				priceViewDetail = item.priceView;
+					priceViewDetail = item.priceView;
 				}
 				item.priceView = priceViewDetail;
 				console.log(item.priceView,"挡位")
@@ -602,10 +602,10 @@
 				console.log(priceViewArr,"view")
 				let priceViewObj = []
 				priceViewArr.forEach((item, index) => {
-				let obj = {
-					id: item
-				}
-				priceViewObj.push(obj)
+					let obj = {
+						id: item
+					}
+					priceViewObj.push(obj)
 				})
 				let priceUnit = item.priceView.unit
 				this.unit = priceUnit
@@ -635,7 +635,6 @@
 					this.$message.error('请至少添加一个时间区段价格')
 					return false
 				}
-
 				let _Bean = true
 				this.editData.periodTimePrices.periodPriceList.forEach((item, index) => {
 					if (!item.periodTypeId) {
@@ -648,6 +647,10 @@
 				}
 				if (!this.validePeriodTime(this.editData.periodTimePrices.periodPriceList)) {
 					this.$message.error('时间区段时间值错误')
+					return
+				}
+				if (this.unit === 0 && Number(this.preMoney) <= 0){
+					this.$message.error('预收金额必须大于0')
 					return
 				}
 				// 传到后台数据
@@ -726,17 +729,17 @@
 				let timeList = this.timeList
 				let electricList = this.electricList
 				if( priceUnit === 0 ){
-				timeList.forEach((item, index) => {
+					timeList.forEach((item, index) => {
 						priceViewArr.push(item.id)
-				})
+					})
 				} else if (priceUnit === 2){
-				moneyList.forEach((item, index) => {
-						priceViewArr.push(item.id)
-				})
+					moneyList.forEach((item, index) => {
+							priceViewArr.push(item.id)
+					})
 				} else if (priceUnit === 1){
-				electricList.forEach((item, index) => {
-						priceViewArr.push(item.id)
-				})
+					electricList.forEach((item, index) => {
+							priceViewArr.push(item.id)
+					})
 				}
 				priceViewArr = priceViewArr.join(',')
 				priceView['view'] = priceViewArr
