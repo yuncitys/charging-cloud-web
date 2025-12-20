@@ -108,7 +108,7 @@
 					<div v-if="pageType === 2"
 						style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
 						<div v-for="(item,index) in moneyList" :key="index" style="width: 30%;">
-							<el-input placeholder="请输入金额" v-model="item.id" type="number"
+							<el-input placeholder="请输入金额" v-model="item.id" type="number" min="1" oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/^0/g,'')"
 								style="width: 200px;margin-bottom: 10px;">
 								<template slot="append">元</template>
 							</el-input>
@@ -117,7 +117,7 @@
 					<div v-if="pageType === 0"
 						style="display: flex;align-items: center;flex-wrap: wrap;margin-left: 20px;width: 100%;">
 						<div v-for="(item,index) in timeList" :key="index" style="width: 30%;">
-							<el-input placeholder="请输入时间" v-model="item.id" type="number"
+							<el-input placeholder="请输入时间" v-model="item.id" type="number" min="1" oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/^0/g,'')"
 								style="width: 200px;margin-bottom: 10px;">
 								<template slot="append">小时</template>
 							</el-input>
