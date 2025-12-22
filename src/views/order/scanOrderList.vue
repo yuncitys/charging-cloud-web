@@ -233,7 +233,8 @@
           <template slot-scope="scope">
             <el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
             <el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
-            <el-tag type="warning" v-if="scope.row.payStatus == 2">已退款 </el-tag>
+            <el-tag type="warning" v-if="scope.row.payStatus == 2">已退款</el-tag>
+            <el-tag type="warning" v-if="scope.row.payStatus == 3">部分退款</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="orderStatus" label="订单状态" v-if="formThead.orderStatus" align="center" min-width="120"
@@ -448,6 +449,10 @@
             id: 2,
             title: '已退款'
           },
+          {
+            id: 3,
+            title: '部分退款'
+          },
         ],
         tags: [{
             id: 0,
@@ -541,7 +546,7 @@
       //显示退款按钮
       showReturn(orderStatus, payStatus) {
         let flag = false
-        if (orderStatus === 2 && payStatus === 1) {
+        if ((orderStatus === 2 || orderStatus === 3) && payStatus === 1) {
           flag = true
         }
         return flag
