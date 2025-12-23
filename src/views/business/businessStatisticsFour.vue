@@ -24,7 +24,7 @@
       	@keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入用户手机号" v-model="listQuery.phoneNumber" class="filter-item" clearable
       	@keyup.enter.native="handleFilter" @clear="handleFilter()" />
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
+      <!-- <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
         placeholder="请选择代理商">
           <el-option
             v-for="item in dealerList"
@@ -32,7 +32,7 @@
             :label="item.adminFullname"
             :value="item.id">
           </el-option>
-      </el-select>
+      </el-select> -->
       <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
         查询
       </el-button>
@@ -357,7 +357,7 @@
       }
     },
     created() {
-      this.getDealerList()
+      // this.getDealerList()
       this.getChargingUserTradingCurve()
       this.getChargingUserTradingSingleList()
       this.getChargingUserTradingSectionList()
