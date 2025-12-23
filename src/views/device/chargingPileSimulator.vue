@@ -26,7 +26,7 @@
 
                 <!-- ChargePoint ID -->
                 <el-form-item label="设备编号">
-                  <el-input v-model="form.chargePointId" placeholder="请输入14位编号"></el-input>
+                  <el-input v-model="form.chargePointId" placeholder="请输入14位编号" maxlength="14"></el-input>
                 </el-form-item>
 
                 <!-- ChargePoint Model -->
