@@ -28,7 +28,7 @@
 				</el-table-column>
 				<el-table-column label="头像" prop="headImg" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<imgView :imgSrc="scope.row.headImg" />
+						<imgView v-if="scope.row.headImg != '' && scope.row.headImg != null && scope.row.headImg != undefined" :imgSrc="scope.row.headImg"/>
 					</template>
 				</el-table-column>
 				<el-table-column label="手机号" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
