@@ -69,7 +69,8 @@
 				uploadImg("WebAnnexFile",param).then(res => {
 					this.loading = false
 					if (res.code == 200) {
-						let imageUrl = this.Global.APIURl + res.data.url
+						// let imageUrl = this.Global.APIURl + res.data.url
+						let imageUrl = res.data.url
 						this.$emit('input', imageUrl)
 					} else {
 						this.$message.error('图片上传失败，原因:' + res.msg)
