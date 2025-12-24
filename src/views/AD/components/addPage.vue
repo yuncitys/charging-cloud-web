@@ -119,15 +119,6 @@
 			},
 		},
 		methods: {
-			getOperator() {
-				getOperator().then(res => {
-					if (res.code == 200) {
-						this.operatorList = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
-			},
 			changeTypes(e) {
 				console.log(e)
 				this.addAdData.imageUrl = ''
@@ -136,7 +127,6 @@
 			},
 			onShowAddAD() {
 				this.showAddAD = true
-        		this.getOperator()
 				this.$nextTick(() => {
 					this.$refs.upload.getType(1)
 				})

@@ -70,7 +70,7 @@
 			}
 		},
 		components: {
-      uploadFile
+      		uploadFile
 		},
 		data() {
 			return {
@@ -124,15 +124,6 @@
 			},
 		},
 		methods: {
-			getOperator() {
-				getOperator().then(res => {
-					if (res.code == 200) {
-						this.operatorList = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
-			},
 			changeTypes(e) {
 				console.log(e)
 				this.editAdData.imageUrl = ''
@@ -152,7 +143,6 @@
 				}
 				this.showEditAD = true
 				this.editAdData = edit
-        		this.getOperator()
 				this.$nextTick(()=>{
 					this.$refs.upload.getType(scope.types)
 				})
