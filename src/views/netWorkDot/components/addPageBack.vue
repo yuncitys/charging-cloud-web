@@ -320,10 +320,10 @@
 						networkLatitude: '',
 						ruleId: 1
 				},
-        this.getOperator()
-        this.$nextTick(() => {
-          this.initMap()
-        })
+				this.getOperator()
+				this.$nextTick(() => {
+					this.initMap()
+				})
 			},
 			onformData(formName) {
 				console.log(this.formData)
@@ -354,15 +354,15 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-      getOperator() {
-      	getOperator().then(res => {
-      		if (res.code == 200) {
-      			this.operatorList = res.data
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
-      },
+			getOperator() {
+				getOperator().then(res => {
+					if (res.code == 200) {
+						this.operatorList = res.data
+					} else {
+						this.$message.error(res.msg)
+					}
+				})
+			},
 		},
 		created() {
 
