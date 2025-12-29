@@ -50,3 +50,10 @@ export function deleteMerchant(id) {
 		method: 'delete'
 	})
 }
+
+export function synchronizationStation(merchantId) {
+	return request({
+		url: '/api/web/interconnection/synchronizationStation/' + merchantId,
+		method: 'get'
+	})
+}
