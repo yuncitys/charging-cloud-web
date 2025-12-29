@@ -222,9 +222,9 @@
                 				</div>
 
 								<div v-if="scope.row.operationState == 1 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')">
-								<el-button type="primary" @click="onOperationDevice(scope.row.id,0)" size='mini'>
-									启用
-								</el-button>
+									<el-button type="primary" @click="onOperationDevice(scope.row.id,0)" size='mini'>
+										启用
+									</el-button>
 								</div>
 
 								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
