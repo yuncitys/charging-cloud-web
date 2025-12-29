@@ -157,7 +157,7 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="220" fixed="right">
+				<el-table-column label="操作" align="center" width="420" fixed="right">
 					<template slot-scope="scope">
 						<div style="display: flex;align-items: center;justify-content: space-around;">
 							<div>
@@ -170,6 +170,16 @@
 									class="top10">
 									<!-- 详情 -->
 									<device-detail :row_data="scope.row" />
+								</div>
+							</div>
+
+							<div>
+								<editDeviceType :row_data="scope.row" @getLists="getLists"></editDeviceType>
+								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
+									style="margin-top: 10px;margin-left: 0px;">
+									<el-button type="primary" @click="showonPriceType(scope.row)" size='mini'>
+										收费方案
+									</el-button>
 								</div>
 							</div>
 
