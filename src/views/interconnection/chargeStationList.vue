@@ -49,8 +49,8 @@
 				</el-table-column> -->
 				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="merchantName" label="归属商户" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
+				<!-- <el-table-column prop="merchantName" label="归属商户" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column prop="networkName" label="充电站名称" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<!-- <el-table-column prop="networkProvince" label="省" align="center" :show-overflow-tooltip='isPc'>
@@ -110,7 +110,7 @@
 						</el-select>
 					</el-form-item>
 					<el-form-item>
-						<el-button type="primary" @click="">确定</el-button>
+						<el-button type="primary" :loading="btnLoading" @click="synchronizationStation()">确定</el-button>
 						<el-button @click="showSyncStation = false">取消</el-button>
 					</el-form-item>
 				</el-form>
@@ -128,7 +128,8 @@
 		findDealerList,
 	} from '@/api/device/deviceList.js'
 	import {
-		getMerchantList
+		getMerchantList,
+		synchronizationStation
 	} from '@/api/interconnection/merchant.js'
 	import {
 		parseTime
@@ -147,7 +148,7 @@
 		},
 		data() {
 			return {
-				activeName: '1',
+				activeName: '2',
         		ruleIdList: [{
 					id: '1',
 					title: '单车'
@@ -166,7 +167,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-					ruleId: 1,
+					ruleId: 2,
 					type: 2,
 					adminId: '',
 					networkName: '',
@@ -174,6 +175,7 @@
 					networkAddress: '',
 				},
 				tableKey: 0,
+				btnLoading: false,
 				syncStationForm: {
 					merchantId: ''
 				},
@@ -201,7 +203,24 @@
 			//同步站点
 			onSyncStation() {
 				this.showSyncStation = true
+				this.syncStationForm = {merchantId: ''}
 				this.getMerchantList()
+			},
+			synchronizationStation() {
+				this.btnLoading = true;
+				const merchantId = this.syncStationForm.merchantId
+				synchronizationStation(merchantId).then(res => {
+					if (res.code == 200) {
+						console.log(res)
+						this.showSyncStation = false
+						this.getLists()
+						this.$message.success(res.msg)
+					} else {
+						this.$message.error(res.msg)
+					}
+					this.btnLoading = false
+				})
+				
 			},
 			//切换导航
 			handleClick(tab, event) {
