@@ -3,6 +3,8 @@
 		<div class="filter-container">
 			<el-input v-model="listQuery.orderCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入结算单号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.splitOrderCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入分账单号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -41,6 +43,8 @@
 				<el-table-column label="分账金额(元)" prop="splitAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column label="追回金额(元)" prop="refundedAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
@@ -115,6 +119,7 @@
 					status: '',
 					adminId: '',
 					orderCode: '',
+					splitOrderCode: '',
 					createTimeStart: '',
 					createTimeEnd: ''
 				},
@@ -208,7 +213,7 @@
 			},
 		},
 		created() {
-			this.listQuery.orderCode = this.$route.query.orderCode || ''
+			this.listQuery.splitOrderCode = this.$route.query.orderCode || ''
 			this.getList()
 			this.findDealerList()
 		},
