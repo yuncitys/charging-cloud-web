@@ -40,6 +40,14 @@
 			</el-table-column>
 			<el-table-column prop="orderCount" label="订单总数" align="center" sortable :show-overflow-tooltip="isPc">
 			</el-table-column>
+			<el-table-column prop="totalDuration" label="充电时长" align="center" sortable :show-overflow-tooltip="isPc">
+			</el-table-column>
+			<el-table-column prop="totalPower" label="使用电量" align="center" sortable :show-overflow-tooltip="isPc">
+			</el-table-column>
+			<el-table-column prop="totalElectricityPrice" label="电费" align="center" sortable :show-overflow-tooltip="isPc">
+			</el-table-column>
+			<el-table-column prop="totalServicePrice" label="服务费" align="center" sortable :show-overflow-tooltip="isPc">
+			</el-table-column>
 			<el-table-column prop="countCashByCard" label="刷卡收入" align="center" sortable :show-overflow-tooltip="isPc">
 			</el-table-column>
 			<el-table-column prop="countCashByScan" label="扫码收入" align="center" sortable :show-overflow-tooltip="isPc">
