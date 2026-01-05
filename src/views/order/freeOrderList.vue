@@ -214,6 +214,13 @@
             <el-tag type="danger" v-if="scope.row.priceType == 2">功率</el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="payStatus" label="支付状态" v-if="formThead.payStatus" align="center"
+          :show-overflow-tooltip="isPc">
+          <template slot-scope="scope">
+            <el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
+            <el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="orderStatus" label="订单状态" v-if="formThead.orderStatus" align="center" min-width="120"
           :show-overflow-tooltip="isPc">
           <template slot-scope="scope">
