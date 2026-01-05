@@ -456,7 +456,6 @@
 								if (_item.label <= item.stTime && item.stTime) {
 									this.editData.disabledItems.push(_item.label)
 								}
-
 							}
 						} else {
 							if (item.stTime && item.enTime) { // 其他行
