@@ -147,7 +147,7 @@
         </el-table-column>
         <el-table-column label="投币支付(元)" prop="insertCoinsPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
-        <el-table-column label="支付宝支付(元)" prop="AlipayPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="支付宝支付(元)" prop="alipayPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
         <el-table-column label="月卡支付(元)" prop="monthCardPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
         </el-table-column>
