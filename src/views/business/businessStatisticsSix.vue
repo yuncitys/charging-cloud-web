@@ -167,7 +167,7 @@
         sectionList: [],
         listQuery: {
         	timeType: 3,
-        	startTime: this.formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),3),
+        	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
         	endTime: this.formatDate(new Date(),3),
         	adminId: '',
         	page: 1,
@@ -195,7 +195,7 @@
         dateFormat: 'yyyy-MM-dd',  // 默认日期格式
         dateValueFormat: 'yyyy-MM-dd', // 默认传递的值的格式
         defaultDateRange: [
-          this.formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),3), // 一周前的日期
+          this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3), // 一周前的日期
           this.formatDate(new Date(),3)  // 今天的日期
         ],
         pickerOptions: {
@@ -217,7 +217,7 @@
           this.dateFormat = 'yyyy-MM-dd';
           this.dateValueFormat = 'yyyy-MM-dd';
           this.defaultDateRange = [
-            this.formatDate(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),value), // 一周前的日期
+            this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),value), // 一周前的日期
             this.formatDate(new Date(),value)  // 今天的日期
           ]
           console.log("defaultDateRange",this.defaultDateRange)
