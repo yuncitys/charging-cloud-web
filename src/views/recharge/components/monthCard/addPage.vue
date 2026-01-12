@@ -131,18 +131,18 @@
 						</div>
 					</div>
 					<div style="margin: 30px 0;margin-left: 20px;">
-						<div v-for="(item, index) in addData.monthPriceConfig.priceConfig" :key="index" class="formItem">
+						<div v-for="(item, index) in addData.monthPriceConfigObj.priceConfig" :key="index" class="formItem">
 							<div style="display: flex;align-items: center;">
 								<div>
 									<div class="flex inputBoxx" style="align-items: center;">
 										<div class="inputCom">
-											<el-input v-model="addData.monthPriceConfig.priceConfig[index].month" placeholder="每月按30天计算" type="number" clearable>
+											<el-input v-model="addData.monthPriceConfigObj.priceConfig[index].month" placeholder="每月按30天计算" type="number" clearable>
 												<template slot="append">月</template>
 											</el-input>
 										</div>
 										<div style="width: 20px;text-align: center;">/</div>
 										<div class="inputCom">
-											<el-input v-model="addData.monthPriceConfig.priceConfig[index].money" placeholder="请输入正整数" type="number" clearable>
+											<el-input v-model="addData.monthPriceConfigObj.priceConfig[index].money" placeholder="请输入正整数" type="number" clearable>
 												<template slot="append">元</template>
 											</el-input>
 										</div>
@@ -188,11 +188,12 @@
 					virtualCardEnabled: true,
 					monthCardType: 0,
 					chargingMonthType: 1,
-					monthTotal: 0,
-					dayTotal: 0,
+					monthTotal: '',
+					dayTotal: '',
 					buyLimit: 0,
 					renewType: 1,
-					monthPriceConfig:{
+					monthPriceConfig: '',
+					monthPriceConfigObj: {
 						"priceConfig":[{
 							month: '',
 							money: ''
@@ -313,12 +314,12 @@
 						this.$message.error('必填项不能为空')
 						return false
 					}
-					if (this.addData.monthPriceConfig.priceConfig.length === 0) {
+					if (this.addData.monthPriceConfigObj.priceConfig.length === 0) {
 						this.$message.error('最少添加一项收费标准')
 						return false
 					}
 					console.log(this.addData,"请求参数")
-					this.addData.monthPriceConfig = JSON.stringify(this.addData.monthPriceConfig)
+					this.addData.monthPriceConfig = JSON.stringify(this.addData.monthPriceConfigObj)
 					console.log(this.addData,"请求参数")
 					if (valid) {
 						console.log("通过")
@@ -326,12 +327,11 @@
 							if (res.code == 200) {
 								this.showAdd = false
 								this.resetForm(formName)
-                			this.$emit('getLists')
+                				this.$emit('getLists')
 								this.$message.success(res.msg)
 							} else {
 								this.$message.error(res.msg)
 							}
-							this.addData.monthPriceConfig = JSON.parse(this.addData.monthPriceConfig)
 							console.log(this.addData)
 						})
 					} else {
@@ -345,13 +345,13 @@
 			},
 			//添加标准
 			addForm(type) {
-				let length = this.addData.monthPriceConfig.priceConfig.length;
+				let length = this.addData.monthPriceConfigObj.priceConfig.length;
 				if (length >= 6){
 					this.$message.error('最多添加6个收费标准')
 					return false
 				}
 				let index = length - 1
-				let duration = this.addData.monthPriceConfig.priceConfig[index]
+				let duration = this.addData.monthPriceConfigObj.priceConfig[index]
 				if (duration.month === ''){
 					this.$message.error('月数不能为空')
 					return false
@@ -373,17 +373,17 @@
 					money: '',
 				}
 				console.log(obj)
-				this.addData.monthPriceConfig.priceConfig.push(obj)
+				this.addData.monthPriceConfigObj.priceConfig.push(obj)
 			},
 			//删除标准
 			delForm(index, type) {
-				let duration = this.addData.monthPriceConfig.priceConfig || []
+				let duration = this.addData.monthPriceConfigObj.priceConfig || []
 				if (duration.length === 1) {
 					this.$message.error('至少有一个收费标准')
 					return false
 				}
-				this.addData.monthPriceConfig.priceConfig.splice(index, 1)
-				this.addData.monthPriceConfig.priceConfig.splice(index, 1)
+				this.addData.monthPriceConfigObj.priceConfig.splice(index, 1)
+				this.addData.monthPriceConfigObj.priceConfig.splice(index, 1)
 			},
 			handleChange(value) {
 				console.log('选中的值是:', value);

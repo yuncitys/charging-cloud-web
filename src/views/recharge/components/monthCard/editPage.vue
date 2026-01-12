@@ -133,18 +133,18 @@
 						</div>
 					</div>
 					<div style="margin: 30px 0;margin-left: 20px;">
-						<div v-for="(item, index) in editData.monthPriceConfig.priceConfig" :key="index" class="formItem">
+						<div v-for="(item, index) in editData.monthPriceConfigObj.priceConfig" :key="index" class="formItem">
 							<div style="display: flex;align-items: center;">
 								<div>
 									<div class="flex inputBoxx" style="align-items: center;">
 										<div class="inputCom">
-											<el-input v-model="editData.monthPriceConfig.priceConfig[index].month" placeholder="每月按30天计算" type="number" clearable>
+											<el-input v-model="editData.monthPriceConfigObj.priceConfig[index].month" placeholder="每月按30天计算" type="number" clearable>
 												<template slot="append">月</template>
 											</el-input>
 										</div>
 										<div style="width: 20px;text-align: center;">/</div>
 										<div class="inputCom">
-											<el-input v-model="editData.monthPriceConfig.priceConfig[index].money" placeholder="请输入正整数" type="number" clearable>
+											<el-input v-model="editData.monthPriceConfigObj.priceConfig[index].money" placeholder="请输入正整数" type="number" clearable>
 												<template slot="append">元</template>
 											</el-input>
 										</div>
@@ -196,11 +196,12 @@
 					tenantId: '',
 					virtualCardEnabled: true,
 					chargingMonthType: 1,
-					monthTotal:0,
-					dayTotal:0,
+					monthTotal: '',
+					dayTotal: '',
 					buyLimit: 0,
 					renewType: 1,
-					monthPriceConfig:{
+					monthPriceConfig: '',
+					monthPriceConfigObj: {
 						"priceConfig":[{
 							month:'',
 							money:''
@@ -279,7 +280,7 @@
 				this.editData.chargingMonthType = item.chargingMonthType
 				this.editData.monthTotal = item.monthTotal
 				this.editData.dayTotal = item.dayTotal
-				this.editData.monthPriceConfig = JSON.parse(item.monthPriceConfig)
+				this.editData.monthPriceConfigObj = JSON.parse(item.monthPriceConfig)
 				this.getChargingStationList(item.tenantId)
 				console.log(this.editData,"编辑参数")
 			},
@@ -300,12 +301,12 @@
 					this.$message.error('必填项不能为空')
 					return false
 				}
-				if (this.editData.monthPriceConfig.priceConfig.length === 0) {
+				if (this.editData.monthPriceConfigObj.priceConfig.length === 0) {
 					this.$message.error('最少添加一项收费标准')
 					return false
 				}
 				console.log(this.editData,"请求参数")
-				this.editData.monthPriceConfig = JSON.stringify(this.editData.monthPriceConfig)
+				this.editData.monthPriceConfig = JSON.stringify(this.editData.monthPriceConfigObj)
 				console.log(this.editData,"请求参数")
 				edit(this.editData).then(res => {
 					if (res.code == 200) {
@@ -316,7 +317,6 @@
 					} else {
 						this.$message.error(res.msg)
 					}
-					this.editData.monthPriceConfig = JSON.parse(this.editData.monthPriceConfig)
 				})
 			},
 			resetForm(formName) {
@@ -324,13 +324,13 @@
 			},
 			//添加标准
 			addForm(type) {
-				let length = this.editData.monthPriceConfig.priceConfig.length;
+				let length = this.editData.monthPriceConfigObj.priceConfig.length;
 				if (length >= 6){
 					this.$message.error('最多添加6个收费标准')
 					return false
 				}
 				let index = length - 1
-				let duration = this.editData.monthPriceConfig.priceConfig[index]
+				let duration = this.editData.monthPriceConfigObj.priceConfig[index]
 				if (duration.month === ''){
 					this.$message.error('月数不能为空')
 					return false
@@ -352,17 +352,17 @@
 					money: '',
 				}
 				console.log(obj)
-				this.editData.monthPriceConfig.priceConfig.push(obj)
+				this.editData.monthPriceConfigObj.priceConfig.push(obj)
 			},
 			//删除标准
 			delForm(index, type) {
-				let duration = this.editData.monthPriceConfig.priceConfig || []
+				let duration = this.editData.monthPriceConfigObj.priceConfig || []
 				if (duration.length === 1) {
 					this.$message.error('至少有一个收费标准')
 					return false
 				}
-				this.editData.monthPriceConfig.priceConfig.splice(index, 1)
-				this.editData.monthPriceConfig.priceConfig.splice(index, 1)
+				this.editData.monthPriceConfigObj.priceConfig.splice(index, 1)
+				this.editData.monthPriceConfigObj.priceConfig.splice(index, 1)
 			},
 			handleChange(value) {
 				console.log('选中的值是:', value);
