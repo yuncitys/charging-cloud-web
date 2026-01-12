@@ -753,8 +753,8 @@
 					this.formData = JSON.parse(JSON.stringify(formData));
 					this.formData.isBarrierGate = !!formData.isBarrierGate;
 					this.formData.isLockFlag = !!formData.isLockFlag;
-					this.formData.businessHours = JSON.parse(formData.businessHours)
-					this.formData.stationTag = JSON.parse(formData.stationTag)
+					this.formData.businessHours = JSON.parse(formData.businessHours) || []
+					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					
 				} else {
 					this.isDetail = true
@@ -763,8 +763,8 @@
 					this.formData = JSON.parse(JSON.stringify(formData));
 					this.formData.isBarrierGate = !!formData.isBarrierGate;
 					this.formData.isLockFlag = !!formData.isLockFlag;
-					this.formData.businessHours = JSON.parse(formData.businessHours)
-					this.formData.stationTag = JSON.parse(formData.stationTag)
+					this.formData.businessHours = JSON.parse(formData.businessHours) || []
+					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 				}
 				this.mapInput = ''
 				this.getOperator()
