@@ -4,6 +4,8 @@
 
 <script>
 	import '../map/china.js'
+	import '../map/fujian.js'
+	import '../map/shangdong.js'
 	export default {
 		data() {
 			return {
