@@ -114,14 +114,42 @@
             stack: 'vistors',
             barWidth: '60%',
             data: userCount,
-            animationDuration
+            animationDuration,
+            itemStyle: {
+                normal: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                        offset: 0,
+                        color: '#83bff6'
+                    }, {
+                        offset: 0.5,
+                        color: '#188df0'
+                    }, {
+                        offset: 1,
+                        color: '#188df0'
+                    }])
+                }
+            }
           }, {
             name: '设备数',
             type: 'bar',
             stack: 'vistors',
             barWidth: '60%',
             data: deviceCount,
-            animationDuration
+            animationDuration,
+            itemStyle: {
+                normal: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                        offset: 0,
+                        color: '#c4b5fd'
+                    }, {
+                        offset: 0.5,
+                        color: '#8b5cf6'
+                    }, {
+                        offset: 1,
+                        color: '#8b5cf6'
+                    }])
+                }
+            }
           }, {
             name: '交易额',
             type: 'bar',
@@ -129,11 +157,17 @@
             barWidth: '60%',
             itemStyle: {
               normal: {
-                color: '#08d374',
-                lineStyle: {
-                  color: '#08d374',
-                  width: 2
-                },
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                    offset: 0,
+                    color: '#4ade80'
+                }, {
+                    offset: 0.5,
+                    color: '#22c55e'
+                }, {
+                    offset: 1,
+                    color: '#22c55e'
+                }]),
+                barBorderRadius: [5, 5, 0, 0]
               }
             },
             data: orderPrice,

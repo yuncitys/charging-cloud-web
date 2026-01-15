@@ -1,6 +1,5 @@
 import request from '@/utils/request'
 
-// 查询刷卡订单列表
 export function getList(data) {
 	return request({
 		url: '/api/web/order/page',
@@ -21,8 +20,7 @@ export function getList(data) {
 		data
 	})
 }
-
-// 删除订单
+//删除订单
 export function deleteOrder(data) {
 	return request({
 		url: '/api/web/order/deleteOrder',
@@ -44,7 +42,7 @@ export function deleteOrder(data) {
 	})
 }
 
-// 根据 id 查询订单详情
+//根据id查询订单详情
 export function findOrderInfoById(data) {
 	return request({
 		url: '/api/web/order/findOrderInfoById',
@@ -66,7 +64,8 @@ export function findOrderInfoById(data) {
 	})
 }
 
-// 更新订单状态
+
+//更新订单状态
 export function updateOrderStatus(data) {
 	return request({
 		url: '/api/web/order/updateOrderStatus',
@@ -88,7 +87,7 @@ export function updateOrderStatus(data) {
 	})
 }
 
-// 修改订单信息
+//订单退款
 export function updateOrder(data) {
 	return request({
 		url: '/api/web/order/updateOrder',
@@ -110,7 +109,8 @@ export function updateOrder(data) {
 	})
 }
 
-// 订单功率图
+
+//订单功率图
 export function findDevicePowerDetails(data) {
 	return request({
 		url: '/api/web/order/findDevicePowerDetails',
@@ -132,76 +132,10 @@ export function findDevicePowerDetails(data) {
 	})
 }
 
-// 导出刷卡订单 Excel
+//导出excel
 export function downloadExcel(data) {
 	return request({
 		url: '/api/web/order/downloadOrderInfo',
-		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
-		data
-	})
-}
-
-// 结束订单
-export function closeOrder(data) {
-	return request({
-		url: '/api/web/order/closeOrder',
-		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
-		data
-	})
-}
-
-// 订单退款
-export function orderRefund(data) {
-	return request({
-		url: '/api/web/order/orderRefund',
-		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
-		data
-	})
-}
-
-// 订单异常结算
-export function abnormalOrderSettlement(data) {
-	return request({
-		url: '/api/web/order/abnormalOrderSettlement',
 		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",

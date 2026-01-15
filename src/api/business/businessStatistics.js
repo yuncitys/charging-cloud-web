@@ -1,6 +1,5 @@
 import request from '@/utils/request'
 
-// 查询业务汇总统计数据
 export function getReportsStatistics(data) {
 	return request({
 		url: '/api/web/reports/statistics',
@@ -22,7 +21,7 @@ export function getReportsStatistics(data) {
 	})
 }
 
-// 按设备维度查询统计数据
+//  查询设备
 export function getDeviceStatistics(data) {
 	return request({
 		url: '/api/web/reports/device',
@@ -44,37 +43,10 @@ export function getDeviceStatistics(data) {
 	})
 }
 
-// 导出设备统计报表
+// 导出报表信息
 export function exportDeviceReport(data) {
 	return request({
 		url: '/api/web/reports/export',
-		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
-		data
-	})
-}
-
-// 设备维度统计（兼容老方法名）
-export function findReportsAndStatisticsByDevice(data) {
-	return getDeviceStatistics(data)
-}
-
-// 代理商分账统计列表
-export function getList(data) {
-	return request({
-		url: '/api/web/reports/adminInfoByDeviceAndOrder',
 		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",

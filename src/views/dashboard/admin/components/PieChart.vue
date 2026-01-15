@@ -68,7 +68,7 @@
 				this.chart.setOption({
 					tooltip: {
 						trigger: 'item',
-						formatter: '{a} <br/>{b} : {c} ({d}%)'
+						formatter: '{b} : {c} ({d}%)'
 					},
 					legend: {
 						left: 'center',
@@ -78,12 +78,25 @@
 					series: [{
 						name: '占比',
 						type: 'pie',
-						roseType: 'radius',
-						radius: [15, 95],
-						center: ['50%', '38%'],
+						radius: ['40%', '70%'],
+						center: ['50%', '50%'],
 						data: expectedData,
 						animationEasing: 'cubicInOut',
-						animationDuration: 2600
+						animationDuration: 2600,
+						itemStyle: {
+							emphasis: {
+								shadowBlur: 10,
+								shadowOffsetX: 0,
+								shadowColor: 'rgba(0, 0, 0, 0.5)'
+							}
+						},
+						label: {
+							show: true,
+							formatter: '{b}'
+						},
+						labelLine: {
+							show: true
+						}
 					}]
 				})
 			},

@@ -204,6 +204,9 @@
   .dashboard-editor-container {
     background: #e9eff8;
     position: relative;
+    min-height: calc(100vh - 84px);
+    padding-bottom: 20px;
+    overflow: hidden;
 
     .github-corner {
       position: absolute;

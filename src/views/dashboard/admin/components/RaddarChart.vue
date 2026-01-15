@@ -72,68 +72,62 @@
         this.chart.setOption({
           tooltip: {
             trigger: 'item',
-            formatter: function (data) {
-              return data.name + '<br/>' + data.seriesName + '：' + (data.value * 100).toFixed(
-                  2) +
-                '%'; //将小数转化为百分数显示
-            }
+            formatter: '{b}: {c} ({d}%)'
           },
           legend: {
             orient: 'vertical',
             left: 'left',
+            data: ['扫码订单', '刷卡订单', '免费订单', '包月订单']
           },
           series: [{
             name: '订单占比',
             type: 'pie',
-            radius: '50%',
+            radius: ['50%', '70%'],
+            avoidLabelOverlap: false,
+            label: {
+              show: false,
+              position: 'center'
+            },
+            emphasis: {
+              label: {
+                show: true,
+                fontSize: '20',
+                fontWeight: 'bold'
+              }
+            },
+            labelLine: {
+              show: false
+            },
             data: [{
                 value: actualData,
-                name: '扫码订单'
+                name: '扫码订单',
+                itemStyle: {
+                    color: '#4CD263'
+                }
               },
               {
                 value: expectedData,
-                name: '刷卡订单'
+                name: '刷卡订单',
+                itemStyle: {
+                    color: '#F4A261'
+                }
               },
               {
                 value: freeOrderData,
-                name: '免费订单'
+                name: '免费订单',
+                itemStyle: {
+                    color: '#E76F51'
+                }
               },
               {
                 value: monthOrderData,
-                name: '包月订单'
+                name: '包月订单',
+                itemStyle: {
+                    color: '#2A9D8F'
+                }
               },
             ],
-            labelLine: {
-              lineStyle: {
-                color: "#312e2e"
-              }
-            },
-            label: {
-              show: true,
-              color: '#312e2e',
-            },
-
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
-            },
-            itemStyle: {
-              normal: {
-                color: function (colors) {
-                  let colorList = [
-                    '#08d374',
-                    '#FFC851',
-                    '#5A5476',
-                    '#1869A0',
-                    // '#FF9393'
-                  ];
-                  return colorList[colors.dataIndex];
-                }
-              }
-            },
+            animationDuration: 2600
           }]
         })
       },
