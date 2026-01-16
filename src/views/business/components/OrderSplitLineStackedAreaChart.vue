@@ -117,8 +117,28 @@
             {
               name: '分账次数（笔）',
               type: 'line',
+              smooth: true,
               stack: 'Total',
-              areaStyle: {},
+              itemStyle: {
+                normal: {
+                  color: '#3888fa',
+                  lineStyle: {
+                    color: '#3888fa',
+                    width: 2
+                  },
+                  areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                      offset: 0,
+                      color: 'rgba(56, 136, 250, 0.3)'
+                    }, {
+                      offset: 0.8,
+                      color: 'rgba(56, 136, 250, 0)'
+                    }], false),
+                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                    shadowBlur: 10
+                  }
+                }
+              },
               emphasis: {
                 focus: 'series'
               },
@@ -127,8 +147,28 @@
             {
               name: '分账金额（元）',
               type: 'line',
+              smooth: true,
               stack: 'Total',
-              areaStyle: {},
+              itemStyle: {
+                normal: {
+                  color: '#07b161',
+                  lineStyle: {
+                    color: '#07b161',
+                    width: 2
+                  },
+                  areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                      offset: 0,
+                      color: 'rgba(7, 177, 97, 0.3)'
+                    }, {
+                      offset: 0.8,
+                      color: 'rgba(7, 177, 97, 0)'
+                    }], false),
+                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                    shadowBlur: 10
+                  }
+                }
+              },
               emphasis: {
                 focus: 'series'
               },

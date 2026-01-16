@@ -43,6 +43,28 @@
           </el-tooltip>
         </div>
       </div>
+      <div class="summary-cards">
+        <div class="summary-card summary-card--service-count">
+          <div class="summary-label">分账总次数(次)</div>
+          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.totalCount, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--duration">
+          <div class="summary-label">成功次数(次)</div>
+          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.successCount, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--electric">
+          <div class="summary-label">失败次数(次)</div>
+          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.failCount, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--amount">
+          <div class="summary-label">到账金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.totalAmount) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+      </div>
       <el-row class="borRadduis10" style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
         <OrderSplitLineStackedAreaChart :chart-data="lineChartData"></OrderSplitLineStackedAreaChart>
       </el-row>
@@ -159,6 +181,12 @@
           chargingUserCount: [],
           datetime: []
         },
+        summaryTotal: {
+          totalCount: 0,
+          successCount: 0,
+          failCount: 0,
+          totalAmount: 0
+        },
         sectionTotal: 10,
         singleTotal: 10,
         listLoading1: false,
@@ -209,6 +237,50 @@
       }
     },
     methods: {
+      /**
+       * 根据分账汇总列表数据汇总顶部统计卡片展示的数据
+       * @param {Array} list 分账汇总数据列表
+       */
+      updateSummaryTotalFromSectionList(list) {
+        const total = {
+          totalCount: 0,
+          successCount: 0,
+          failCount: 0,
+          totalAmount: 0
+        }
+        if (Array.isArray(list) && list.length) {
+          list.forEach(item => {
+            total.totalCount += Number(item.totalCount) || 0
+            total.successCount += Number(item.successCount) || 0
+            total.failCount += Number(item.failCount) || 0
+            total.totalAmount += Number(item.totalAmount) || 0
+          })
+        }
+        this.summaryTotal = total
+      },
+      /**
+       * 金额格式化，保留两位小数并添加千分位分隔
+       * @param {number|string} value 原始数值
+       * @returns {string}
+       */
+      formatMoney(value) {
+        return this.formatNumber(value, 2)
+      },
+      /**
+       * 通用数字格式化，可控制小数位并添加千分位分隔
+       * @param {number|string} value 原始数值
+       * @param {number} fractionDigits 小数位，默认 0
+       * @returns {string}
+       */
+      formatNumber(value, fractionDigits = 0) {
+        if (value === null || value === undefined || value === '') return '-'
+        const num = Number(value)
+        if (Number.isNaN(num)) return value
+        const fixed = fractionDigits >= 0 ? num.toFixed(fractionDigits) : String(num)
+        const parts = fixed.split('.')
+        const intWithComma = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        return parts[1] ? `${intWithComma}.${parts[1]}` : intWithComma
+      },
       handleDimensionChange(value) {
         console.log("value：",value)
         if (value === 3) {
@@ -299,6 +371,7 @@
             this.listLoading2 = false
             this.sectionTotal = res.count
             this.sectionList = res.data
+            this.updateSummaryTotalFromSectionList(res.data)
             this.$forceUpdate()
           }else {
       			this.$message.error(res.msg)
@@ -393,5 +466,103 @@
 #userChargingPage {
   	margin-top: 80px;
   	/* margin-left: 10px; */
+}
+
+/* 顶部统计卡片统一样式 */
+.summary-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 24px;
+  margin: 12px 0 24px;
+}
+
+.summary-card {
+  position: relative;
+  flex: 0 0 260px;
+  height: 94px;
+  border-radius: 15px;
+  padding: 14px 18px;
+  box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.05);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.summary-card-icon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  height: 80px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.summary-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.summary-card--service-count {
+  background: linear-gradient(135deg, #2ecc71, #1abc9c);
+}
+
+.summary-card--amount {
+  background: linear-gradient(135deg, #409EFF, #2d8cf0);
+}
+
+.summary-card--power {
+  background: linear-gradient(135deg, #00c9ff, #92fe9d);
+}
+
+.summary-card--duration {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+
+.summary-card--electric {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+.summary-card--servicefee {
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+}
+
+.summary-card--placeholder {
+  background: linear-gradient(135deg, #f97373, #fb7185);
+}
+
+.summary-card--service-count .summary-card-icon {
+  background-image: url(../../assets/home-panel/user-panel.png);
+}
+
+.summary-card--amount .summary-card-icon {
+  background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--power .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
+}
+
+.summary-card--duration .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--electric .summary-card-icon {
+  background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--servicefee .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--placeholder .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
 }
 </style>

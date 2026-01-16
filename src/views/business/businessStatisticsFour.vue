@@ -47,6 +47,28 @@
           </el-tooltip>
         </div>
       </div>
+      <div class="summary-cards">
+        <div class="summary-card summary-card--service-count">
+          <div class="summary-label">支付总数(次)</div>
+          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.payCount, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--amount">
+          <div class="summary-label">支付金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.payMoneyCount) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--duration">
+          <div class="summary-label">退款总数(次)</div>
+          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.refundCount, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--electric">
+          <div class="summary-label">退款金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.refundMoneyCount) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+      </div>
       <el-row class="borRadduis10" style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
         <!-- <user-trading-line-chart :chart-data="lineChartData"></user-trading-line-chart> -->
         <user-trading-line-stacked-area-chart :chart-data="lineChartData"></user-trading-line-stacked-area-chart>
@@ -170,6 +192,12 @@
           refundMoneyCount: [],
           datetime: []
         },
+        summaryTotal: {
+          payCount: 0,
+          payMoneyCount: 0,
+          refundCount: 0,
+          refundMoneyCount: 0
+        },
         chargingUserTradingSectionTotal: 10,
         chargingUserTradingSingleTotal: 10,
         listLoading: false,
@@ -214,6 +242,50 @@
       }
     },
     methods: {
+      /**
+       * 根据用户交易汇总列表数据汇总顶部统计卡片展示的数据
+       * @param {Array} list 用户交易汇总数据列表
+       */
+      updateSummaryTotalFromSectionList(list) {
+        const total = {
+          payCount: 0,
+          payMoneyCount: 0,
+          refundCount: 0,
+          refundMoneyCount: 0
+        }
+        if (Array.isArray(list) && list.length) {
+          list.forEach(item => {
+            total.payCount += Number(item.payCount) || 0
+            total.payMoneyCount += Number(item.payMoneyCount) || 0
+            total.refundCount += Number(item.refundCount) || 0
+            total.refundMoneyCount += Number(item.refundMoneyCount) || 0
+          })
+        }
+        this.summaryTotal = total
+      },
+      /**
+       * 金额格式化，保留两位小数并添加千分位分隔
+       * @param {number|string} value 原始数值
+       * @returns {string}
+       */
+      formatMoney(value) {
+        return this.formatNumber(value, 2)
+      },
+      /**
+       * 通用数字格式化，可控制小数位并添加千分位分隔
+       * @param {number|string} value 原始数值
+       * @param {number} fractionDigits 小数位，默认 0
+       * @returns {string}
+       */
+      formatNumber(value, fractionDigits = 0) {
+        if (value === null || value === undefined || value === '') return '-'
+        const num = Number(value)
+        if (Number.isNaN(num)) return value
+        const fixed = fractionDigits >= 0 ? num.toFixed(fractionDigits) : String(num)
+        const parts = fixed.split('.')
+        const intWithComma = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        return parts[1] ? `${intWithComma}.${parts[1]}` : intWithComma
+      },
       handleDimensionChange(value) {
         console.log("value：",value)
         if (value === 3) {
@@ -288,6 +360,7 @@
             this.listLoading = false
             this.chargingUserTradingSectionTotal = res.count
             this.chargingUserTradingList = res.data
+            this.updateSummaryTotalFromSectionList(res.data)
             this.$forceUpdate()
           }else {
 						this.$message.error(res.msg)
@@ -396,5 +469,103 @@
 #userChargingPage {
   	margin-top: 80px;
   	/* margin-left: 10px; */
+}
+
+/* 顶部统计卡片统一样式 */
+.summary-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 24px;
+  margin: 12px 0 24px;
+}
+
+.summary-card {
+  position: relative;
+  flex: 0 0 260px;
+  height: 94px;
+  border-radius: 15px;
+  padding: 14px 18px;
+  box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.05);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.summary-card-icon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  height: 80px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.summary-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.summary-card--service-count {
+  background: linear-gradient(135deg, #2ecc71, #1abc9c);
+}
+
+.summary-card--amount {
+  background: linear-gradient(135deg, #409EFF, #2d8cf0);
+}
+
+.summary-card--power {
+  background: linear-gradient(135deg, #00c9ff, #92fe9d);
+}
+
+.summary-card--duration {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+
+.summary-card--electric {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+.summary-card--servicefee {
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+}
+
+.summary-card--placeholder {
+  background: linear-gradient(135deg, #f97373, #fb7185);
+}
+
+.summary-card--service-count .summary-card-icon {
+  background-image: url(../../assets/home-panel/user-panel.png);
+}
+
+.summary-card--amount .summary-card-icon {
+  background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--power .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
+}
+
+.summary-card--duration .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--electric .summary-card-icon {
+  background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--servicefee .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--placeholder .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
 }
 </style>

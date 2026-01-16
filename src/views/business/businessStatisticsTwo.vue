@@ -43,13 +43,43 @@
       </el-button>
 
       <div class="report-header">
-        <div class="title-section">
-          <!-- 标题 -->
+          <div class="title-section">
           <span class="title">充电趋势</span>
-          <!-- 带有统计说明的图标提示 -->
           <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
             <el-icon><i class="el-icon-question"></i></el-icon>
           </el-tooltip>
+        </div>
+      </div>
+      <div class="summary-cards">
+        <div class="summary-card summary-card--service-count">
+          <div class="summary-label">订单总数(笔)</div>
+          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.totalChargeNumber, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--duration">
+          <div class="summary-label">总充电时长(分)</div>
+          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.totalChargeDurations, 0) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--amount">
+          <div class="summary-label">扫码收入(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.scanActualPrice) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--electric">
+          <div class="summary-label">刷卡收入(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.swipeActualPrice) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--servicefee">
+          <div class="summary-label">实际收益(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.actualPrice) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--power">
+          <div class="summary-label">总使用电量(度)</div>
+          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 2) }}</div>
+          <div class="summary-card-icon" />
         </div>
       </div>
       <el-row class="borRadduis10" style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
@@ -133,6 +163,14 @@
           orderPrice: [],
           datetime: []
         },
+        summaryTotal: {
+          totalChargeNumber: 0,
+          totalChargeDurations: 0,
+          scanActualPrice: 0,
+          swipeActualPrice: 0,
+          actualPrice: 0,
+          totalPower: 0
+        },
         page: 1,
         limit: 10,
         total: 10,
@@ -176,6 +214,54 @@
       }
     },
     methods: {
+      /**
+       * 根据充电趋势明细列表汇总顶部统计卡片展示的数据
+       * @param {Array} list 充电趋势明细列表
+       */
+      updateSummaryTotalFromTrendList(list) {
+        const total = {
+          totalChargeNumber: 0,
+          totalChargeDurations: 0,
+          scanActualPrice: 0,
+          swipeActualPrice: 0,
+          actualPrice: 0,
+          totalPower: 0
+        }
+        if (Array.isArray(list) && list.length) {
+          list.forEach(item => {
+            total.totalChargeNumber += Number(item.totalChargeNumber) || 0
+            total.totalChargeDurations += Number(item.totalChargeDurations) || 0
+            total.scanActualPrice += Number(item.scanActualPrice) || 0
+            total.swipeActualPrice += Number(item.swipeActualPrice) || 0
+            total.actualPrice += Number(item.actualPrice) || 0
+            total.totalPower += Number(item.totalPower) || 0
+          })
+        }
+        this.summaryTotal = total
+      },
+      /**
+       * 金额格式化，保留两位小数并添加千分位分隔
+       * @param {number|string} value 原始数值
+       * @returns {string}
+       */
+      formatMoney(value) {
+        return this.formatNumber(value, 2)
+      },
+      /**
+       * 通用数字格式化，可控制小数位并添加千分位分隔
+       * @param {number|string} value 原始数值
+       * @param {number} fractionDigits 小数位，默认 0
+       * @returns {string}
+       */
+      formatNumber(value, fractionDigits = 0) {
+        if (value === null || value === undefined || value === '') return '-'
+        const num = Number(value)
+        if (Number.isNaN(num)) return value
+        const fixed = fractionDigits >= 0 ? num.toFixed(fractionDigits) : String(num)
+        const parts = fixed.split('.')
+        const intWithComma = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+        return parts[1] ? `${intWithComma}.${parts[1]}` : intWithComma
+      },
       handleDimensionChange(value) {
         console.log("value：",value)
         if (value === 3) {
@@ -261,6 +347,7 @@
             this.listLoading = false
             this.total = res.count
             this.chargingTrendList = res.data
+            this.updateSummaryTotalFromTrendList(res.data)
             // console.log("chargingTrendList：",this.chargingTrendList)
             // this.$forceUpdate()
           }else {
@@ -342,5 +429,103 @@
 .export-button {
   background-color: #409EFF;
   color: white;
+}
+
+/* 顶部统计卡片统一样式 */
+.summary-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 24px;
+  margin: 12px 0 24px;
+}
+
+.summary-card {
+  position: relative;
+  flex: 0 0 260px;
+  height: 94px;
+  border-radius: 15px;
+  padding: 14px 18px;
+  box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.05);
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.summary-card-icon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  height: 80px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+
+.summary-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.summary-card--service-count {
+  background: linear-gradient(135deg, #2ecc71, #1abc9c);
+}
+
+.summary-card--amount {
+  background: linear-gradient(135deg, #409EFF, #2d8cf0);
+}
+
+.summary-card--power {
+  background: linear-gradient(135deg, #00c9ff, #92fe9d);
+}
+
+.summary-card--duration {
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+}
+
+.summary-card--electric {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+
+.summary-card--servicefee {
+  background: linear-gradient(135deg, #14b8a6, #06b6d4);
+}
+
+.summary-card--placeholder {
+  background: linear-gradient(135deg, #f97373, #fb7185);
+}
+
+.summary-card--service-count .summary-card-icon {
+  background-image: url(../../assets/home-panel/user-panel.png);
+}
+
+.summary-card--amount .summary-card-icon {
+  background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--power .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
+}
+
+.summary-card--duration .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--electric .summary-card-icon {
+  background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--servicefee .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--placeholder .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
 }
 </style>
