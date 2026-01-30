@@ -144,9 +144,9 @@
 		updateOrder,
 		findDevicePowerDetails
 	} from '@/api/order/scanOrderList.js'
-  import {
-    findDevicePriceById
-  } from '@/api/netWorkDot/charge/chargeList.js'
+	import {
+		findDevicePriceById
+	} from '@/api/netWorkDot/charge/chargeList.js'
 	import {
 		getRouter
 	} from '@/api/user'
@@ -208,7 +208,7 @@
 			},
 			//显示功率图
 			openDialog() {
-        this.showChart = true
+        		this.showChart = true
 				this.OrderListData = this.row_data;
 				this.deviceCode1 = this.row_data.deviceCode
 				this.startTime = this.row_data.startTimeAll

@@ -70,7 +70,7 @@
 			},
 			setOptions({
 				expectedData,
-        tip,
+        		tip,
 				time
 			} = {}) {
 				this.chart.setOption({
@@ -93,10 +93,10 @@
 						axisPointer: {
 							type: 'cross'
 						},
-            // formatter: function (data) {
-            //   console.log(data)
-            // //   return data[i].marker + data[i].seriesName  + ': '+ data[i].value+'<br/>';
-            // },
+						// formatter: function (data) {
+						//   console.log(data)
+						// //   return data[i].marker + data[i].seriesName  + ': '+ data[i].value+'<br/>';
+						// },
 						padding: [5, 10]
 					},
 					yAxis: {
