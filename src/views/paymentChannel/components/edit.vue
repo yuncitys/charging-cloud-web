@@ -199,6 +199,61 @@
             </el-col>
           </el-row>
         </div>
+        <div class="tzbankConfig" v-else-if="form.channelName === '台州银行'">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="平台商户号">
+                <el-input v-model="tzbankConfig.platMerCstNo" clearable placeholder="平台商户号"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="平台商户名称">
+                <el-input v-model="tzbankConfig.platMerCstName" clearable placeholder="平台商户名称"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="应用ID">
+                <el-input v-model="tzbankConfig.appKey" clearable placeholder="应用APPID"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="密钥">
+                <el-input v-model="tzbankConfig.appSecret" clearable placeholder="密钥"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="私钥">
+                <el-input v-model="tzbankConfig.privateKey" clearable placeholder="私钥"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="平台公钥">
+                <el-input v-model="tzbankConfig.publicKey" clearable placeholder="公钥"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="签名方式">
+                <el-input v-model="tzbankConfig.signType" clearable placeholder="签名方式"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="请求域名">
+                <el-input v-model="tzbankConfig.requestDomain" clearable placeholder="请求域名"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="回调域名">
+                <el-input v-model="tzbankConfig.callbackDomain" clearable placeholder="回调域名"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
       </div>
     </el-form>
     <div slot="footer" class="dialog-footer">
@@ -275,13 +330,25 @@ export default {
         'alipayRootCert': null,
         'callbackDomain': ''
       },
+      tzbankConfig: {
+        platMerCstNo: '',
+        appKey: '',
+        appSecret: '',
+        privateKey: '',
+        publicKey: '',
+        signType: '',
+        callbackDomain: '',
+        requestDomain: '',
+      },
       channelList: [
         { name: '微信', code: 'wxpay' },
-        { name: '支付宝', code: 'alipay' }
+        { name: '支付宝', code: 'alipay' },
+        { name: '台州银行', code: 'tzbank' }
       ],
       serviceProviderList: [
         { name: '微信', code: 'wxpay' },
-        { name: '支付宝', code: 'alipay' }
+        { name: '支付宝', code: 'alipay' },
+        { name: '台州银行', code: 'tzbank' }
       ],
       channelRule: {
         channelName: [
@@ -322,6 +389,8 @@ export default {
           this.wxConfig = JSON.parse(this.form.configStr)
         } else if (this.form.channelName === '支付宝') {
           this.aliConfig = JSON.parse(this.form.configStr)
+        } else if (this.form.channelName === '台州银行') {
+          this.tzbankConfig = JSON.parse(this.form.configStr)
         }
       })
     }
@@ -400,6 +469,9 @@ export default {
         } else if (this.form.channelName === '支付宝') {
           this.form.channelCode = 'alipay'
           this.form.configStr = JSON.stringify(this.aliConfig)
+        } else if (this.form.channelName === '台州银行') {
+          this.form.channelCode = 'tzbank'
+          this.form.configStr = JSON.stringify(this.tzbankConfig)
         }
         if (valid) {
           if (this.param.id) {

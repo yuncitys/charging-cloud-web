@@ -25,6 +25,7 @@
           <template slot-scope="scope">
 						<span v-if="scope.row.serviceProviderId == 'wxpay'">微信</span>
 						<span v-if="scope.row.serviceProviderId == 'alipay'">支付宝</span>
+            <span v-if="scope.row.serviceProviderId == 'tzbank'">台州银行</span>
 					</template>
         </el-table-column>
         <el-table-column prop="channelAccount" label="渠道账号"></el-table-column>
@@ -69,13 +70,6 @@ export default {
       tableKey: 0,
       listLoading: false,
       list: [],
-      options: [{
-        value: '1',
-        label: '微信'
-      }, {
-        value: '0',
-        label: '支付宝'
-      }],
       param: {
         visible: false,
         title: '新增',
