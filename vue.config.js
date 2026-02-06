@@ -54,7 +54,16 @@ module.exports = {
 			sass: {
 				implementation: require('sass'),
 				sassOptions: {
-					outputStyle: 'expanded'// 生效代码,更换打包压缩方式解决elementUI打包上线后icon图标偶尔乱码的问题
+					outputStyle: 'expanded'
+					// 因为 sass-loader 会检查运行环境的模式，给 dart-sass 传入 { outputStyle: “compressed” }。 dart-sass 在这时会使用 BOM 而不是输出 @charset。
+					// 如果是通过 @vue/cli 搭建的环境，因为有 cssnano 处理压缩，所以可以给 vue.config.js 传入 sassOptions 避免 compressed。
+					// sass的默认输出格式为expanded,编译时不会转换unicode字符。而sassLoader修改了sass默认输出格式为compressed。
+					// 因此我们在配置sassLoader时将输出格式重新改为expanded便能解决问题
+					// 生效代码,更换打包压缩方式解决elementUI打包上线后icon图标偶尔乱码的问题
+					// 嵌套输出方式 nested
+					// 展开输出方式 expanded
+					// 紧凑输出方式 compact
+					// 压缩输出方式 compressed
 				}	
 			}
 		}
