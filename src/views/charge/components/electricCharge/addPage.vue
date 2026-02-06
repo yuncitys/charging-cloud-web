@@ -210,7 +210,7 @@
 									<h3>最长充电时长</h3>
 								</div>
 								<div>
-									<el-input placeholder="请输入时间" v-model="maxChargeTime" type="number"
+									<el-input placeholder="请输入整数" v-model="maxChargeTime" type="number" min="1" oninput="this.value=this.value.replace(/[^0-9]/g,'').replace(/^0/g,'')"
 										style="width: 250px;">
 										<template slot="append">小时</template>
 									</el-input>
@@ -372,6 +372,14 @@
 				}
 				if (this.addData.duration == '') {
 					this.$message.error('请至少添加一种方案')
+					return false
+				}
+				if (this.isAutostop && Number(this.fixedMoney) <= 0){
+					this.$message.error(this.chco === 0 ? '预收金额必须大于0' : '固定金额必须大于0')
+					return false
+				}
+				if (this.isAutostop && Number(this.maxChargeTime) <= 0){
+					this.$message.error('最长充电时长不能小于0')
 					return false
 				}
 				let {
