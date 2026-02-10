@@ -948,6 +948,41 @@ export const constantRoutes = [{
         icon: 'el-icon-setting',
       }
     }]
+  },{
+    path: '/payment',
+    component: Layout,
+    redirect: '/billPaymentInfo',
+    alwaysShow: true, // will always show the root menu
+    name: 'payment',
+    meta: {
+      title: '支付中心',
+      icon: 'peoples',
+    },
+    children: [{
+      path: 'billPaymentInfo',
+      component: () => import('@/views/payment/billPaymentInfo'),
+      name: 'billPaymentInfo',
+      meta: {
+        title: '支付流水',
+        icon: 'el-icon-s-check',
+      }
+    },{
+      path: 'billPaymentLog',
+      component: () => import('@/views/payment/billPaymentLog'),
+      name: 'billPaymentLog',
+      meta: {
+        title: '支付日志',
+        icon: 'el-icon-s-check',
+      }
+    },{
+      path: 'billRefundInfo',
+      component: () => import('@/views/payment/billRefundInfo'),
+      name: 'billRefundInfo',
+      meta: {
+        title: '退款流水',
+        icon: 'el-icon-s-check',
+      }
+    }]
   },
   {
     path: '*',
