@@ -10,8 +10,13 @@
 				<el-form-item :label="'角色名称'" prop="roleName">
 					<el-input v-model="editData.roleName" placeholder="请输入角色名称" clearable />
 				</el-form-item>
-				<el-form-item :label="'角色备注'" prop="roleRemark">
-					<el-input v-model="editData.roleRemark" placeholder="请输入角色备注" clearable />
+				<el-form-item :label="'角色类型'" prop="roleType">
+					<el-radio-group v-model="editData.roleType">
+						<el-radio :label="1">平台管理员</el-radio>
+						<el-radio :label="2">租户管理员</el-radio>
+						<el-radio :label="3">商户管理员</el-radio>
+						<el-radio :label="4">站点管理员</el-radio>
+					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'数据权限'" prop="dataScope">
 					<el-select v-model="editData.dataScope" class="filter-item" placeholder="请选择数据权限"
@@ -19,6 +24,9 @@
 						<el-option v-for="item in dataScopeList" :key="item.id" :label="item.title"
 							:value="item.id" />
 					</el-select>
+				</el-form-item>
+				<el-form-item :label="'角色备注'" prop="roleRemark">
+					<el-input v-model="editData.roleRemark" placeholder="请输入角色备注" clearable />
 				</el-form-item>
 				<el-form-item :label="'功能权限'">
 					<el-input v-model="filterTextEdit" placeholder="输入关键字进行过滤" />
@@ -60,7 +68,8 @@
 					roleName: '',
 					roleRemark: '',
 					menuIdArray: '',
-					dataScope:''
+					dataScope:'',
+					roleType:''
 				},
 				rules: {
 					roleName: [{
@@ -81,6 +90,11 @@
 					menuIdArray: [{
 						required: true,
 						message: '请选择功能权限',
+						trigger: 'change'
+					}],
+					roleType: [{
+						required: true,
+						message: '请选择角色类型',
 						trigger: 'change'
 					}],
 				},
@@ -123,6 +137,7 @@
 				this.editData.roleRemark = item.remark
 				this.editData.menuIdArray = item.menuIdArray
 				this.editData.dataScope = item.dataScope ? item.dataScope : ''
+				this.editData.roleType = item.roleType ? item.roleType : ''
 				let data = {
 					roleId: item.id
 				}

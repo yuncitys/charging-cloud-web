@@ -11,6 +11,14 @@
 				</el-table-column>
 				<el-table-column prop="roleName" label="角色名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
+				<el-table-column prop="roleType" label="角色类型" align="center" :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span v-if="scope.row.roleType === 1">平台管理员</span>
+						<span v-if="scope.row.roleType === 2">租户管理员</span>
+						<span v-if="scope.row.roleType === 3">商户管理员</span>
+						<span v-if="scope.row.roleType === 4">站点管理员</span>
+					</template>
+				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc" sortable>
