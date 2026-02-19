@@ -40,7 +40,7 @@
 				</el-table-column>
 				<el-table-column prop="totalAmount" label="总收益" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="balenceAmount" label="余额" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="balanceAmount" label="余额" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="openId" label="绑定状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
@@ -70,14 +70,14 @@
 						<div style="display: flex;align-items: center;justify-content: space-around;">
 						<div>
 							<div>
-							<!-- 编辑 -->
-							<editPage :row_data="scope.row" @getLists="getLists" />
+								<!-- 编辑 -->
+								<editPage :row_data="scope.row" @getLists="getLists" />
 							</div>
 
 							<div class="top10" v-if="btnAuthen.permsVerifAuthention(':sys:admin:deleteAdminUser')">
-							<el-button type="danger" size="mini" @click='del(scope.row.id)'>
-								删除
-							</el-button>
+								<el-button type="danger" size="mini" @click='del(scope.row.id)'>
+									删除
+								</el-button>
 							</div>
 						</div>
 
@@ -91,21 +91,21 @@
 								</el-button>
 							</div>
 							<div class="top10">
-							<el-button type="primary" @click='editPassword(scope.row.id)' size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:admin:editPasswordAdminUser')">
-								重置密码
-							</el-button>
+								<el-button type="primary" @click='editPassword(scope.row.id)' size="mini" v-if="btnAuthen.permsVerifAuthention(':sys:admin:editPasswordAdminUser')">
+									重置密码
+								</el-button>
 							</div>
 						</div>
 
 						<div>
 							<!-- 名下所有代理商 -->
 							<div>
-							<childsPage :row_data="scope.row" />
+								<childsPage :row_data="scope.row" />
 							</div>
 							<div class="top10" v-if="btnAuthen.permsVerifAuthention(':sys:admin:unbindingAccount')">
-							<el-button type="warning" size="mini" @click='unbindingAccount(scope.row.id)'>
-								解绑账户
-							</el-button>
+								<el-button type="warning" size="mini" @click='unbindingAccount(scope.row.id)'>
+									解绑账户
+								</el-button>
 							</div>
 						</div>
 						</div>
@@ -215,15 +215,6 @@
 						console.log(res)
 						let list = res.data || []
 						this.list = list
-						// let agentList = []
-						// list.forEach((item, index) => {
-						//   if(item.roleId != 3){
-						//     agentList.push(item)
-						//     // list.splice(index, 1);
-						//     // console.log("remove",item)
-						//   }
-						// })
-						// this.list = agentList
 						this.total = res.count
 						this.listLoading = false
 					} else {

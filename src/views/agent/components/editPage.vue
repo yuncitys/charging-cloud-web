@@ -10,7 +10,7 @@
 		<el-dialog :visible.sync="showEdit" title="编辑" @close="showEdit = false" style="width: 100%;"
 			:append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="120px"
-				style="margin-left:50px;width: 450px;" :rules="rules">
+				style="margin-left:50px;width: 650px;" :rules="rules">
 				<el-form-item :label="'登录账号'" prop="adminName">
 					<el-input v-model="editData.adminName" placeholder="请输入登录账号" clearable />
 				</el-form-item>
@@ -20,11 +20,37 @@
 				<el-form-item :label="'手机号'" prop="adminPhone">
 					<el-input v-model="editData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
+				<el-form-item :label="'角色类型'" prop="roleType">
+					<el-radio-group v-model="editData.roleType" @change="changeRoleType">
+						<el-radio :label="1">平台管理员</el-radio>
+						<el-radio :label="2">租户管理员</el-radio>
+						<el-radio :label="3">商户管理员</el-radio>
+						<el-radio :label="4">站点管理员</el-radio>
+					</el-radio-group>
+				</el-form-item>
 				<el-form-item :label="'角色'" prop="roleId" style="width: 100%;">
 					<el-select v-model="editData.roleId" class="filter-item" placeholder="请选择角色" clearable
 						@keyup.enter.native="handleFilter" style="width: 100%;">
-						<el-option v-for="item in tags" :key="item.id" :label="item.roleName" :value="item.id" />
+						<el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id" />
 					</el-select>
+				</el-form-item>
+				<el-form-item :label="label" prop="selectedStations" v-if="editData.roleType != '' && editData.roleType != 1">
+					<div class="station-select-box">
+						<div class="search-bar">
+							<el-input v-model="searchKey" placeholder="请输入关键字进行过滤" clearable></el-input>
+							<el-button type="primary" @click="filterTree">搜索</el-button>
+						</div>
+						<el-tree
+							ref="tree"
+							:data="filteredData"
+							show-checkbox
+							node-key="id"
+							:props="defaultProps"
+							:default-expand-all="false"
+							:filter-node-method="filterNode"
+							@check-change="handleCheck"
+						></el-tree>
+					</div>
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onEditData('editData')">确定</el-button>
@@ -38,14 +64,23 @@
 <script>
 	import {
 		updateAdminUser,
-		findRoleList,
+		getDataPermissionsIdList
 	} from '@/api/agent/agentList.js'
+	import {
+		findRoleAllList,
+	} from '@/api/permission/role.js'
 	import {
 		parseTime
 	} from '@/utils/index'
 	import {
-		uploadImg
-	} from '@/api/AD/ADList.js'
+        getChargeStationTreeByMerchant
+    } from '@/api/netWorkDot/netWorkDotList.js'
+	import {
+        getMerchant
+    } from '@/api/merchant/merchant.js'
+	import {
+        getOperator
+    } from '@/api/operator/operator.js'
 	export default {
 		name: 'agentEditpage',
 		components: {
@@ -85,11 +120,13 @@
 			return {
 				showEdit: false,
 				editData: {
-          id: '',
+          			id: '',
 					adminName: '',
 					adminFullname: '',
 					adminPhone: '',
 					roleId: '',
+					roleType: '',
+					dataIdList: [],
 				},
 				rules: {
 					adminName: [{
@@ -113,10 +150,23 @@
 					roleId: [{
 						required: true,
 						message: '请选择角色',
-						trigger: 'blur'
+						trigger: 'change'
+					}],
+					roleType: [{
+						required: true,
+						message: '请选择角色类型',
+						trigger: 'change'
 					}],
 				},
-				tags: [],
+				roleList: [],
+
+				label: '',
+				searchKey: '',
+				defaultProps: {
+					children: 'children',
+					label: 'label'
+				},
+				filteredData: [],
 			}
 		},
 		filters: {
@@ -130,19 +180,138 @@
 		mounted() {
 
 		},
+		watch: {
+          searchKey() {
+            this.filterTree();
+          },
+        },
 		methods: {
+			getDataPermissionsIdList(adminId){
+				const data = {
+					adminId: adminId
+				}
+				getDataPermissionsIdList(data).then(res => {
+					if (res.code == 200){
+						this.editData.dataIdList = res.data
+						this.$nextTick(() => {
+							this.$refs.tree.setCheckedKeys(res.data)
+						})
+					}
+				})
+            },
+			filterNode(value, data) {
+				console.log("value",value,"data",data)
+				if (!value) return true;
+				return data.label.includes(value);
+            },
+            filterTree() {
+              	this.$refs.tree.filter(this.searchKey);
+            },
+            handleCheck(data, checked) {
+				const selected = this.$refs.tree.getCheckedKeys();
+				console.log("handleCheck selected:",selected)
+				this.editData.dataIdList = this.filterMerchantIds(selected);
+            },
+			initTreeData(roleType){
+				switch (roleType) {
+					case 2:
+						this.label = '选择租户'
+						this.getOperator()
+						break;
+					case 3:
+						this.label = '选择商户'
+						this.getMerchant()
+						break
+					case 4:
+						this.label = '选择站点'
+						this.getChargeStation()
+						break
+					default:
+						break;
+				}
+              	
+            },
+			getChargeStation(){
+				getChargeStationTreeByMerchant().then(res => {
+					if (res.code != 200){
+						return;
+					}
+					const stations = res.data.map(merchant => ({
+						id: `merchant-${merchant.id}`,  // 商户ID加前缀，避免与充电站ID冲突
+						label: merchant.name,
+						type: 'merchant',
+						// disabled: true,    // 可选：禁用商户节点选中
+						// ...merchant,
+						children: (merchant.chargingStationInfoVoList || []).map(station => ({
+							id: station.id,
+							label: station.networkName,
+							type: 'station',
+							...station,
+							// 如果有更深层级可以继续嵌套 children
+						}))
+					}))
+					console.log("stations:",stations)
+					this.filteredData = JSON.parse(JSON.stringify(stations));
+				})
+			},
+			getMerchant(){
+				getMerchant().then(res => {
+					if (res.code != 200){
+						return;
+					}
+					const merchant = res.data.map(merchant => ({
+						id: merchant.id,
+						label: merchant.name,
+						children: []
+					}))
+					console.log("merchant:",merchant)
+					this.filteredData = JSON.parse(JSON.stringify(merchant));
+				})
+			},
+			getOperator(){
+				getOperator().then(res => {
+					if (res.code != 200){
+						return;
+					}
+					const operator = res.data.map(operator => ({
+						id: operator.operatorId,
+						label: operator.name,
+						children: []
+					}))
+					console.log("operator:",operator)
+					this.filteredData = JSON.parse(JSON.stringify(operator));
+				})
+			},
+			// 过滤商户ID的通用方法
+			filterMerchantIds(ids) {
+				if (!Array.isArray(ids)) return []
+				return ids.filter(id =>  
+					typeof id === 'number' || 
+					(typeof id === 'string' && !id.startsWith('merchant-'))
+				)
+			},
+			changeRoleType(roleType) {
+				console.log("changeRoleType:",roleType)
+				this.editData.roleType = roleType
+				this.editData.roleId = ''
+				this.findRoleAllList(roleType)
+				this.initTreeData(roleType)
+			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
 			showDidlaoEditData() {
 				let item = this.row_data
-        this.editData.id = item.id
+        		this.editData.id = item.id
 				this.editData.adminName = item.adminName
 				this.editData.adminFullname = item.adminFullname
 				this.editData.adminPhone = item.adminPhone
 				this.editData.roleId = item.roleId
+				this.editData.roleType = item.roleType
 				this.showEdit = true
-				this.getRoleList()
+				this.getDataPermissionsIdList(item.id)
+				this.findRoleAllList(item.roleType)
+				this.initTreeData(item.roleType)
 			},
 			onEditData(formName) {
 				let editData = JSON.parse(JSON.stringify(this.editData))
@@ -165,57 +334,15 @@
 					}
 				})
 			},
-			getRoleList() {
-				let data = {
-					page: 1,
-					limit: 1000
+			findRoleAllList(roleType) {
+				const data = {
+					roleType: roleType
 				}
-				findRoleList(data).then(res => {
+				findRoleAllList(data).then(res => {
 					if (res.code == 200) {
-						this.tags = res.data
+						this.roleList = res.data
 					}
 				})
-			},
-			//上传图片
-			uploadShopSteps(file) {
-				// console.log(file.file)
-				// 创建FormData对象
-				let param = new FormData()
-				// 将得到的文件流添加到FormData对象
-				param.append('file', file.file)
-				console.log(param, "11111")
-				this.loadingAdd = true
-				uploadImg(param).then(res => {
-					this.loadingAdd = false
-					if (res.code == 200) {
-						this.editData.wxQrcode = res.data
-						console.log(this.editData.wxQrcode)
-					} else {
-						this.$message.error('图片上传失败，原因' + err)
-					}
-				}).catch((err) => {
-					this.$message.error('图片上传失败，原因' + err)
-					this.loadingAdd = false
-				})
-			},
-			beforeUploadShopSteps(file) {
-				const isRightType = (file.type === 'image/jpeg') || (file.type === 'image/png') || (file.type ===
-					'image/jpg')
-				const isLt2M = file.size / 1024 / 1024 < 2
-
-				if (!isRightType) {
-					this.$message.error('只能上传jgp,jpeg和png格式!')
-				}
-				if (!isLt2M) {
-					this.$message.error('图片大小不能超过2M')
-				}
-				return isRightType && isLt2M
-			},
-			handleRemoveShopSteps() {
-				this.editData.wxQrcode = ''
-			},
-			successShopSteps(res) {
-				this.editData.wxQrcode = res.url
 			},
 		},
 		created() {
@@ -224,6 +351,20 @@
 	}
 </script>
 
-<style>
 
+<style scoped>
+ .station-select-box {
+    border: 0.2px solid gray;
+    padding: 10px;
+    border-radius: 4px;
+  }
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .search-bar .el-input {
+    flex: 1;
+  }
 </style>
