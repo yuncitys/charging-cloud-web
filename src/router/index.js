@@ -750,6 +750,15 @@ export const constantRoutes = [{
         }
       },
       {
+        path: 'merchantList',
+        component: () => import('@/views/merchant/merchantList'),
+        name: 'merchantList',
+        meta: {
+          title: '商户管理',
+          icon: 'el-icon-s-operation',
+        }
+      },
+      {
         path: 'individual',
         component: () => import('@/views/agent/components/addIndividual'),
         name: 'addIndividual',
@@ -948,7 +957,8 @@ export const constantRoutes = [{
         icon: 'el-icon-setting',
       }
     }]
-  },{
+  },
+  {
     path: '/payment',
     component: Layout,
     redirect: '/billPaymentInfo',
