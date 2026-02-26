@@ -46,7 +46,7 @@
 						{{scope.row.ruleId === 1 ? '单车充电站' : '汽车充电站'}}
 					</template>
 				</el-table-column> -->
-				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="merchantName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="networkName" label="充电站名称" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
@@ -62,11 +62,11 @@
 				</el-table-column>
 				<el-table-column prop="networkLatitude" label="地址纬度" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="startingPrice" label="充电起始价" align="center" :show-overflow-tooltip='isPc'>
+				<!-- <el-table-column prop="startingPrice" label="充电起始价" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.ruleId === 2 ? scope.row.startingPrice + '（元）' : '无' }}</span>
 					</template>
-				</el-table-column>
+				</el-table-column> -->
 				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip='isPc' sortable>

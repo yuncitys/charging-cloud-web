@@ -21,24 +21,34 @@
 						<el-radio :label="2">汽车充电站</el-radio>
 					</el-radio-group>
 				</el-form-item>
-				<el-form-item :label="'运营商户'" prop="tenantId">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.tenantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
+				<el-form-item :label="'运营商户'" prop="merchantId">
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.merchantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
 						<el-option
-							v-for="item in operatorList"
-							:key="item.operatorId"
+							v-for="item in merchantList"
+							:key="item.id"
 							:label="item.name"
-							:value="item.operatorId + ''">
+							:value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item :label="'计费标准'" prop="pricingRuleId" v-if="formData.ruleId == 2">
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.pricingRuleId" filterable clearable placeholder="请选择站点计费标准" :disabled = "isDetail">
+						<el-option
+							v-for="item in priceTypeList"
+							:key="item.id"
+							:label="item.feeName"
+							:value="item.id">
 						</el-option>
 					</el-select>
 				</el-form-item>
 				<el-form-item :label="'充电站名称'" prop="networkName">
 					<el-input v-model="formData.networkName" placeholder="请输入充电站名称" clearable :disabled = "isDetail"/>
 				</el-form-item>
-				<el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
+				<!-- <el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
 					<el-input v-model="formData.startingPrice" placeholder="请输入充电站最低起充电价(元)" clearable type = "number" :disabled = "isDetail">
 						<template slot="append">元</template>
 					</el-input>
-				</el-form-item>
+				</el-form-item> -->
 				<el-form-item :label="'充电站位置'" prop="networkAddress">
 					<el-input v-model="formData.networkAddress" placeholder="请在下方投放地输入地址查询或者手动输入" clearable :disabled = "isDetail"/>
 				</el-form-item>
@@ -187,8 +197,14 @@
 		updateNetworkDot
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
-      getOperator
+    	getOperator
     } from '@/api/operator/operator.js'
+	import {
+    	getMerchant
+    } from '@/api/merchant/merchant.js'
+	import {
+		findDevicePriceByPriceType
+	} from '@/api/device/deviceList.js'
 	import loadMap from "../../../utils/loadMap.js";
 	import {
 		parseTime
@@ -380,7 +396,7 @@
 						message: '请输入充电站名称',
 						trigger: 'blur'
 					}],
-					tenantId: [{
+					merchantId: [{
 						required: true,
 						message: '请选择归属运营商户',
 						trigger: 'change'
@@ -483,7 +499,12 @@
 					auxiliaryDeviceCheckList: [{
 						required: true,
 						message: '请选择站场辅助设备',
-						trigger: 'blur'
+						trigger: 'change'
+					}],
+					pricingRuleId: [{
+						required: true,
+						message: '请选择站场计费标准',
+						trigger: 'change'
 					}],
 				},
 				title: "新增站点",
@@ -492,6 +513,8 @@
 				currentStep: 1,
 				showAdd: false,
         		operatorList: [],
+				merchantList: [],
+				priceTypeList: [],
 				formData: {
 					networkAddress: '',
 					networkName: '',
@@ -520,6 +543,8 @@
 					stationTag: '',
 					businessHours: '',
 					remark: '',
+					pricingRuleId: '',
+					merchantId: ''
 				},
 				mapInput: "",
 				// 地图实例
@@ -767,7 +792,8 @@
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 				}
 				this.mapInput = ''
-				this.getOperator()
+				this.getMerchant()
+				this.getDevicePriceByPriceType()
 				this.$nextTick(() => {
 					this.initMap()
 				})
@@ -818,7 +844,23 @@
 			},
 			getOperator() {
 				getOperator().then(res => {
-					this.operatorList = res.data
+					this.operatorList = res.data || []
+				})
+			},
+			getMerchant() {
+				getMerchant().then(res => {
+					this.merchantList = res.data || []
+				})
+			},
+			getDevicePriceByPriceType() {
+				let data = {
+					priceType: 1,
+					ruleId: 2
+				}
+				findDevicePriceByPriceType(data).then(res => {
+					if (res.code == 200) {
+						this.priceTypeList = res.data || []
+					}
 				})
 			},
 		},
