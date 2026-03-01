@@ -634,8 +634,7 @@
 			},
 			//显示二维码
 			showWXQrcode(item) {
-				this.$refs.wxCodes.showQrcode(item.deviceCode, item.appId, item.portCount, item.networkDotId, item
-					.domainName, item.ruleId)
+				this.$refs.wxCodes.showQrcode(item.deviceCode, item.portCount, item.networkDotId, item.deviceQrcodeLink, item.ruleId)
 			},
 			//设置表格一页数量
 			handleSizeChange(val) {
