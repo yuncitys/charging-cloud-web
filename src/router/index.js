@@ -350,6 +350,47 @@ export const constantRoutes = [{
     }]
   },
   {
+    path: '/tradeEntry',
+    component: Layout,
+    redirect: '/tradeEntry/list',
+    name: 'TradeEntry',
+    meta: {
+      title: '交易商户',
+      icon: 'money'
+    },
+    children: [
+      {
+        path: 'list',
+        name: 'TradeEntryList',
+        component: () => import('@/views/tradeEntry/index'),
+        meta: {
+          title: '进件列表',
+          icon: 'list'
+        }
+      },
+      {
+        path: 'add',
+        name: 'AddTradeEntry',
+        component: () => import('@/views/tradeEntry/entry'),
+        hidden: true,
+        meta: {
+          title: '商户进件',
+          noCache: true
+        }
+      },
+      {
+        path: 'edit/:id',
+        name: 'EditTradeEntry',
+        component: () => import('@/views/tradeEntry/entry'),
+        hidden: true,
+        meta: {
+          title: '修改进件',
+          noCache: true
+        }
+      }
+    ]
+  },
+  {
     path: '/order',
     component: Layout,
     redirect: '/order/scanOrderList',
