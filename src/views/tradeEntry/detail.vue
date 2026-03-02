@@ -118,6 +118,22 @@
               </el-form-item>
             </el-col>
           </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="营业执照">
+                <el-image
+                  style="width: 200px; height: 120px"
+                  :src="form.corLicenseImg"
+                  :preview-src-list="[form.corLicenseImg]"
+                  fit="contain"
+                >
+                  <div slot="error" class="image-slot">
+                    <i class="el-icon-picture-outline"></i>
+                  </div>
+                </el-image>
+              </el-form-item>
+            </el-col>
+          </el-row>
         </div>
 
         <!-- Step 2: Address & Legal Person -->
@@ -208,6 +224,38 @@
             <el-col :span="12">
               <el-form-item label="证件背面照批次号">
                 <el-input v-model="form.corLegIdBackImgBatchNo" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item label="证件照片">
+                <div style="display: flex;">
+                  <div style="margin-right: 20px; text-align: center;">
+                    <el-image
+                      style="width: 200px; height: 120px"
+                      :src="form.corLegIdFaceImg"
+                      :preview-src-list="[form.corLegIdFaceImg]"
+                      fit="contain"
+                    >
+                      <div slot="error" class="image-slot">
+                        <i class="el-icon-picture-outline"></i>
+                      </div>
+                    </el-image>
+                    <div>人像面</div>
+                  </div>
+                  <div style="text-align: center;">
+                    <el-image
+                      style="width: 200px; height: 120px"
+                      :src="form.corLegIdBackImg"
+                      :preview-src-list="[form.corLegIdBackImg]"
+                      fit="contain"
+                    >
+                      <div slot="error" class="image-slot">
+                        <i class="el-icon-picture-outline"></i>
+                      </div>
+                    </el-image>
+                    <div>国徽面</div>
+                  </div>
+                </div>
               </el-form-item>
             </el-col>
             <el-col :span="8">
@@ -440,6 +488,7 @@ export default {
           merName: '测试商户1',
           merCertNo: '330106199001011234',
           corLicenseBatchNo: 'L001',
+          corLicenseImg: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
           shortName: '测试商户',
           corCapital: 100,
           corIdEffectDate: '2020-01-01',
@@ -454,7 +503,9 @@ export default {
           corLegIdType: '11',
           corLegIdNo: '330106199001011234',
           corLegIdFaceImgBatchNo: 'IMG001',
+          corLegIdFaceImg: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg',
           corLegIdBackImgBatchNo: 'IMG002',
+          corLegIdBackImg: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg',
           corLegIdEffectDate: '2010-01-01',
           corLegIdExaDate: '2030-01-01',
           corLegProvince: '330000',
