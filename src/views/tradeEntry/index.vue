@@ -49,8 +49,21 @@
           <span>{{ row.managerMobile }}</span>
         </template>
       </el-table-column>
+      <el-table-column label="入驻状态" width="100" align="center">
+        <template slot-scope="{row}">
+          <el-tag :type="row.status | statusTypeFilter">{{ row.status | statusFilter }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="审核状态" width="100" align="center">
+        <template slot-scope="{row}">
+          <el-tag :type="row.auditStatus | auditStatusTypeFilter">{{ row.auditStatus | auditStatusFilter }}</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
         <template slot-scope="{row}">
+          <el-button type="info" size="mini" @click="handleDetail(row)">
+            详情
+          </el-button>
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             修改
           </el-button>
@@ -79,6 +92,46 @@ export default {
         '1': '普通商户'
       }
       return statusMap[status] || status
+    },
+    statusFilter(status) {
+      const statusMap = {
+        10: '入网中',
+        20: '认证中',
+        21: '待签署协议',
+        30: '正常',
+        40: '冻结',
+        50: '注销',
+        60: '入网失败'
+      }
+      return statusMap[status] || status
+    },
+    statusTypeFilter(status) {
+      const statusMap = {
+        10: 'info',
+        20: 'warning',
+        21: 'warning',
+        30: 'success',
+        40: 'danger',
+        50: 'info',
+        60: 'danger'
+      }
+      return statusMap[status] || ''
+    },
+    auditStatusFilter(status) {
+      const statusMap = {
+        10: '待审核',
+        20: '审核拒绝',
+        30: '审核通过'
+      }
+      return statusMap[status] || status
+    },
+    auditStatusTypeFilter(status) {
+      const statusMap = {
+        10: 'warning',
+        20: 'danger',
+        30: 'success'
+      }
+      return statusMap[status] || ''
     }
   },
   data() {
@@ -130,8 +183,11 @@ export default {
     handleUpdate(row) {
       this.$router.push('/tradeEntry/edit/' + row.id)
     },
+    handleDetail(row) {
+      this.$router.push('/tradeEntry/detail/' + row.id)
+    },
     handleDelete(row) {
-      this.$confirm('确认删除该商户?', '警告', {
+      this.$confirm('此操作将永久删除该商户, 是否继续?', '警告', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
