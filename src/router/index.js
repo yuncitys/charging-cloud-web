@@ -387,6 +387,16 @@ export const constantRoutes = [{
           title: '修改进件',
           noCache: true
         }
+      },
+      {
+        path: 'detail/:id',
+        name: 'DetailTradeEntry',
+        component: () => import('@/views/tradeEntry/detail'),
+        hidden: true,
+        meta: {
+          title: '进件详情',
+          noCache: true
+        }
       }
     ]
   },
