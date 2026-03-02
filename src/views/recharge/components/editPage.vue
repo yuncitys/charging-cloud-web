@@ -52,7 +52,7 @@
 		},
 		data() {
 			let checkNumber = (rule, value, callback) => {
-				if (!(/^(?!0+(?:\.0+)?$)(?:[1-9]\d*|0)(?:\.\d{1,2})?$/.test(value))) {
+				if (!(/^\d+(\.\d{1,2})?$/.test(value))) {
 					callback(new Error('请输入正整数或者最多2位正小数'))
 					return false;
 				} else {
