@@ -52,6 +52,19 @@
             <div class="ocr-tip-text">
               <i class="el-icon-info"></i> 上传营业执照可自动识别并填充下方信息
             </div>
+            <div v-if="form.corLicenseImg" class="ocr-preview">
+              <el-image
+                class="ocr-preview-image"
+                :src="form.corLicenseImg"
+                :preview-src-list="[form.corLicenseImg]"
+                fit="contain"
+              >
+                <div slot="error" class="ocr-preview-error">
+                  <i class="el-icon-picture-outline"></i>
+                </div>
+              </el-image>
+              <div class="ocr-preview-label">营业执照预览</div>
+            </div>
           </div>
           <el-row>
             <!-- <el-col :span="12">
@@ -203,6 +216,19 @@
                 <div class="ocr-tip-text">
                   <i class="el-icon-info"></i> 识别身份证正面
                 </div>
+                <div v-if="form.corLegIdFaceImg" class="ocr-preview">
+                  <el-image
+                    class="ocr-preview-image"
+                    :src="form.corLegIdFaceImg"
+                    :preview-src-list="[form.corLegIdFaceImg]"
+                    fit="contain"
+                  >
+                    <div slot="error" class="ocr-preview-error">
+                      <i class="el-icon-picture-outline"></i>
+                    </div>
+                  </el-image>
+                  <div class="ocr-preview-label">正面预览</div>
+                </div>
               </el-col>
               <el-col :span="12">
                 <el-upload
@@ -218,6 +244,19 @@
                 </el-upload>
                 <div class="ocr-tip-text">
                   <i class="el-icon-info"></i> 识别身份证反面
+                </div>
+                <div v-if="form.corLegIdBackImg" class="ocr-preview">
+                  <el-image
+                    class="ocr-preview-image"
+                    :src="form.corLegIdBackImg"
+                    :preview-src-list="[form.corLegIdBackImg]"
+                    fit="contain"
+                  >
+                    <div slot="error" class="ocr-preview-error">
+                      <i class="el-icon-picture-outline"></i>
+                    </div>
+                  </el-image>
+                  <div class="ocr-preview-label">反面预览</div>
                 </div>
               </el-col>
             </el-row>
@@ -413,6 +452,7 @@ export default {
         merName: '',
         merCertNo: '',
         corLicenseBatchNo: '',
+        corLicenseImg: '',
         shortName: '',
         corCapital: 0,
         corIdEffectDate: '',
@@ -429,7 +469,9 @@ export default {
         corLegIdType: '',
         corLegIdNo: '',
         corLegIdFaceImgBatchNo: '',
+        corLegIdFaceImg: '',
         corLegIdBackImgBatchNo: '',
+        corLegIdBackImg: '',
         corLegIdEffectDate: '',
         corLegIdExaDate: '',
         corLegProvince: '',
@@ -499,26 +541,7 @@ export default {
           if (data && typeof data === 'object') {
             delete data.id
             Object.assign(this.form, data)
-            if (this.form.merProvinceId) {
-              getAreaSelector(this.form.merProvinceId).then(res => {
-                this.cityList = res.data
-              })
-            }
-            if (this.form.merRegionId) {
-              getAreaSelector(this.form.merRegionId).then(res => {
-                this.areaList = res.data
-              })
-            }
-            if (this.form.corLegProvince) {
-              getAreaSelector(this.form.corLegProvince).then(res => {
-                this.legCityList = res.data
-              })
-            }
-            if (this.form.corLegCity) {
-              getAreaSelector(this.form.corLegCity).then(res => {
-                this.legAreaList = res.data
-              })
-            }
+            this.loadAreaOptionsForCurrentForm()
           }
         }
       } catch (e) {
@@ -534,9 +557,16 @@ export default {
     }
   },
   methods: {
+    normalizeAreaList(res) {
+      const data = res && res.data
+      if (Array.isArray(data)) return data
+      if (data && Array.isArray(data)) return data
+      if (Array.isArray(res)) return res
+      return []
+    },
     getProvinceList() {
       getAreaSelector('-1').then(res => {
-        this.provinceList = res.data
+        this.provinceList = this.normalizeAreaList(res)
       })
     },
     handleProvinceChange(val) {
@@ -545,14 +575,14 @@ export default {
       this.cityList = []
       this.areaList = []
       getAreaSelector(val).then(res => {
-        this.cityList = res.data
+        this.cityList = this.normalizeAreaList(res)
       })
     },
     handleCityChange(val) {
       this.form.merCountyId = ''
       this.areaList = []
       getAreaSelector(val).then(res => {
-        this.areaList = res.data
+        this.areaList = this.normalizeAreaList(res)
       })
     },
     handleLegProvinceChange(val) {
@@ -561,15 +591,37 @@ export default {
       this.legCityList = []
       this.legAreaList = []
       getAreaSelector(val).then(res => {
-        this.legCityList = res.data
+        this.legCityList = this.normalizeAreaList(res)
       })
     },
     handleLegCityChange(val) {
       this.form.corLegCountyId = ''
       this.legAreaList = []
       getAreaSelector(val).then(res => {
-        this.legAreaList = res.data
+        this.legAreaList = this.normalizeAreaList(res)
       })
+    },
+    loadAreaOptionsForCurrentForm() {
+      if (this.form.merProvinceId) {
+        getAreaSelector(this.form.merProvinceId).then(res => {
+          this.cityList = this.normalizeAreaList(res)
+        })
+      }
+      if (this.form.merRegionId) {
+        getAreaSelector(this.form.merRegionId).then(res => {
+          this.areaList = this.normalizeAreaList(res)
+        })
+      }
+      if (this.form.corLegProvince) {
+        getAreaSelector(this.form.corLegProvince).then(res => {
+          this.legCityList = this.normalizeAreaList(res)
+        })
+      }
+      if (this.form.corLegCity) {
+        getAreaSelector(this.form.corLegCity).then(res => {
+          this.legAreaList = this.normalizeAreaList(res)
+        })
+      }
     },
     handleBankChange(val) {
       if (!val) {
@@ -686,22 +738,22 @@ export default {
         this.form = response.data
         if (this.form.merProvinceId) {
           getAreaSelector(this.form.merProvinceId).then(res => {
-            this.cityList = res.data.list
+            this.cityList = this.normalizeAreaList(res)
           })
         }
         if (this.form.merRegionId) {
           getAreaSelector(this.form.merRegionId).then(res => {
-            this.areaList = res.data.list
+            this.areaList = this.normalizeAreaList(res)
           })
         }
         if (this.form.corLegProvince) {
           getAreaSelector(this.form.corLegProvince).then(res => {
-            this.legCityList = res.data
+            this.legCityList = this.normalizeAreaList(res)
           })
         }
         if (this.form.corLegCity) {
           getAreaSelector(this.form.corLegCity).then(res => {
-            this.legAreaList = res.data
+            this.legAreaList = this.normalizeAreaList(res)
           })
         }
       }).catch(err => {
@@ -780,5 +832,32 @@ export default {
   margin-top: 10px;
   color: #909399;
   font-size: 13px;
+}
+
+.ocr-preview {
+  margin-top: 12px;
+}
+
+.ocr-preview-image {
+  width: 200px;
+  height: 120px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.ocr-preview-label {
+  margin-top: 6px;
+  color: #606266;
+  font-size: 12px;
+}
+
+.ocr-preview-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #c0c4cc;
+  background: #f5f7fa;
 }
 </style>
