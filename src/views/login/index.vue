@@ -323,7 +323,7 @@
   .login-bg .login-box-wrap .login-logo.img {
     width: 60px;
     height: 60px;
-    background-image: url("../../assets/logo-yc.png");
+    background-image: url("../../assets/logo.png");
     background-repeat: no-repeat;
     background-size: 60px;
   }
