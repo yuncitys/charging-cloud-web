@@ -420,6 +420,7 @@
 <script>
 import { addTradeEntry, updateTradeEntry, getTradeEntry, imgInfoDiscern } from '@/api/pay/tradeEntry'
 import { getAreaSelector } from '@/api/area/index'
+import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
 
 export default {
@@ -642,30 +643,63 @@ export default {
         return
       }
 
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('imageType', type)
-
       const loading = this.$loading({
         lock: true,
-        text: '正在识别中...',
+        text: '正在上传并识别中...',
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
 
-      imgInfoDiscern(formData).then(response => {
+      // 1. Upload file
+      const uploadFormData = new FormData()
+      uploadFormData.append('file', file)
+
+      upload('WebAnnexFile', uploadFormData).then(uploadRes => {
+        const fileUrl = uploadRes.data.url || uploadRes.data // Adapt to response
+        if (!fileUrl) {
+          throw new Error('文件上传失败，未获取到URL')
+        }
+
+        // 2. OCR Recognition
+        const ocrFormData = new FormData()
+        ocrFormData.append('file', file)
+        ocrFormData.append('imageType', type)
+        ocrFormData.append('serviceProviderId', this.form.serviceProviderId)
+        ocrFormData.append('apiVersion', this.form.apiVersion || 'v1.0')
+
+        return imgInfoDiscern(ocrFormData).then(ocrRes => {
+          return { ocrData: ocrRes.data || ocrRes, fileUrl }
+        })
+      }).then(({ ocrData, fileUrl }) => {
         loading.close()
-        const data = response.data || response // Adjust based on actual response structure
-        if (data) {
+        if (ocrData) {
           this.$message.success('识别成功')
-          this.fillFormData(data, type)
+          this.fillFormData(ocrData, type)
+
+          // 3. Construct Attach object and add to attchList
+          const attach = {
+            fileBatchId: ocrData.fileBatchId,
+            fileName: file.name,
+            fileType: parseInt(type),
+            busTradeMerNo: this.form.busTradeMerNo,
+            fileUrl: fileUrl
+          }
+          // Remove existing attach of same type if any (optional, but good for re-upload)
+          this.form.attchList = this.form.attchList.filter(item => item.fileType !== parseInt(type))
+          this.form.attchList.push(attach)
+
+          // Update preview images
+          if (type === '04') this.form.corLicenseImg = fileUrl
+          if (type === '01') this.form.corLegIdFaceImg = fileUrl
+          if (type === '02') this.form.corLegIdBackImg = fileUrl
+
         } else {
           this.$message.warning('未能识别到有效信息')
         }
       }).catch(err => {
         loading.close()
-        console.error('识别失败', err)
-        this.$message.error('识别失败，请稍后重试')
+        console.error('操作失败', err)
+        this.$message.error('操作失败，请检查网络或稍后重试')
       })
     },
     fillFormData(data, type) {
