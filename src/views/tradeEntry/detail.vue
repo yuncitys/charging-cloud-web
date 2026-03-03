@@ -26,18 +26,8 @@
           <el-divider content-position="left">基础信息</el-divider>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="租户标识">
-                <el-input v-model="form.tenantId" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
               <el-form-item label="渠道代码">
                 <el-input v-model="form.serviceProviderId" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="接口版本号">
-                <el-input v-model="form.apiVersion" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -342,7 +332,7 @@
 </template>
 
 <script>
-import { getTradeEntry, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
+import { getTradeEntry, getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
 import dictData from '@/utils/dictData'
 
 export default {
@@ -455,14 +445,32 @@ export default {
     }
   },
   methods: {
+    mapAttachments(attchList) {
+      if (!Array.isArray(attchList)) return
+      attchList.forEach(a => {
+        const t = (a.imageType || a.type || a.bizType || '').toString().toLowerCase()
+        const url = a.fileUrl || a.url || a.path || ''
+        if (!url) return
+        if (t.includes('04') || t.includes('license') || t.includes('yyzz')) {
+          this.form.corLicenseImg = url
+        } else if (t.includes('01') || t.includes('front') || t.includes('face')) {
+          this.form.corLegIdFaceImg = url
+        } else if (t.includes('02') || t.includes('back')) {
+          this.form.corLegIdBackImg = url
+        }
+      })
+    },
     getProvinceList() {
       getAreaSelector('-1').then(res => {
         this.provinceList = res.data.list
       })
     },
     fetchData(id) {
-      getTradeEntry(id).then(response => {
-        this.form = response.data
+      // 优先调用聚合详情接口，返回 tradeEntry 和 attchList
+      getTradeEntryDetail(id).then(response => {
+        const data = response.data || {}
+        this.form = data.tradeEntry || data
+        this.mapAttachments(data.attchList)
         // 加载地址数据用于回显
         if (this.form.merProvinceId) {
           getAreaSelector(this.form.merProvinceId).then(res => {
@@ -486,7 +494,7 @@ export default {
         }
       }).catch(err => {
         console.error(err)
-        // Mock data
+        // Mock data（保留，便于联调前预览）
         this.form = {
           id: id,
           tenantId: 'T001',
