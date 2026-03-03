@@ -5,6 +5,7 @@
         <span>商户进件详情</span>
         <div style="float: right;">
           <el-tag :type="form.status | statusTypeFilter" style="margin-right: 10px;">{{ form.status | statusFilter }}</el-tag>
+          <el-button type="warning" size="mini" :disabled="!canResubmit" style="margin-right: 10px;" @click="handleResubmit">重新提交</el-button>
           <el-button type="primary" size="mini" :loading="statusLoading" @click="handleQueryStatus">查询状态</el-button>
         </div>
       </div>
@@ -346,13 +347,22 @@ import dictData from '@/utils/dictData'
 
 export default {
   name: 'TradeEntryDetail',
+  computed: {
+    canResubmit() {
+      const val = Number(this.form.status)
+      return [0, 32, 60].includes(val)
+    }
+  },
   filters: {
     statusFilter(status) {
       const statusMap = {
+        0: '待提交',
         10: '入网中',
         20: '认证中',
         21: '待签署协议',
         30: '正常',
+        31: '修改中',
+        32: '修改失败',
         40: '冻结',
         50: '注销',
         60: '入网失败'
@@ -361,10 +371,13 @@ export default {
     },
     statusTypeFilter(status) {
       const statusMap = {
+        0: 'info',
         10: 'info',
         20: 'warning',
         21: 'warning',
         30: 'success',
+        31: 'info',
+        32: 'danger',
         40: 'danger',
         50: 'info',
         60: 'danger'
@@ -534,6 +547,14 @@ export default {
       }).catch(() => {
         this.statusLoading = false
       })
+    },
+    handleResubmit() {
+      try {
+        const payload = { ...this.form }
+        delete payload.id
+        sessionStorage.setItem('tradeEntryPrefill', JSON.stringify(payload))
+      } catch (e) {}
+      this.$router.push({ path: '/tradeEntry/add', query: { prefill: '1' } })
     },
     handleBack() {
       this.$router.go(-1)

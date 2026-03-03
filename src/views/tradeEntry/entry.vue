@@ -491,6 +491,41 @@ export default {
     this.busKindOptions = dictData.getBusKindData()
     this.bankList = dictData.getBankNo()
     this.getProvinceList()
+    if (this.$route.query && this.$route.query.prefill === '1') {
+      try {
+        const cached = sessionStorage.getItem('tradeEntryPrefill')
+        if (cached) {
+          const data = JSON.parse(cached)
+          if (data && typeof data === 'object') {
+            delete data.id
+            Object.assign(this.form, data)
+            if (this.form.merProvinceId) {
+              getAreaSelector(this.form.merProvinceId).then(res => {
+                this.cityList = res.data
+              })
+            }
+            if (this.form.merRegionId) {
+              getAreaSelector(this.form.merRegionId).then(res => {
+                this.areaList = res.data
+              })
+            }
+            if (this.form.corLegProvince) {
+              getAreaSelector(this.form.corLegProvince).then(res => {
+                this.legCityList = res.data
+              })
+            }
+            if (this.form.corLegCity) {
+              getAreaSelector(this.form.corLegCity).then(res => {
+                this.legAreaList = res.data
+              })
+            }
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+      sessionStorage.removeItem('tradeEntryPrefill')
+    }
     const id = this.$route.params.id
     if (id) {
       this.isEdit = true
