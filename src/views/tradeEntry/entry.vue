@@ -418,7 +418,7 @@
 </template>
 
 <script>
-import { addTradeEntry, updateTradeEntry, getTradeEntry, imgInfoDiscern } from '@/api/pay/tradeEntry'
+import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern } from '@/api/pay/tradeEntry'
 import { getAreaSelector } from '@/api/area/index'
 import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
@@ -561,9 +561,27 @@ export default {
     normalizeAreaList(res) {
       const data = res && res.data
       if (Array.isArray(data)) return data
-      if (data && Array.isArray(data)) return data
+      if (data && Array.isArray(data.list)) return data.list
       if (Array.isArray(res)) return res
       return []
+    },
+    mapAttachmentsFromAttchList(attchList) {
+      if (!Array.isArray(attchList)) return
+      attchList.forEach(a => {
+        const url = a && a.fileUrl
+        const ft = (a && a.fileType != null ? String(a.fileType) : '').padStart(2, '0')
+        if (!url) return
+        if (ft === '04') {
+          this.$set(this.form, 'corLicenseImg', url)
+          if (a.fileBatchId) this.form.corLicenseBatchNo = a.fileBatchId
+        } else if (ft === '01') {
+          this.$set(this.form, 'corLegIdFaceImg', url)
+          if (a.fileBatchId) this.form.corLegIdFaceImgBatchNo = a.fileBatchId
+        } else if (ft === '02') {
+          this.$set(this.form, 'corLegIdBackImg', url)
+          if (a.fileBatchId) this.form.corLegIdBackImgBatchNo = a.fileBatchId
+        }
+      })
     },
     getProvinceList() {
       getAreaSelector('-1').then(res => {
@@ -768,28 +786,14 @@ export default {
       }
     },
     fetchData(id) {
-      getTradeEntry(id).then(response => {
-        this.form = response.data
-        if (this.form.merProvinceId) {
-          getAreaSelector(this.form.merProvinceId).then(res => {
-            this.cityList = this.normalizeAreaList(res)
-          })
-        }
-        if (this.form.merRegionId) {
-          getAreaSelector(this.form.merRegionId).then(res => {
-            this.areaList = this.normalizeAreaList(res)
-          })
-        }
-        if (this.form.corLegProvince) {
-          getAreaSelector(this.form.corLegProvince).then(res => {
-            this.legCityList = this.normalizeAreaList(res)
-          })
-        }
-        if (this.form.corLegCity) {
-          getAreaSelector(this.form.corLegCity).then(res => {
-            this.legAreaList = this.normalizeAreaList(res)
-          })
-        }
+      getTradeEntryDetail(id).then(response => {
+        const detail = (response && response.data) || response || {}
+        const tradeEntry = detail.tradeEntry || detail
+        const attchList = detail.attchList || []
+        Object.assign(this.form, tradeEntry)
+        this.$set(this.form, 'attchList', Array.isArray(attchList) ? attchList : [])
+        this.mapAttachmentsFromAttchList(this.form.attchList)
+        this.loadAreaOptionsForCurrentForm()
       }).catch(err => {
         console.error(err)
       })
@@ -821,10 +825,11 @@ export default {
       this.$refs.form.validate(valid => {
         if (valid) {
           this.loading = true
-          const request = this.isEdit ? updateTradeEntry : addTradeEntry
+          const isUpdate = !!this.form.id || this.isEdit
+          const request = isUpdate ? updateTradeEntry : addTradeEntry
           request(this.form).then(() => {
             this.$message({
-              message: this.isEdit ? '修改成功' : '新增成功',
+              message: (isUpdate ? '修改成功' : '新增成功'),
               type: 'success'
             })
             this.loading = false
