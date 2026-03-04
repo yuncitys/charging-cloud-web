@@ -448,15 +448,15 @@ export default {
     mapAttachments(attchList) {
       if (!Array.isArray(attchList)) return
       attchList.forEach(a => {
-        const t = (a.imageType || a.type || a.bizType || '').toString().toLowerCase()
         const url = a.fileUrl || a.url || a.path || ''
+        const ft = (a.fileType != null ? String(a.fileType) : '').padStart(2, '0')
         if (!url) return
-        if (t.includes('04') || t.includes('license') || t.includes('yyzz')) {
-          this.form.corLicenseImg = url
-        } else if (t.includes('01') || t.includes('front') || t.includes('face')) {
-          this.form.corLegIdFaceImg = url
-        } else if (t.includes('02') || t.includes('back')) {
-          this.form.corLegIdBackImg = url
+        if (ft === '04') {
+          this.$set(this.form, 'corLicenseImg', url)
+        } else if (ft === '01') {
+          this.$set(this.form, 'corLegIdFaceImg', url)
+        } else if (ft === '02') {
+          this.$set(this.form, 'corLegIdBackImg', url)
         }
       })
     },
