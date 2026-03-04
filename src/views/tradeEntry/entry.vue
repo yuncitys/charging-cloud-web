@@ -418,7 +418,7 @@
 </template>
 
 <script>
-import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern } from '@/api/pay/tradeEntry'
+import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern, submitTradeEntry } from '@/api/pay/tradeEntry'
 import { getAreaSelector } from '@/api/area/index'
 import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
@@ -827,15 +827,27 @@ export default {
           this.loading = true
           const isUpdate = !!this.form.id || this.isEdit
           const request = isUpdate ? updateTradeEntry : addTradeEntry
-          request(this.form).then(() => {
-            this.$message({
-              message: (isUpdate ? '修改成功' : '新增成功'),
-              type: 'success'
-            })
+          request(this.form).then(res => {
+            if (res && res.code === 200) {
+              const merNoFromResp = res.data && (res.data.busTradeMerNo || res.data)
+              const busTradeMerNo = merNoFromResp || this.form.busTradeMerNo
+              return submitTradeEntry(busTradeMerNo).then(sres => {
+                if (sres && sres.code === 200) {
+                  this.$message({ message: '提交成功', type: 'success' })
+                  this.loading = false
+                  this.$router.push('/tradeEntry/list')
+                } else {
+                  this.loading = false
+                  this.$message.error((sres && sres.msg) || '提交失败')
+                }
+              })
+            } else {
+              this.loading = false
+              this.$message.error((res && res.msg) || '保存失败')
+            }
+          }).catch(err => {
             this.loading = false
-            this.$router.push('/tradeEntry/list')
-          }).catch(() => {
-            this.loading = false
+            this.$message.error('请求失败')
           })
         } else {
           console.log('error submit!!')
