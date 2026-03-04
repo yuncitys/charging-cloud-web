@@ -10,11 +10,11 @@
         </div>
       </div>
 
-      <div v-if="form.auditMessage" style="margin-bottom: 20px;">
+      <div v-if="form.auditRemark" style="margin-bottom: 20px;">
         <el-alert
           title="审核失败原因"
           type="error"
-          :description="form.auditMessage"
+          :description="form.auditRemark"
           show-icon
           :closable="false"
         />
@@ -470,7 +470,8 @@ export default {
       getTradeEntryDetail(id).then(response => {
         const data = response.data || {}
         this.form = data.tradeEntry || data
-        this.mapAttachments(data.attchList)
+        this.$set(this.form, 'attchList', Array.isArray(data.attchList) ? data.attchList : [])
+        this.mapAttachments(this.form.attchList)
         // 加载地址数据用于回显
         if (this.form.merProvinceId) {
           getAreaSelector(this.form.merProvinceId).then(res => {
@@ -509,7 +510,6 @@ export default {
           merName: '测试商户1',
           merCertNo: '330106199001011234',
           corLicenseBatchNo: 'L001',
-          corLicenseImg: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg',
           shortName: '测试商户',
           corCapital: 100,
           corIdEffectDate: '2020-01-01',
@@ -524,9 +524,7 @@ export default {
           corLegIdType: '11',
           corLegIdNo: '330106199001011234',
           corLegIdFaceImgBatchNo: 'IMG001',
-          corLegIdFaceImg: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg',
           corLegIdBackImgBatchNo: 'IMG002',
-          corLegIdBackImg: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg',
           corLegIdEffectDate: '2010-01-01',
           corLegIdExaDate: '2030-01-01',
           corLegProvince: '330000',
@@ -541,8 +539,14 @@ export default {
           identityNo: '330106199001011234',
           mobileNo: '13800138000',
           status: 60,
-          auditMessage: '证件信息不清晰，请重新上传'
+          auditRemark: '证件信息不清晰，请重新上传',
+          attchList: [
+            { fileType: 4, fileUrl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg', fileBatchId: 'L001' },
+            { fileType: 1, fileUrl: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg', fileBatchId: 'IMG001' },
+            { fileType: 2, fileUrl: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg', fileBatchId: 'IMG002' }
+          ]
         }
+        this.mapAttachments(this.form.attchList)
       })
     },
     handleQueryStatus() {
