@@ -542,6 +542,9 @@ export default {
           if (data && typeof data === 'object') {
             delete data.id
             Object.assign(this.form, data)
+            if (Array.isArray(this.form.attchList)) {
+              this.mapAttachmentsFromAttchList(this.form.attchList)
+            }
             this.loadAreaOptionsForCurrentForm()
           }
         }
