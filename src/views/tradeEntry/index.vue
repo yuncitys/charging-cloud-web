@@ -116,10 +116,13 @@ export default {
     },
     statusFilter(status) {
       const statusMap = {
+        0: '待提交',
         10: '入网中',
         20: '认证中',
         21: '待签署协议',
         30: '正常',
+        31: '修改中',
+        32: '修改失败',
         40: '冻结',
         50: '注销',
         60: '入网失败'
@@ -128,10 +131,13 @@ export default {
     },
     statusTypeFilter(status) {
       const statusMap = {
+        0: 'info',
         10: 'info',
         20: 'warning',
         21: 'warning',
         30: 'success',
+        31: 'info',
+        32: 'danger',
         40: 'danger',
         50: 'info',
         60: 'danger'
@@ -210,8 +216,8 @@ export default {
     getList() {
       this.listLoading = true
       listTradeEntry(this.listQuery).then(response => {
-        this.list = response.data.items
-        this.total = response.data.total
+        this.list = response.data
+        this.total = response.count
         this.listLoading = false
       }).catch(() => {
         // Mock data for demonstration if API fails or is not implemented
