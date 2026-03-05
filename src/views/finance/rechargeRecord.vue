@@ -13,6 +13,20 @@
 				placeholder="请选择交易类型" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
+			<el-select v-model="listQuery.payStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请选择交易状态" clearable @change="handleFilter">
+				<el-option label="未支付" :value="0" />
+				<el-option label="支付中" :value="10" />
+				<el-option label="已支付" :value="1" />
+				<el-option label="支付失败" :value="2" />
+				<el-option label="已退款" :value="3" />
+				<el-option label="部分退款" :value="30" />
+			</el-select>
+			<el-select v-model="listQuery.isProfitSharing" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="是否分账" clearable @change="handleFilter">
+				<el-option label="是" :value="1" />
+				<el-option label="否" :value="0" />
+			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
 				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
@@ -48,24 +62,37 @@
 				</el-table-column>
 				<el-table-column prop="giftMoney" label="赠送金额" align="center" :show-overflow-tooltip='isPc' sortable>
 				</el-table-column>
-				<el-table-column prop="type" label="充值类型" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="refundMoney" label="退款金额" align="center" :show-overflow-tooltip='isPc' sortable>
+				</el-table-column>
+				<el-table-column prop="remainingShareMoney" label="剩余分账金额" align="center" :show-overflow-tooltip='isPc' sortable>
+				</el-table-column>
+				<el-table-column prop="isProfitSharing" label="是否分账" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag v-if="scope.row.type == 0">充电缴费</el-tag>
-						<el-tag v-if="scope.row.type == 1">充值余额</el-tag>
-						<el-tag v-if="scope.row.type == 2">充值IC卡</el-tag>
-            			<el-tag v-if="scope.row.type == 3">充值月卡</el-tag>
+						<el-tag type="success" v-if="scope.row.isProfitSharing == 1">是</el-tag>
+						<el-tag type="danger" v-if="scope.row.isProfitSharing == 0">否</el-tag>
+					</template>
+				</el-table-column>
+				<el-table-column prop="type" label="交易类型" align="center" :show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span v-if="scope.row.type == 0">充电缴费</span>
+						<span v-if="scope.row.type == 1">充值余额</span>
+						<span v-if="scope.row.type == 2">充值IC卡</span>
+            			<span v-if="scope.row.type == 3">充值月卡</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="payStatus" label="状态" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
+						<el-tag type="info" v-if="scope.row.payStatus == 10">支付中</el-tag>
 						<el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
-            			<el-tag type="success" v-if="scope.row.payStatus == 2">支付失败</el-tag>
+            			<el-tag type="danger" v-if="scope.row.payStatus == 2">支付失败</el-tag>
+						<el-tag type="success" v-if="scope.row.payStatus == 3">已退款</el-tag>
+						<el-tag type="warning" v-if="scope.row.payStatus == 30">部分退款</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="createTime" label="创建时间" align="center" sortable :show-overflow-tooltip='isPc'>
+				<el-table-column prop="createTime" label="交易时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
@@ -111,6 +138,8 @@
 					userCode: '',
 					phone: '',
 					type: '',
+					payStatus: '',
+					isProfitSharing: '',
 					createTimeStart: '',
 					createTimeEnd: ''
 				},
