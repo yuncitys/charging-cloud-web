@@ -47,7 +47,7 @@
 						{{scope.row.ruleId === 1 ? '单车充电站' : '汽车充电站'}}
 					</template>
 				</el-table-column> -->
-				<el-table-column prop="operatorName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="merchantName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<!-- <el-table-column prop="merchantName" label="归属商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column> -->
