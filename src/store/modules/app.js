@@ -8,7 +8,8 @@ const state = {
   },
   device: 'desktop',
   language: getLanguage(),
-  size: Cookies.get('size') || 'medium'
+  size: Cookies.get('size') || 'medium',
+  menuLayout: localStorage.getItem('menuLayout') || 'mix'
 }
 
 const mutations = {
@@ -41,6 +42,10 @@ const mutations = {
   SET_SIZE: (state, size) => {
     state.size = size
     Cookies.set('size', size)
+  },
+  SET_MENU_LAYOUT: (state, layout) => {
+    state.menuLayout = layout
+    localStorage.setItem('menuLayout', layout)
   }
 }
 
@@ -62,6 +67,9 @@ const actions = {
   },
   setSize({ commit }, size) {
     commit('SET_SIZE', size)
+  },
+  setMenuLayout({ commit }, layout) {
+    commit('SET_MENU_LAYOUT', layout)
   }
 }
 

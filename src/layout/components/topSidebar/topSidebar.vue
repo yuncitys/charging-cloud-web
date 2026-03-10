@@ -1,7 +1,14 @@
 <template>
-  <div class="divElmenu" ref="divElmenu">
-    <el-menu :default-active="pActiveMenu" :background-color="variables.menuBg" :text-color="variables.menuText"
-      :unique-opened="true" :active-text-color="variables.menuActiveText" :collapse-transition="false" mode="horizontal"
+  <div class="divElmenu" :class="{'sidebar-only-mode': menuLayout !== 'mix'}" ref="divElmenu">
+    <el-menu
+      v-if="menuLayout === 'mix'"
+      :default-active="pActiveMenu"
+      :background-color="variables.menuBg"
+      :text-color="variables.menuText"
+      :unique-opened="true"
+      :active-text-color="variables.menuActiveText"
+      :collapse-transition="false"
+      mode="horizontal"
       class="top-elmenu">
       <template v-for="item in list">
         <el-menu-item :index="item.title" :key="item.title" ref="subMenuitem">
@@ -39,6 +46,31 @@
         </template>
         <lang-select class="right-menu-item hover-effect" style="display:flex; align-items:center" />
         <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex; align-items:center" />
+
+        <!-- 布局切换按钮 -->
+        <el-tooltip
+          :content="menuLayout === 'mix' ? '切换到左侧菜单' : '切换到混合菜单'"
+          effect="dark"
+          placement="bottom"
+          class="right-menu-item hover-effect layout-toggle-btn"
+        >
+          <div @click="toggleMenuLayout" style="display:flex; align-items:center; padding: 0 8px; cursor: pointer;">
+            <svg v-if="menuLayout === 'mix'" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#5a5e66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="18" rx="1"/>
+              <rect x="13" y="3" width="8" height="4" rx="1"/>
+              <rect x="13" y="10" width="8" height="4" rx="1"/>
+              <rect x="13" y="17" width="8" height="4" rx="1"/>
+            </svg>
+            <svg v-else viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#5a5e66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="18" rx="1"/>
+              <line x1="13" y1="3" x2="21" y2="3"/>
+              <line x1="13" y1="8" x2="21" y2="8"/>
+              <line x1="13" y1="13" x2="21" y2="13"/>
+              <line x1="13" y1="18" x2="21" y2="18"/>
+              <line x1="13" y1="21" x2="21" y2="21"/>
+            </svg>
+          </div>
+        </el-tooltip>
       </div>
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
@@ -80,9 +112,6 @@
       }
     },
     created() {
-      // if (window.sessionStorage.getItem("pActiveMenu")) {
-      //   this.pActiveMenu = window.sessionStorage.getItem("pActiveMenu")
-      // };
       if (window.localStorage.getItem("pActiveMenu")) {
         this.pActiveMenu = window.localStorage.getItem("pActiveMenu")
       };
@@ -91,7 +120,8 @@
       ...mapGetters([
         'permission_routes',
         'sidebar',
-        'device'
+        'device',
+        'menuLayout'
       ]),
       userName() {
         return this.$store.getters.adminUser.adminName
@@ -111,7 +141,6 @@
     },
     methods: {
       onClick(item) {
-        // window.sessionStorage.setItem("pActiveMenu", item.title);
         window.localStorage.setItem("pActiveMenu", item.title);
         this.pActiveMenu = item.title;
         if (item.children.length > 0) {
@@ -120,12 +149,9 @@
           this.$router.push({
             path: item.children[0].href
           });
-          // window.sessionStorage.setItem("activeMenu", item.children[0].href);
-          // window.sessionStorage.setItem("leftMeunList", JSON.stringify(item.children));
           window.localStorage.setItem("activeMenu", item.children[0].href);
           window.localStorage.setItem("leftMeunList", JSON.stringify(item.children));
         } else {
-          // window.sessionStorage.removeItem("leftMeunList", item.title);
           window.localStorage.removeItem("leftMeunList", item.title);
           this.$store.commit('permission/setLeftMeunList', []);
           this.$store.dispatch('app/closeSideBar', {
@@ -136,6 +162,14 @@
           })
         }
       },
+      toggleMenuLayout() {
+        const next = this.menuLayout === 'mix' ? 'sidebar' : 'mix'
+        this.$store.dispatch('app/setMenuLayout', next)
+        // 切换到左侧菜单模式时，确保侧边栏展开（避免菜单以折叠 icon-only 模式渲染）
+        if (next === 'sidebar') {
+          this.$store.dispatch('app/openSideBar')
+        }
+      },
       async logout() {
         let logoutFrom = {
           grandType: 'password'
@@ -144,9 +178,6 @@
           if (res.code == 200) {
             this.$store.dispatch('user/resetToken')
             this.$router.push(`/login?redirect=${this.$route.fullPath}`);
-            // window.sessionStorage.removeItem("activeMenu");
-            // window.sessionStorage.removeItem("pActiveMenu");
-            // window.sessionStorage.removeItem("leftMeunList");
             window.localStorage.removeItem("activeMenu");
             window.localStorage.removeItem("pActiveMenu");
             window.localStorage.removeItem("leftMeunList");
@@ -189,24 +220,41 @@
     display: flex;
     align-items: center;
     border-bottom: solid 1px #e6e6e6;
+
+    /* 左侧菜单模式：整行高度 60px（与左侧 logo 区等高），去掉底部分割线，右侧操作区靠右 */
+    &.sidebar-only-mode {
+      border-bottom: none;
+      height: 60px;
+
+      .right-menu {
+        margin-left: auto;
+        height: 100%;
+        display: flex;
+        align-items: center;
+      }
+    }
   }
 
   .top-elmenu {
     overflow: hidden;
     display: flex;
     flex: 1;
+    height: 60px;          /* 与整行高度一致 */
     border: none !important;
     margin-left: 100px;
 
     & .el-menu-item {
-      padding: 0 0px;
+      padding: 0;
+      height: 100%;          /* 撑满 60px */
+      display: flex;
+      align-items: center;   /* 内层 div 垂直居中 */
       line-height: normal;
       color: $menuText !important;
       font-weight: 600;
 
       &>div {
         padding: 8px 22px;
-        margin: 14px 4px;
+        margin: 0 4px;       /* 去掉固定上下 margin，交由 flex 居中 */
         border-radius: 10px;
       }
 
@@ -289,6 +337,8 @@
     }
 
     .avatar-container {
+      display: flex;
+      align-items: center;
 
       .avatar-wrapper {
         margin-top: 5px;

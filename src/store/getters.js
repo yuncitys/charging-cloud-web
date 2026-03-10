@@ -3,6 +3,7 @@ const getters = {
   language: state => state.app.language,
   size: state => state.app.size,
   device: state => state.app.device,
+  menuLayout: state => state.app.menuLayout,
   visitedViews: state => state.tagsView.visitedViews,
   cachedViews: state => state.tagsView.cachedViews,
   token: state => state.user.token,
