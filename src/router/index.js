@@ -705,6 +705,14 @@ export const constantRoutes = [{
         title: '开票记录',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'commissionStrategy',
+      component: () => import('@/views/finance/commissionStrategy/index'),
+      name: 'commissionStrategy',
+      meta: {
+        title: '抽成费用策略',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
