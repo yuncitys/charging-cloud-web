@@ -209,6 +209,8 @@
     },
     mounted() {
       this.$store.commit('permission/setTopOffsetWidth', this.$refs.divElmenu.offsetWidth);
+      // 组件挂载后宽度才准确，重新按实际宽度分割顶部菜单
+      this.$store.dispatch('permission/splitMenuByWidth', this.$refs.divElmenu.offsetWidth);
     },
   }
 

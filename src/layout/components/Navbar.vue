@@ -16,7 +16,7 @@
   import SizeSelect from '@/components/SizeSelect'
   import LangSelect from '@/components/LangSelect'
   import Search from '@/components/HeaderSearch'
-  
+
   import {
     MessageBox,
     Message
@@ -72,7 +72,6 @@
       cursor: pointer;
       transition: background .3s;
       -webkit-tap-highlight-color: transparent;
-
       &:hover {
         background: rgba(0, 0, 0, .025)
       }

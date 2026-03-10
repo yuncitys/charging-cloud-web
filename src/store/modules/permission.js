@@ -120,6 +120,15 @@ const actions = {
       })
     })
   },
+
+  // 组件挂载后按真实宽度重新分割顶部菜单
+  splitMenuByWidth({ state, commit }, offsetWidth) {
+    const allMenus = [...(state.meunList || []), ...(state.rightMoreMeunList || [])]
+    if (!allMenus.length) return
+    const arr = disassembleArr(allMenus, offsetWidth)
+    commit('setMeunList', addRouterInfo(arr[0]))
+    commit('setRightMoreMeunList', arr[1])
+  },
 }
 
 // 添加指定路由页面后期删除

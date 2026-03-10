@@ -445,9 +445,10 @@ export function removeClass(ele, cls) {
 
 /**
  * 顶部菜单栏拆分
+ * threshold = 右侧操作区实际宽度(~290px) + "更多"按钮宽度(~80px) ≈ 370px
  */
 export function disassembleArr(arr, topOffsetWidth) {
-  console.log(arr,topOffsetWidth)
+  const RIGHT_RESERVE = 370   // 右侧区域预留宽度
   let lists = [];
   let index = 0;
   let width = 0;
@@ -455,10 +456,9 @@ export function disassembleArr(arr, topOffsetWidth) {
     let len = item.title.length;
     return 94 + ((len - 2) * 14)
   });
-  console.log(list)
   for (let i = 0; i < list.length; i++) {
     width += list[i];
-    if ((width + 450) > Number(topOffsetWidth)) {
+    if ((width + RIGHT_RESERVE) > Number(topOffsetWidth)) {
       index = i;
       break;
     }

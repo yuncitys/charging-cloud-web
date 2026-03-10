@@ -135,6 +135,10 @@ export default {
     .hamburger-container {
       line-height: 60px !important;
     }
+    /* 面包屑在左侧菜单模式下跟随 60px 顶栏高度 */
+    .app-breadcrumb.el-breadcrumb {
+      line-height: 60px !important;
+    }
     .divElmenu {
       flex: 1;
       border-bottom: none !important;
