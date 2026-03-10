@@ -241,7 +241,6 @@
     flex: 1;
     height: 60px;          /* 与整行高度一致 */
     border: none !important;
-    margin-left: 100px;
 
     & .el-menu-item {
       padding: 0;
