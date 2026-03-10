@@ -82,7 +82,9 @@
 				<el-table-column label="操作" align="center" width="380" fixed="right">
 					<template slot-scope="scope">
 						<!-- 设置分成 -->
-						<set-split-account-page :row_data="scope.row" @getLists="getLists"/>
+						<!-- <set-split-account-page :row_data="scope.row" @getLists="getLists"/> -->
+						<!-- 抽成规则 -->
+						<el-button v-if="scope.row.isNeedPercentage === true || scope.row.isNeedPercentage === 'true' || scope.row.isNeedPercentage == 1 || scope.row.isNeedPercentage == '1'" type="primary" size="mini" @click="showCommissionRule(scope.row)">抽成规则</el-button>
 						<!-- 编辑 -->
 						<!-- <chargeStationDialog :row_data="scope.row" @getLists="getLists" /> -->
 						<el-button type="primary" style="margin-left: 10px;" size = "mini" @click="addOrUpdateHandle(scope.row,false)" 
@@ -104,6 +106,33 @@
 			</div>
 		</div>
 		<ChargeStationDialog ref="chargeStationForm" @getLists="getLists" />
+		<el-dialog :visible.sync="commissionDialog.visible" title="抽成规则" @close="commissionDialog.visible = false" :append-to-body="true">
+			<div v-loading="commissionDialog.loading" element-loading-text="拼命加载中......">
+				<el-form :model="commissionDialog.data" label-position="left" label-width="120px">
+					<el-form-item label="电站名称">
+						<el-input v-model="commissionDialog.data.stationName" disabled />
+					</el-form-item>
+					<el-form-item label="是否收取抽成">
+						<el-tag type="success" v-if="commissionDialog.data.collectFlag == '1'">是</el-tag>
+						<el-tag type="info" v-else>否</el-tag>
+					</el-form-item>
+					<template v-if="commissionDialog.data.collectFlag == '1'">
+						<el-form-item label="电费抽成">
+							<span>{{ formatCommission(commissionDialog.data.powerRateType, commissionDialog.data.powerRate) }}</span>
+						</el-form-item>
+						<el-form-item label="服务费抽成">
+							<span>{{ formatCommission(commissionDialog.data.serviceRateType, commissionDialog.data.serviceRate) }}</span>
+						</el-form-item>
+					</template>
+					<el-form-item label="修改用户">
+						<span>{{ commissionDialog.data.updateUser || '-' }}</span>
+					</el-form-item>
+					<el-form-item label="修改时间">
+						<span>{{ commissionDialog.data.updateTime | formatDate }}</span>
+					</el-form-item>
+				</el-form>
+			</div>
+		</el-dialog>
 	</div>
 </template>
 
@@ -112,6 +141,7 @@
 		getList,
 		deleteNetworkDot,
 	} from '@/api/netWorkDot/netWorkDotList.js'
+	import { getByStationId as getStationCommissionInfo } from '@/api/finance/commissionStrategy'
 	import {
 		findDealerList,
 	} from '@/api/device/deviceList.js'
@@ -119,14 +149,12 @@
 	import {
 		parseTime
 	} from '@/utils/index'
-  	import setSplitAccountPage from './components/setSplitAccountPage.vue'
 	import downExcel from './components/downExcel.vue'
 	import ChargeStationDialog from './components/chargeStationDialog.vue';
 	export default {
 		name: 'netWorkDotList',
 		components: {
 			ChargeStationDialog,
-      		setSplitAccountPage,
 			downExcel
 		},
 		data() {
@@ -157,6 +185,20 @@
 					
 				},
 				tableKey: 0,
+				commissionDialog: {
+					visible: false,
+					loading: false,
+					data: {
+						stationName: '',
+						collectFlag: '0',
+						powerRateType: '0',
+						powerRate: '',
+						serviceRateType: '0',
+						serviceRate: '',
+						updateUser: '',
+						updateTime: ''
+					}
+				}
 			}
 		},
 		filters: {
@@ -171,6 +213,46 @@
 
 		},
 		methods: {
+			formatCommission(type, value) {
+				if (value === null || value === undefined || value === '') return '-'
+				if (type == '1') return `${value}%`
+				return `${value} 元/度`
+			},
+			showCommissionRule(row) {
+				this.commissionDialog.visible = true
+				this.commissionDialog.loading = true
+				this.commissionDialog.data = {
+					stationName: row.networkName,
+					collectFlag: '0',
+					powerRateType: '0',
+					powerRate: '',
+					serviceRateType: '0',
+					serviceRate: '',
+					updateUser: '',
+					updateTime: ''
+				}
+				getStationCommissionInfo(row.id).then(res => {
+					if (res.code == 200) {
+						const data = res.data || {}
+						this.commissionDialog.data = {
+							stationName: row.networkName,
+							collectFlag: String(data.collectFlag ?? '0'),
+							powerRateType: String(data.powerRateType ?? '0'),
+							powerRate: data.powerRate ?? '',
+							serviceRateType: String(data.serviceRateType ?? '0'),
+							serviceRate: data.serviceRate ?? '',
+							updateUser: data.updateUser || '',
+							updateTime: data.updateTime || ''
+						}
+					} else {
+						this.$message.error(res.msg || '查询抽成规则失败')
+					}
+				}).catch(() => {
+					this.$message.error('查询抽成规则失败')
+				}).finally(() => {
+					this.commissionDialog.loading = false
+				})
+			},
 			addOrUpdateHandle(row,isDetail) {
 				console.log("row:",row)
 				this.$nextTick(() => {
