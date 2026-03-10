@@ -203,20 +203,20 @@ export default {
           id: '',
           stationId: '',
           stationName: '',
-          collectFlag: 1,
-          powerRateType: 0,
+          collectFlag: '0',
+          powerRateType: '0',
           powerRate: '',
-          serviceRateType: 0,
+          serviceRateType: '0',
           serviceRate: ''
         }
       },
       batchDialog: {
         visible: false,
         form: {
-          collectFlag: 1,
-          powerRateType: 0,
+          collectFlag: '0',
+          powerRateType: '0',
           powerRate: '',
-          serviceRateType: 0,
+          serviceRateType: '0',
           serviceRate: ''
         }
       },
@@ -292,22 +292,22 @@ export default {
         form.id = res.data?.id || row.id
         form.stationId = row.stationId || row.id
         form.stationName = row.stationName
-        form.collectFlag = res.data?.collectFlag ?? row.collectFlag ?? 1
-        form.powerRateType = res.data?.powerRateType ?? row.powerRateType ?? 0
-        form.powerRate = res.data?.powerRate ?? row.powerRate ?? ''
-        form.serviceRateType = res.data?.serviceRateType ?? row.serviceRateType ?? 0
-        form.serviceRate = res.data?.serviceRate ?? row.serviceRate ?? ''
+        form.collectFlag = res.data?.collectFlag ?? row.collectFlag ?? '0'
+        form.powerRateType = res.data?.powerRateType ?? row.powerRateType ?? '0'
+        form.powerRate = res.data?.powerRate ?? row.powerRate ?? '0.00'
+        form.serviceRateType = res.data?.serviceRateType ?? row.serviceRateType ?? '0'
+        form.serviceRate = res.data?.serviceRate ?? row.serviceRate ?? '0.00'
         this.editDialog.visible = true
       }).catch(() => {
         const form = this.editDialog.form
         form.id = row.id
         form.stationId = row.stationId || row.id
         form.stationName = row.stationName
-        form.collectFlag = row.collectFlag ?? 1
-        form.powerRateType = row.powerRateType ?? 0
-        form.powerRate = row.powerRate ?? ''
-        form.serviceRateType = row.serviceRateType ?? 0
-        form.serviceRate = row.serviceRate ?? ''
+        form.collectFlag = row.collectFlag ?? '0'
+        form.powerRateType = row.powerRateType ?? '0'
+        form.powerRate = row.powerRate ?? '0.00'
+        form.serviceRateType = row.serviceRateType ?? '0'
+        form.serviceRate = row.serviceRate ?? '0.00'
         this.editDialog.visible = true
       })
     },
