@@ -119,7 +119,7 @@
 							<div class="commission-header-right">
 								<div class="commission-badge commission-badge--on" v-if="settlementDialog.commissionExists">已配置</div>
 								<div class="commission-badge commission-badge--off" v-else>未配置</div>
-								<el-button v-if="settlementDialog.commissionExists" size="mini" type="primary" plain @click="openCommissionEdit">修改</el-button>
+								<el-button v-if="settlementDialog.commissionExists" class="settlement-header-btn" size="mini" type="primary" @click="openCommissionEdit">修改</el-button>
 							</div>
 						</div>
 						<div class="commission-body" v-if="settlementDialog.commissionExists">
@@ -158,7 +158,7 @@
 							<div class="commission-header-right">
 								<div class="commission-badge commission-badge--on" v-if="settlementDialog.account">已配置</div>
 								<div class="commission-badge commission-badge--off" v-else>未配置</div>
-								<el-button v-if="settlementDialog.account" size="mini" type="primary" plain @click="openReceivingAccountEdit">修改</el-button>
+								<el-button v-if="settlementDialog.account" class="settlement-header-btn" size="mini" type="primary" @click="openReceivingAccountEdit">修改</el-button>
 							</div>
 						</div>
 						<div class="commission-body" v-if="settlementDialog.account">
@@ -855,6 +855,12 @@
 		display: flex;
 		align-items: center;
 		gap: 10px;
+	}
+
+	.settlement-header-btn.el-button--primary,
+	.settlement-header-btn.el-button--primary:hover,
+	.settlement-header-btn.el-button--primary:focus {
+		color: #fff;
 	}
 
 	.commission-title {
