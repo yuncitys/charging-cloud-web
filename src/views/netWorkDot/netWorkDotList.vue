@@ -145,7 +145,7 @@
 						</div>
 						<div class="commission-footer">
 							<div class="commission-meta">修改用户：{{ settlementDialog.commission.updateUser || '-' }}</div>
-							<div class="commission-meta">修改时间：{{ settlementDialog.commission.updateTime | formatDate }}</div>
+							<div class="commission-meta">修改时间：{{ settlementDialog.commission.updateTime || '-' }}</div>
 						</div>
 					</div>
 				</div>
@@ -190,7 +190,7 @@
 						</div>
 						<div class="commission-footer">
 							<div class="commission-meta">更新用户：{{ settlementDialog.account ? (settlementDialog.account.updateUser || '-') : '-' }}</div>
-							<div class="commission-meta">更新时间：{{ settlementDialog.account ? (settlementDialog.account.updateTime | formatDate) : '-' }}</div>
+							<div class="commission-meta">更新时间：{{ settlementDialog.account ? (settlementDialog.account.updateTime || '-') : '-' }}</div>
 						</div>
 					</div>
 				</div>
