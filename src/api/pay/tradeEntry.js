@@ -9,6 +9,14 @@ export function listTradeEntry(query) {
   })
 }
 
+export function listCompleted(merchantId) {
+  return request({
+    url: '/api/payment/tradeMerchant/listCompleted',
+    method: 'get',
+    params: { merchantId }
+  })
+}
+
 // 查询交易商户详细
 export function getTradeEntry(id) {
   return request({
@@ -83,7 +91,7 @@ export function submitTradeEntry(busTradeMerNo) {
     url: `/api/payment/tradeMerchant/submitTradeEntry`,
     method: 'post',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
     },
     transformRequest: [
       function(data) {
