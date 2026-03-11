@@ -28,6 +28,13 @@ export function getInfo(id) {
   })
 }
 
+export function getByStationId(stationId) {
+  return request({
+    url: `/api/web/stationCommissionPriceStrategy/getByStationId/${stationId}`,
+    method: 'get'
+  })
+}
+
 export function saveOrUpdate(data) {
   return request({
     url: '/api/web/stationCommissionPriceStrategy/saveOrUpdate',
