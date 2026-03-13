@@ -58,7 +58,7 @@
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
             			<el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
-						<el-tag v-if="scope.row.status == 'RPOCESSED'">处理中</el-tag>
+						<el-tag v-if="scope.row.status == 'PROCESSING'">处理中</el-tag>
 						<el-tag type="success"v-if="scope.row.status == 'FINISH'">已完成</el-tag>
 						<el-tag type="danger" v-if="scope.row.status == 'FAIL'">分账失败</el-tag>
 					</template>
