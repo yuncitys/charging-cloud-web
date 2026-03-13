@@ -172,7 +172,7 @@
   </template>
 
 <script>
-import { getList, getInfo, saveOrUpdate, batchSaveOrUpdate } from '@/api/finance/commissionStrategy'
+import { getList, getByStationId as getInfo, saveOrUpdate, batchSaveOrUpdate } from '@/api/finance/commissionStrategy'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
 export default {
