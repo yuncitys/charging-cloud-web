@@ -502,6 +502,15 @@ export const constantRoutes = [{
         title: '站点管理',
         icon: 'el-icon-help',
       }
+    }, {
+      path: 'setting/:id',
+      component: () => import('@/views/netWorkDot/netWorkDotSetting'),
+      name: 'netWorkDotSetting',
+      hidden: true,
+      meta: {
+        title: '站点设置',
+        noCache: true
+      }
     }, ]
   },
   {
