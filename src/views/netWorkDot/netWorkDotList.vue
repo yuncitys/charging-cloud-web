@@ -84,14 +84,14 @@
 						<!-- 设置分成 -->
 						<!-- <set-split-account-page :row_data="scope.row" @getLists="getLists"/> -->
 						<!-- 抽成规则 -->
-						<el-button type="primary" size="mini" @click="showSettlementConfig(scope.row)">结算配置</el-button>
+						<el-button type="primary" size="mini" @click="toStationSetting(scope.row)">设置</el-button>
 						<!-- 编辑 -->
 						<!-- <chargeStationDialog :row_data="scope.row" @getLists="getLists" /> -->
 						<el-button type="primary" style="margin-left: 10px;" size = "mini" @click="addOrUpdateHandle(scope.row,false)" 
 							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')">编辑
 						</el-button>
 						<!-- 详情 -->
-						<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
+						<!-- <el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button> -->
 						<!-- 删除 -->
 						<el-button style="margin-left: 10px;" type="danger" size="mini" icon="el-icon-delete"  @click="del(scope.row.id)"
 							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">删除
@@ -321,6 +321,7 @@
 					stationId: '',
 					stationName: '',
 					merchantId: '',
+					merchantName: '',
 					loadingCommission: false,
 					loadingAccount: false,
 					commissionExists: false,
@@ -393,7 +394,8 @@
 				this.settlementDialog.activeTab = 'commission'
 				this.settlementDialog.stationId = row.id
 				this.settlementDialog.stationName = row.networkName || ''
-				this.settlementDialog.merchantId = row.merchantId || row.merchant_id || row.merchantID || row.operatorId || ''
+				this.settlementDialog.merchantId = row.merchantId || row.merchant_id || row.merchantID || ''
+				this.settlementDialog.merchantName = row.merchantName || row.merchant_name || ''
 				this.settlementDialog.account = null
 				this.settlementDialog.accountLoaded = false
 				this.settlementDialog.commissionExists = false
@@ -403,6 +405,21 @@
 				this.settlementDialog.accountListEmpty = false
 				this.settlementDialog.selectedAccountId = ''
 				this.loadCommissionRule(row)
+			},
+			toStationSetting(row) {
+				const stationId = row && row.id ? row.id : ''
+				if (!stationId) {
+					this.$message.error('缺少站点ID')
+					return
+				}
+				this.$router.push({
+					path: `/netWorkDot/setting/${stationId}`,
+					query: {
+						merchantId: row.merchantId || row.merchant_id || row.merchantID || '',
+						merchantName: row.merchantName || row.merchant_name || '',
+						stationName: row.networkName || ''
+					}
+				})
 			},
 			loadCommissionRule(row) {
 				this.settlementDialog.loadingCommission = true
@@ -552,6 +569,7 @@
 				const selected = (this.settlementDialog.accountList || []).find(i => i.id === this.settlementDialog.selectedAccountId)
 				const payload = {
 					stationId: this.settlementDialog.stationId,
+					merchantName: selected ? (selected.merchantName || selected.merchant_name || '') : '',
 					merchantNo: selected ? selected.merchantNo : undefined,
 					busTradeMerNo: selected ? selected.busTradeMerNo : undefined,
 					settBankAccType: selected ? selected.settBankAccType : undefined,
