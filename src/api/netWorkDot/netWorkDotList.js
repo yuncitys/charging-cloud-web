@@ -133,3 +133,10 @@ export function getChargeStationTreeByMerchant(data) {
 		data
 	})
 }
+
+export function getChargeStationById(id) {
+	return request({
+		url: `/api/web/networkDot/getChargeStationById/${id}`,
+		method: 'get'
+	})
+}
