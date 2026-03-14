@@ -37,9 +37,9 @@
             <el-select style="width: 100%;" class="filter-item" v-model="form.operatorId" filterable clearable placeholder="请选择运营商户" :disabled = "isDetail">
                 <el-option
                     v-for="item in operatorList"
-                    :key="item.operatorId"
+                    :key="item.id"
                     :label="item.name"
-                    :value="item.operatorId + ''">
+                    :value="item.id + ''">
                 </el-option>
             </el-select>
         </el-form-item>
@@ -73,9 +73,7 @@
       addOrganizeSecretKey,
       updateOrganizeSecretKey
     } from '@/api/organization/organization.js'
-    import {
-      getOperatorList
-    } from '@/api/operator/operator.js'
+    import { getMerchant } from '@/api/merchant/merchant'
     import { title } from '@/settings';
     export default {
         props:{
@@ -172,9 +170,11 @@
             };
         },
       methods: {
-        getOperator() {
-          getOperatorList().then(res => {
-              this.operatorList = res.data
+        getMerchant() {
+          getMerchant().then(res => {
+              this.operatorList = (res && res.code == 200) ? (res.data || []) : []
+          }).catch(() => {
+              this.operatorList = []
           })
         },
         getOrganize(){
@@ -186,7 +186,7 @@
         openDialog(formData,isDetail) {
           this.dialogVisible = true;
           this.getOrganize()
-          this.getOperator()
+          this.getMerchant()
           if(formData == null){
             this.isEdit = false
             this.isDetail = false

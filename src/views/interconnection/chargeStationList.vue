@@ -7,15 +7,15 @@
         		placeholder="请输入充电站省份" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
       		<el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
         		placeholder="请输入充电站名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
-			<!-- <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
 			  placeholder="归属商户">
 			    <el-option
-			      v-for="item in dealerList"
+			      v-for="item in merchantSelectList"
 			      :key="item.id"
-			      :label="item.adminFullname"
+			      :label="item.name"
 			      :value="item.id">
 			    </el-option>
-			</el-select> -->
+			</el-select>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
 				查询
 			</el-button>
@@ -125,12 +125,10 @@
 		deleteNetworkDot,
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
-		findDealerList,
-	} from '@/api/device/deviceList.js'
-	import {
 		getMerchantList,
 		synchronizationStation
 	} from '@/api/interconnection/merchant.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -162,14 +160,14 @@
 				limit: 10,
 				list: [],
 				total: 10,
-        		dealerList: [],
 				merchantList: [],
+				merchantSelectList: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
 					ruleId: 2,
 					type: 2,
-					adminId: '',
+					merchantId: '',
 					networkName: '',
 					networkProvince: '',
 					networkAddress: '',
@@ -277,13 +275,11 @@
 				this.listQuery.page = val
 				this.getLists()
 			},
-			findDealerList() {
-				findDealerList().then(res => {
-					if (res.code == 200) {
-						this.dealerList = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
+			getMerchantSelectList() {
+				getMerchant().then(res => {
+					this.merchantSelectList = (res && res.code == 200) ? (res.data || []) : []
+				}).catch(() => {
+					this.merchantSelectList = []
 				})
 			},
 			getMerchantList() {
@@ -298,7 +294,7 @@
 		},
 		created() {
 			this.getLists()
-			// this.findDealerList()
+			this.getMerchantSelectList()
 		},
 	}
 </script>
