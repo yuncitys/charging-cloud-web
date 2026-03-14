@@ -31,6 +31,11 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
+              <el-form-item label="运营商户">
+                <el-input :value="merchantName" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
               <el-form-item label="管理员姓名">
                 <el-input v-model="form.managerName" />
               </el-form-item>
@@ -47,6 +52,11 @@
             <el-col :span="12">
               <el-form-item label="业务方交易商户编号">
                 <el-input v-model="form.busTradeMerNo" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="商户编号">
+                <el-input v-model="form.merchantNo" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -176,7 +186,7 @@
 
           <el-divider content-position="left">法人/经营者信息</el-divider>
           <el-row>
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="法人姓名">
                 <el-input v-model="form.corLegName" />
               </el-form-item>
@@ -333,11 +343,18 @@
 
 <script>
 import { getTradeEntry, getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
+import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
 
 export default {
   name: 'TradeEntryDetail',
   computed: {
+    merchantName() {
+      const id = this.form && this.form.merchantId
+      if (id === null || id === undefined || id === '') return '-'
+      const item = (this.merchantList || []).find(m => String(m.id) === String(id))
+      return (item && item.name) || String(id)
+    },
     canResubmit() {
       const val = Number(this.form.status)
       return [0, 32, 60].includes(val)
@@ -384,15 +401,18 @@ export default {
       legCityList: [],
       legAreaList: [],
       busKindOptions: [],
+      merchantList: [],
       form: {
         id: undefined,
         // Basic
         tenantId: '',
+        merchantId: '',
         serviceProviderId: '',
         apiVersion: '',
         managerName: '',
         managerMobile: '',
         // Subject
+        merchantNo: '',
         busTradeMerNo: '',
         merType: '',
         tradeMerType: '',
@@ -438,6 +458,7 @@ export default {
   created() {
     this.busKindOptions = dictData.getBusKindData()
     this.getProvinceList()
+    this.getMerchantList()
     const id = this.$route.params.id
     if (id) {
       this.form.id = id
@@ -445,6 +466,17 @@ export default {
     }
   },
   methods: {
+    getMerchantList() {
+      getMerchant().then(res => {
+        if (res && res.code == 200) {
+          this.merchantList = res.data || []
+        } else {
+          this.merchantList = []
+        }
+      }).catch(() => {
+        this.merchantList = []
+      })
+    },
     mapAttachments(attchList) {
       if (!Array.isArray(attchList)) return
       attchList.forEach(a => {
@@ -462,7 +494,7 @@ export default {
     },
     getProvinceList() {
       getAreaSelector('-1').then(res => {
-        this.provinceList = res.data.list
+        this.provinceList = res.data
       })
     },
     fetchData(id) {
@@ -475,87 +507,40 @@ export default {
         // 加载地址数据用于回显
         if (this.form.merProvinceId) {
           getAreaSelector(this.form.merProvinceId).then(res => {
-            this.cityList = res.data.list
+            this.cityList = res.data
           })
         }
         if (this.form.merRegionId) {
           getAreaSelector(this.form.merRegionId).then(res => {
-            this.areaList = res.data.list
+            this.areaList = res.data
           })
         }
         if (this.form.corLegProvince) {
           getAreaSelector(this.form.corLegProvince).then(res => {
-            this.legCityList = res.data.list
+            this.legCityList = res.data
           })
         }
         if (this.form.corLegCity) {
           getAreaSelector(this.form.corLegCity).then(res => {
-            this.legAreaList = res.data.list
+            this.legAreaList = res.data
           })
         }
       }).catch(err => {
         console.error(err)
-        // Mock data（保留，便于联调前预览）
-        this.form = {
-          id: id,
-          tenantId: 'T001',
-          serviceProviderId: 'tzbank',
-          apiVersion: 'v1.0',
-          managerName: '张三',
-          managerMobile: '13800138000',
-          busTradeMerNo: 'M001',
-          merType: '0',
-          tradeMerType: '2',
-          merCertType: '22',
-          merName: '测试商户1',
-          merCertNo: '330106199001011234',
-          corLicenseBatchNo: 'L001',
-          shortName: '测试商户',
-          corCapital: 100,
-          corIdEffectDate: '2020-01-01',
-          corIdExaDate: '2030-01-01',
-          merProvinceId: '330000',
-          merRegionId: '330100',
-          merCountyId: '330106',
-          merAddress: '西湖区某某路88号',
-          busKindCode: '100145',
-          serverPhone: '0571-88888888',
-          corLegName: '张三',
-          corLegIdType: '11',
-          corLegIdNo: '330106199001011234',
-          corLegIdFaceImgBatchNo: 'IMG001',
-          corLegIdBackImgBatchNo: 'IMG002',
-          corLegIdEffectDate: '2010-01-01',
-          corLegIdExaDate: '2030-01-01',
-          corLegProvince: '330000',
-          corLegCity: '330100',
-          corLegCountyId: '330106',
-          corLegAddress: '西湖区某某路88号',
-          settBankAccType: '0010',
-          settBankAccName: '张三',
-          settBankBranchId: '',
-          settBankBranchName: '',
-          settBankAccNo: '6222021202020202020',
-          identityNo: '330106199001011234',
-          mobileNo: '13800138000',
-          status: 60,
-          auditRemark: '证件信息不清晰，请重新上传',
-          attchList: [
-            { fileType: 4, fileUrl: 'https://fuss10.elemecdn.com/e/5d/4a731a90594a4af544c0c25941171jpeg.jpeg', fileBatchId: 'L001' },
-            { fileType: 1, fileUrl: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg', fileBatchId: 'IMG001' },
-            { fileType: 2, fileUrl: 'https://fuss10.elemecdn.com/3/63/4e7f3a15429bfda99bce42a18cdd1jpeg.jpeg', fileBatchId: 'IMG002' }
-          ]
-        }
-        this.mapAttachments(this.form.attchList)
+        this.$message.error('获取失败')
       })
     },
     handleQueryStatus() {
       this.statusLoading = true
       queryTradeEntryStatus(this.form.id).then(response => {
         this.statusLoading = false
-        this.$message.success('状态查询成功')
-        // 刷新数据
-        this.fetchData(this.form.id)
+        if (response && response.code == 200) {
+           this.$message.success('状态查询成功')
+          // 刷新数据
+          this.fetchData(this.form.id)
+        } else {
+          this.$message.error('状态查询失败')
+        }
       }).catch(() => {
         this.statusLoading = false
       })
