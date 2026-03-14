@@ -20,12 +20,12 @@
 					placeholder="请选择设备状态" clearable @change="handleFilter">
 					<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 				</el-select>
-			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" 
-				filterable clearable @change="handleFilter()" placeholder="请选择代理商">
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" 
+				filterable clearable @change="handleFilter()" placeholder="归属商户">
 				<el-option
-					v-for="item in dealerList"
+					v-for="item in merchantList"
 					:key="item.id"
-					:label="item.adminFullname"
+					:label="item.name"
 					:value="item.id">
 				</el-option>
 			</el-select>
@@ -357,7 +357,6 @@
 	import {
 		getList,
 		deleteDevice,
-		findDealerList,
 		addDevicePrice,
 		batchAddDevicePrice,
 		findDevicePriceByPriceType,
@@ -367,6 +366,7 @@
 		setDeviceChargeModel,
 		batchSetDeviceChargeModel
 	} from '@/api/device/deviceList.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	import {
 		getChargingStationList
 	} from '@/api/netWorkDot/netWorkDotList.js'
@@ -421,7 +421,7 @@
 					networkAddress: '',
 					deviceStatus: '',
 					activateStatus: '',
-					dealerId: '',
+					merchantId: '',
 					// allocationStatus: 1,
 					page: 1,
 					limit: 10,
@@ -457,7 +457,7 @@
 					id: 1,
 				}],
 				//分配设备
-				dealerList: [],
+				merchantList: [],
         		chargingStationList: [],
 				showAllocation: false,
 				allocation: {
@@ -741,14 +741,11 @@
 					this.$refs.allocation.batchUpdate(this.ids, this.activeName)
 				})
 			},
-			// 代理商列表
-			findDealerList() {
-				findDealerList().then(res => {
-					if (res.code == 200) {
-						this.dealerList = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
+			getMerchantList() {
+				getMerchant().then(res => {
+					this.merchantList = (res && res.code == 200) ? (res.data || []) : []
+				}).catch(() => {
+					this.merchantList = []
 				})
 			},
 			//批量设置收费方案
@@ -930,7 +927,7 @@
 				}
 			}
 			this.getLists()
-			this.findDealerList()
+			this.getMerchantList()
 			this.getfindDevicePriceByPriceType()
 		},
 	}
