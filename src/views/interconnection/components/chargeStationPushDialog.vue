@@ -25,12 +25,31 @@
             <!-- <el-radio :label="3">按电站分组</el-radio> -->
           </el-radio-group>
         </el-form-item>
+
+        <el-form-item :label="label" prop="selectedStations" v-if="formData.stationScopeType === 2">
+					<div class="station-select-box">
+						<div class="search-bar">
+							<el-input v-model="searchKey" placeholder="请输入关键字进行过滤" clearable></el-input>
+							<el-button type="primary" @click="filterTree">搜索</el-button>
+						</div>
+						<el-tree
+							ref="tree"
+							:data="filteredData"
+							show-checkbox
+							node-key="id"
+							:props="defaultProps"
+							:default-expand-all="false"
+							:filter-node-method="filterNode"
+							@check-change="handleCheck"
+						></el-tree>
+					</div>
+				</el-form-item>
   
-        <el-form-item label="选择电站" prop="selectedStations" v-if="formData.stationScopeType === 2">
+        <!-- <el-form-item label="选择电站" prop="selectedStations" v-if="formData.stationScopeType === 2">
           <div class="station-select-box">
-            <div class="search-bar">
+            <div class="search-bar"> -->
               <!-- <el-checkbox v-model="checkAll" @change="handleCheckAll">全选</el-checkbox> -->
-              <el-input v-model="searchKey" placeholder="请输入关键字进行过滤" clearable></el-input>
+              <!-- <el-input v-model="searchKey" placeholder="请输入关键字进行过滤" clearable></el-input>
               <el-button type="primary" @click="filterTree">搜索</el-button>
             </div>
             <el-tree
@@ -44,7 +63,7 @@
               @check-change="handleCheck"
             ></el-tree>
           </div>
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
   
       <div slot="footer" class="dialog-footer">
@@ -56,7 +75,7 @@
   
 <script>
     import {
-        getChargingStationList
+        getChargeStationTreeByMerchant
     } from '@/api/netWorkDot/netWorkDotList.js'
     import {
       getOrganize,
@@ -83,7 +102,15 @@
                   label: 'networkName'
                 },
                 organizeList: [],
-                chargeStationList: []
+                chargeStationList: [],
+
+                label: '',
+                searchKey: '',
+                defaultProps: {
+                  children: 'children',
+                  label: 'label'
+                },
+                filteredData: [],
             };
         },
         watch: {
@@ -92,24 +119,68 @@
           },
         },
         methods: {
-            initTreeData(operatorId,operatorName){
-              const data = {
-                tenantId: operatorId,
-                ruleId: 2
-              }
-              getChargingStationList(data).then(res => {
-                let treeData = {
-                  id: parseInt(operatorId),
-                  networkName: operatorName,
-                  networkAddress: "",
-                  children: res.data
+          filterNode(value, data) {
+            console.log("value",value,"data",data)
+            if (!value) return true;
+            return data.label.includes(value);
+          },
+          filterTree() {
+              this.$refs.tree.filter(this.searchKey);
+          },
+          handleCheck(data, checked) {
+            const selected = this.$refs.tree.getCheckedKeys();
+            console.log("handleCheck selected:",selected)
+            this.formData.dataId = this.filterMerchantIds(selected);
+          },
+          // 过滤商户ID的通用方法
+          filterMerchantIds(ids) {
+            if (!Array.isArray(ids)) return []
+            return ids.filter(id =>  
+              typeof id === 'number' || 
+              (typeof id === 'string' && !id.startsWith('merchant-'))
+            )
+          },
+          initTreeData(){
+              getChargeStationTreeByMerchant().then(res => {
+                if (res.code != 200){
+                  return;
                 }
-                let treeList = [treeData]
-                this.stations = treeList
-                console.log("stations:",this.stations)
-                this.filteredStations = JSON.parse(JSON.stringify(this.stations));
+                const stations = res.data.map(merchant => ({
+                  id: `merchant-${merchant.id}`,  // 商户ID加前缀，避免与充电站ID冲突
+                  label: merchant.name,
+                  type: 'merchant',
+                  // disabled: true,    // 可选：禁用商户节点选中
+                  // ...merchant,
+                  children: (merchant.chargingStationInfoVoList || []).map(station => ({
+                    id: String(station.id ),
+                    label: station.networkName,
+                    type: 'station',
+                    ...station,
+                    // 如果有更深层级可以继续嵌套 children
+                  }))
+                }))
+                console.log("stations:",stations)
+                this.filteredData = JSON.parse(JSON.stringify(stations));
               })
             },
+            // initTreeData(operatorId,operatorName){
+            //   const data = {
+            //     tenantId: operatorId,
+            //     ruleId: 2
+            //   }
+            //   getChargingStationList(data).then(res => {
+            //     let treeData = {
+            //       id: parseInt(operatorId),
+            //       networkName: operatorName,
+            //       networkAddress: "",
+            //       children: res.data
+            //     }
+            //     let treeList = [treeData]
+            //     this.stations = treeList
+            //     console.log("stations:",this.stations)
+            //     this.filteredStations = JSON.parse(JSON.stringify(this.stations));
+            //   })
+            // },
             getOrganize(){
               let data = {orgMold: 2}
               getOrganize(data).then(res => {
@@ -121,7 +192,7 @@
                 if (res.code == 200){
                   this.formData = res.data
                   this.$nextTick(() => {
-                    this.$refs.stationTree.setCheckedKeys(res.data.dataId)
+                    this.$refs.tree.setCheckedKeys(res.data.dataId)
                   })
                 }
               })
@@ -130,32 +201,33 @@
               this.visible = true;
               this.getOrganize()
               this.getAvailableStation(data.organizationId)
-              this.initTreeData(data.operatorId,data.operatorName)
+              this.initTreeData()
+              // this.initTreeData(data.operatorId,data.operatorName)
             },
-            filterNode(value, data) {
-              if (!value) return true;
-              return data.networkName.includes(value);
-            },
-            filterTree() {
-              this.$refs.stationTree.filter(this.searchKey);
-            },
-            handleCheck(data, checked) {
-              const selected = this.$refs.stationTree.getCheckedKeys();
-              console.log("selected:",selected)
-              this.formData.dataId = selected;
-              this.checkAll = selected.length === this.getAllStationIds().length;
-            },
-            handleCheckAll(val) {
-              if (val) {
-                this.$refs.stationTree.setCheckedKeys(this.getAllStationIds());
-              } else {
-                this.$refs.stationTree.setCheckedKeys([]);
-              }
-              this.formData.chargeStationId = val ? this.getAllStationIds() : [];
-            },
-            getAllStationIds() {
-              return this.stations.flatMap(parent => parent.children.map(child => child.id));
-            },
+            // filterNode(value, data) {
+            //   if (!value) return true;
+            //   return data.networkName.includes(value);
+            // },
+            // filterTree() {
+            //   this.$refs.stationTree.filter(this.searchKey);
+            // },
+            // handleCheck(data, checked) {
+            //   const selected = this.$refs.stationTree.getCheckedKeys();
+            //   console.log("selected:",selected)
+            //   this.formData.dataId = selected;
+            //   this.checkAll = selected.length === this.getAllStationIds().length;
+            // },
+            // handleCheckAll(val) {
+            //   if (val) {
+            //     this.$refs.stationTree.setCheckedKeys(this.getAllStationIds());
+            //   } else {
+            //     this.$refs.stationTree.setCheckedKeys([]);
+            //   }
+            //   this.formData.chargeStationId = val ? this.getAllStationIds() : [];
+            // },
+            // getAllStationIds() {
+            //   return this.stations.flatMap(parent => parent.children.map(child => child.id));
+            // },
             handleSubmit() {
               // const keys = [
               //   ...this.$refs.stationTree.getCheckedKeys(),
@@ -172,6 +244,7 @@
                   saveAvailableStation(data).then(res => {
                     if (res.code == 200) {
                       this.visible = false;
+                      this.$message.success('操作成功')
                     } else {
                       this.$message.error(res.msg)
                     }
