@@ -104,6 +104,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
+					type: 1,
 					name: '',
 					manageName: '',
 					managePhone: '',
