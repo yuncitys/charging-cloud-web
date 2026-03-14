@@ -80,7 +80,7 @@
           <el-tag :type="row.auditStatus | auditStatusTypeFilter">{{ row.auditStatus | auditStatusFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="230" class-name="small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="320" class-name="operation-col small-padding fixed-width">
         <template slot-scope="{row}">
           <el-button type="info" size="mini" @click="handleDetail(row)">
             详情
@@ -88,7 +88,10 @@
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             修改
           </el-button>
-          <el-button size="mini" type="danger" @click="handleDelete(row)">
+          <el-button size="mini" type="warning" @click="handleCancel(row)">
+            注销
+          </el-button>
+          <el-button size="mini" type="danger" @click="handleRemove(row)">
             删除
           </el-button>
         </template>
@@ -100,7 +103,7 @@
 </template>
 
 <script>
-import { listTradeEntry, delTradeEntry } from '@/api/pay/tradeEntry'
+import { listTradeEntry, delTradeEntry, removeTradeEntry } from '@/api/pay/tradeEntry'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -248,13 +251,28 @@ export default {
     handleDetail(row) {
       this.$router.push('/tradeEntry/detail/' + row.id)
     },
-    handleDelete(row) {
-      this.$confirm('此操作将永久删除该商户, 是否继续?', '警告', {
+    handleCancel(row) {
+      this.$confirm('确认注销该商户？注销后该账户将无法使用，是否继续？', '提示', {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
         delTradeEntry(row.id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '注销成功'
+          })
+          this.getList()
+        })
+      })
+    },
+    handleRemove(row) {
+      this.$confirm('此操作将永久删除该商户，是否继续？', '警告', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        removeTradeEntry(row.id).then(() => {
           this.$message({
             type: 'success',
             message: '删除成功'
@@ -276,5 +294,13 @@ export default {
 }
 .filter-item {
   margin: 0 12px 12px 0 !important;
+}
+
+.operation-col >>> .cell {
+  white-space: nowrap;
+}
+
+.operation-col >>> .el-button + .el-button {
+  margin-left: 6px;
 }
 </style>

@@ -51,6 +51,13 @@ export function delTradeEntry(id) {
   })
 }
 
+export function removeTradeEntry(id) {
+  return request({
+    url: '/api/payment/tradeMerchant/removeTradeEntry/' + id,
+    method: 'delete'
+  })
+}
+
 // 交易商户图片识别
 export function imgInfoDiscern(data) {
   return request({
