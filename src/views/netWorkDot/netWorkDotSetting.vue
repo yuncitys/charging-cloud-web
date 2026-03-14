@@ -4,9 +4,9 @@
       <div slot="header" class="clearfix">
         <span>站点设置</span>
         <div style="float: right;">
-          <el-tag v-if="station.merchantName" style="margin-right: 10px;">{{ station.merchantName }}</el-tag>
-          <el-tag v-if="station.networkName" type="info" style="margin-right: 10px;">{{ station.networkName }}</el-tag>
-          <el-button size="mini" @click="$router.back()">返回</el-button>
+          <!-- <el-tag v-if="station.merchantName" style="margin-right: 10px;">{{ station.merchantName }}</el-tag>
+          <el-tag v-if="station.networkName" type="info" style="margin-right: 10px;">{{ station.networkName }}</el-tag> -->
+          <el-button size="mini" type="primary" @click="$router.back()">返回</el-button>
         </div>
       </div>
 
@@ -216,7 +216,7 @@
           <div slot="header" class="clearfix">
             <span>抽成规则</span>
             <div style="float: right;">
-              <el-tag :type="commissionExists ? 'success' : 'info'" style="margin-right: 10px;">{{ commissionExists ? '已配置' : '未配置' }}</el-tag>
+              <el-tag :type="commissionExists ? 'success' : 'info'" style="margin-right: 10px;">{{ commissionExists ? (commission.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}</el-tag>
               <el-button size="mini" type="primary" @click="openCommissionEdit">{{ commissionExists ? '修改' : '配置规则' }}</el-button>
             </div>
           </div>
@@ -267,7 +267,7 @@
           </el-alert>
 
           <el-table :data="splitTableData" border style="width: 100%;" v-loading="splitLoading" element-loading-text="loading……">
-            <el-table-column label="分账主体" min-width="280">
+            <el-table-column label="分账主体" align="center" min-width="280">
               <template slot-scope="scope">
                 <el-select v-model="scope.row.merchantNo" filterable clearable placeholder="请选择分账方" style="width: 100%;">
                   <el-option
@@ -338,7 +338,7 @@
         <el-form-item v-if="commissionForm.collectFlag == '1'" label="电费抽成" prop="powerRate">
           <div style="display: flex; gap: 10px;">
             <el-select v-model="commissionForm.powerRateType" style="width: 120px">
-              <el-option :value="'0'" label="度数" />
+              <!-- <el-option :value="'0'" label="度数" /> -->
               <el-option :value="'1'" label="折扣" />
             </el-select>
             <el-input v-model="commissionForm.powerRate" placeholder="请输入数值" type="number">
@@ -352,7 +352,7 @@
         <el-form-item v-if="commissionForm.collectFlag == '1'" label="服务费抽成" prop="serviceRate">
           <div style="display: flex; gap: 10px;">
             <el-select v-model="commissionForm.serviceRateType" style="width: 120px">
-              <el-option :value="'0'" label="度数" />
+              <!-- <el-option :value="'0'" label="度数" /> -->
               <el-option :value="'1'" label="折扣" />
             </el-select>
             <el-input v-model="commissionForm.serviceRate" placeholder="请输入数值" type="number">
@@ -501,9 +501,9 @@ export default {
         id: '',
         stationId: '',
         collectFlag: '0',
-        powerRateType: '0',
+        powerRateType: '1',
         powerRate: '',
-        serviceRateType: '0',
+        serviceRateType: '1',
         serviceRate: ''
       },
 
