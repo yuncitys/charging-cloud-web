@@ -93,7 +93,7 @@
         <el-form-item v-if="editDialog.form.collectFlag == '1'" label="电费抽成" prop="powerRate">
           <div class="flex" style="gap: 10px;">
             <el-select v-model="editDialog.form.powerRateType" style="width: 120px">
-              <el-option :value="'0'" label="度数" />
+              <!-- <el-option :value="'0'" label="度数" /> -->
               <el-option :value="'1'" label="折扣" />
             </el-select>
             <el-input v-model="editDialog.form.powerRate" placeholder="请输入数值" type="number">
@@ -107,7 +107,7 @@
         <el-form-item v-if="editDialog.form.collectFlag == '1'" label="服务费抽成" prop="serviceRate">
           <div class="flex" style="gap: 10px;">
             <el-select v-model="editDialog.form.serviceRateType" style="width: 120px">
-              <el-option :value="'0'" label="度数" />
+              <!-- <el-option :value="'0'" label="度数" /> -->
               <el-option :value="'1'" label="折扣" />
             </el-select>
             <el-input v-model="editDialog.form.serviceRate" placeholder="请输入数值" type="number">
@@ -137,7 +137,7 @@
         <el-form-item v-if="batchDialog.form.collectFlag == '1'" label="电费抽成" prop="powerRate">
           <div class="flex" style="gap: 10px;">
             <el-select v-model="batchDialog.form.powerRateType" style="width: 120px">
-              <el-option :value="'0'" label="度数" />
+              <!-- <el-option :value="'0'" label="度数" /> -->
               <el-option :value="'1'" label="折扣" />
             </el-select>
             <el-input v-model="batchDialog.form.powerRate" placeholder="请输入数值" type="number">
@@ -151,7 +151,7 @@
         <el-form-item v-if="batchDialog.form.collectFlag == '1'" label="服务费抽成" prop="serviceRate">
           <div class="flex" style="gap: 10px;">
             <el-select v-model="batchDialog.form.serviceRateType" style="width: 120px">
-              <el-option :value="'0'" label="度数" />
+              <!-- <el-option :value="'0'" label="度数" /> -->
               <el-option :value="'1'" label="折扣" />
             </el-select>
             <el-input v-model="batchDialog.form.serviceRate" placeholder="请输入数值" type="number">
@@ -204,9 +204,9 @@ export default {
           stationId: '',
           stationName: '',
           collectFlag: '0',
-          powerRateType: '0',
+          powerRateType: '1',
           powerRate: '',
-          serviceRateType: '0',
+          serviceRateType: '1',
           serviceRate: ''
         }
       },
@@ -214,9 +214,9 @@ export default {
         visible: false,
         form: {
           collectFlag: '0',
-          powerRateType: '0',
+          powerRateType: '1',
           powerRate: '',
-          serviceRateType: '0',
+          serviceRateType: '1',
           serviceRate: ''
         }
       },
@@ -293,9 +293,9 @@ export default {
         form.stationId = row.stationId || row.id
         form.stationName = row.stationName
         form.collectFlag = res.data?.collectFlag ?? row.collectFlag ?? '0'
-        form.powerRateType = res.data?.powerRateType ?? row.powerRateType ?? '0'
+        form.powerRateType = res.data?.powerRateType ?? row.powerRateType ?? '1'
         form.powerRate = res.data?.powerRate ?? row.powerRate ?? '0.00'
-        form.serviceRateType = res.data?.serviceRateType ?? row.serviceRateType ?? '0'
+        form.serviceRateType = res.data?.serviceRateType ?? row.serviceRateType ?? '1'
         form.serviceRate = res.data?.serviceRate ?? row.serviceRate ?? '0.00'
         this.editDialog.visible = true
       }).catch(() => {
@@ -304,9 +304,9 @@ export default {
         form.stationId = row.stationId || row.id
         form.stationName = row.stationName
         form.collectFlag = row.collectFlag ?? '0'
-        form.powerRateType = row.powerRateType ?? '0'
+        form.powerRateType = row.powerRateType ?? '1'
         form.powerRate = row.powerRate ?? '0.00'
-        form.serviceRateType = row.serviceRateType ?? '0'
+        form.serviceRateType = row.serviceRateType ?? '1'
         form.serviceRate = row.serviceRate ?? '0.00'
         this.editDialog.visible = true
       })
