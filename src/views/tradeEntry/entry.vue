@@ -17,9 +17,16 @@
           <el-row>
             <el-col :span="12">
               <el-form-item label="渠道代码" prop="serviceProviderId">
-                <el-select v-model="form.serviceProviderId" placeholder="请选择渠道代码" style="width: 100%">
+                <el-select v-model="form.serviceProviderId" placeholder="请选择渠道代码" style="width: 100%" :disabled="isEdit">
                   <el-option label="台州银行 (tzbank)" value="tzbank" />
                   <el-option label="微信支付 (wxpay)" value="wxpay" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="运营商户" prop="merchantId">
+                <el-select v-model="form.merchantId" placeholder="请选择运营商户" style="width: 100%" filterable clearable :disabled="isEdit">
+                  <el-option v-for="item in merchantList" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -117,18 +124,21 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="注册资金(万元)" prop="corCapital">
-                <el-input-number v-model="form.corCapital" :precision="2" :step="0.1" style="width: 100%" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
               <el-form-item label="证件生效日期" prop="corIdEffectDate">
                 <el-date-picker v-model="form.corIdEffectDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width: 100%" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="证件到期日期" prop="corIdExaDate">
-                <el-date-picker v-model="form.corIdExaDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width: 100%" />
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <el-date-picker v-model="form.corIdExaDate" :disabled="corIdExaDateForever" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="flex: 1;" />
+                  <el-checkbox v-model="corIdExaDateForever">永久</el-checkbox>
+                </div>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="注册资金(万元)" prop="corCapital">
+                <el-input-number v-model="form.corCapital" :precision="2" :step="0.1" style="width: 100%" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -290,7 +300,10 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="证件到期日期" prop="corLegIdExaDate">
-                <el-date-picker v-model="form.corLegIdExaDate" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="width: 100%" />
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <el-date-picker v-model="form.corLegIdExaDate" :disabled="corLegIdExaDateForever" type="date" value-format="yyyy-MM-dd" placeholder="选择日期" style="flex: 1;" />
+                  <el-checkbox v-model="corLegIdExaDateForever">永久</el-checkbox>
+                </div>
               </el-form-item>
             </el-col>
             <!-- <el-col :span="12">
@@ -420,6 +433,7 @@
 <script>
 import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern, submitTradeEntry } from '@/api/pay/tradeEntry'
 import { getAreaSelector } from '@/api/area/index'
+import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
 
@@ -437,10 +451,14 @@ export default {
       legAreaList: [],
       busKindOptions: [],
       bankList: [],
+      merchantList: [],
+      corIdExaDateForever: false,
+      corLegIdExaDateForever: false,
       form: {
         id: undefined,
         // Basic
         tenantId: '',
+        merchantId: '',
         serviceProviderId: 'tzbank',
         apiVersion: '',
         managerName: '',
@@ -492,6 +510,7 @@ export default {
       },
       rules: {
         tenantId: [{ required: true, message: '请输入租户标识', trigger: 'blur' }],
+        merchantId: [{ required: true, message: '请选择运营商户', trigger: 'change' }],
         serviceProviderId: [{ required: true, message: '请输入渠道代码', trigger: 'blur' }],
         busTradeMerNo: [{ required: true, message: '请输入业务方交易商户编号', trigger: 'blur' }],
         merType: [{ required: true, message: '请选择商户类型', trigger: 'change' }],
@@ -529,11 +548,33 @@ export default {
         this.$refs.form.clearValidate()
       })
     }
+    ,
+    corIdExaDateForever(val) {
+      if (val) {
+        this.form.corIdExaDate = '9999-12-31'
+      } else if (String(this.form.corIdExaDate || '') === '9999-12-31') {
+        this.form.corIdExaDate = ''
+      }
+    },
+    corLegIdExaDateForever(val) {
+      if (val) {
+        this.form.corLegIdExaDate = '9999-12-31'
+      } else if (String(this.form.corLegIdExaDate || '') === '9999-12-31') {
+        this.form.corLegIdExaDate = ''
+      }
+    },
+    'form.corIdExaDate'(val) {
+      this.corIdExaDateForever = String(val || '') === '9999-12-31'
+    },
+    'form.corLegIdExaDate'(val) {
+      this.corLegIdExaDateForever = String(val || '') === '9999-12-31'
+    }
   },
   created() {
     this.busKindOptions = dictData.getBusKindData()
     this.bankList = dictData.getBankNo()
     this.getProvinceList()
+    this.getMerchantList()
     if (this.$route.query && this.$route.query.prefill === '1') {
       try {
         const cached = sessionStorage.getItem('tradeEntryPrefill')
@@ -561,6 +602,17 @@ export default {
     }
   },
   methods: {
+    getMerchantList() {
+      getMerchant().then(res => {
+        if (res && res.code == 200) {
+          this.merchantList = res.data || []
+        } else {
+          this.merchantList = []
+        }
+      }).catch(() => {
+        this.merchantList = []
+      })
+    },
     normalizeAreaList(res) {
       const data = res && res.data
       if (Array.isArray(data)) return data
@@ -795,6 +847,8 @@ export default {
         const attchList = detail.attchList || []
         Object.assign(this.form, tradeEntry)
         this.$set(this.form, 'attchList', Array.isArray(attchList) ? attchList : [])
+        this.corIdExaDateForever = String(this.form.corIdExaDate || '') === '9999-12-31'
+        this.corLegIdExaDateForever = String(this.form.corLegIdExaDate || '') === '9999-12-31'
         this.mapAttachmentsFromAttchList(this.form.attchList)
         this.loadAreaOptionsForCurrentForm()
       }).catch(err => {
