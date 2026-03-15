@@ -643,6 +643,15 @@ export const constantRoutes = [{
         icon: 'el-icon-document',
       }
     }, {
+      path: 'rechargeRecordDetail',
+      component: () => import('@/views/finance/rechargeRecordDetail'),
+      name: 'rechargeRecordDetail',
+      hidden: true,
+      meta: {
+        title: '充值记录详情',
+        icon: 'el-icon-document',
+      }
+    }, {
       path: 'refundRecord',
       component: () => import('@/views/finance/refundRecord'),
       name: 'refundRecord',

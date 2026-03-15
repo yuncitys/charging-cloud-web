@@ -97,13 +97,17 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
+				<el-table-column label="操作" align="center" width="120" fixed="right">
+					<template slot-scope="scope">
+						<el-button type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
+					</template>
+				</el-table-column>
 			</el-table>
 			<div class="pagination-container">
 				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
 					:total="total" background layout="total, sizes, prev, pager, next, jumper"
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</div>
-
 		</div>
 	</div>
 </template>
@@ -176,6 +180,17 @@
 
 		},
 		methods: {
+			handleDetail(row) {
+				const payCode = row && row.payCode
+				if (!payCode) {
+					this.$message.error('payCode不能为空')
+					return
+				}
+				this.$router.push({
+					name: 'rechargeRecordDetail',
+					query: { payCode }
+				})
+			},
 			getLists() {
 				this.listLoading = true
 				let listQuery = JSON.parse(JSON.stringify(this.listQuery))
