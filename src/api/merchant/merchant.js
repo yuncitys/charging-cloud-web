@@ -22,10 +22,11 @@ export function getMerchantList(data) {
 	})
 }
 
-export function getMerchant() {
+export function getMerchant(params) {
 	return request({
 		url: '/api/web/merchant',
-		method: 'get'
+		method: 'get',
+		params
 	})
 }
 

@@ -632,13 +632,9 @@ export default {
       })
     },
     getMerchant() {
-      getMerchant().then(res => {
+      getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
         if (res && res.code == 200) {
           this.merchantList = res.data || []
-          if (!this.station.merchantName && this.station.merchantId) {
-            const hit = this.merchantList.find(i => String(i.id) === String(this.station.merchantId))
-            if (hit) this.station.merchantName = hit.name
-          }
         }
       })
     },

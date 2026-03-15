@@ -847,9 +847,11 @@
 					this.operatorList = res.data || []
 				})
 			},
-			getMerchant() {
-				getMerchant().then(res => {
+			 getMerchant() {
+				getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
+					if (res && res.code == 200) {
 					this.merchantList = res.data || []
+					}
 				})
 			},
 			getDevicePriceByPriceType() {
