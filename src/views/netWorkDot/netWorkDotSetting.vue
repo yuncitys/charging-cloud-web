@@ -4,62 +4,201 @@
       <div slot="header" class="clearfix">
         <span>站点设置</span>
         <div style="float: right;">
-          <!-- <el-tag v-if="station.merchantName" style="margin-right: 10px;">{{ station.merchantName }}</el-tag>
-          <el-tag v-if="station.networkName" type="info" style="margin-right: 10px;">{{ station.networkName }}</el-tag> -->
+          <el-button v-if="activeTab === 'detail' && !isEditing" size="mini" type="primary" @click="startEdit">编辑</el-button>
+          <el-button v-if="activeTab === 'detail' && isEditing" size="mini" @click="cancelEdit">取消</el-button>
+          <el-button v-if="activeTab === 'detail' && isEditing" size="mini" type="primary" :loading="detailSaving" @click="saveStation">保存</el-button>
           <el-button size="mini" type="primary" @click="$router.back()">返回</el-button>
         </div>
       </div>
 
       <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
-        <el-tab-pane label="详情" name="detail" />
+        <el-tab-pane label="基本信息" name="detail" />
         <el-tab-pane label="抽成规则" name="commission" />
         <el-tab-pane label="分账设置" name="split" />
       </el-tabs>
 
       <div v-show="activeTab === 'detail'" v-loading="loadingStation" element-loading-text="拼命加载中......">
-        <el-form :model="station" label-position="left" label-width="120px" size="medium" disabled>
+        <div v-if="!isEditing" class="detail-view">
+          <div class="detail-section">
+            <div class="detail-section__title">基础信息</div>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">站点名称</div>
+                  <div class="kv__value">{{ station.networkName || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="24">
+                <div class="kv">
+                  <div class="kv__label">充电站位置</div>
+                  <div class="kv__value">{{ station.networkAddress || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">充电站经度</div>
+                  <div class="kv__value">{{ station.networkLongitude || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">充电站纬度</div>
+                  <div class="kv__value">{{ station.networkLatitude || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">运营商户</div>
+                  <div class="kv__value">{{ station.merchantName || getNameById(merchantList, station.merchantId) || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12" v-if="station.ruleId == 2">
+                <div class="kv">
+                  <div class="kv__label">计费标准</div>
+                  <div class="kv__value">{{ getNameById(priceTypeList, station.pricingRuleId, 'feeName') || '-' }}</div>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div id="GDMapSetting" class="detail-map" v-show="activeTab === 'detail'"></div>
+
+          <div class="detail-section">
+            <div class="detail-section__title">监管信息</div>
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">电站位置</div>
+                  <div class="kv__value">{{ station.locationAddress == 2 ? '地下电站' : '地上电站' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">可用电容</div>
+                  <div class="kv__value">{{ station.capacity ? `${station.capacity} KWA` : '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">电站类型</div>
+                  <div class="kv__value">{{ getNameById(stationTypeList, station.stationType) || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">建设场所</div>
+                  <div class="kv__value">{{ getNameById(buildAddressList, station.buildAddress) || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">人员值守</div>
+                  <div class="kv__value">{{ station.isDuty == 1 ? '是' : '否' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">独立报装</div>
+                  <div class="kv__value">{{ station.isAloneApply == 1 ? '是' : '否' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">公共停车场</div>
+                  <div class="kv__value">{{ station.isPublicParkingLot == 1 ? '是' : '否' }}</div>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div class="detail-section">
+            <div class="detail-section__title">运营信息</div>
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <div class="kv">
+                  <div class="kv__label">站场辅助设备</div>
+                  <div class="kv__value">
+                    <el-tag v-if="station.isBarrierGate" size="mini" style="margin-right: 6px;">道闸</el-tag>
+                    <el-tag v-if="station.isLockFlag" size="mini" type="success" style="margin-right: 6px;">地锁</el-tag>
+                    <span v-if="!station.isBarrierGate && !station.isLockFlag">-</span>
+                  </div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">营业时间</div>
+                  <div class="kv__value">{{ formatBusinessHours(station.businessHours) }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">管理员电话</div>
+                  <div class="kv__value">{{ station.phone || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">停车收费模式</div>
+                  <div class="kv__value">{{ getNameById(parkFeeType, station.parkFeeType) || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">停车收费提示</div>
+                  <div class="kv__value">{{ station.parkFeeTip || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="24">
+                <div class="kv">
+                  <div class="kv__label">站点标签</div>
+                  <div class="kv__value">{{ formatStationTags(station.stationTag) }}</div>
+                </div>
+              </el-col>
+              <el-col :span="24">
+                <div class="kv">
+                  <div class="kv__label">站场备注</div>
+                  <div class="kv__value">{{ station.remark || '-' }}</div>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+
+        <el-form v-else ref="detailForm" :model="editStation" label-position="left" label-width="120px" size="medium" class="detail-edit">
           <el-divider content-position="left">基础信息</el-divider>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="充电站类型">
-                <el-radio-group v-model="station.ruleId">
-                  <el-radio :label="1">单车充电站</el-radio>
-                  <el-radio :label="2">汽车充电站</el-radio>
-                </el-radio-group>
+              <el-form-item label="站点名称">
+                <el-input v-model="editStation.networkName" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="运营商户">
-                <el-select v-model="station.merchantId" filterable clearable style="width: 100%;">
+                <el-select v-model="editStation.merchantId" filterable clearable style="width: 100%;" @change="handleMerchantChange">
                   <el-option v-for="item in merchantList" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="24" v-if="station.ruleId == 2">
+            <el-col :span="12" v-if="editStation.ruleId == 2">
               <el-form-item label="计费标准">
-                <el-select v-model="station.pricingRuleId" filterable clearable style="width: 100%;">
+                <el-select v-model="editStation.pricingRuleId" filterable clearable style="width: 100%;">
                   <el-option v-for="item in priceTypeList" :key="item.id" :label="item.feeName" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
-            <el-col :span="12">
-              <el-form-item label="站点名称">
-                <el-input v-model="station.networkName" />
-              </el-form-item>
-            </el-col>
             <el-col :span="24">
               <el-form-item label="充电站位置">
-                <el-input v-model="station.networkAddress" />
+                <el-input v-model="editStation.networkAddress" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="充电站经度">
-                <el-input v-model="station.networkLongitude" />
+                <el-input v-model="editStation.networkLongitude" @change="updateMapPosition" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="充电站纬度">
-                <el-input v-model="station.networkLatitude" />
+                <el-input v-model="editStation.networkLatitude" @change="updateMapPosition" />
               </el-form-item>
             </el-col>
             <el-col :span="24">
@@ -69,18 +208,18 @@
             </el-col>
             <el-col :span="24">
               <el-form-item>
-                <el-tag type="warning" style="font-size: 16px;">在投放地输入框内查询小区位置后，可点击地图再次选取更详细的楼层或街道地址</el-tag>
+                <el-tag type="warning" style="font-size: 14px;">在投放地输入框内查询小区位置后，可点击地图再次选取更详细的楼层或街道地址</el-tag>
               </el-form-item>
             </el-col>
           </el-row>
 
-          <div id="GDMapSetting" style="height:400px;width: 900px;margin: 60px 0;" v-show="activeTab === 'detail'"></div>
+          <div id="GDMapSetting" class="detail-map" v-show="activeTab === 'detail'"></div>
 
           <el-divider content-position="left">监管信息</el-divider>
           <el-row>
             <el-col :span="12">
               <el-form-item label="电站位置">
-                <el-radio-group v-model="station.locationAddress">
+                <el-radio-group v-model="editStation.locationAddress">
                   <el-radio :label="1">地上电站</el-radio>
                   <el-radio :label="2">地下电站</el-radio>
                 </el-radio-group>
@@ -88,28 +227,28 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="可用电容">
-                <el-input v-model="station.capacity" type="number">
+                <el-input v-model="editStation.capacity" type="number">
                   <template slot="append">KWA</template>
                 </el-input>
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item label="电站类型">
-                <el-select v-model="station.stationType" filterable clearable style="width: 100%;">
+                <el-select v-model="editStation.stationType" filterable clearable style="width: 100%;">
                   <el-option v-for="item in stationTypeList" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item label="建设场所">
-                <el-select v-model="station.buildAddress" filterable clearable style="width: 100%;">
+                <el-select v-model="editStation.buildAddress" filterable clearable style="width: 100%;">
                   <el-option v-for="item in buildAddressList" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="人员值守">
-                <el-radio-group v-model="station.isDuty">
+                <el-radio-group v-model="editStation.isDuty">
                   <el-radio :label="0">否</el-radio>
                   <el-radio :label="1">是</el-radio>
                 </el-radio-group>
@@ -117,7 +256,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="独立报装">
-                <el-radio-group v-model="station.isAloneApply">
+                <el-radio-group v-model="editStation.isAloneApply">
                   <el-radio :label="0">否</el-radio>
                   <el-radio :label="1">是</el-radio>
                 </el-radio-group>
@@ -125,7 +264,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="公共停车场">
-                <el-radio-group v-model="station.isPublicParkingLot">
+                <el-radio-group v-model="editStation.isPublicParkingLot">
                   <el-radio :label="0">否</el-radio>
                   <el-radio :label="1">是</el-radio>
                 </el-radio-group>
@@ -137,15 +276,15 @@
           <el-row>
             <el-col :span="24">
               <el-form-item label="站场辅助设备">
-                <el-checkbox v-model="station.isBarrierGate" label="道闸">道闸</el-checkbox>
-                <el-checkbox v-model="station.isLockFlag" label="地锁">地锁</el-checkbox>
+                <el-checkbox v-model="editStation.isBarrierGate" label="道闸">道闸</el-checkbox>
+                <el-checkbox v-model="editStation.isLockFlag" label="地锁">地锁</el-checkbox>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="营业时间">
                 <el-time-picker
                   is-range
-                  v-model="station.businessHours"
+                  v-model="editStation.businessHours"
                   value-format="HH:mm:ss"
                   range-separator="至"
                   start-placeholder="开始时间"
@@ -156,55 +295,31 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="管理员电话">
-                <el-input v-model="station.phone" />
+                <el-input v-model="editStation.phone" />
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item label="停车收费模式">
-                <el-select v-model="station.parkFeeType" filterable clearable style="width: 100%;">
+                <el-select v-model="editStation.parkFeeType" filterable clearable style="width: 100%;">
                   <el-option v-for="item in parkFeeType" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item label="停车收费提示">
-                <el-input v-model="station.parkFeeTip" />
+                <el-input v-model="editStation.parkFeeTip" />
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item label="站点标签">
-                <el-select v-model="station.stationTag" multiple collapse-tags style="width: 100%;">
+                <el-select v-model="editStation.stationTag" multiple filterable clearable style="width: 100%;">
                   <el-option v-for="item in stationTagList" :key="item.id + ''" :label="item.name" :value="item.id + ''" />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="24">
               <el-form-item label="站场备注">
-                <el-input v-model="station.remark" type="textarea" />
-              </el-form-item>
-            </el-col>
-          </el-row>
-
-          <el-divider content-position="left">审计信息</el-divider>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="创建用户">
-                <el-input v-model="station.createUser" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="创建时间">
-                <el-input v-model="station.createTime" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="更新用户">
-                <el-input v-model="station.updateUser" />
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="更新时间">
-                <el-input v-model="station.updateTime" />
+                <el-input v-model="editStation.remark" type="textarea" />
               </el-form-item>
             </el-col>
           </el-row>
@@ -374,7 +489,7 @@
 </template>
 
 <script>
-import { getChargeStationById } from '@/api/netWorkDot/netWorkDotList'
+import { getChargeStationById, updateNetworkDot } from '@/api/netWorkDot/netWorkDotList'
 import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
 import { getMerchant } from '@/api/merchant/merchant'
 import { findDevicePriceByPriceType } from '@/api/device/deviceList'
@@ -388,6 +503,9 @@ export default {
     return {
       activeTab: 'detail',
       stationId: '',
+      isEditing: false,
+      detailSaving: false,
+      editStation: null,
       stationTagList: [
         { id: 1, name: '免费wifi' },
         { id: 2, name: '空调休息室' },
@@ -465,6 +583,7 @@ export default {
       loadingStation: false,
       mapInput: '',
       GDMap: null,
+      GDMarker: null,
       plugins: [
         'AMap.Autocomplete',
         'AMap.PlaceSearch',
@@ -475,7 +594,8 @@ export default {
         'AMap.DistrictLayer',
         'AMap.CustomLayer'
       ],
-      key: '87331a23c6a4e734969f8621bc166eff',
+      // key: '87331a23c6a4e734969f8621bc166eff',
+      key: '160cab8ad6c50752175d76e61ef92c50',
       v: '1.4.4',
 
       loadingCommission: false,
@@ -521,10 +641,103 @@ export default {
     this.getDevicePriceByPriceType()
   },
   methods: {
+    getNameById(list, id, labelKey = 'name') {
+      if (!list || !list.length) return ''
+      const hit = list.find(i => String(i.id) === String(id))
+      if (!hit) return ''
+      return hit[labelKey] || hit.name || hit.label || ''
+    },
+    formatBusinessHours(val) {
+      const arr = Array.isArray(val) ? val : this.parseJsonArray(val)
+      if (!arr || arr.length < 2) return '-'
+      const start = arr[0]
+      const end = arr[1]
+      if (!start || !end) return '-'
+      return `${start} 至 ${end}`
+    },
+    formatStationTags(val) {
+      const arr = Array.isArray(val) ? val : this.parseJsonArray(val)
+      const ids = (arr || []).map(i => String(i))
+      if (!ids.length) return '-'
+      const names = ids.map(id => {
+        const hit = (this.stationTagList || []).find(t => String(t.id) === String(id))
+        return hit ? hit.name : id
+      }).filter(Boolean)
+      return names.length ? names.join('、') : '-'
+    },
+    startEdit() {
+      this.isEditing = true
+      this.editStation = JSON.parse(JSON.stringify(this.station || {}))
+      this.$nextTick(() => {
+        this.resetMapInstance()
+        this.initMap()
+        this.updateMapPosition()
+      })
+    },
+    cancelEdit() {
+      this.isEditing = false
+      this.detailSaving = false
+      this.editStation = null
+      this.mapInput = ''
+      this.$nextTick(() => {
+        this.resetMapInstance()
+        this.initMap()
+        this.updateMapPosition()
+      })
+    },
+    resetMapInstance() {
+      this.GDMap = null
+      this.GDMarker = null
+      const container = document.getElementById('GDMapSetting')
+      if (container) container.innerHTML = ''
+    },
+    handleMerchantChange(val) {
+      const hit = (this.merchantList || []).find(i => String(i.id) === String(val))
+      if (this.editStation) {
+        this.editStation.merchantName = hit ? (hit.name || '') : ''
+      }
+    },
+    buildStationUpdatePayload() {
+      const src = this.editStation || {}
+      const payload = {
+        ...src,
+        id: src.id || this.stationId
+      }
+      payload.ruleId = Number(payload.ruleId || 1)
+      payload.locationAddress = Number(payload.locationAddress || 1)
+      payload.isDuty = this.normalizeFlag01(payload.isDuty)
+      payload.isAloneApply = this.normalizeFlag01(payload.isAloneApply)
+      payload.isPublicParkingLot = this.normalizeFlag01(payload.isPublicParkingLot)
+      payload.isBarrierGate = this.normalizeBool(payload.isBarrierGate)
+      payload.isLockFlag = this.normalizeBool(payload.isLockFlag)
+      payload.businessHours = JSON.stringify(Array.isArray(payload.businessHours) ? payload.businessHours : this.parseJsonArray(payload.businessHours))
+      payload.stationTag = JSON.stringify(Array.isArray(payload.stationTag) ? payload.stationTag : this.parseJsonArray(payload.stationTag))
+      return payload
+    },
+    saveStation() {
+      if (!this.stationId || !this.editStation) return
+      this.detailSaving = true
+      const payload = this.buildStationUpdatePayload()
+      updateNetworkDot(payload).then(res => {
+        if (res && res.code == 200) {
+          this.$message.success(res.msg || '保存成功')
+          this.isEditing = false
+          this.editStation = null
+          this.initStation()
+        } else {
+          this.$message.error((res && res.msg) || '保存失败')
+        }
+      }).catch(() => {
+        this.$message.error('保存失败')
+      }).finally(() => {
+        this.detailSaving = false
+      })
+    },
     handleTabClick(tab) {
       if (tab.name === 'detail') {
         this.$nextTick(() => {
           this.initMap()
+          this.updateMapPosition()
         })
       }
       if (tab.name === 'commission') {
@@ -610,9 +823,13 @@ export default {
       return !!val
     },
     initMap() {
-      if (this.GDMap) return
-      const lng = Number(this.station.networkLongitude)
-      const lat = Number(this.station.networkLatitude)
+      const data = this.isEditing && this.editStation ? this.editStation : this.station
+      const lng = Number(data.networkLongitude)
+      const lat = Number(data.networkLatitude)
+      if (this.GDMap) {
+        this.updateMapPosition()
+        return
+      }
       if (!lng || !lat) return
       const container = document.getElementById('GDMapSetting')
       if (!container) return
@@ -629,7 +846,24 @@ export default {
         })
         map.add(marker)
         this.GDMap = map
+        this.GDMarker = marker
       })
+    },
+    updateMapPosition() {
+      if (!this.GDMap) return
+      const data = this.isEditing && this.editStation ? this.editStation : this.station
+      const lng = Number(data.networkLongitude)
+      const lat = Number(data.networkLatitude)
+      if (!lng || !lat) return
+      const center = [lng, lat]
+      try {
+        this.GDMap.setCenter(center)
+        this.GDMap.setZoom(18)
+        if (this.GDMarker && this.GDMarker.setPosition) {
+          this.GDMarker.setPosition(center)
+        }
+      } catch (e) {
+      }
     },
     getMerchant() {
       getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
@@ -962,3 +1196,55 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.detail-view {
+  padding: 6px 2px 14px;
+}
+
+.detail-section {
+  padding: 14px 0 6px;
+}
+
+.detail-section__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+}
+
+.kv {
+  background: #fafafa;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  padding: 12px 12px;
+  margin-bottom: 12px;
+  min-height: 66px;
+}
+
+.kv__label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 6px;
+}
+
+.kv__value {
+  font-size: 14px;
+  color: #303133;
+  word-break: break-all;
+  line-height: 20px;
+}
+
+.detail-map {
+  height: 400px;
+  width: 100%;
+  margin: 14px 0 10px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #ebeef5;
+}
+
+.detail-edit {
+  padding-top: 8px;
+}
+</style>
