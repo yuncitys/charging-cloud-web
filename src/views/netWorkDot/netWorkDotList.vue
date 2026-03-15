@@ -7,15 +7,15 @@
 				placeholder="请输入充电站省份" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
 			<el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入充电站名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
-			<!-- <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
-				placeholder="请选择代理商">
-				<el-option
-				v-for="item in dealerList"
-				:key="item.id"
-				:label="item.adminFullname"
-				:value="item.id">
-				</el-option>
-			</el-select> -->
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
+			  placeholder="运营商户">
+			    <el-option
+			      v-for="item in merchantList"
+			      :key="item.id"
+			      :label="item.name"
+			      :value="item.id">
+			    </el-option>
+			</el-select>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
 				查询
 			</el-button>
@@ -62,12 +62,20 @@
 				</el-table-column>
 				<el-table-column prop="networkLatitude" label="地址纬度" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<!-- <el-table-column prop="startingPrice" label="充电起始价" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="App展示" align="center" width="110">
 					<template slot-scope="scope">
-						<span>{{ scope.row.ruleId === 2 ? scope.row.startingPrice + '（元）' : '无' }}</span>
+						<el-switch
+							v-model="scope.row.isAppDisplay"
+							:active-value="1"
+							:inactive-value="0"
+							:disabled="!btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit') || !!appDisplayUpdating[scope.row.id]"
+							@change="handleAppDisplayChange(scope.row, $event)"
+						/>
 					</template>
-				</el-table-column> -->
+				</el-table-column>
 				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="updateUser" label="更新用户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip='isPc' sortable>
 					<template slot-scope="scope">
@@ -267,6 +275,7 @@
 <script>
 	import {
 		getList,
+		updateNetworkDot,
 		deleteNetworkDot,
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
@@ -275,6 +284,7 @@
 	import {
 		findDealerList,
 	} from '@/api/device/deviceList.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	import loadMap from "../../utils/loadMap.js";
 	import {
 		parseTime
@@ -303,12 +313,15 @@
 				list: [],
 				total: 10,
         		dealerList: [],
+				merchantList: [],
+				appDisplayUpdating: {},
 				listQuery: {
 					page: 1,
 					limit: 10,
 					ruleId: 1,
 					type: 1,
 					adminId: '',
+					merchantId: '',
 					networkName: '',
 					networkProvince: '',
 					networkAddress: '',
@@ -374,6 +387,30 @@
 
 		},
 		methods: {
+			normalizeFlag01(val) {
+				if (val === 1 || val === '1' || val === true) return 1
+				return 0
+			},
+			handleAppDisplayChange(row, val) {
+				if (!row || !row.id) return
+				const nextVal = this.normalizeFlag01(val)
+				const prevVal = nextVal === 1 ? 0 : 1
+
+				this.$set(this.appDisplayUpdating, row.id, true)
+				updateNetworkDot({ id: row.id, isAppDisplay: nextVal }).then(res => {
+					if (res && res.code == 200) {
+						this.$message.success(res.msg || '更新成功')
+					} else {
+						row.isAppDisplay = prevVal
+						this.$message.error((res && res.msg) || '更新失败')
+					}
+				}).catch(() => {
+					row.isAppDisplay = prevVal
+					this.$message.error('更新失败')
+				}).finally(() => {
+					this.$delete(this.appDisplayUpdating, row.id)
+				})
+			},
 			formatCommission(type, value) {
 				if (value === null || value === undefined || value === '') return '-'
 				if (type == '1') return `${value}%`
@@ -619,7 +656,11 @@
 				getList(this.listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
-						this.list = res.data
+						const list = Array.isArray(res.data) ? res.data : []
+						this.list = list.map(item => {
+							const isAppDisplay = this.normalizeFlag01(item.isAppDisplay ?? item.is_app_display)
+							return { ...item, isAppDisplay }
+						})
 						this.total = res.count
 						this.listLoading = false
 					} else {
@@ -667,10 +708,17 @@
 					}
 				})
 			},
+			getMerchantList() {
+				getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
+					this.merchantList = (res && res.code == 200) ? (res.data || []) : []
+				}).catch(() => {
+					this.merchantList = []
+				})
+			},
 		},
 		created() {
 			this.getLists()
-			// this.findDealerList()
+			this.getMerchantList()
 		},
 	}
 </script>
