@@ -20,6 +20,11 @@
         <el-form-item label="联系方式" prop="contactInfo">
           <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :disabled = "isDetail"></el-input>
         </el-form-item>
+        <el-form-item label="角色类型" prop="roleType">
+          <el-select v-model="form.roleType" multiple filterable clearable placeholder="请选择角色类型" style="width: 100%;" :disabled="isDetail">
+            <el-option v-for="item in roleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="开票类型：" prop="invoiceType">
 					<el-radio-group v-model="form.invoiceType" :disabled = "isDetail">
             <el-radio :label="0">不开票</el-radio>
@@ -114,6 +119,14 @@
 						validator: checkPhone,
 						trigger: 'blur'
 					}],
+          roleType: [{
+						required: true,
+						validator: (rule, value, callback) => {
+              if (!Array.isArray(value) || value.length === 0) callback(new Error('请选择角色类型'))
+              else callback()
+            },
+						trigger: 'change'
+					}],
           invoiceType: [{
 						required: true,
 						message: '请选择开票类型',
@@ -124,6 +137,19 @@
         isDetail: false,
         isSave: false,
         title: '新增',
+        roleTypeOptions: [{
+          label: '运营商',
+          value: 'OPERATOR'
+        }, {
+          label: '投资人',
+          value: 'INVESTOR'
+        }, {
+          label: '场地方',
+          value: 'LANDLORD'
+        }, {
+          label: '分账主体',
+          value: 'SETTLE'
+        }],
         form: {
           id: '',
           typq: 1,
@@ -132,12 +158,19 @@
           socialCreditCode: '',
           manageName: '',
           contactInfo: '',
+          roleType: [],
           invoiceType: '',
           remark: ''
         },
       };
     },
     methods: {
+      normalizeRoleType(val) {
+        if (Array.isArray(val)) return val
+        if (val === null || val === undefined || val === '') return []
+        if (typeof val === 'string') return val.split(',').map(s => s.trim()).filter(Boolean)
+        return []
+      },
       openDialog(formData,isDetail) {
         this.dialogVisible = true;
         if(formData == null){
@@ -154,6 +187,7 @@
             socialCreditCode: '',
             manageName: '',
             contactInfo: '',
+            roleType: [],
             invoiceType: '',
             remark: ''
           }
@@ -164,6 +198,7 @@
           this.visibleStep = false
           this.isSave = false
           this.form = JSON.parse(JSON.stringify(formData));
+          this.form.roleType = this.normalizeRoleType(this.form.roleType)
         } else {
           this.title = '详情'
           this.currentStep = 1
@@ -171,6 +206,7 @@
           this.visibleStep = false
           this.isSave = false
           this.form = formData
+          this.form.roleType = this.normalizeRoleType(this.form.roleType)
         }
       },
       saveOrUpdate(){
