@@ -58,12 +58,14 @@
 						<span>{{ scope.row.updateTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="230">
+				<el-table-column label="操作" align="center" width="280">
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: center;align-items: center;">
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)"
 								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:edit')">编辑</el-button>
-							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
+							<el-button type="primary" size="mini" @click="toTradeEntryAdd(scope.row)"
+								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:edit')">进件</el-button>
+							<el-button type="primary" size = "mini" @click="toTradeEntryDetail(scope.row)">详情</el-button>
 							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)"
 								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:delete')">删除</el-button>
 						</div>
@@ -132,6 +134,29 @@
 					this.$refs.merchantFrom.openDialog(row,isDetail)
 				})
       		},
+			toTradeEntryAdd(row) {
+				const merchantId = row && row.id ? row.id : ''
+				if (!merchantId) return
+				this.$router.push({
+					path: '/tradeEntry/add',
+					query: {
+						merchantId
+					}
+				})
+			},
+			toTradeEntryDetail(row) {
+				const merchantId = row && row.id ? row.id : ''
+				if (!merchantId) return
+				try {
+					sessionStorage.setItem('merchantTradeEntryMerchantInfo', JSON.stringify(row || {}))
+				} catch (e) {}
+				this.$router.push({
+					name: 'merchantTradeEntryDetail',
+					query: {
+						merchantId
+					}
+				})
+			},
 			getLists() {
 				this.listLoading = true
 				getMerchantList(this.listQuery).then(res => {
