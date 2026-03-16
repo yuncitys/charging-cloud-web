@@ -336,30 +336,40 @@
             </div>
           </div>
 
-          <el-form :model="commission" label-width="160px" size="medium" disabled>
-            <el-row>
+          <div class="detail-view">
+            <el-row :gutter="20">
+              <!-- <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">抽成状态</div>
+                  <div class="kv__value">{{ commissionExists ? (commission.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}</div>
+                </div>
+              </el-col> -->
               <el-col :span="12">
-                <el-form-item label="电费抽成">
-                  <el-input :value="commission.collectFlag == '1' ? formatCommission(commission.powerRateType, commission.powerRate) : '-'" />
-                </el-form-item>
+                <div class="kv">
+                  <div class="kv__label">电费抽成</div>
+                  <div class="kv__value">{{ commissionExists && commission.collectFlag == '1' ? formatCommission(commission.powerRateType, commission.powerRate) : '-' }}</div>
+                </div>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="服务费抽成">
-                  <el-input :value="commission.collectFlag == '1' ? formatCommission(commission.serviceRateType, commission.serviceRate) : '-'" />
-                </el-form-item>
+                <div class="kv">
+                  <div class="kv__label">服务费抽成</div>
+                  <div class="kv__value">{{ commissionExists && commission.collectFlag == '1' ? formatCommission(commission.serviceRateType, commission.serviceRate) : '-' }}</div>
+                </div>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="修改用户">
-                  <el-input :value="commission.updateUser || '-'" />
-                </el-form-item>
+                <div class="kv">
+                  <div class="kv__label">修改用户</div>
+                  <div class="kv__value">{{ commission.updateUser || '-' }}</div>
+                </div>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="修改时间">
-                  <el-input :value="commission.updateTime || '-'" />
-                </el-form-item>
+                <div class="kv">
+                  <div class="kv__label">修改时间</div>
+                  <div class="kv__value">{{ commission.updateTime || '-' }}</div>
+                </div>
               </el-col>
             </el-row>
-          </el-form>
+          </div>
         </el-card>
       </div>
 
@@ -959,7 +969,7 @@ export default {
         this.payeeList = []
         return
       }
-      listCompletedTradeMerchant(merchantId).then(res => {
+      listCompletedTradeMerchant({roleType: 'SETTLE',status: '30'}).then(res => {
         if (res && res.code == 200) {
           this.payeeList = res.data || []
         } else {
@@ -1004,10 +1014,11 @@ export default {
     },
     formatPayeeLabel(item) {
       if (!item) return ''
-      const name = item.settBankAccName || item.merchantName || item.merchant_name || item.name || ''
+      const name = item.name || item.merchantName || ''
+      const accame = item.settBankAccName || item.merchantName || item.merchant_name || item.name || ''
       const acc = item.settBankAccNo || item.merchantNo || item.busTradeMerNo || item.no || ''
-      if (name && acc) return `${name}  ${acc}`
-      return name || acc || ''
+      if (accame && acc && name) return `${name}  ${accame} ${acc}`
+      return name || accame || acc || ''
     },
     toAddAccount() {
       this.$router.push({ path: '/tradeEntry/add' })
