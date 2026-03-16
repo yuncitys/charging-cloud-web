@@ -25,7 +25,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="运营商户" prop="merchantId">
-                <el-select v-model="form.merchantId" placeholder="请选择运营商户" style="width: 100%" filterable clearable :disabled="isEdit">
+                <el-select v-model="form.merchantId" placeholder="请选择运营商户" style="width: 100%" filterable clearable :disabled="isEdit || merchantIdLocked">
                   <el-option v-for="item in merchantList" :key="item.id" :label="item.name" :value="item.id" />
                 </el-select>
               </el-form-item>
@@ -444,6 +444,7 @@ export default {
       active: 0,
       loading: false,
       isEdit: false,
+      merchantIdLocked: false,
       provinceList: [],
       cityList: [],
       areaList: [],
@@ -575,6 +576,11 @@ export default {
     this.bankList = dictData.getBankNo()
     this.getProvinceList()
     this.getMerchantList()
+    const merchantId = this.$route.query && this.$route.query.merchantId
+    if (merchantId !== null && merchantId !== undefined && merchantId !== '') {
+      this.form.merchantId = merchantId
+      this.merchantIdLocked = true
+    }
     if (this.$route.query && this.$route.query.prefill === '1') {
       try {
         const cached = sessionStorage.getItem('tradeEntryPrefill')

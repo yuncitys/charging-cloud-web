@@ -836,6 +836,16 @@ export const constantRoutes = [{
         }
       },
       {
+        path: 'merchantTradeEntryDetail',
+        component: () => import('@/views/merchant/merchantTradeEntryDetail'),
+        name: 'merchantTradeEntryDetail',
+        hidden: true,
+        meta: {
+          title: '商户进件详情',
+          icon: 'el-icon-document'
+        }
+      },
+      {
         path: 'individual',
         component: () => import('@/views/agent/components/addIndividual'),
         name: 'addIndividual',

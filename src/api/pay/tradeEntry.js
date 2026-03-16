@@ -9,11 +9,11 @@ export function listTradeEntry(query) {
   })
 }
 
-export function listCompleted(merchantId) {
+export function listCompleted(params) {
   return request({
     url: '/api/payment/tradeMerchant/listCompleted',
     method: 'get',
-    params: { merchantId }
+    params
   })
 }
 
@@ -74,6 +74,14 @@ export function getTradeEntryDetail(id) {
   return request({
     url: '/api/payment/tradeMerchant/detailTradeEntry/' + id,
     method: 'get'
+  })
+}
+
+export function detailTradeEntryByMerchantId(params) {
+  return request({
+    url: '/api/payment/tradeMerchant/detailTradeEntryByMerchantId',
+    method: 'get',
+    params
   })
 }
 
