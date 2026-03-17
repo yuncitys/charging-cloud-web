@@ -16,7 +16,7 @@
 					<div style="justify-content: space-between;display: flex;margin-top: 20px;">
 						<div style="margin-top: 0px;">
 							<el-button @click="print('trueBtn')" type="primary">打印</el-button>
-							<button v-print="'#qrCode0'" id="trueBtn" style="display: none">
+							<button v-print="{id: 'qrCode0', popTitle: '设备二维码'}" id="trueBtn" style="display: none">
 								打印
 							</button>
 						</div>
@@ -38,7 +38,7 @@
 						<div style="justify-content: space-between;display: flex;margin-top: 20px;">
 							<div style="margin-top: 0px;">
 								<el-button @click="print(`trueBtn${index+1}`)" type="primary">打印</el-button>
-								<button v-print="`#qrCode${index+1}`" :id="`trueBtn${index+1}`" style="display: none">
+								<button v-print="{id: `qrCode${index+1}`, popTitle: `端口${index+1}二维码`}" :id="`trueBtn${index+1}`" style="display: none">
 									打印
 								</button>
 							</div>
