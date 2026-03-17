@@ -54,7 +54,6 @@
 </template>
 
 <script>
-	import QRCode from 'qrcodejs2'
 	import vueQr from 'vue-qr'
 	export default {
 		components: {
