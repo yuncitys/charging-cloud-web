@@ -90,8 +90,8 @@
 						<el-tag type="warning" v-if="scope.row.payStatus == 30">部分退款</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
+				<!-- <el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column> -->
 				<el-table-column prop="createTime" label="交易时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
