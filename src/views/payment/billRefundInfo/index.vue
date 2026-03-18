@@ -58,7 +58,13 @@
           </template>
         </el-table-column>
         <el-table-column prop="refundTime" label="退款时间"></el-table-column>
-        <el-table-column prop="refundStatus" label="退款状态"></el-table-column>
+        <el-table-column prop="refundStatus" label="退款状态">
+          <template v-slot="scope">
+            <span v-if="scope.row.refundStatus == 30">退款中</span>
+            <span v-if="scope.row.refundStatus == 31">已退款</span>
+            <span v-if="scope.row.refundStatus == 32">退款失败</span>
+          </template>
+        </el-table-column>    
       </el-table>
       <div class="pagination-container">
         <el-pagination :current-page="searchForm.page" :page-sizes="[10,20,30, 50]" :page-size="searchForm.limit"

@@ -36,7 +36,17 @@
             <span>{{ row.paymentAmount | amount }}元</span>
           </template>
         </el-table-column>
-        <el-table-column prop="paymentStatus" label="支付状态"></el-table-column>
+        <el-table-column prop="paymentStatus" label="支付状态">
+          <template v-slot="scope">
+            <span v-if="scope.row.paymentStatus == 10">支付中</span>
+            <span v-if="scope.row.paymentStatus == 11">支付成功</span>
+            <span v-if="scope.row.paymentStatus == 12">支付失败</span>
+            <span v-if="scope.row.paymentStatus == 20">订单关闭</span>
+            <span v-if="scope.row.paymentStatus == 30">退款中</span>
+            <span v-if="scope.row.paymentStatus == 31">已退款</span>
+            <span v-if="scope.row.paymentStatus == 32">退款失败</span>
+          </template>
+        </el-table-column>  
         <el-table-column prop="request" label="请求第三方数据">
           <template v-slot="scope">
             <el-button type="text" v-if="scope.row.request || scope.row.response"
