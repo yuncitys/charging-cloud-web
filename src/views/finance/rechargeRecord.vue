@@ -176,10 +176,24 @@
 				return parseTime(time)
 			},
 		},
+		watch: {
+			'$route.query.payCode': {
+				handler() {
+					this.initFromRoute()
+					this.getLists()
+				}
+			}
+		},
 		mounted() {
 
 		},
 		methods: {
+			initFromRoute() {
+				const payCode = this.$route && this.$route.query ? this.$route.query.payCode : ''
+				if (payCode === null || payCode === undefined || payCode === '') return
+				this.listQuery.payCode = payCode
+				this.listQuery.page = 1
+			},
 			handleDetail(row) {
 				const payCode = row && row.payCode
 				if (!payCode) {
@@ -238,6 +252,7 @@
 			},
 		},
 		created() {
+			this.initFromRoute()
 			this.getLists();
 		},
 	}

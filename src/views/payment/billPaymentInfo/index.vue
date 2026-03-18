@@ -48,7 +48,7 @@
         <el-table-column prop="paymentChannelSn" label="支付渠道流水号" width="180px"></el-table-column>
         <el-table-column prop="paymentSn" label="支付流水号" width="180px">
           <template v-slot="scope">
-            <router-link :to="'billTrade?paymentsn='+scope.row.paymentSn" style="color: blue;">
+            <router-link :to="{ name: 'rechargeRecord', query: { payCode: scope.row.paymentSn } }" style="color: blue;">
               {{ scope.row.paymentSn }}
             </router-link>
           </template>
