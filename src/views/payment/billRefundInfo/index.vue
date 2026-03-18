@@ -126,6 +126,11 @@ export default {
   created() {
 
   },
+  filters: {
+    amount(number) {
+      return isNaN(number) ? 0.00 : parseFloat((number / 100).toFixed(2))
+    }
+  },
   methods: {
     handleSizeChange(val) {
       this.searchForm.limit = val
