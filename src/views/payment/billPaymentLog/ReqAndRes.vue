@@ -3,18 +3,13 @@
     <div class="req-item">
       <h3>入参: </h3>
       <div class="code">
-        <pre v-highlightjs="reqCode">
-          <code class="javascript">
-          </code>
-        </pre>
+        <pre v-highlightjs="reqCode"><code class="javascript"></code></pre>
       </div>
     </div>
     <div class="req-item">
       <h3>返回: </h3>
       <div class="code">
-        <pre v-highlightjs="resCode">
-          <code class="javascript"></code>
-        </pre>
+        <pre v-highlightjs="resCode"><code class="javascript"></code></pre>
       </div>
     </div>
   </el-dialog>
@@ -31,6 +26,16 @@ export default {
       resCode: ''
     }
   },
+  directives: {
+    highlightjs: {
+      inserted(el, binding) {
+        setCode(el, binding.value)
+      },
+      update(el, binding) {
+        setCode(el, binding.value)
+      }
+    }
+  },
   computed: { },
   methods: {
     init(req, res, title) {
@@ -39,6 +44,32 @@ export default {
       this.resCode = res?res:''
       this.title = '请求第三方代码: '+ title
     },
+  }
+}
+
+function setCode(el, val) {
+  const text = formatCode(val)
+  const blocks = el.querySelectorAll('code')
+  if (blocks && blocks.length) {
+    blocks.forEach(code => {
+      code.textContent = text
+    })
+  } else {
+    el.textContent = text
+  }
+}
+
+function formatCode(val) {
+  if (val === null || val === undefined) return ''
+  if (typeof val === 'object') {
+    try { return JSON.stringify(val, null, 2) } catch (e) { return String(val) }
+  }
+  const str = String(val)
+  try {
+    const obj = JSON.parse(str)
+    return JSON.stringify(obj, null, 2)
+  } catch (e) {
+    return str
   }
 }
 </script>
