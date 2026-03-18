@@ -86,7 +86,7 @@ export default {
       searchForm: {
         page: 1,
         limit: 10,
-        paymentStatus: 11,
+        paymentStatus: '',
         serialNumber: '',
         createTimeStart: '',
         createTimeEnd: '',
