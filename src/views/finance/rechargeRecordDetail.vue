@@ -9,7 +9,22 @@
 				<el-row :gutter="20">
 					<el-col :span="12"><el-form-item label="支付单号"><span>{{ detailPay.payCode || detailData.payCode || '-' }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="业务记录号"><span>{{ detailPay.bizRecordId || '-' }}</span></el-form-item></el-col>
-					<el-col :span="12"><el-form-item label="付款金额"><span>{{ formatNullable(detailPay.payMoney) }}</span></el-form-item></el-col>
+					<el-col :span="12">
+						<el-form-item label="付款金额">
+							<span class="pay-money-inline">
+								<span class="pay-money-highlight">{{ formatNullable(detailPay.payMoney) }}</span>
+								<el-button
+								v-if="btnAuthen && btnAuthen.permsVerifAuthention(':web:refundCenter:tradingRefund')"
+								type="danger"
+								size="mini"
+								plain
+								class="pay-money-refund-btn"
+								:disabled="!effectivePayCode"
+								@click="openRefundDialog"
+							>退款</el-button>
+							</span>
+						</el-form-item>
+					</el-col>
 					<el-col :span="12"><el-form-item label="赠送金额"><span>{{ formatNullable(detailPay.giftMoney) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="退款金额"><span>{{ formatNullable(detailPay.refundMoney) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="待分账金额"><span>{{ formatNullable(detailPay.remainingShareMoney) }}</span></el-form-item></el-col>
@@ -17,7 +32,7 @@
 					<el-col :span="12"><el-form-item label="支付状态"><span>{{ formatPayStatus(detailPay.payStatus) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="用户ID"><span>{{ formatNullable(detailPay.userCode) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="交易类型"><span>{{ formatTradeType(detailPay.type) }}</span></el-form-item></el-col>
-					<el-col :span="12"><el-form-item label="卡号"><span>{{ detailPay.cardNo || '-' }}</span></el-form-item></el-col>
+					<el-col v-if="showCardNo" :span="12"><el-form-item label="卡号"><span>{{ detailPay.cardNo || '-' }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="创建时间"><span>{{ detailPay.createTime || '-' }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="更新时间"><span>{{ detailPay.updateTime || '-' }}</span></el-form-item></el-col>
 					<el-col :span="24"><el-form-item label="备注"><span>{{ detailPay.remark || '-' }}</span></el-form-item></el-col>
@@ -36,11 +51,36 @@
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 		</div>
+
+		<el-dialog :visible.sync="refundDialogVisible" title="交易退款" :append-to-body="true" width="60%" @close="handleRefundClose">
+			<div>
+				<p style="color: orange;">温馨提示1：退款仅支持180天内的交易订单。</p>
+				<p style="color: orange;">温馨提示2：若该笔交易记录存在交易订单则视为订单退款否则视为用户余额退款，退款金额原路返回。</p>
+				<p style="color: orange;">温馨提示3：用户充值月卡不支持退款；交易订单未结算不允许退款。</p>
+			</div>
+			<el-form ref="refundFormRef" :model="refundForm" label-position="left" label-width="80px">
+				<el-form-item label="支付单号" prop="payCode">
+					<el-input v-model="refundForm.payCode" placeholder="请输入支付单号" disabled />
+				</el-form-item>
+				<el-form-item label="退款金额" prop="refundMoney">
+					<el-input v-model="refundForm.refundMoney" placeholder="请输入退款金额" clearable type="number" />
+				</el-form-item>
+				<el-form-item label="退款说明" prop="remark">
+					<el-input v-model="refundForm.remark" placeholder="请输入退款说明" clearable type="textarea" :rows="2" />
+				</el-form-item>
+			</el-form>
+
+			<div slot="footer" class="dialog-footer">
+				<el-button @click="refundDialogVisible = false">取消</el-button>
+				<el-button type="primary" :loading="refundConfirmLoading" @click="confirmRefund">确定</el-button>
+			</div>
+		</el-dialog>
 	</div>
 </template>
 
 <script>
 	import { getDetail } from '@/api/finance/rechargeRecord.js'
+	import { tradingRefund } from '@/api/finance/refundCenter.js'
 	export default {
 		name: 'rechargeRecordDetail',
 		data() {
@@ -51,12 +91,28 @@
 					payDetails: {},
 					refundDetails: [],
 					splitRecords: []
-				}
+				},
+				refundDialogVisible: false,
+				refundConfirmLoading: false,
+				refundForm: {
+					tradingType: '',
+					payCode: '',
+					tradingOrders: [],
+					refundMoney: '',
+					remark: ''
+				},
 			}
 		},
 		computed: {
 			payCode() {
 				return (this.$route && this.$route.query && this.$route.query.payCode) ? this.$route.query.payCode : ''
+			},
+			effectivePayCode() {
+				return this.detailPay.payCode || this.detailData.payCode || this.payCode || ''
+			},
+			showCardNo() {
+				const v = typeof this.detailPay.type === 'string' ? Number(this.detailPay.type) : this.detailPay.type
+				return v === 2 && !!this.detailPay.cardNo
 			},
 			detailPay() {
 				return (this.detailData && this.detailData.payDetails) ? this.detailData.payDetails : {}
@@ -85,6 +141,68 @@
 		methods: {
 			handleBack() {
 				this.$router.back()
+			},
+			openRefundDialog() {
+				if (!this.effectivePayCode) {
+					this.$message.error('payCode不能为空')
+					return
+				}
+				this.refundDialogVisible = true
+				this.refundConfirmLoading = false
+				this.refundForm.payCode = this.effectivePayCode
+				this.refundForm.tradingType = this.detailPay.payType || ''
+				this.refundForm.refundMoney = ''
+				this.refundForm.remark = ''
+				this.refundForm.tradingOrders = []
+			},
+			handleRefundClose() {
+				this.refundDialogVisible = false
+				this.refundConfirmLoading = false
+				this.refundForm = {
+					tradingType: '',
+					payCode: this.effectivePayCode || '',
+					tradingOrders: [],
+					refundMoney: '',
+					remark: ''
+				}
+			},
+			confirmRefund() {
+				if (this.refundConfirmLoading) return
+				if (!this.refundForm.payCode) {
+					this.$message.error('支付单号不能为空')
+					return
+				}
+				if (this.refundForm.refundMoney === '' || this.refundForm.refundMoney === null || this.refundForm.refundMoney === undefined) {
+					this.$message.error('退款金额不能为空')
+					return
+				}
+				if (Number(this.refundForm.refundMoney) <= 0) {
+					this.$message.error('退款金额必须大于0')
+					return
+				}
+				if (!this.refundForm.remark) {
+					this.$message.error('退款备注不能为空')
+					return
+				}
+				const payload = {
+					...this.refundForm,
+					refundMoney: Number(this.refundForm.refundMoney),
+					tradingOrders: []
+				}
+				this.refundConfirmLoading = true
+				tradingRefund(payload).then(res => {
+					if (res && res.code == 200) {
+						this.$message.success(res.msg || '退款成功')
+						this.refundDialogVisible = false
+						this.fetchDetail()
+					} else {
+						this.$message.error((res && res.msg) || '退款失败')
+					}
+				}).catch(() => {
+					this.$message.error('退款失败')
+				}).finally(() => {
+					this.refundConfirmLoading = false
+				})
 			},
 			fetchDetail() {
 				if (!this.payCode) {
@@ -240,4 +358,21 @@
 </script>
 
 <style>
+	.pay-money-highlight {
+		color: #f56c6c;
+		font-weight: 600;
+		line-height: 1;
+	}
+	.pay-money-inline {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		white-space: nowrap;
+		vertical-align: middle;
+	}
+	.pay-money-refund-btn {
+		height: 24px;
+		line-height: 24px;
+		padding: 0 8px;
+	}
 </style>
