@@ -44,7 +44,8 @@
             <span v-if="scope.row.paymentStatus == 20">订单关闭</span>
             <span v-if="scope.row.paymentStatus == 30">退款中</span>
             <span v-if="scope.row.paymentStatus == 31">已退款</span>
-            <span v-if="scope.row.paymentStatus == 32">退款失败</span>
+            <span v-if="scope.row.paymentStatus == 32">未知状态</span>
+            <span v-if="scope.row.paymentStatus == 33">退款失败</span>
           </template>
         </el-table-column>  
         <el-table-column prop="request" label="请求第三方数据">
