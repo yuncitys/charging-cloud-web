@@ -676,6 +676,15 @@ export const constantRoutes = [{
         icon: 'el-icon-document',
       }
     }, {
+      path: 'orderSplitRecordDetail',
+      component: () => import('@/views/finance/orderSplitRecordDetail'),
+      name: 'orderSplitRecordDetail',
+      hidden: true,
+      meta: {
+        title: '分成记录详情',
+        icon: 'el-icon-document',
+      }
+    }, {
       path: 'refundCenter',
       component: () => import('@/views/finance/refundCenter'),
       name: 'refundCenter',
