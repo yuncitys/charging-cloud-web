@@ -223,19 +223,10 @@ export default {
         this.total = response.count
         this.listLoading = false
       }).catch(() => {
-        // Mock data for demonstration if API fails or is not implemented
-        this.list = [
-          {
-            id: 1,
-            busTradeMerNo: 'M001',
-            merName: '测试商户1',
-            merType: '0',
-            managerName: '张三',
-            managerMobile: '13800138000'
-          }
-        ]
-        this.total = 1
-        this.listLoading = false
+        this.$message({
+            type: 'error',
+            message: '获取失败'
+          })
       })
     },
     handleFilter() {
