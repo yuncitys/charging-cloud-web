@@ -46,7 +46,7 @@ export function updateTradeEntry(data) {
 // 删除交易商户
 export function delTradeEntry(id) {
   return request({
-    url: '/api/payment/tradeMerchant/' + id,
+    url: '/api/payment/tradeMerchant/deleteTradeEntry/' + id,
     method: 'delete'
   })
 }
