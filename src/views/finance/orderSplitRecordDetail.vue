@@ -171,17 +171,15 @@ export default {
 			return Object.keys(first)
 		},
 		getRefundRecordColumns(list) {
-			const hiddenProps = ['userId', 'adminId', 'tenantId']
+			const hiddenProps = ['id', 'orderSplitRecordId', 'userId', 'adminId', 'tenantId','createUser','updateUser']
 			const labelMap = {
-				id: 'ID',
-				orderCode: '结算订单',
-				splitOrderCode: '分账订单',
-				refundOrderCode: '退款单号',
-				refundMoney: '退款金额',
-				refundedAmount: '已退款金额',
-				refundSource: '退款来源',
+				orderCode: '退款订单',
+				splitOrderCode: '支付订单',
+				outReturnNo: '第三方退款单号',
+				returnMchid: '退款商户号',
+				amount: '退款金额',
 				status: '状态',
-				result: '结果',
+				failReason: '失败原因',
 				remark: '备注',
 				createTime: '创建时间',
 				updateTime: '更新时间'
@@ -190,12 +188,11 @@ export default {
 				'id',
 				'orderCode',
 				'splitOrderCode',
-				'refundOrderCode',
-				'refundMoney',
-				'refundedAmount',
-				'refundSource',
+				'outReturnNo',
+				'returnMchid',
+				'amount',
 				'status',
-				'result',
+				'failReason',
 				'remark',
 				'createTime',
 				'updateTime'
