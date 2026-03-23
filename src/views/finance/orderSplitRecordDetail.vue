@@ -9,9 +9,9 @@
 				<el-row :gutter="20">
 					<el-col :span="12"><el-form-item label="结算订单"><span>{{ formatNullable(splitRecord.orderCode) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="分账订单"><span>{{ formatNullable(splitRecord.splitOrderCode) }}</span></el-form-item></el-col>
-					<el-col :span="12"><el-form-item label="收款账号"><span>{{ formatNullable(splitRecord.merchantName) }}</span></el-form-item></el-col>
+					<!-- <el-col :span="12"><el-form-item label="收款账号"><span>{{ formatNullable(splitRecord.merchantName) }}</span></el-form-item></el-col> -->
 					<el-col :span="12"><el-form-item label="分账金额(元)"><span>{{ formatNullable(splitRecord.splitAmount) }}</span></el-form-item></el-col>
-					<el-col :span="12"><el-form-item label="到账金额(元)"><span>{{ formatNullable(splitRecord.amount) }}</span></el-form-item></el-col>
+					<!-- <el-col :span="12"><el-form-item label="到账金额(元)"><span>{{ formatNullable(splitRecord.amount) }}</span></el-form-item></el-col> -->
 					<el-col :span="12"><el-form-item label="追回金额(元)"><span>{{ formatNullable(splitRecord.refundedAmount) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="手续费(元)"><span>{{ formatNullable(splitRecord.serviceCharge) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="分账比例(%)"><span>{{ formatNullable(splitRecord.splitRate) }}</span></el-form-item></el-col>
@@ -20,20 +20,15 @@
 					<el-col :span="12"><el-form-item label="更新时间"><span>{{ formatNullable(splitRecord.updateTime) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="失败原因"><span>{{ formatNullable(splitRecord.failReason) }}</span></el-form-item></el-col>
 					<!-- <el-col :span="12"><el-form-item label="备注"><span>{{ formatNullable(splitRecord.remark) }}</span></el-form-item></el-col> -->
-					<el-col :span="24"><el-form-item label="分账详情"><span>{{ formatNullable(splitRecord.billingDetails) }}</span></el-form-item></el-col>
+					<!-- <el-col :span="24"><el-form-item label="分账详情"><span>{{ formatNullable(splitRecord.billingDetails) }}</span></el-form-item></el-col> -->
 				</el-row>
 			</el-form>
 
 			<el-divider content-position="left">收款信息</el-divider>
-			<el-form label-position="left" label-width="140px" size="mini">
-				<el-row :gutter="20">
-					<el-col v-for="item in splitRecordInfoItems" :key="item.prop" :span="12">
-						<el-form-item :label="item.label">
-							<span>{{ formatNullable(splitRecordInfo[item.prop]) }}</span>
-						</el-form-item>
-					</el-col>
-				</el-row>
-			</el-form>
+			<el-table v-if="payeeList.length" :data="payeeList" border size="mini" style="width: 100%;" :span-method="payeeSpanMethod">
+				<el-table-column v-for="col in payeeColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
+			</el-table>
+			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 
 			<el-divider content-position="left">退款记录</el-divider>
 			<el-table v-if="profitRefundRecords.length" :data="profitRefundRecords" border size="mini" style="width: 100%;">
@@ -55,7 +50,7 @@ export default {
 			detailData: {
 				splitRecordId: '',
 				splitRecord: {},
-				splitRecordInfo: {},
+				splitRecordInfo: [],
 				profitRefundRecords: []
 			}
 		}
@@ -71,16 +66,28 @@ export default {
 			return this.detailData && this.detailData.splitRecord ? this.detailData.splitRecord : {}
 		},
 		splitRecordInfo() {
-			return this.detailData && this.detailData.splitRecordInfo ? this.detailData.splitRecordInfo : {}
+			return this.detailData && this.detailData.splitRecordInfo ? this.detailData.splitRecordInfo : []
+		},
+		payeeList() {
+			let list = []
+			if (Array.isArray(this.splitRecordInfo)) list = this.splitRecordInfo
+			else if (this.splitRecordInfo && typeof this.splitRecordInfo === 'object') list = [this.splitRecordInfo]
+			else list = []
+			return list.map(item => {
+				if (this.isPlatformPayee(item)) {
+					return { ...item, merchantName: '平台抽成' }
+				}
+				return item
+			})
+		},
+		payeeColumns() {
+			return this.getPayeeColumns(this.payeeList)
 		},
 		profitRefundRecords() {
 			return (this.detailData && Array.isArray(this.detailData.profitRefundRecords)) ? this.detailData.profitRefundRecords : []
 		},
 		refundRecordColumns() {
 			return this.getRefundRecordColumns(this.profitRefundRecords)
-		},
-		splitRecordInfoItems() {
-			return this.getObjectItems(this.splitRecordInfo)
 		}
 	},
 	watch: {
@@ -101,18 +108,25 @@ export default {
 				return
 			}
 			this.loading = true
-			this.detailData = { splitRecordId: '', splitRecord: {}, splitRecordInfo: {}, profitRefundRecords: [] }
+			this.detailData = { splitRecordId: '', splitRecord: {}, splitRecordInfo: [], profitRefundRecords: [] }
 			getDetail({ id: this.id }).then(res => {
 				if (res && res.code == 200) {
 					const data = res.data || {}
 					const splitRecordId = data.splitRecordId || data.id || ''
 					const splitRecord = data.splitRecord || {}
-					const splitRecordInfo = data.splitRecordInfo || {}
+					const splitRecordInfo =
+						data.splitRecordInfoList ||
+						data.splitRecordInfos ||
+						data.splitRecordInfoVos ||
+						data.payeeList ||
+						data.payees ||
+						data.splitRecordInfo ||
+						[]
 					const list = data.profitRefundRecords || []
 					this.detailData = {
 						splitRecordId,
 						splitRecord: splitRecord || {},
-						splitRecordInfo: splitRecordInfo || {},
+						splitRecordInfo: splitRecordInfo || [],
 						profitRefundRecords: Array.isArray(list) ? list : []
 					}
 				} else {
@@ -124,22 +138,40 @@ export default {
 				this.loading = false
 			})
 		},
-		getObjectItems(obj) {
-			if (!obj || typeof obj !== 'object') return []
-			const hiddenProps = ['id', 'orderSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId','stationId','isPlatformMerchant','busTradeMerNo']
+		isPlatformPayee(row) {
+			if (!row) return false
+			const merchantId = row.merchantId !== undefined ? row.merchantId : row.merchant_id
+			if (merchantId === 0 || merchantId === '0') return true
+			if (row.isPlatformMerchant === 1 || row.isPlatformMerchant === '1' || row.is_platform_merchant === 1 || row.is_platform_merchant === '1') return true
+			return false
+		},
+		getPlatformMergeColspan() {
+			const props = (this.payeeColumns || []).map(c => c.prop)
+			const start = props.indexOf('merchantName')
+			if (start === -1) return 1
+			const mergeProps = ['merchantName', 'merchantNo', 'settBankAccType', 'settBankAccName', 'settBankBranchId', 'settBankBranchName', 'settBankAccNo']
+			let count = 0
+			for (let i = start; i < props.length; i++) {
+				if (mergeProps.includes(props[i])) count += 1
+				else break
+			}
+			return count || 1
+		},
+		payeeSpanMethod({ row, column }) {
+			if (!this.isPlatformPayee(row)) return { rowspan: 1, colspan: 1 }
+			const mergeProps = ['merchantName', 'merchantNo', 'settBankAccType', 'settBankAccName', 'settBankBranchId', 'settBankBranchName', 'settBankAccNo']
+			const prop = column && column.property ? column.property : ''
+			if (prop === 'merchantName') {
+				return { rowspan: 1, colspan: this.getPlatformMergeColspan() }
+			}
+			if (mergeProps.includes(prop)) {
+				return { rowspan: 0, colspan: 0 }
+			}
+			return { rowspan: 1, colspan: 1 }
+		},
+		getPayeeColumns(list) {
+			const hiddenProps = ['id', 'orderSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo']
 			const labelMap = {
-				orderCode: '结算订单',
-				splitOrderCode: '分账订单',
-				amount: '到账金额(元)',
-				splitAmount: '分账金额(元)',
-				serviceCharge: '手续费(元)',
-				splitRate: '分账比例(%)',
-				refundedAmount: '追回金额(元)',
-				status: '状态',
-				createTime: '创建时间',
-				updateTime: '更新时间',
-				remark: '备注',
-
 				merchantName: '收款商户',
 				merchantNo: '商户号',
 				settBankAccType: '结算账户类型',
@@ -148,9 +180,16 @@ export default {
 				settBankBranchName: '开户行全称',
 				settBankAccNo: '银行账号',
 				serviceRate: '服务费分账比例(%)',
+				serviceAmount: '服务费分账金额(元)',
 				electricRate: '电费分账比例(%)',
+				electricAmount: '电费分账金额(元)',
 				reserveRate: '预约费分账比例(%)',
+				reserveAmount: '预约费分账金额(元)',
 				occupyRate: '占用费分账比例(%)',
+				occupyAmount: '占用费分账金额(元)',	
+				createTime: '创建时间',
+				updateTime: '更新时间',
+				remark: '备注',
 			}
 			const preferredProps = [
 				'merchantName',
@@ -160,8 +199,19 @@ export default {
 				'settBankBranchId',
 				'settBankBranchName',
 				'settBankAccNo',
+				'serviceRate',
+				'serviceAmount',
+				'electricRate',
+				'electricAmount',
+				'reserveRate',
+				'reserveAmount',
+				'occupyRate',
+				'occupyAmount',
+				'remark',
+				'createTime',
+				'updateTime',
 			]
-			const keys = Object.keys(obj).filter(k => !hiddenProps.includes(k))
+			const keys = this.getDynamicColumns(list).filter(k => !hiddenProps.includes(k))
 			const ordered = preferredProps.filter(k => keys.includes(k)).concat(keys.filter(k => !preferredProps.includes(k)))
 			return ordered.map(prop => ({ prop, label: labelMap[prop] || prop }))
 		},

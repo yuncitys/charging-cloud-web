@@ -38,12 +38,12 @@
 				</el-table-column>
 				<el-table-column label="分账订单" prop="splitOrderCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="收款账号" prop="merchantName" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
+				<!-- <el-table-column label="收款账号" prop="merchantName" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column label="分账金额(元)" prop="splitAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
+				<!-- <el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column label="追回金额(元)" prop="refundedAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
@@ -63,8 +63,8 @@
 						<el-tag type="danger" v-if="scope.row.status == 'FAIL'">分账失败</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
+				<!-- <el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column> -->
 				<el-table-column prop="failReason" label="失败原因" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
