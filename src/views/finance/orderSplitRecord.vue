@@ -38,6 +38,8 @@
 				</el-table-column>
 				<el-table-column label="分账订单" prop="splitOrderCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
+				<el-table-column label="业务订单" prop="bizOrderCode" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
 				<!-- <el-table-column label="收款账号" prop="merchantName" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column> -->
 				<el-table-column label="分账金额(元)" prop="splitAmount" align="center" :show-overflow-tooltip='isPc'>
@@ -52,7 +54,7 @@
 				</el-table-column>
 				<el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
 				<template slot-scope="scope">
-					<el-tag v-if="scope.row.splitType === 0">分成</el-tag>
+					<span v-if="scope.row.splitType === 0">充电</span>
 				</template>
 				</el-table-column>
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
