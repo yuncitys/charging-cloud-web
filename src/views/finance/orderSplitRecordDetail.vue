@@ -31,7 +31,7 @@
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 
 			<el-divider content-position="left">退款记录</el-divider>
-			<el-table v-if="profitRefundRecords.length" :data="profitRefundRecords" border size="mini" style="width: 100%;">
+			<el-table v-if="profitRefundRecords.length" :data="profitRefundRecords" border size="mini" style="width: 100%;" :span-method="refundSpanMethod">
 				<el-table-column v-for="col in refundRecordColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
@@ -84,7 +84,13 @@ export default {
 			return this.getPayeeColumns(this.payeeList)
 		},
 		profitRefundRecords() {
-			return (this.detailData && Array.isArray(this.detailData.profitRefundRecords)) ? this.detailData.profitRefundRecords : []
+			const list = (this.detailData && Array.isArray(this.detailData.profitRefundRecords)) ? this.detailData.profitRefundRecords : []
+			return list.map(item => {
+				if (this.isPlatformPayee(item)) {
+					return { ...item, merchantName: item && item.merchantName ? item.merchantName : '平台商户' }
+				}
+				return item
+			})
 		},
 		refundRecordColumns() {
 			return this.getRefundRecordColumns(this.profitRefundRecords)
@@ -142,6 +148,7 @@ export default {
 			if (!row) return false
 			const merchantId = row.merchantId !== undefined ? row.merchantId : row.merchant_id
 			if (merchantId === 0 || merchantId === '0') return true
+			if (row.isPlatformMerchant === true || row.is_platform_merchant === true) return true
 			if (row.isPlatformMerchant === 1 || row.isPlatformMerchant === '1' || row.is_platform_merchant === 1 || row.is_platform_merchant === '1') return true
 			return false
 		},
@@ -163,6 +170,30 @@ export default {
 			const prop = column && column.property ? column.property : ''
 			if (prop === 'merchantName') {
 				return { rowspan: 1, colspan: this.getPlatformMergeColspan() }
+			}
+			if (mergeProps.includes(prop)) {
+				return { rowspan: 0, colspan: 0 }
+			}
+			return { rowspan: 1, colspan: 1 }
+		},
+		getRefundPlatformMergeColspan() {
+			const props = (this.refundRecordColumns || []).map(c => c.prop)
+			const start = props.indexOf('merchantName')
+			if (start === -1) return 1
+			const mergeProps = ['merchantName', 'merchantNo', 'settBankAccType', 'settBankAccName', 'settBankBranchId', 'settBankBranchName', 'settBankAccNo']
+			let count = 0
+			for (let i = start; i < props.length; i++) {
+				if (mergeProps.includes(props[i])) count += 1
+				else break
+			}
+			return count || 1
+		},
+		refundSpanMethod({ row, column }) {
+			if (!this.isPlatformPayee(row)) return { rowspan: 1, colspan: 1 }
+			const mergeProps = ['merchantName', 'merchantNo', 'settBankAccType', 'settBankAccName', 'settBankBranchId', 'settBankBranchName', 'settBankAccNo']
+			const prop = column && column.property ? column.property : ''
+			if (prop === 'merchantName') {
+				return { rowspan: 1, colspan: this.getRefundPlatformMergeColspan() }
 			}
 			if (mergeProps.includes(prop)) {
 				return { rowspan: 0, colspan: 0 }
@@ -221,31 +252,44 @@ export default {
 			return Object.keys(first)
 		},
 		getRefundRecordColumns(list) {
-			const hiddenProps = ['id', 'orderSplitRecordId', 'userId', 'adminId', 'tenantId','createUser','updateUser']
+			const hiddenProps = ['id', 'orderProfitRefundRecordId', 'orderSplitRecordId', 'stationId', 'merchantId', 'userId', 'adminId', 'tenantId', 'createUser', 'updateUser', 'busTradeMerNo', 'isPlatformMerchant']	
 			const labelMap = {
-				orderCode: '退款订单',
-				splitOrderCode: '支付订单',
-				outReturnNo: '第三方退款单号',
-				returnMchid: '退款商户号',
-				amount: '退款金额',
-				status: '状态',
-				failReason: '失败原因',
-				remark: '备注',
-				createTime: '创建时间',
-				updateTime: '更新时间'
+				orderProfitRefundRecordId: '退款记录ID',
+				stationId: '电站ID',
+				merchantName: '退款商户',
+				merchantNo: '商户号',
+				settBankAccType: '结算账户类型',
+				settBankAccName: '结算账户名称',
+				settBankBranchId: '开户行行号',
+				settBankBranchName: '开户行全称',
+				settBankAccNo: '银行账号',
+				serviceRate: '服务费退款比例(%)',
+				serviceAmount: '服务费退款金额(元)',
+				electricRate: '电费退款比例(%)',
+				electricAmount: '电费退款金额(元)',
+				reserveRate: '预约费退款比例(%)',
+				reserveAmount: '预约费退款金额(元)',
+				occupyRate: '占用费退款比例(%)',
+				occupyAmount: '占用费退款金额(元)'
 			}
 			const preferredProps = [
-				'id',
-				'orderCode',
-				'splitOrderCode',
-				'outReturnNo',
-				'returnMchid',
-				'amount',
-				'status',
-				'failReason',
-				'remark',
-				'createTime',
-				'updateTime'
+				'orderProfitRefundRecordId',
+				'stationId',
+				'merchantName',
+				'merchantNo',
+				'settBankAccType',
+				'settBankAccName',
+				'settBankBranchId',
+				'settBankBranchName',
+				'settBankAccNo',
+				'serviceRate',
+				'serviceAmount',
+				'electricRate',
+				'electricAmount',
+				'reserveRate',
+				'reserveAmount',
+				'occupyRate',
+				'occupyAmount'
 			]
 			const keys = this.getDynamicColumns(list).filter(k => !hiddenProps.includes(k))
 			const ordered = preferredProps.filter(k => keys.includes(k)).concat(keys.filter(k => !preferredProps.includes(k)))
