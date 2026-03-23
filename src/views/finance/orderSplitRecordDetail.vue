@@ -30,7 +30,7 @@
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 
-			<el-divider content-position="left">退款记录</el-divider>
+			<el-divider content-position="left">退款信息</el-divider>
 			<el-table v-if="profitRefundRecords.length" :data="profitRefundRecords" border size="mini" style="width: 100%;" :span-method="refundSpanMethod">
 				<el-table-column v-for="col in refundRecordColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
 			</el-table>
