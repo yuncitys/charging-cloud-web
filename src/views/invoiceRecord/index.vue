@@ -43,47 +43,62 @@
       <el-table-column type="index" width="55" label="序号" align="center">
         <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
       </el-table-column>
-      <el-table-column prop="buyerTel" label="手机号" min-width="150"></el-table-column>
-      <el-table-column prop="buyerEmail" label="收件邮箱" width="180">
-        <template v-slot="scope">
-          <router-link class="font-blue" :to="`/customer/customerinvoice?email=${scope.row.buyerEmail}`">{{ scope.row.buyerEmail }}</router-link>
-        </template>
+      <el-table-column label="用户信息" align="center">
+        <el-table-column prop="buyerTel" label="手机号" min-width="120" align="center"></el-table-column>
+        <el-table-column prop="buyerEmail" label="收件邮箱" width="220" align="center" show-overflow-tooltip>
+          <template v-slot="scope">
+            <router-link class="font-blue" :to="`/customer/customerinvoice?email=${scope.row.buyerEmail}`">{{ scope.row.buyerEmail }}</router-link>
+          </template>
+        </el-table-column>
       </el-table-column>
-      <el-table-column prop="buyerTaxName" label="发票抬头" min-width="150"></el-table-column>
-      <el-table-column prop="buyerTaxNum" label="企业税号" min-width="150"></el-table-column>
-      <!-- 发票流水-发票方生成（部分）-->
-      <el-table-column prop="invoiceNo" label="发票号码" min-width="150"></el-table-column>
-      <el-table-column prop="invoiceType" label="发票类型" min-width="100">
-        <template v-slot="scope">
-          <el-tag v-if="scope.row.invoiceType === 1">蓝票</el-tag>
-          <el-tag type="danger" v-else>冲红</el-tag>
-        </template>
+      <el-table-column label="金额信息" align="center">
+        <el-table-column prop="invoiceTaxPrice" label="税额" min-width="110" align="center">
+          <template v-slot="scope">
+            {{ Number(scope.row.invoiceTaxPrice) * 0.01 }}元
+          </template>
+        </el-table-column>
+        <el-table-column prop="invoiceExTaxPrice" label="不含税额" min-width="110" align="center">
+          <template v-slot="scope">
+            {{ Number(scope.row.invoiceExTaxPrice) * 0.01 }}元
+          </template>
+        </el-table-column>
+        <el-table-column prop="invoicePrice" label="总金额" min-width="120" align="center">
+          <template v-slot="scope">
+            {{ (Number(scope.row.invoicePrice) * 0.01).toFixed(2) }}元
+          </template>
+        </el-table-column>
+        <el-table-column prop="electricityPrice" label="电费" min-width="110" align="center">
+          <template v-slot="scope">
+            {{ (Number(scope.row.electricityPrice) * 0.01).toFixed(2) }}元
+          </template>
+        </el-table-column>
+        <el-table-column prop="servicePrice" label="服务费" min-width="110" align="center">
+          <template v-slot="scope">
+            {{ (Number(scope.row.servicePrice) * 0.01).toFixed(2) }}元
+          </template>
+        </el-table-column>
       </el-table-column>
-      <el-table-column prop="invoiceState" label="状态" min-width="100">
-        <template v-slot="scope">
-          <el-tag :type="getInvoiceClass(scope.row.invoiceState)" effect="dark">
-            {{ getInvoiceState(scope.row.invoiceState) }}
-          </el-tag>
-        </template>
+      <el-table-column label="发票信息" align="center">
+        <el-table-column prop="buyerTaxName" label="发票抬头" min-width="160" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="buyerTaxNum" label="企业税号" min-width="160" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="invoiceNo" label="发票号码" min-width="160" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="invoiceType" label="发票类型" min-width="100" align="center">
+          <template v-slot="scope">
+            <el-tag v-if="scope.row.invoiceType === 1">蓝票</el-tag>
+            <el-tag type="danger" v-else>冲红</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="invoiceState" label="状态" min-width="100" align="center">
+          <template v-slot="scope">
+            <el-tag :type="getInvoiceClass(scope.row.invoiceState)" effect="dark">
+              {{ getInvoiceState(scope.row.invoiceState) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="申请时间" width="140" align="center"/>
+        <el-table-column prop="invoiceTime" label="开票时间" width="140" align="center"/>
+        <el-table-column prop="invoiceRote" label="备注" min-width="150" align="center" show-overflow-tooltip></el-table-column>
       </el-table-column>
-      <el-table-column prop="invoiceTaxPrice" label="税额">
-        <template v-slot="scope">
-          {{ Number(scope.row.invoiceTaxPrice) * 0.01 }}元
-        </template>
-      </el-table-column>
-      <el-table-column prop="invoiceExTaxPrice" label="不含税额">
-        <template v-slot="scope">
-          {{ Number(scope.row.invoiceExTaxPrice) * 0.01 }}元
-        </template>
-      </el-table-column>
-      <el-table-column prop="invoicePrice" label="总金额">
-        <template v-slot="scope">
-          {{ Number(scope.row.invoicePrice) * 0.01 }}元
-        </template>
-      </el-table-column>
-      <el-table-column prop="createTime" label="申请时间" width="140"/>
-      <el-table-column prop="invoiceTime" label="开票时间" width="140"/>
-      <el-table-column prop="invoiceRote" label="备注"></el-table-column>
       <el-table-column label="操作" fixed="right" width="100">
         <template v-slot="scope">
           <el-dropdown size="mini" type="primary">
