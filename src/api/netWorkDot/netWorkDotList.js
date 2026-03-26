@@ -140,3 +140,10 @@ export function getChargeStationById(id) {
 		method: 'get'
 	})
 }
+
+export function getNetworkDotPictures(stationId) {
+	return request({
+		url: `/api/web/networkDot/pictures/${stationId}`,
+		method: 'get'
+	})
+}

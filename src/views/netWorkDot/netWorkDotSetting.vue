@@ -58,6 +58,26 @@
                   <div class="kv__value">{{ getNameById(priceTypeList, station.pricingRuleId, 'feeName') || '-' }}</div>
                 </div>
               </el-col>
+              <el-col :span="24">
+                <div class="kv">
+                  <div class="kv__label">电站图片</div>
+                  <div class="kv__value">
+                    <div class="station-picture-view-grid">
+                      <div class="station-picture-view-item" v-for="slot in stationPictureSlots" :key="slot.sort">
+                        <el-image
+                          v-if="slot.url"
+                          :src="slot.url"
+                          :preview-src-list="getPicturePreviewList(stationPictureSlots)"
+                          class="station-picture-view-img"
+                          fit="cover"
+                        />
+                        <div v-else class="station-picture-view-empty">无</div>
+                        <div class="station-picture-view-label">{{ slot.label }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </el-col>
             </el-row>
           </div>
 
@@ -209,6 +229,32 @@
             <el-col :span="24">
               <el-form-item>
                 <el-tag type="warning" style="font-size: 14px;">在投放地输入框内查询小区位置后，可点击地图再次选取更详细的楼层或街道地址</el-tag>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item label="电站图片">
+                <div class="picture-grid">
+                  <div class="picture-slot" v-for="slot in editStationPictureSlots" :key="slot.sort">
+                    <el-upload
+                      action=""
+                      :show-file-list="false"
+                      :http-request="(p) => handleStationPictureUpload(slot.sort, p)"
+                      accept=".jpg,.jpeg,.png,.gif"
+                    >
+                      <div class="picture-box">
+                        <el-image
+                          v-if="slot.url"
+                          :src="slot.url"
+                          style="width: 100%; height: 100%;"
+                          fit="contain"
+                        />
+                        <i v-else class="el-icon-plus picture-plus"></i>
+                      </div>
+                    </el-upload>
+                    <div class="picture-label">{{ slot.label }}</div>
+                  </div>
+                </div>
+                <div class="picture-tip">图片仅支持 .jpg、.jpeg、.png、.gif，建议比例4:3，最多5张</div>
               </el-form-item>
             </el-col>
           </el-row>
@@ -499,10 +545,11 @@
 </template>
 
 <script>
-import { getChargeStationById, updateNetworkDot } from '@/api/netWorkDot/netWorkDotList'
+import { getChargeStationById, getNetworkDotPictures, updateNetworkDot } from '@/api/netWorkDot/netWorkDotList'
 import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
 import { getMerchant } from '@/api/merchant/merchant'
 import { findDevicePriceByPriceType } from '@/api/device/deviceList'
+import { upload } from '@/api/upload/file'
 import loadMap from '@/utils/loadMap.js'
 import { getByStationId as getSplitConfigByStationId, saveOrUpdate as saveSplitConfigApi } from '@/api/finance/stationCommissionSettlementAccount'
 import { listCompleted as listCompletedTradeMerchant } from '@/api/pay/tradeEntry'
@@ -516,6 +563,20 @@ export default {
       isEditing: false,
       detailSaving: false,
       editStation: null,
+      stationPictureSlots: [
+        { sort: 1, label: '主入口图', url: '' },
+        { sort: 2, label: '标志路径', url: '' },
+        { sort: 3, label: '电站全景', url: '' },
+        { sort: 4, label: '电桩特写', url: '' },
+        { sort: 5, label: '其它图片', url: '' }
+      ],
+      editStationPictureSlots: [
+        { sort: 1, label: '主入口图', url: '' },
+        { sort: 2, label: '标志路径', url: '' },
+        { sort: 3, label: '电站全景', url: '' },
+        { sort: 4, label: '电桩特写', url: '' },
+        { sort: 5, label: '其它图片', url: '' }
+      ],
       stationTagList: [
         { id: 1, name: '免费wifi' },
         { id: 2, name: '空调休息室' },
@@ -675,9 +736,71 @@ export default {
       }).filter(Boolean)
       return names.length ? names.join('、') : '-'
     },
+    buildStationPictureSlots(list) {
+      const base = [
+        { sort: 1, label: '主入口图', url: '' },
+        { sort: 2, label: '标志路径', url: '' },
+        { sort: 3, label: '电站全景', url: '' },
+        { sort: 4, label: '电桩特写', url: '' },
+        { sort: 5, label: '其它图片', url: '' }
+      ]
+      if (Array.isArray(list)) {
+        list.forEach(it => {
+          const sort = it && it.sort != null ? Number(it.sort) : null
+          const hit = base.find(b => b.sort === sort)
+          if (hit) hit.url = it.pictureUrl || ''
+        })
+      }
+      return base
+    },
+    getPicturePreviewList(slots) {
+      return (slots || []).map(s => s && s.url).filter(Boolean)
+    },
+    loadStationPictures() {
+      if (!this.stationId) return
+      getNetworkDotPictures(this.stationId).then(res => {
+        if (res && res.code == 200) {
+          const list = Array.isArray(res.data) ? res.data : []
+          this.stationPictureSlots = this.buildStationPictureSlots(list)
+          if (!this.isEditing) {
+            this.editStationPictureSlots = JSON.parse(JSON.stringify(this.stationPictureSlots || []))
+          }
+        }
+      }).catch(() => {})
+    },
+    setEditPictureUrl(sort, url) {
+      const idx = (this.editStationPictureSlots || []).findIndex(s => Number(s.sort) === Number(sort))
+      if (idx !== -1) {
+        this.$set(this.editStationPictureSlots, idx, {
+          ...this.editStationPictureSlots[idx],
+          url
+        })
+      }
+    },
+    handleStationPictureUpload(sort, params) {
+      const file = params && params.file
+      if (!file) return
+      const isOk = /\.(jpg|jpeg|png|gif)$/i.test(file.name || '')
+      if (!isOk) {
+        this.$message.error('仅支持 jpg/jpeg/png/gif')
+        return
+      }
+      const form = new FormData()
+      form.append('file', file)
+      upload('WebAnnexFile', form).then(res => {
+        const url = res && res.data && (res.data.url || res.data)
+        this.setEditPictureUrl(sort, url || (res && res.data) || '')
+        this.$message.success('上传成功')
+      }).catch(() => {
+        this.$message.error('上传失败')
+      })
+    },
     startEdit() {
       this.isEditing = true
       this.editStation = JSON.parse(JSON.stringify(this.station || {}))
+      const bh = this.parseJsonArray(this.editStation && this.editStation.businessHours)
+      this.editStation.businessHours = Array.isArray(bh) ? bh : []
+      this.editStationPictureSlots = JSON.parse(JSON.stringify(this.stationPictureSlots || []))
       this.$nextTick(() => {
         this.resetMapInstance()
         this.initMap()
@@ -688,6 +811,7 @@ export default {
       this.isEditing = false
       this.detailSaving = false
       this.editStation = null
+      this.editStationPictureSlots = JSON.parse(JSON.stringify(this.stationPictureSlots || []))
       this.mapInput = ''
       this.$nextTick(() => {
         this.resetMapInstance()
@@ -722,6 +846,10 @@ export default {
       payload.isLockFlag = this.normalizeBool(payload.isLockFlag)
       payload.businessHours = JSON.stringify(Array.isArray(payload.businessHours) ? payload.businessHours : this.parseJsonArray(payload.businessHours))
       payload.stationTag = JSON.stringify(Array.isArray(payload.stationTag) ? payload.stationTag : this.parseJsonArray(payload.stationTag))
+      payload.stationPictures = (this.editStationPictureSlots || []).filter(s => s && s.url).slice(0, 5).map(s => ({
+        pictureUrl: s.url,
+        sort: s.sort
+      }))
       return payload
     },
     saveStation() {
@@ -796,6 +924,7 @@ export default {
             businessHours,
             stationTag
           }
+          this.loadStationPictures()
           this.getPayeeList()
           this.$nextTick(() => {
             this.initMap()
@@ -1257,5 +1386,83 @@ export default {
 
 .detail-edit {
   padding-top: 8px;
+}
+
+.station-picture-view-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.station-picture-view-item {
+  width: 120px;
+}
+
+.station-picture-view-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  background: #fff;
+}
+
+.station-picture-view-empty {
+  width: 120px;
+  height: 120px;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #909399;
+  font-size: 12px;
+}
+
+.station-picture-view-label {
+  text-align: center;
+  color: #409EFF;
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.picture-grid {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.picture-slot {
+  width: 120px;
+}
+
+.picture-box {
+  width: 120px;
+  height: 120px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.picture-plus {
+  font-size: 28px;
+  color: #909399;
+}
+
+.picture-label {
+  text-align: center;
+  color: #409EFF;
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.picture-tip {
+  margin-top: 8px;
+  color: #909399;
+  font-size: 12px;
 }
 </style>
