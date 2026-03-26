@@ -281,9 +281,6 @@
 	import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
 	import { getByStationId as getSettlementAccountByStationId, saveOrUpdate as saveSettlementAccount } from '@/api/finance/stationCommissionSettlementAccount'
 	import { listCompleted as listCompletedTradeMerchant } from '@/api/pay/tradeEntry'
-	import {
-		findDealerList,
-	} from '@/api/device/deviceList.js'
 	import { getMerchant } from '@/api/merchant/merchant'
 	import loadMap from "../../utils/loadMap.js";
 	import {
@@ -312,7 +309,6 @@
 				limit: 10,
 				list: [],
 				total: 10,
-        		dealerList: [],
 				merchantList: [],
 				appDisplayUpdating: {},
 				listQuery: {
@@ -698,15 +694,6 @@
 			handleCurrentChange(val) {
 				this.listQuery.page = val
 				this.getLists()
-			},
-			findDealerList() {
-				findDealerList().then(res => {
-					if (res.code == 200) {
-						this.dealerList = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
 			},
 			getMerchantList() {
 				getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
