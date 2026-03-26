@@ -138,6 +138,7 @@
 	import {
 		getList,
 		updateNetworkDot,
+		updateSwitch,
 		deleteNetworkDot,
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
@@ -220,7 +221,7 @@
 				const prevVal = nextVal === 1 ? 0 : 1
 
 				this.$set(this.appDisplayUpdating, row.id, true)
-				updateNetworkDot({ id: row.id, isAppDisplay: nextVal }).then(res => {
+				updateSwitch({ id: row.id, field: 'isAppDisplay', value: nextVal === 1 }).then(res => {
 					if (res && res.code == 200) {
 						this.$message.success(res.msg || '更新成功')
 					} else {
