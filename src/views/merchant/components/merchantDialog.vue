@@ -4,42 +4,78 @@
       {{ isEdit? '编辑':'新增' }} 
     </el-button> -->
     <el-dialog :title="title" :visible.sync="dialogVisible" @close="dialogVisible = false" :append-to-body="true" :destroy-on-close="true" width="50%">
-      <el-form ref="form" v-show="currentStep === 1" :model="form" :rules="rules" label-width="100px" label-position="left" style="width: 600px; margin-left:80px;">
-        <el-form-item label="主体名称" prop="name">
-          <el-input v-model="form.name" placeholder="中文,英文,数字(长度1-30字数),不可重复" :disabled = "isDetail" maxlength="30"></el-input>
+      <el-steps :active="currentStep - 1" align-center style="margin: 0 80px 20px;">
+        <el-step title="商户属性" />
+        <el-step title="经营属性" />
+      </el-steps>
+      <el-form ref="form" v-show="currentStep === 1" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
+        <el-form-item label="商户名称" prop="name">
+          <el-input v-model="form.name" placeholder="中文,英文,数字(长度1-30字数),不可重复" :disabled="isDetail" maxlength="30"></el-input>
         </el-form-item>
         <el-form-item label="公司名称" prop="companyName">
-          <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled = "isDetail"></el-input>
+          <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled="isDetail"></el-input>
         </el-form-item>
-        <el-form-item label="信用代码" prop="socialCreditCode">
-          <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled = "isDetail"></el-input>
+        <el-form-item label="归属地区" prop="areaPath">
+          <el-cascader
+            :key="cascaderKey"
+            v-model="form.areaPath"
+            :options="areaOptions"
+            :props="areaCascaderProps"
+            :disabled="isDetail"
+            clearable
+            filterable
+            style="width: 100%"
+            @change="handleAreaPathChange"
+          />
         </el-form-item>
-        <el-form-item label="管理员" prop="manageName">
-          <el-input v-model="form.manageName" placeholder="请输入租户管理员" :disabled = "isDetail"></el-input>
+        <el-form-item label="统一社会信用码" prop="socialCreditCode">
+          <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled="isDetail"></el-input>
+          <!-- <div style="color:#409EFF;margin-top:6px;">温馨提示：请认真核对营业执照上的18位编码</div> -->
+        </el-form-item>
+        <el-form-item label="商户管理员" prop="manageName">
+          <el-input v-model="form.manageName" placeholder="请输入租户管理员" :disabled="isDetail"></el-input>
         </el-form-item>
         <el-form-item label="联系方式" prop="contactInfo">
-          <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :disabled = "isDetail"></el-input>
+          <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :disabled="isDetail"></el-input>
         </el-form-item>
         <el-form-item label="角色类型" prop="roleType">
           <el-select v-model="form.roleType" multiple filterable clearable placeholder="请选择角色类型" style="width: 100%;" :disabled="isDetail">
             <el-option v-for="item in roleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="开票类型：" prop="invoiceType">
-					<el-radio-group v-model="form.invoiceType" :disabled = "isDetail">
+      </el-form>
+      <el-form v-show="currentStep === 2" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
+        <el-form-item label="开票种类" prop="invoiceType">
+          <el-radio-group v-model="form.invoiceType" :disabled="isDetail">
             <el-radio :label="0">不开票</el-radio>
-						<el-radio :label="1">普票</el-radio>
-						<el-radio :label="2">专票</el-radio>
+            <el-radio :label="1">普票</el-radio>
+            <el-radio :label="2">专票</el-radio>
             <el-radio :label="3">普票和专票</el-radio>
-					</el-radio-group>
-				</el-form-item>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="营业执照" prop="businessLicence">
+          <div style="display:flex;align-items:center;gap:20px;">
+            <el-upload
+              action=""
+              :show-file-list="false"
+              :http-request="handleBusinessUpload"
+              accept=".jpg,.jpeg,.png">
+              <el-button size="small" type="primary" :disabled="isDetail">上传图片</el-button>
+            </el-upload>
+            <el-image v-if="form.businessLicence" :src="form.businessLicence" style="width:80px;height:80px;" fit="contain">
+              <div slot="error" style="width:80px;height:80px;background:#f5f7fa;display:flex;align-items:center;justify-content:center;">无</div>
+            </el-image>
+          </div>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" placeholder="请输入备注" type="textarea" :disabled = "isDetail"></el-input>
+          <el-input v-model="form.remark" placeholder="请输入备注" type="textarea" :disabled="isDetail"></el-input>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button v-if="!isDetail" type="primary" @click="saveOrUpdate">保存</el-button>
+        <el-button v-if="!isDetail && currentStep === 1" type="primary" @click="nextStep">下一步</el-button>
+        <el-button v-if="!isDetail && currentStep === 2" @click="prevStep">上一步</el-button>
+        <el-button v-if="!isDetail && currentStep === 2" type="primary" @click="saveOrUpdate">保存</el-button>
       </span>
     </el-dialog>
   </div>
@@ -50,6 +86,8 @@
     addMerchant,
 		updateMerchant
 	} from '@/api/merchant/merchant.js'
+  import { getAreaSelector } from '@/api/area/index'
+  import { upload } from '@/api/upload/file'
   export default {
     props:{
         row_data:{
@@ -82,6 +120,7 @@
         }
       }
       return {
+        cascaderKey: 1,
         dialogVisible: false,
         visibleStep: true,
         rules: {
@@ -98,6 +137,12 @@
 						message: '请输入公司名称',
 						trigger: 'blur'
 					}],
+          areaPath: [{
+            type: 'array',
+            required: true,
+            message: '请选择归属地区',
+            trigger: 'change'
+          }],
           socialCreditCode: [{
 						required: true,
 						message: '请输入统一社会信用代码',
@@ -132,11 +177,30 @@
 						message: '请选择开票类型',
 						trigger: 'blur'
 					}],
+          businessLicence: [{
+            required: false,
+            trigger: 'change'
+          }]
         },
         currentStep: 1,
         isDetail: false,
         isSave: false,
         title: '新增',
+        areaOptions: [],
+        areaCascaderProps: {
+          value: 'id',
+          label: 'fullName',
+          children: 'children',
+          emitPath: true,
+          lazy: true,
+          lazyLoad: (node, resolve) => {
+            if (!node) {
+              resolve([])
+              return
+            }
+            this.loadAreaChildren(node, resolve)
+          }
+        },
         roleTypeOptions: [{
           label: '运营商',
           value: 'OPERATOR'
@@ -155,16 +219,124 @@
           typq: 1,
           name: '',
           companyName: '',
+          provinceId: '',
+          regionId: '',
+          countyId: '',
+          areaPath: [],
           socialCreditCode: '',
           manageName: '',
           contactInfo: '',
           roleType: [],
           invoiceType: '',
+          businessLicence: '',
           remark: ''
         },
       };
     },
     methods: {
+      nextStep() {
+        const fs = ['name', 'companyName', 'areaPath', 'socialCreditCode', 'manageName', 'contactInfo', 'roleType']
+        const tasks = fs.map(f => new Promise(resolve => {
+          this.$refs['form'].validateField(f, (errorMessage) => {
+            resolve(errorMessage === '')
+          })
+        }))
+        Promise.all(tasks).then((results) => {
+          if (results.every(res => res)) {
+            this.currentStep = 2
+          }
+        })
+      },
+      prevStep() {
+        this.currentStep = 1
+      },
+      handleBusinessUpload(params) {
+        const file = params.file
+        const formData = new FormData()
+        formData.append('file', file)
+        upload('WebAnnexFile', formData).then(res => {
+          const url = res && res.data && (res.data.url || res.data)
+          this.form.businessLicence = url || res.data
+          this.$message.success('上传成功')
+        }).catch(() => {
+          this.$message.error('上传失败')
+        })
+      },
+      normalizeAreaList(res) {
+        const data = res && res.data
+        const list = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : (Array.isArray(res) ? res : []))
+        return list.map(item => ({
+          ...item,
+          id: item && item.id != null ? String(item.id) : item.id
+        }))
+      },
+      loadAreaChildren(node, resolve) {
+        if (!node) {
+          resolve([])
+          return
+        }
+        const level = node.level
+        const parentId = level === 0 ? '-1' : (node.value != null ? String(node.value) : '')
+        getAreaSelector(parentId).then(res => {
+          const nodes = this.normalizeAreaList(res).map(item => ({
+            ...item,
+            leaf: level >= 2
+          }))
+          resolve(nodes)
+        }).catch(() => {
+          resolve([])
+        })
+      },
+      handleAreaPathChange(val) {
+        const path = Array.isArray(val) ? val.map(v => String(v)) : []
+        this.form.areaPath = path
+        this.form.provinceId = path[0] || ''
+        this.form.regionId = path[1] || ''
+        this.form.countyId = path[2] || ''
+      },
+      normalizeAreaIdsInForm() {
+        this.form.provinceId = this.form.provinceId != null && this.form.provinceId !== '' ? String(this.form.provinceId) : ''
+        this.form.regionId = this.form.regionId != null && this.form.regionId !== '' ? String(this.form.regionId) : ''
+        this.form.countyId = this.form.countyId != null && this.form.countyId !== '' ? String(this.form.countyId) : ''
+      },
+      getProvinceList() {
+        return getAreaSelector('-1').then(res => {
+          this.areaOptions = this.normalizeAreaList(res).map(item => ({
+            ...item,
+            leaf: false
+          }))
+        }).catch(() => {
+          this.areaOptions = []
+        })
+      },
+      loadAreaOptionsForCurrentForm() {
+        const provinceId = this.form.provinceId
+        const regionId = this.form.regionId
+        const countyId = this.form.countyId
+        return getAreaSelector('-1').then(res => {
+          const provinces = this.normalizeAreaList(res)
+          provinces.forEach(p => { p.leaf = false })
+          this.areaOptions = provinces
+          if (!provinceId) return Promise.resolve()
+          const provinceNode = this.areaOptions.find(p => String(p.id) === String(provinceId))
+          if (!provinceNode) return Promise.resolve()
+          if (!regionId) return Promise.resolve()
+          return getAreaSelector(provinceId).then(res2 => {
+            const cities = this.normalizeAreaList(res2)
+            cities.forEach(c => { c.leaf = false })
+            this.$set(provinceNode, 'children', cities)
+            const cityNode = cities.find(c => String(c.id) === String(regionId))
+            if (!cityNode || !countyId) return Promise.resolve()
+            return getAreaSelector(regionId).then(res3 => {
+              const counties = this.normalizeAreaList(res3)
+              counties.forEach(a => { a.leaf = true })
+              this.$set(cityNode, 'children', counties)
+            })
+          })
+        }).catch(() => {
+          this.areaOptions = []
+        })
+      },
       normalizeRoleType(val) {
         if (Array.isArray(val)) return val
         if (val === null || val === undefined || val === '') return []
@@ -173,6 +345,7 @@
       },
       openDialog(formData,isDetail) {
         this.dialogVisible = true;
+        this.areaOptions = []
         if(formData == null){
           this.isDetail = false
           this.visibleStep = true
@@ -184,13 +357,21 @@
             type: 1,
             name: '',
             companyName: '',
+            provinceId: '',
+            regionId: '',
+            countyId: '',
+            areaPath: [],
             socialCreditCode: '',
             manageName: '',
             contactInfo: '',
             roleType: [],
             invoiceType: '',
+            businessLicence: '',
             remark: ''
           }
+          this.getProvinceList().then(() => {
+            this.cascaderKey++
+          })
         } else if (!isDetail) {
           this.title = '编辑'
           this.currentStep = 1
@@ -199,6 +380,15 @@
           this.isSave = false
           this.form = JSON.parse(JSON.stringify(formData));
           this.form.roleType = this.normalizeRoleType(this.form.roleType)
+          this.normalizeAreaIdsInForm()
+          const areaPath = [this.form.provinceId, this.form.regionId, this.form.countyId].filter(Boolean)
+          this.form.areaPath = areaPath
+          this.loadAreaOptionsForCurrentForm().then(() => {
+            this.cascaderKey++
+            this.$nextTick(() => {
+              this.form.areaPath = areaPath
+            })
+          })
         } else {
           this.title = '详情'
           this.currentStep = 1
@@ -207,6 +397,15 @@
           this.isSave = false
           this.form = formData
           this.form.roleType = this.normalizeRoleType(this.form.roleType)
+          this.normalizeAreaIdsInForm()
+          const areaPath = [this.form.provinceId, this.form.regionId, this.form.countyId].filter(Boolean)
+          this.form.areaPath = areaPath
+          this.loadAreaOptionsForCurrentForm().then(() => {
+            this.cascaderKey++
+            this.$nextTick(() => {
+              this.form.areaPath = areaPath
+            })
+          })
         }
       },
       saveOrUpdate(){
@@ -261,6 +460,7 @@
     display: flex;
     width: 100%;
     padding-right: 10px;
+    margin-bottom: 20px;
 
     .el-form-item__label-wrap {
       margin-left: 0;
