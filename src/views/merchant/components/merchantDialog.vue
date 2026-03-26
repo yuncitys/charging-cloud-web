@@ -289,10 +289,11 @@
       },
       handleAreaPathChange(val) {
         const path = Array.isArray(val) ? val.map(v => String(v)) : []
-        this.form.areaPath = path
+        this.$set(this.form, 'areaPath', path)
         this.form.provinceId = path[0] || ''
         this.form.regionId = path[1] || ''
         this.form.countyId = path[2] || ''
+        this.$refs['form'].validateField('areaPath')
       },
       normalizeAreaIdsInForm() {
         this.form.provinceId = this.form.provinceId != null && this.form.provinceId !== '' ? String(this.form.provinceId) : ''
@@ -346,31 +347,37 @@
       openDialog(formData,isDetail) {
         this.dialogVisible = true;
         this.areaOptions = []
+        
+        const defaultForm = {
+          id: '',
+          type: 1,
+          name: '',
+          companyName: '',
+          provinceId: '',
+          regionId: '',
+          countyId: '',
+          areaPath: [],
+          socialCreditCode: '',
+          manageName: '',
+          contactInfo: '',
+          roleType: [],
+          invoiceType: '',
+          businessLicence: '',
+          remark: ''
+        }
+
         if(formData == null){
           this.isDetail = false
           this.visibleStep = true
           this.isSave = true
           this.title = '新增'
           this.currentStep = 1
-          this.form = {
-            id: '',
-            type: 1,
-            name: '',
-            companyName: '',
-            provinceId: '',
-            regionId: '',
-            countyId: '',
-            areaPath: [],
-            socialCreditCode: '',
-            manageName: '',
-            contactInfo: '',
-            roleType: [],
-            invoiceType: '',
-            businessLicence: '',
-            remark: ''
-          }
+          this.form = { ...defaultForm }
           this.getProvinceList().then(() => {
             this.cascaderKey++
+          })
+          this.$nextTick(() => {
+            this.$refs['form'] && this.$refs['form'].clearValidate()
           })
         } else if (!isDetail) {
           this.title = '编辑'
@@ -378,7 +385,7 @@
           this.isDetail = false
           this.visibleStep = false
           this.isSave = false
-          this.form = JSON.parse(JSON.stringify(formData));
+          this.form = Object.assign({}, defaultForm, JSON.parse(JSON.stringify(formData)));
           this.form.roleType = this.normalizeRoleType(this.form.roleType)
           this.normalizeAreaIdsInForm()
           const areaPath = [this.form.provinceId, this.form.regionId, this.form.countyId].filter(Boolean)
@@ -386,7 +393,8 @@
           this.loadAreaOptionsForCurrentForm().then(() => {
             this.cascaderKey++
             this.$nextTick(() => {
-              this.form.areaPath = areaPath
+              this.$set(this.form, 'areaPath', areaPath)
+              this.$refs['form'] && this.$refs['form'].clearValidate()
             })
           })
         } else {
@@ -395,7 +403,7 @@
           this.isDetail = true
           this.visibleStep = false
           this.isSave = false
-          this.form = formData
+          this.form = Object.assign({}, defaultForm, JSON.parse(JSON.stringify(formData)));
           this.form.roleType = this.normalizeRoleType(this.form.roleType)
           this.normalizeAreaIdsInForm()
           const areaPath = [this.form.provinceId, this.form.regionId, this.form.countyId].filter(Boolean)
@@ -403,7 +411,7 @@
           this.loadAreaOptionsForCurrentForm().then(() => {
             this.cascaderKey++
             this.$nextTick(() => {
-              this.form.areaPath = areaPath
+              this.$set(this.form, 'areaPath', areaPath)
             })
           })
         }
