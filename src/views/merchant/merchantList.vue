@@ -32,7 +32,7 @@
 				</el-table-column>
 				<el-table-column prop="socialCreditCode" label="社会信用代码" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column prop="manageName" label="机构管理员" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="manageName" label="商户管理员" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="contactInfo" label="联系方式" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -92,7 +92,7 @@
 	} from '@/utils/index'
 	import merchantDialog from './components/merchantDialog.vue'
 	export default {
-		name: 'operatorList',
+		name: 'merchantList',
 		components: {
 			merchantDialog
 		},
