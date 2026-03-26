@@ -3,14 +3,14 @@
 		<div class="filter-container">
 			<el-input v-model="listQuery.networkAddress" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入充电站地址" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
-			<el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入充电站省份" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
-			<el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入充电站名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
+      		<el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
+        		placeholder="请输入充电站省份" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
+      		<el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
+        		placeholder="请输入充电站名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()"/>
 			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
-			  placeholder="运营商户">
+			  placeholder="归属商户">
 			    <el-option
-			      v-for="item in merchantList"
+			      v-for="item in merchantSelectList"
 			      :key="item.id"
 			      :label="item.name"
 			      :value="item.id">
@@ -20,7 +20,7 @@
 				查询
 			</el-button>
 
-			<!--同步站点-->
+      		<!--同步站点-->
 			<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onSyncStation">
 				同步站点
 			</el-button>
@@ -30,14 +30,15 @@
 
 			<el-tabs v-model="activeName" type="card" @tab-click="handleClick">
 				<el-tab-pane
-					v-for="(item, index) in ruleIdList"
-					:key="item.id"
-					:label="item.title"
-					:name="item.id">
+				    v-for="(item, index) in ruleIdList"
+				    :key="item.id"
+				    :label="item.title"
+				    :name="item.id">
 				</el-tab-pane>
 			</el-tabs>
 
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
+			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
+				highlight-current-row style="width: 100%;" align="center" id="tableBox">
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
@@ -48,6 +49,8 @@
 				</el-table-column> -->
 				<el-table-column prop="merchantName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
+				<!-- <el-table-column prop="merchantName" label="归属商户" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column prop="networkName" label="充电站名称" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<!-- <el-table-column prop="networkProvince" label="省" align="center" :show-overflow-tooltip='isPc'>
@@ -62,20 +65,10 @@
 				</el-table-column>
 				<el-table-column prop="networkLatitude" label="地址纬度" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="App展示" align="center" width="110">
-					<template slot-scope="scope">
-						<el-switch
-							v-model="scope.row.isAppDisplay"
-							:active-value="1"
-							:inactive-value="0"
-							:disabled="!btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit') || !!appDisplayUpdating[scope.row.id]"
-							@change="handleAppDisplayChange(scope.row, $event)"
-						/>
-					</template>
-				</el-table-column>
-				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="updateUser" label="更新用户" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="startingPrice" label="充电起始价" align="center" :show-overflow-tooltip='isPc'>
+				<template slot-scope="scope">
+					<span>{{ scope.row.ruleId === 2 ? scope.row.startingPrice + '（元）' : '无' }}</span>
+				</template>
 				</el-table-column>
 				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip='isPc' sortable>
 					<template slot-scope="scope">
@@ -87,22 +80,13 @@
 						<span>{{ scope.row.updateTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="180" fixed="right">
+				<el-table-column label="操作" align="center" width="280" fixed="right">
 					<template slot-scope="scope">
 						<!-- 设置分成 -->
-						<!-- <set-split-account-page :row_data="scope.row" @getLists="getLists"/> -->
-						<!-- 抽成规则 -->
-						<el-button type="primary" size="mini" @click="toStationSetting(scope.row)">设置</el-button>
-						<!-- 编辑 -->
-						<!-- <chargeStationDialog :row_data="scope.row" @getLists="getLists" /> -->
-						<!-- <el-button type="primary" style="margin-left: 10px;" size = "mini" @click="addOrUpdateHandle(scope.row,false)" 
-							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')">编辑
-						</el-button> -->
-						<!-- 详情 -->
-						<!-- <el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button> -->
-						<!-- 删除 -->
+						<set-split-account-page :row_data="scope.row" @getLists="getLists"/>
 						<el-button style="margin-left: 10px;" type="danger" size="mini" icon="el-icon-delete"  @click="del(scope.row.id)"
-							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">删除
+							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">
+							删除
 						</el-button>
 					</template>
 				</el-table-column>
@@ -112,51 +96,58 @@
 					:total="total" background layout="total, sizes, prev, pager, next, jumper"
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</div>
+
+			<el-dialog :visible.sync="showSyncStation" title="同步站点" @close="showSyncStation = false">
+				<el-form ref="syncStation" :model="syncStationForm" :rules="rules" label-position="left"
+					label-width="100px" style="width: 600px; margin-left:50px;">
+					<el-form-item :label="'互联商户'" prop="merchantId">
+						<el-select v-model="syncStationForm.merchantId" class="filter-item" placeholder="请选择互联商户" clearable style="width: 100%">
+							<el-option v-for="item in merchantList" 
+								:key="item.id" 
+								:label="item.name + '(' + item.companyName + ')'"
+								:value="item.id" 
+							/>
+						</el-select>
+					</el-form-item>
+					<el-form-item>
+						<el-button type="primary" :loading="btnLoading" @click="synchronizationStation()">确定</el-button>
+						<el-button @click="showSyncStation = false">取消</el-button>
+					</el-form-item>
+				</el-form>
+			</el-dialog>
 		</div>
-		<el-dialog :visible.sync="showSyncStation" title="同步站点" @close="showSyncStation = false">
-			<el-form ref="syncStation" :model="syncStationForm" :rules="rules" label-position="left"
-				label-width="100px" style="width: 600px; margin-left:50px;">
-				<el-form-item :label="'互联商户'" prop="merchantId">
-				<el-select v-model="syncStationForm.merchantId" class="filter-item" placeholder="请选择互联商户" clearable style="width: 100%">
-					<el-option v-for="item in merchantList" 
-						:key="item.id" 
-						:label="item.name + '(' + item.companyName + ')'"
-						:value="item.id" 
-					/>
-				</el-select>
-				</el-form-item>
-				<el-form-item>
-					<el-button type="primary" :loading="btnLoading" @click="synchronizationStation()">确定</el-button>
-					<el-button @click="showSyncStation = false">取消</el-button>
-				</el-form-item>
-			</el-form>
-		</el-dialog>
 	</div>
 </template>
 
 <script>
 	import {
 		getList,
-		updateNetworkDot,
 		deleteNetworkDot,
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		getMerchantList,
 		synchronizationStation
 	} from '@/api/interconnection/merchant.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	import {
 		parseTime
 	} from '@/utils/index'
+	import addPage from '../netWorkDot/components/chargeStationDialog.vue'
+	import editPage from '../netWorkDot/components/editPage.vue'
+  	import setSplitAccountPage from '../netWorkDot/components/setSplitAccountPage.vue'
 	import downExcel from '../netWorkDot/components/downExcel.vue'
 	export default {
-		name: 'interconnectionChargeStationList',
+		name: 'chargeStationList',
 		components: {
+			addPage,
+			editPage,
+      		setSplitAccountPage,
 			downExcel
 		},
 		data() {
 			return {
 				activeName: '2',
-				ruleIdList: [{
+        		ruleIdList: [{
 					id: '1',
 					title: '单车'
 				}, {
@@ -170,21 +161,18 @@
 				list: [],
 				total: 10,
 				merchantList: [],
-				appDisplayUpdating: {},
+				merchantSelectList: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
 					ruleId: 2,
 					type: 2,
-					adminId: '',
 					merchantId: '',
 					networkName: '',
 					networkProvince: '',
 					networkAddress: '',
-					
 				},
 				tableKey: 0,
-
 				btnLoading: false,
 				syncStationForm: {
 					merchantId: ''
@@ -210,51 +198,6 @@
 
 		},
 		methods: {
-			normalizeFlag01(val) {
-				if (val === 1 || val === '1' || val === true) return 1
-				return 0
-			},
-			handleAppDisplayChange(row, val) {
-				if (!row || !row.id) return
-				const nextVal = this.normalizeFlag01(val)
-				const prevVal = nextVal === 1 ? 0 : 1
-
-				this.$set(this.appDisplayUpdating, row.id, true)
-				updateNetworkDot({ id: row.id, isAppDisplay: nextVal }).then(res => {
-					if (res && res.code == 200) {
-						this.$message.success(res.msg || '更新成功')
-					} else {
-						row.isAppDisplay = prevVal
-						this.$message.error((res && res.msg) || '更新失败')
-					}
-				}).catch(() => {
-					row.isAppDisplay = prevVal
-					this.$message.error('更新失败')
-				}).finally(() => {
-					this.$delete(this.appDisplayUpdating, row.id)
-				})
-			},
-			toStationSetting(row) {
-				const stationId = row && row.id ? row.id : ''
-				if (!stationId) {
-					this.$message.error('缺少站点ID')
-					return
-				}
-				this.$router.push({
-					path: `/netWorkDot/setting/${stationId}`,
-					query: {
-						merchantId: row.merchantId || row.merchant_id || row.merchantID || '',
-						merchantName: row.merchantName || row.merchant_name || '',
-						stationName: row.networkName || ''
-					}
-				})
-			},
-			addOrUpdateHandle(row,isDetail) {
-				console.log("row:",row)
-				this.$nextTick(() => {
-					this.$refs.chargeStationForm.onshowAdd(row,isDetail)
-				})
-      		},
 			//同步站点
 			onSyncStation() {
 				this.showSyncStation = true
@@ -293,11 +236,7 @@
 				getList(this.listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
-						const list = Array.isArray(res.data) ? res.data : []
-						this.list = list.map(item => {
-							const isAppDisplay = this.normalizeFlag01(item.isAppDisplay ?? item.is_app_display)
-							return { ...item, isAppDisplay }
-						})
+						this.list = res.data
 						this.total = res.count
 						this.listLoading = false
 					} else {
@@ -336,17 +275,26 @@
 				this.listQuery.page = val
 				this.getLists()
 			},
-			getMerchantList() {
-				getMerchantList({ roleType: 'OPERATOR', type: 2 }).then(res => {
-					this.merchantList = (res && res.code == 200) ? (res.data || []) : []
+			getMerchantSelectList() {
+				getMerchant().then(res => {
+					this.merchantSelectList = (res && res.code == 200) ? (res.data || []) : []
 				}).catch(() => {
-					this.merchantList = []
+					this.merchantSelectList = []
+				})
+			},
+			getMerchantList() {
+				getMerchantList().then(res => {
+					if (res.code == 200) {
+						this.merchantList = res.data
+					} else {
+						this.$message.error(res.msg)
+					}
 				})
 			},
 		},
 		created() {
 			this.getLists()
-			this.getMerchantList()
+			this.getMerchantSelectList()
 		},
 	}
 </script>
