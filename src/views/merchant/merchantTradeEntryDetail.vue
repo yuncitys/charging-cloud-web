@@ -32,7 +32,13 @@
             </el-col>
             <el-col :span="12">
               <div class="kv">
-                <div class="kv__label">机构管理员</div>
+                <div class="kv__label">归属地区</div>
+                <div class="kv__value">{{ formatValue(merchantInfo.provinceName) }}{{ formatValue(merchantInfo.regionName) }}{{ formatValue(merchantInfo.countyName) }}</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="kv">
+                <div class="kv__label">商户管理员</div>
                 <div class="kv__value">{{ formatValue(merchantInfo.manageName) }}</div>
               </div>
             </el-col>
@@ -44,11 +50,38 @@
             </el-col>
             <el-col :span="12">
               <div class="kv">
-                <div class="kv__label">开票类型</div>
+                <div class="kv__label">角色类型</div>
+                <div class="kv__value">{{ formatRoleType(merchantInfo.roleType) }}</div>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="kv">
+                <div class="kv__label">开票种类</div>
                 <div class="kv__value">{{ formatInvoiceType(merchantInfo.invoiceType) }}</div>
               </div>
             </el-col>
             <el-col :span="12">
+              <div class="kv">
+                <div class="kv__label">备注</div>
+                <div class="kv__value">{{ formatValue(merchantInfo.remark) }}</div>
+              </div>
+            </el-col>
+            <el-col :span="24">
+              <div class="kv">
+                <div class="kv__label">营业执照</div>
+                <div class="kv__value" style="display:flex; align-items:center;">
+                  <el-image 
+                    v-if="merchantInfo.businessLicence" 
+                    :src="merchantInfo.businessLicence" 
+                    :preview-src-list="[merchantInfo.businessLicence]"
+                    style="width: 80px; height: 80px; border-radius: 4px;" 
+                    fit="contain">
+                  </el-image>
+                  <span v-else>-</span>
+                </div>
+              </div>
+            </el-col>
+            <!-- <el-col :span="12">
               <div class="kv">
                 <div class="kv__label">创建用户</div>
                 <div class="kv__value">{{ formatValue(merchantInfo.createUser) }}</div>
@@ -59,8 +92,8 @@
                 <div class="kv__label">更新用户</div>
                 <div class="kv__value">{{ formatValue(merchantInfo.updateUser) }}</div>
               </div>
-            </el-col>
-            <el-col :span="12">
+            </el-col> -->
+            <!-- <el-col :span="12">
               <div class="kv">
                 <div class="kv__label">创建时间</div>
                 <div class="kv__value">{{ formatTime(merchantInfo.createTime) }}</div>
@@ -71,12 +104,15 @@
                 <div class="kv__label">更新时间</div>
                 <div class="kv__value">{{ formatTime(merchantInfo.updateTime) }}</div>
               </div>
-            </el-col>
+            </el-col> -->
           </el-row>
 
           <el-divider content-position="left">进件信息</el-divider>
-          <el-empty v-if="!loading && !detail" description="暂无进件资料" />
-          <el-row v-else :gutter="20">
+          <div v-if="!loading && !detail" style="text-align: center; color: #909399; padding: 40px 0;">
+            <i class="el-icon-document" style="font-size: 40px; margin-bottom: 10px;"></i>
+            <div>暂无进件资料</div>
+          </div>
+          <el-row v-else-if="detail" :gutter="20">
             <el-col :span="12">
               <div class="kv">
                 <div class="kv__label">商户号</div>
@@ -149,7 +185,7 @@ import { detailTradeEntryByMerchantId } from '@/api/pay/tradeEntry'
 import { parseTime } from '@/utils/index'
 
 export default {
-  name: 'MerchantTradeEntryDetail',
+  name: 'MerchantDetail',
   data() {
     return {
       loading: false,
@@ -202,8 +238,24 @@ export default {
       })
     },
     formatValue(val) {
-      if (val === null || val === undefined || val === '') return '-'
+      if (val === null || val === undefined || val === '') return ''
       return String(val)
+    },
+    formatRoleType(val) {
+      if (!val) return '-'
+      const map = {
+        'OPERATOR': '运营商',
+        'INVESTOR': '投资人',
+        'LANDLORD': '场地方',
+        'SETTLE': '分账主体'
+      }
+      let roles = []
+      if (typeof val === 'string') {
+        roles = val.split(',')
+      } else if (Array.isArray(val)) {
+        roles = val
+      }
+      return roles.map(r => map[r.trim()] || r).join('，') || '-'
     },
     formatTime(val) {
       if (val === null || val === undefined || val === '') return '-'
