@@ -1,12 +1,7 @@
 <template>
-	<div> <!-- style="display: inline-block;" -->
-		<!-- <el-button style="margin-right: 20px ;" type="primary" @click="onshowAdd" class="filter-item"
-			v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:add')">
-      		新增充电站
-		</el-button> -->
-
+	<div> 
 		<!-- 新增充电站 -->
-		<el-dialog :visible.sync="showAdd" :title="title" @close="showAdd = false" :destroy-on-close="true" :append-to-body="true" width="60%">
+		<el-dialog :visible.sync="showAdd" :title="title" @close="showAdd = false" :destroy-on-close="true" :append-to-body="true" width="60%" :close-on-click-modal="false">
 			<div style="width: 100%; height:100px;">
 				<el-steps :active="currentStep" align-center>
 					<el-step title="基础信息"></el-step>
@@ -168,7 +163,7 @@
 					<el-input v-model="formData.parkFeeTip" placeholder="请输入停车收费提示" clearable type="text" :disabled = "isDetail"/>
 				</el-form-item>
 				<el-form-item :label="'站点标签'" prop="stationTag">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple collapse-tags placeholder="请选择站点标签" :disabled = "isDetail">
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple placeholder="请选择站点标签" :disabled = "isDetail">
 						<el-option
 							v-for="item in stationTagList"
 							:key="item.id + ''"
@@ -177,7 +172,7 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
-				<el-form-item :label="'电站图片'">
+				<el-form-item :label="'电站图片'" prop="stationPictures">
 					<div class="picture-grid">
 						<div class="picture-slot" v-for="slot in stationPictureSlots" :key="slot.sort">
 							<el-upload
@@ -514,14 +509,26 @@
 						trigger: 'blur'
 					}],
 					stationTag: [{
+						type: 'array',
 						required: true,
 						message: '请选择站点标签',
-						trigger: 'blur'
+						trigger: 'change'
 					}],
 					businessHours: [{
+						type: 'array',
 						required: true,
 						message: '请选择营业时间',
-						trigger: 'blur'
+						trigger: 'change'
+					}],
+					stationPictures: [{
+						type: 'array',
+						required: true,
+						validator: (rule, value, callback) => {
+							const hasPicture = (this.stationPictureSlots || []).some(s => s && s.url)
+							if (!hasPicture) callback(new Error('请至少上传1张站点图片'))
+							else callback()
+						},
+						trigger: 'change'
 					}],
 					remark: [{
 						required: true,
@@ -581,6 +588,7 @@
 					parkFeeTip: '',
 					stationTag: [],
 					businessHours: [],
+					stationPictures: [],
 					remark: '',
 					pricingRuleId: '',
 					merchantId: ''
@@ -640,39 +648,6 @@
 				this.formData.isBarrierGate = auxiliaryDeviceCheckList.includes("isBarrierGate")
 				console.log("表单数据:",this.formData)
 			},
-			// querySearch(queryString, cb) {
-			// 	var restaurants = this.restaurants;
-			// 	let restaurantsText = []
-			// 	if (restaurants.length != '') {
-			// 		restaurants.forEach((item, index) => {
-			// 			let obj = {
-			// 				value: '',
-			// 				dealerId: ''
-			// 			}
-			// 			let value = item.adminName + "(" + item.adminFullname + ")"
-			// 			obj.value = value
-			// 			obj.dealerId = item.id
-			// 			restaurantsText.push(obj)
-			// 		})
-			// 	}
-			// 	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
-			// 	// 调用 callback 返回建议列表的数据
-			// 	cb(results);
-			// },
-			// createFilter(queryString) {
-			// 	return (restaurant) => {
-			// 		return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
-			// 	};
-			// },
-			// changeName() {
-			// 	if (this.formData.adminName == '') {
-			// 		this.formData.adminId = ''
-			// 	}
-			// },
-			// addchangeDealer(item) {
-			// 	this.formData.adminId = item.dealerId
-			// 	this.formData.adminName = item.value + ''
-			// },
 			initMap() {
 				let _this = this
 				loadMap(_this.key, _this.plugins, _this.v).then(AMap => {
@@ -854,6 +829,10 @@
 							sort: s.sort
 							}))
 						}
+						if (!payload.stationPictures || payload.stationPictures.length < 1) {
+							this.$message.error('请至少上传1张站点图片')
+							return false
+						}
 						if (!this.isEdit){
 							addNetworkDot(payload).then(res => {
 								if (res.code == 200) {
@@ -921,6 +900,8 @@
 							url
 						})
 					}
+					this.formData.stationPictures = this.stationPictureSlots.filter(s => s && s.url).map(s => s.url)
+					this.$refs['formData'] && this.$refs['formData'].validateField('stationPictures')
 				},
 				handleStationPictureUpload(sort, params) {
 					const file = params.file
@@ -958,6 +939,7 @@
 						})
 					}
 					this.stationPictureSlots = base
+					this.formData.stationPictures = this.stationPictureSlots.filter(s => s && s.url).map(s => s.url)
 				}
 		},
 		created() {

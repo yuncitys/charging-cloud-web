@@ -854,6 +854,11 @@ export default {
     },
     saveStation() {
       if (!this.stationId || !this.editStation) return
+      const hasPicture = (this.editStationPictureSlots || []).some(s => s && s.url)
+      if (!hasPicture) {
+        this.$message.error('请至少上传1张站点图片')
+        return
+      }
       this.detailSaving = true
       const payload = this.buildStationUpdatePayload()
       updateNetworkDot(payload).then(res => {
