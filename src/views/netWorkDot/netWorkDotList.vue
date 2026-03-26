@@ -633,7 +633,8 @@
 			addOrUpdateHandle(row,isDetail) {
 				console.log("row:",row)
 				this.$nextTick(() => {
-					this.$refs.chargeStationForm.onshowAdd(row,isDetail)
+					const defaultRuleId = Number(this.activeName || this.listQuery.ruleId || 1)
+					this.$refs.chargeStationForm.onshowAdd(row,isDetail, defaultRuleId)
 				})
       		},
 			//切换导航
