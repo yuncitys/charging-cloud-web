@@ -40,7 +40,8 @@
           <template v-slot="scope">
             <span v-if="scope.row.paymentStatus == 10">支付中</span>
             <span v-if="scope.row.paymentStatus == 11">支付成功</span>
-            <span v-if="scope.row.paymentStatus == 12">支付失败</span>
+            <span v-if="scope.row.paymentStatus == 12">支付状态未知</span>
+            <span v-if="scope.row.paymentStatus == 13">支付失败</span>
             <span v-if="scope.row.paymentStatus == 20">订单关闭</span>
             <span v-if="scope.row.paymentStatus == 30">退款中</span>
             <span v-if="scope.row.paymentStatus == 31">已退款</span>
@@ -115,6 +116,7 @@ export default {
       payStatusList:[
         { label: '支付中', value: 10 },
         { label: '支付成功', value: 11 },
+        { label: '支付状态未知', value: 12 },
         { label: '支付失败', value: 13 },
         { label: '已撤销', value: 20 },
         { label: '退款中', value: 30 },
