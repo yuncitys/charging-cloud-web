@@ -14,11 +14,16 @@
 				<el-form-item :label="'登录账号'" prop="adminName">
 					<el-input v-model="addData.adminName" placeholder="请输入登录账号" clearable />
 				</el-form-item>
-				<el-form-item :label="'姓名'" prop="adminFullname">
+				<el-form-item :label="'账号名称'" prop="adminFullname">
 					<el-input v-model="addData.adminFullname" placeholder="请输入姓名" clearable />
 				</el-form-item>
 				<el-form-item :label="'手机号'" prop="adminPhone">
 					<el-input v-model="addData.adminPhone" placeholder="请输入手机号" clearable />
+				</el-form-item>
+				<el-form-item :label="'归属租户'" prop="tenantId">
+					<el-select v-model="addData.tenantId" class="filter-item" placeholder="请选择归属租户" filterable clearable style="width: 100%;">
+						<el-option v-for="item in tenantList" :key="item.operatorId || item.id" :label="item.name" :value="item.operatorId || item.id" />
+					</el-select>
 				</el-form-item>
 				<el-form-item :label="'角色类型'" prop="roleType">
 					<el-radio-group v-model="addData.roleType" @change="changeRoleType">
@@ -28,7 +33,7 @@
 						<el-radio :label="4">站点管理员</el-radio>
 					</el-radio-group>
 				</el-form-item>
-				<el-form-item :label="'角色'" prop="roleId" style="width: 100%;">
+				<el-form-item :label="'所属角色'" prop="roleId" style="width: 100%;">
 					<el-select v-model="addData.roleId" class="filter-item" placeholder="请选择角色" clearable :disabled="showRole"
 						@keyup.enter.native="handleFilter" style="width: 100%;">
 						<el-option v-for="item in roleList" :key="item.id" :label="item.roleName" :value="item.id"/>
@@ -118,6 +123,7 @@
 					adminName: '',
 					adminFullname: '',
 					adminPhone: '',
+					tenantId: '',
 					roleId: '',
 					roleType: '',
 					dataIdList: [],
@@ -141,6 +147,11 @@
 						validator: checkPhone,
 						trigger: 'blur'
 					}],
+					tenantId: [{
+						required: true,
+						message: '请选择归属租户',
+						trigger: 'change'
+					}],
 					roleId: [{
 						required: true,
 						message: '请选择角色',
@@ -153,6 +164,7 @@
 					}],
 				},
 				roleList: [],
+				tenantList: [],
 
 				label: '',
 				searchKey: '',
@@ -197,7 +209,7 @@
 				switch (roleType) {
 					case 2:
 						this.label = '选择租户'
-						this.getOperator()
+						this.getOperatorTree()
 						break;
 					case 3:
 						this.label = '选择商户'
@@ -249,18 +261,29 @@
 					this.filteredData = JSON.parse(JSON.stringify(merchant));
 				})
 			},
-			getOperator(){
+			getOperatorTree(){
 				getOperator().then(res => {
 					if (res.code != 200){
 						return;
 					}
 					const operator = res.data.map(operator => ({
-						id: operator.id,
+						id: operator.operatorId || operator.id,
 						label: operator.name,
 						children: []
 					}))
 					console.log("operator:",operator)
 					this.filteredData = JSON.parse(JSON.stringify(operator));
+				})
+			},
+			getTenantList() {
+				getOperator().then(res => {
+					if (res && res.code == 200) {
+						this.tenantList = res.data || []
+					} else {
+						this.tenantList = []
+					}
+				}).catch(() => {
+					this.tenantList = []
 				})
 			},
 			// 过滤商户ID的通用方法
@@ -284,6 +307,7 @@
 			},
 			onShowAdd() {
 				this.showAdd = true
+				this.getTenantList()
 			},
 			onaddData(formName) {
 				let addData = JSON.parse(JSON.stringify(this.addData))
