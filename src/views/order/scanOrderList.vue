@@ -290,20 +290,17 @@
             <span>{{ scope.row.createTime | formatDate }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="380" fixed="right">
+        <el-table-column label="操作" align="center" width="200" fixed="right">
           <template slot-scope="scope">
-            <order-detail :row_data="scope.row" />
-            <power-charts :row_data="scope.row" />
             <el-button
               size="mini"
-              type="danger"
-              icon="el-icon-delete"
-              style="margin-left: 10px;"
-              @click="deleteOrder(scope.row.orderCode)"
-              v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')"
-            >删除</el-button>
-            <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
-              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 10px;">更多</el-button>
+              type="primary"
+              icon="el-icon-view"
+              @click="goOrderDetail(scope.row)"
+              v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
+            >详情</el-button>
+            <el-dropdown size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
+              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 8px;">更多</el-button>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
                   v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1">结束订单</el-dropdown-item>
@@ -312,6 +309,8 @@
                 <el-dropdown-item command="handleOrderRefund" icon="el-icon-money"
                   v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">订单退款</el-dropdown-item>
                 <el-dropdown-item command="handleOrderSplitRecord" icon="el-icon-s-operation">分账明细</el-dropdown-item>
+                <el-dropdown-item command="handleDeleteOrder" icon="el-icon-delete" divided
+                  v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">删除</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </template>
@@ -330,11 +329,9 @@
   import {
     getList,
     deleteOrder,
-    findOrderInfoById,
     closeOrder,
     downloadExcel,
     orderRefund,
-    findDevicePowerDetails,
     abnormalOrderSettlement,
   } from '@/api/order/scanOrderList.js'
   import {
@@ -346,15 +343,11 @@
     formatSeconds,
     getNowTime
   } from '@/utils/index'
-  import orderDetail from './components/orderDetail.vue'
-  import powerCharts from './components/powerCharts.vue'
   import downExcel from './components/downExcel.vue'
   import imgView from '@/components/Common/imgView.vue'
   export default {
     name: 'scanOrderList',
     components: {
-      orderDetail,
-      powerCharts,
       downExcel,
       imgView
     },
@@ -485,6 +478,13 @@
       this.getChargingStationList(this.activeName)
     },
     methods: {
+      goOrderDetail(row) {
+        if (!row || row.id == null) {
+          this.$message.warning('缺少订单 ID')
+          return
+        }
+        this.$router.push({ path: '/order/orderDetail', query: { orderId: row.id }})
+      },
       getChargingStationList(ruleId){
         const data = {
           ruleId: ruleId
@@ -511,6 +511,9 @@
             break;
           case "handleOrderSplitRecord":
             this.toOrderSplitRecord(row.orderCode)
+            break;
+          case "handleDeleteOrder":
+            this.deleteOrder(row.orderCode)
             break;
           default:
             break;
