@@ -27,7 +27,14 @@
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">
         搜索
       </el-button>
-      <el-button class="filter-item" style="margin-left: 10px;" type="primary" icon="el-icon-edit" @click="handleCreate">
+      <el-button
+        v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:add')"
+        class="filter-item"
+        style="margin-left: 10px;"
+        type="primary"
+        icon="el-icon-edit"
+        @click="handleCreate"
+      >
         新增进件
       </el-button>
     </div>
@@ -82,16 +89,36 @@
       </el-table-column>
       <el-table-column label="操作" align="center" width="320" class-name="operation-col small-padding fixed-width">
         <template slot-scope="{row}">
-          <el-button type="info" size="mini" @click="handleDetail(row)">
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:info')"
+            type="info"
+            size="mini"
+            @click="handleDetail(row)"
+          >
             详情
           </el-button>
-          <el-button type="primary" size="mini" @click="handleUpdate(row)">
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
+            type="primary"
+            size="mini"
+            @click="handleUpdate(row)"
+          >
             修改
           </el-button>
-          <el-button size="mini" type="warning" @click="handleCancel(row)">
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
+            size="mini"
+            type="warning"
+            @click="handleCancel(row)"
+          >
             注销
           </el-button>
-          <el-button size="mini" type="danger" @click="handleRemove(row)">
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:delete')"
+            size="mini"
+            type="danger"
+            @click="handleRemove(row)"
+          >
             删除
           </el-button>
         </template>
@@ -224,9 +251,9 @@ export default {
         this.listLoading = false
       }).catch(() => {
         this.$message({
-            type: 'error',
-            message: '获取失败'
-          })
+          type: 'error',
+          message: '获取失败'
+        })
       })
     },
     handleFilter() {

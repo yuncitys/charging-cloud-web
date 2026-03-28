@@ -5,8 +5,25 @@
         <span>商户进件详情</span>
         <div style="float: right;">
           <el-tag :type="form.status | statusTypeFilter" style="margin-right: 10px;">{{ form.status | statusFilter }}</el-tag>
-          <el-button type="warning" size="mini" :disabled="!canResubmit" style="margin-right: 10px;" @click="handleResubmit">重新提交</el-button>
-          <el-button type="primary" size="mini" :loading="statusLoading" @click="handleQueryStatus">查询状态</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
+            type="warning"
+            size="mini"
+            :disabled="!canResubmit"
+            style="margin-right: 10px;"
+            @click="handleResubmit"
+          >
+            重新提交
+          </el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:query')"
+            type="primary"
+            size="mini"
+            :loading="statusLoading"
+            @click="handleQueryStatus"
+          >
+            查询状态
+          </el-button>
         </div>
       </div>
 
@@ -305,12 +322,12 @@
                 <el-input v-model="form.settBankAccName" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="form.settBankAccType === '0030'">
+            <el-col v-if="form.settBankAccType === '0030'" :span="12">
               <el-form-item label="开户行名称">
                 <el-input v-model="form.settBankBranchName" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="form.settBankAccType === '0030'">
+            <el-col v-if="form.settBankAccType === '0030'" :span="12">
               <el-form-item label="开户行行号">
                 <el-input v-model="form.settBankBranchId" />
               </el-form-item>
@@ -320,12 +337,12 @@
                 <el-input v-model="form.settBankAccNo" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="form.settBankAccType === '0010'">
+            <el-col v-if="form.settBankAccType === '0010'" :span="12">
               <el-form-item label="持卡人身份证号">
                 <el-input v-model="form.identityNo" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="form.settBankAccType === '0010'">
+            <el-col v-if="form.settBankAccType === '0010'" :span="12">
               <el-form-item label="银行预留手机号">
                 <el-input v-model="form.mobileNo" />
               </el-form-item>
@@ -342,24 +359,12 @@
 </template>
 
 <script>
-import { getTradeEntry, getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
+import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
 
 export default {
   name: 'TradeEntryDetail',
-  computed: {
-    merchantName() {
-      const id = this.form && this.form.merchantId
-      if (id === null || id === undefined || id === '') return '-'
-      const item = (this.merchantList || []).find(m => String(m.id) === String(id))
-      return (item && item.name) || String(id)
-    },
-    canResubmit() {
-      const val = Number(this.form.status)
-      return [0, 32, 60].includes(val)
-    }
-  },
   filters: {
     statusFilter(status) {
       const statusMap = {
@@ -455,6 +460,18 @@ export default {
       }
     }
   },
+  computed: {
+    merchantName() {
+      const id = this.form && this.form.merchantId
+      if (id === null || id === undefined || id === '') return '-'
+      const item = (this.merchantList || []).find(m => String(m.id) === String(id))
+      return (item && item.name) || String(id)
+    },
+    canResubmit() {
+      const val = Number(this.form.status)
+      return [0, 32, 60].includes(val)
+    }
+  },
   created() {
     this.busKindOptions = dictData.getBusKindData()
     this.getProvinceList()
@@ -468,7 +485,7 @@ export default {
   methods: {
     getMerchantList() {
       getMerchant().then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           this.merchantList = res.data || []
         } else {
           this.merchantList = []
@@ -534,8 +551,8 @@ export default {
       this.statusLoading = true
       queryTradeEntryStatus(this.form.id).then(response => {
         this.statusLoading = false
-        if (response && response.code == 200) {
-           this.$message.success('状态查询成功')
+        if (response && response.code === 200) {
+          this.$message.success('状态查询成功')
           // 刷新数据
           this.fetchData(this.form.id)
         } else {
@@ -550,8 +567,11 @@ export default {
         const payload = { ...this.form }
         delete payload.id
         sessionStorage.setItem('tradeEntryPrefill', JSON.stringify(payload))
-      } catch (e) {}
-      this.$router.push({ path: '/tradeEntry/add', query: { prefill: '1' } })
+      } catch (e) {
+        void e
+      }
+      const query = { prefill: '1' }
+      this.$router.push({ path: '/tradeEntry/add', query })
     },
     handleBack() {
       this.$router.go(-1)
