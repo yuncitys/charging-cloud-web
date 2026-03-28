@@ -378,7 +378,12 @@
             <span>抽成规则</span>
             <div style="float: right;">
               <el-tag :type="commissionExists ? 'success' : 'info'" style="margin-right: 10px;">{{ commissionExists ? (commission.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}</el-tag>
-              <el-button size="mini" type="primary" @click="openCommissionEdit">{{ commissionExists ? '修改' : '配置规则' }}</el-button>
+              <el-button
+                v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
+                size="mini"
+                type="primary"
+                @click="openCommissionEdit"
+              >{{ commissionExists ? '修改' : '配置规则' }}</el-button>
             </div>
           </div>
 
@@ -424,7 +429,13 @@
           <div slot="header" class="clearfix">
             <span>分账设置</span>
             <div style="float: right;">
-              <el-button size="mini" type="primary" :loading="splitSaving" @click="saveSplitConfig">保存</el-button>
+              <el-button
+                v-if="btnAuthen.permsVerifAuthention(':web:splitAccount:save')"
+                size="mini"
+                type="primary"
+                :loading="splitSaving"
+                @click="saveSplitConfig"
+              >保存</el-button>
             </div>
           </div>
 
@@ -485,13 +496,22 @@
 
             <el-table-column label="操作" width="100" align="center">
               <template slot-scope="scope">
-                <el-button v-if="splitTableData.length > 1" type="danger" size="mini" @click="removeSplitRow(scope.$index)">删除</el-button>
+                <el-button
+                  v-if="splitTableData.length > 1 && btnAuthen.permsVerifAuthention(':web:splitAccount:save')"
+                  type="danger"
+                  size="mini"
+                  @click="removeSplitRow(scope.$index)"
+                >删除</el-button>
               </template>
             </el-table-column>
           </el-table>
 
           <div style="margin: 10px 0;">
-            <el-button type="primary" @click="addSplitRow">+ 新增分账方</el-button>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:splitAccount:save')"
+              type="primary"
+              @click="addSplitRow"
+            >+ 新增分账方</el-button>
             <el-link type="primary" style="margin-left: 10px;" @click="toAddAccount">点击此处去创建收款账号</el-link>
           </div>
         </el-card>
@@ -537,7 +557,12 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="editCommissionVisible = false">取消</el-button>
-        <el-button type="primary" :loading="commissionSaving" @click="saveCommissionRule">确定</el-button>
+        <el-button
+          v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
+          type="primary"
+          :loading="commissionSaving"
+          @click="saveCommissionRule"
+        >确定</el-button>
       </div>
     </el-dialog>
 
@@ -555,7 +580,7 @@ import { getByStationId as getSplitConfigByStationId, saveOrUpdate as saveSplitC
 import { listCompleted as listCompletedTradeMerchant } from '@/api/pay/tradeEntry'
 
 export default {
-  name: 'netWorkDotSetting',
+  name: 'NetWorkDotSetting',
   data() {
     return {
       activeTab: 'detail',
@@ -759,14 +784,16 @@ export default {
     loadStationPictures() {
       if (!this.stationId) return
       getNetworkDotPictures(this.stationId).then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           const list = Array.isArray(res.data) ? res.data : []
           this.stationPictureSlots = this.buildStationPictureSlots(list)
           if (!this.isEditing) {
             this.editStationPictureSlots = JSON.parse(JSON.stringify(this.stationPictureSlots || []))
           }
         }
-      }).catch(() => {})
+      }).catch(() => {
+        void 0
+      })
     },
     setEditPictureUrl(sort, url) {
       const idx = (this.editStationPictureSlots || []).findIndex(s => Number(s.sort) === Number(sort))
@@ -862,7 +889,7 @@ export default {
       this.detailSaving = true
       const payload = this.buildStationUpdatePayload()
       updateNetworkDot(payload).then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           this.$message.success(res.msg || '保存成功')
           this.isEditing = false
           this.editStation = null
@@ -892,7 +919,7 @@ export default {
     },
     formatCommission(type, value) {
       if (value === null || value === undefined || value === '') return '-'
-      if (type == '1') return `${value}%`
+      if (type === '1') return `${value}%`
       return `${value} 元/度`
     },
     formatSettBankAccType(type) {
@@ -907,7 +934,7 @@ export default {
       }
       this.loadingStation = true
       getChargeStationById(this.stationId).then(res => {
-        if (res.code == 200) {
+        if (res.code === 200) {
           const data = res.data || {}
           const businessHours = this.parseJsonArray(data.businessHours)
           const stationTag = this.parseJsonArray(data.stationTag).map(i => String(i))
@@ -1007,11 +1034,12 @@ export default {
           this.GDMarker.setPosition(center)
         }
       } catch (e) {
+        void e
       }
     },
     getMerchant() {
       getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           this.merchantList = res.data || []
         }
       })
@@ -1019,7 +1047,7 @@ export default {
     getDevicePriceByPriceType() {
       const payload = { priceType: 1, ruleId: 2 }
       findDevicePriceByPriceType(payload).then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           this.priceTypeList = res.data || []
         }
       })
@@ -1039,7 +1067,7 @@ export default {
         updateTime: ''
       }
       getStationCommissionInfo(this.stationId).then(res => {
-        if (res.code == 200) {
+        if (res.code === 200) {
           const data = res.data || null
           this.commissionExists = !!data
           if (data) {
@@ -1082,7 +1110,7 @@ export default {
         this.commissionSaving = true
         const payload = { ...this.commissionForm, stationId: this.stationId }
         saveCommissionRuleApi(payload).then(res => {
-          if (res.code == 200) {
+          if (res.code === 200) {
             this.$message.success(res.msg || '保存成功')
             this.editCommissionVisible = false
             this.commissionExists = false
@@ -1103,8 +1131,8 @@ export default {
         this.payeeList = []
         return
       }
-      listCompletedTradeMerchant({roleType: 'SETTLE',status: '30'}).then(res => {
-        if (res && res.code == 200) {
+      listCompletedTradeMerchant({ roleType: 'SETTLE', status: '30' }).then(res => {
+        if (res && res.code === 200) {
           this.payeeList = res.data || []
         } else {
           this.payeeList = []
@@ -1124,7 +1152,6 @@ export default {
       const busTradeMerNo = item.busTradeMerNo || item.bus_trade_mer_no || ''
       const settBankAccNo = item.settBankAccNo || item.sett_bank_acc_no || ''
       const hit = (this.payeeList || []).find(i => {
-        const iMerchantNo = i.merchantNo || i.merchant_no || ''
         const iBusTradeMerNo = i.busTradeMerNo || i.bus_trade_mer_no || ''
         const iSettBankAccNo = i.settBankAccNo || i.sett_bank_acc_no || ''
         return (busTradeMerNo && iBusTradeMerNo && String(busTradeMerNo) === String(iBusTradeMerNo)) ||
@@ -1252,7 +1279,7 @@ export default {
       if (this.splitLoaded) return
       this.splitLoading = true
       getSplitConfigByStationId(this.stationId).then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           const data = res.data
           const list = Array.isArray(data) ? data : (data ? [data] : [])
           this.splitTableData = list.map(item => ({
@@ -1315,17 +1342,17 @@ export default {
       const callOneByOne = () => {
         return payload.reduce((p, item) => {
           return p.then(prev => {
-            if (prev && prev.code && prev.code != 200) return prev
+            if (prev && prev.code && prev.code !== 200) return prev
             return saveSplitConfigApi(item)
           })
         }, Promise.resolve({ code: 200 })).then(res => {
-          if (res && res.code == 200) return { code: 200, msg: '保存成功' }
+          if (res && res.code === 200) return { code: 200, msg: '保存成功' }
           return res
         })
       }
 
       callOneByOne().then(res => {
-        if (res && res.code == 200) {
+        if (res && res.code === 200) {
           this.$message.success(res.msg || '保存成功')
           this.splitLoaded = false
           this.loadSplitConfig()

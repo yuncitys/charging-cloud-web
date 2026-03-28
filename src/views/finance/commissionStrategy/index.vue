@@ -20,7 +20,14 @@
           <el-button type="primary" icon="el-icon-search" @click="search">搜索</el-button>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-setting" @click="onBatchSet">批量设置</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:batchSave')"
+            type="primary"
+            icon="el-icon-setting"
+            @click="onBatchSet"
+          >
+            批量设置
+          </el-button>
         </el-form-item>
       </el-form>
       <el-tabs v-model="activeName" type="card" @tab-click="handleTabClick">
@@ -61,7 +68,15 @@
         </el-table-column>
         <el-table-column label="操作" width="160" align="center" fixed="right">
           <template v-slot="{row}">
-            <el-button size="mini" type="primary" icon="el-icon-edit" @click="onEdit(row)">编辑</el-button>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
+              size="mini"
+              type="primary"
+              icon="el-icon-edit"
+              @click="onEdit(row)"
+            >
+              编辑
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -119,7 +134,13 @@
           </div>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onEditSubmit">确定</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
+            type="primary"
+            @click="onEditSubmit"
+          >
+            确定
+          </el-button>
           <el-button @click="editDialog.visible=false">取消</el-button>
         </el-form-item>
       </el-form>
@@ -163,7 +184,13 @@
           </div>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onBatchSubmit">确定</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:batchSave')"
+            type="primary"
+            @click="onBatchSubmit"
+          >
+            确定
+          </el-button>
           <el-button @click="batchDialog.visible=false">取消</el-button>
         </el-form-item>
       </el-form>
