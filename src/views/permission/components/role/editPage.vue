@@ -4,18 +4,17 @@
 			@click="showDidlaoEditData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':permission:role:edit')">编辑
 		</el-button>
-		<el-dialog :visible.sync="showEdit" title="编辑角色" @close="showEdit = false" :append-to-body="true">
+		<el-dialog :visible.sync="showEdit" title="编辑角色" @close="showEdit = false" @opened="syncRoleTypeRadioOptions"
+			:append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;" :rules="rules">
 				<el-form-item :label="'角色名称'" prop="roleName">
 					<el-input v-model="editData.roleName" placeholder="请输入角色名称" clearable />
 				</el-form-item>
 				<el-form-item :label="'角色类型'" prop="roleType">
-					<el-radio-group v-model="editData.roleType">
-						<el-radio :label="1">平台管理员</el-radio>
-						<el-radio :label="2">租户管理员</el-radio>
-						<el-radio :label="3">商户管理员</el-radio>
-						<el-radio :label="4">站点管理员</el-radio>
+					<el-radio-group v-model="editData.roleType" @change="onRoleTypeChange">
+						<el-radio v-for="opt in roleTypeRadioOptions" :key="'rt-' + opt.value" :label="opt.value"
+							:disabled="opt.disabled">{{ opt.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'数据权限'" prop="dataScope">
@@ -51,6 +50,7 @@
 		updateRole,
 		deleteRole
 	} from '@/api/permission/role.js'
+	import { getRoleTypeOptionsForEdit } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		props:{
 			row_data:{
@@ -62,6 +62,7 @@
 		},
 		data(){
 			return {
+				roleTypeRadioOptions: [],
 				showEdit: false,
 				editData: {
 					myRoleId: '',
@@ -128,6 +129,12 @@
 			}
 		},
 		methods:{
+			syncRoleTypeRadioOptions() {
+				this.roleTypeRadioOptions = getRoleTypeOptionsForEdit(this.$store.getters.adminUser, this.editData.roleType)
+			},
+			onRoleTypeChange() {
+				this.$nextTick(() => this.syncRoleTypeRadioOptions())
+			},
 			showDidlaoEditData() {
 				let item=this.row_data
 				this.ger_role_id=[]
@@ -146,10 +153,12 @@
 						let menuList = res.data
 						this.treeData = menuList
 						this.showEdit = true
+						this.syncRoleTypeRadioOptions()
 						if (menuList.length != '') {
 							this.test_parse(menuList)
 						}
 						this.$nextTick(() => {
+							this.syncRoleTypeRadioOptions()
 							this.$refs.editTree.setCheckedKeys(this.ger_role_id)
 						})
 					}else {

@@ -3,7 +3,8 @@
 		<el-button style="margin-right: 20px ;" type="primary" @click="onShowAdd"
 			v-if="btnAuthen.permsVerifAuthention(':permission:role:add')">新增角色</el-button>
 		
-		<el-dialog :visible.sync="showAdd" title="新增角色" @close="showAdd = false" :append-to-body="true">
+		<el-dialog :visible.sync="showAdd" title="新增角色" @close="showAdd = false" @opened="syncRoleTypeRadioOptions"
+			:append-to-body="true">
 			<el-form ref="addData" :model="addData" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;" :rules="rules">
 				<el-form-item :label="'角色名称'" prop="roleName">
@@ -11,16 +12,14 @@
 				</el-form-item>
 				<el-form-item :label="'角色类型'" prop="roleType">
 					<el-radio-group v-model="addData.roleType">
-						<el-radio :label="1">平台管理员</el-radio>
-						<el-radio :label="2">租户管理员</el-radio>
-						<el-radio :label="3">商户管理员</el-radio>
-						<el-radio :label="4">站点管理员</el-radio>
+						<el-radio v-for="opt in roleTypeRadioOptions" :key="'rt-' + opt.value" :label="opt.value"
+							:disabled="opt.disabled">{{ opt.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'数据权限'" prop="dataScope">
 					<el-select v-model="addData.dataScope" class="filter-item" placeholder="请选择数据权限"
 						clearable style="width: 100%">
-						<el-option v-for="item in dataScopeList" :key="item.id" :label="item.title":value="item.id" />
+						<el-option v-for="item in dataScopeList" :key="item.id" :label="item.title" :value="item.id" />
 					</el-select>
 				</el-form-item>
 				<el-form-item :label="'角色备注'" prop="roleRemark">
@@ -49,9 +48,11 @@
 		updateRole,
 		deleteRole
 	} from '@/api/permission/role.js'
+	import { getRoleTypeOptionsForAdd } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		data(){
 			return {
+				roleTypeRadioOptions: [],
 				showAdd: false,
 				addData: {
 					roleName: '',
@@ -117,7 +118,11 @@
 			},
 		},
 		methods:{
+			syncRoleTypeRadioOptions() {
+				this.roleTypeRadioOptions = getRoleTypeOptionsForAdd(this.$store.getters.adminUser)
+			},
 			onShowAdd(){
+				this.syncRoleTypeRadioOptions()
 				this.getFindMenuByRoleId(1)
 				this.showAdd=true
 			},
