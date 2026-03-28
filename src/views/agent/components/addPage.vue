@@ -7,8 +7,8 @@
 			v-if="btnAuthen.permsVerifAuthention(':sys:admin:addAdminUser')">添加账号
 		</el-button>
 		<!-- 添加代理商-->
-		<el-dialog :visible.sync="showAdd" title="添加账号" @close="showAdd = false" style="width: 100%;"
-			:append-to-body="true">
+		<el-dialog :visible.sync="showAdd" title="添加账号" @close="showAdd = false" @opened="syncRoleTypeRadioOptions"
+			style="width: 100%;" :append-to-body="true">
 			<el-form ref="addData" :model="addData" label-position="left" label-width="120px"
 				style="margin-left:50px;width: 650px;" :rules="rules">
 				<el-form-item :label="'登录账号'" prop="adminName">
@@ -17,7 +17,7 @@
 				<el-form-item :label="'账号名称'" prop="adminFullname">
 					<el-input v-model="addData.adminFullname" placeholder="请输入姓名" clearable />
 				</el-form-item>
-				<el-form-item :label="'手机号'" prop="adminPhone">
+				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="addData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
 				<el-form-item :label="'归属租户'" prop="tenantId">
@@ -27,10 +27,7 @@
 				</el-form-item>
 				<el-form-item :label="'角色类型'" prop="roleType">
 					<el-radio-group v-model="addData.roleType" @change="changeRoleType">
-						<el-radio :label="1">平台管理员</el-radio>
-						<el-radio :label="2">租户管理员</el-radio>
-						<el-radio :label="3">商户管理员</el-radio>
-						<el-radio :label="4">站点管理员</el-radio>
+						<el-radio v-for="opt in roleTypeRadioOptions" :key="'rt-' + opt.value" :label="opt.value" :disabled="opt.disabled">{{ opt.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'所属角色'" prop="roleId" style="width: 100%;">
@@ -85,6 +82,7 @@
 	import {
         getOperator
     } from '@/api/operator/operator.js'
+	import { getRoleTypeOptionsForAdd } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		name: 'agentAddpage',
 		components: {
@@ -117,6 +115,7 @@
 				}
 			}
 			return {
+				roleTypeRadioOptions: [],
 				showAdd: false,
 				showRole: true,
 				addData: {
@@ -192,6 +191,9 @@
           },
         },
 		methods: {
+			syncRoleTypeRadioOptions() {
+				this.roleTypeRadioOptions = getRoleTypeOptionsForAdd(this.$store.getters.adminUser)
+			},
 			filterNode(value, data) {
 				console.log("value",value,"data",data)
 				if (!value) return true;
@@ -306,6 +308,7 @@
 				this.$refs[formName].resetFields();
 			},
 			onShowAdd() {
+				this.syncRoleTypeRadioOptions()
 				this.showAdd = true
 				this.getTenantList()
 			},

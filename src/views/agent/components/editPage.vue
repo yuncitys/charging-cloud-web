@@ -7,17 +7,17 @@
       		编辑
 		</el-button>
 		<!-- 编辑代理商-->
-		<el-dialog :visible.sync="showEdit" title="编辑" @close="showEdit = false" style="width: 100%;"
-			:append-to-body="true">
+		<el-dialog :visible.sync="showEdit" title="编辑" @close="showEdit = false" @opened="syncRoleTypeRadioOptions"
+			style="width: 100%;" :append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="120px"
 				style="margin-left:50px;width: 650px;" :rules="rules">
-				<el-form-item :label="'登录账号'" prop="adminName" disabled>
-					<el-input v-model="editData.adminName" placeholder="请输入登录账号" clearable />
+				<el-form-item :label="'登录账号'" prop="adminName">
+					<el-input v-model="editData.adminName" placeholder="请输入登录账号" disabled clearable />
 				</el-form-item>
 				<el-form-item :label="'账号名称'" prop="adminFullname">
 					<el-input v-model="editData.adminFullname" placeholder="请输入姓名" clearable />
 				</el-form-item>
-				<el-form-item :label="'手机号'" prop="adminPhone">
+				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="editData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
 				<el-form-item :label="'归属租户'" prop="tenantId">
@@ -27,10 +27,7 @@
 				</el-form-item>
 				<el-form-item :label="'角色类型'" prop="roleType">
 					<el-radio-group v-model="editData.roleType" @change="changeRoleType">
-						<el-radio :label="1">平台管理员</el-radio>
-						<el-radio :label="2">租户管理员</el-radio>
-						<el-radio :label="3">商户管理员</el-radio>
-						<el-radio :label="4">站点管理员</el-radio>
+						<el-radio v-for="opt in roleTypeRadioOptions" :key="'rt-' + opt.value" :label="opt.value" :disabled="opt.disabled">{{ opt.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'所属角色'" prop="roleId" style="width: 100%;">
@@ -86,6 +83,7 @@
 	import {
         getOperator
     } from '@/api/operator/operator.js'
+	import { getRoleTypeOptionsForEdit } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		name: 'agentEditpage',
 		components: {
@@ -123,6 +121,7 @@
 				}
 			}
 			return {
+				roleTypeRadioOptions: [],
 				showEdit: false,
 				editData: {
           			id: '',
@@ -198,6 +197,9 @@
           },
         },
 		methods: {
+			syncRoleTypeRadioOptions() {
+				this.roleTypeRadioOptions = getRoleTypeOptionsForEdit(this.$store.getters.adminUser, this.editData.roleType)
+			},
 			getDataPermissionsIdList(adminId){
 				const data = {
 					adminId: adminId
@@ -335,6 +337,7 @@
 				this.editData.roleId = ''
 				this.findRoleAllList(roleType)
 				this.initTreeData(roleType)
+				this.$nextTick(() => this.syncRoleTypeRadioOptions())
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
@@ -349,10 +352,12 @@
 				this.editData.roleId = item.roleId
 				this.editData.roleType = item.roleType
 				this.showEdit = true
+				this.syncRoleTypeRadioOptions()
 				this.getTenantListForEdit(item)
 				this.getDataPermissionsIdList(item.id)
 				this.findRoleAllList(item.roleType)
 				this.initTreeData(item.roleType)
+				this.$nextTick(() => this.syncRoleTypeRadioOptions())
 			},
 			onEditData(formName) {
 				let editData = JSON.parse(JSON.stringify(this.editData))
