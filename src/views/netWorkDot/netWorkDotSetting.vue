@@ -4,9 +4,9 @@
       <div slot="header" class="clearfix">
         <span>站点设置</span>
         <div style="float: right;">
-          <el-button v-if="activeTab === 'detail' && !isEditing" size="mini" type="primary" @click="startEdit">编辑</el-button>
+          <el-button v-if="activeTab === 'detail' && !isEditing && btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')" size="mini" type="primary" @click="startEdit" >编辑</el-button>
           <el-button v-if="activeTab === 'detail' && isEditing" size="mini" @click="cancelEdit">取消</el-button>
-          <el-button v-if="activeTab === 'detail' && isEditing" size="mini" type="primary" :loading="detailSaving" @click="saveStation">保存</el-button>
+          <el-button v-if="activeTab === 'detail' && isEditing && btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')" size="mini" type="primary" :loading="detailSaving" @click="saveStation">保存</el-button>
           <el-button size="mini" type="primary" @click="$router.back()">返回</el-button>
         </div>
       </div>
