@@ -11,7 +11,7 @@
 			:append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="120px"
 				style="margin-left:50px;width: 650px;" :rules="rules">
-				<el-form-item :label="'登录账号'" prop="adminName">
+				<el-form-item :label="'登录账号'" prop="adminName" disabled>
 					<el-input v-model="editData.adminName" placeholder="请输入登录账号" clearable />
 				</el-form-item>
 				<el-form-item :label="'账号名称'" prop="adminFullname">
@@ -21,8 +21,8 @@
 					<el-input v-model="editData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
 				<el-form-item :label="'归属租户'" prop="tenantId">
-					<el-select v-model="editData.tenantId" class="filter-item" placeholder="请选择归属租户" filterable clearable style="width: 100%;">
-						<el-option v-for="item in tenantList" :key="item.operatorId || item.id" :label="item.name" :value="item.operatorId || item.id" />
+					<el-select v-model="editData.tenantId" class="filter-item" placeholder="请选择归属租户" disabled style="width: 100%;">
+						<el-option v-for="item in tenantList" :key="String(item.operatorId || item.id || item.tenantId)" :label="item.name" :value="tenantOptionValue(item)" />
 					</el-select>
 				</el-form-item>
 				<el-form-item :label="'角色类型'" prop="roleType">
@@ -294,13 +294,29 @@
 					this.filteredData = JSON.parse(JSON.stringify(operator));
 				})
 			},
-			getTenantList() {
+			tenantOptionValue(item) {
+				if (item.operatorId != null && item.operatorId !== '') return item.operatorId
+				return item.id
+			},
+			// 编辑时拉取租户下拉数据，回显当前租户并与选项 value 类型对齐；无匹配项时用行数据补一条仅展示用选项
+			getTenantListForEdit(rowItem) {
 				getOperator().then(res => {
-					if (res && res.code == 200) {
-						this.tenantList = res.data || []
-					} else {
-						this.tenantList = []
+					let list = (res && res.code == 200) ? (res.data || []) : []
+					const raw = rowItem.tenantId || rowItem.operatorId || rowItem.operator_id || rowItem.tenant_id
+					const rawStr = raw === '' || raw == null ? '' : String(raw)
+					let matched = null
+					if (rawStr) {
+						matched = list.find(t => String(this.tenantOptionValue(t)) === rawStr)
+						if (!matched) {
+							const label = rowItem.operatorName || rowItem.tenantName || rowItem.name || `租户（${rawStr}）`
+							list = [{ name: label, operatorId: raw, id: raw }, ...list]
+						}
 					}
+					this.tenantList = list
+					this.$nextTick(() => {
+						if (!rawStr) return
+						this.editData.tenantId = matched ? this.tenantOptionValue(matched) : raw
+					})
 				}).catch(() => {
 					this.tenantList = []
 				})
@@ -333,7 +349,7 @@
 				this.editData.roleId = item.roleId
 				this.editData.roleType = item.roleType
 				this.showEdit = true
-				this.getTenantList()
+				this.getTenantListForEdit(item)
 				this.getDataPermissionsIdList(item.id)
 				this.findRoleAllList(item.roleType)
 				this.initTreeData(item.roleType)
