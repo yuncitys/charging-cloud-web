@@ -22,11 +22,6 @@
             :value="item.id">
           </el-option>
       </el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable
-        clearable @change="handleFilter()" placeholder="请选择代理商">
-        <el-option v-for="item in dealerList" :key="item.id" :label="item.adminFullname" :value="item.id">
-        </el-option>
-      </el-select>
       <el-select v-model="listQuery.orderStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请选择订单状态" clearable @change="handleFilter">
         <el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -351,9 +346,6 @@
     formatSeconds,
     getNowTime
   } from '@/utils/index'
-  import {
-    findDealerList,
-  } from '@/api/device/deviceList.js'
   import orderDetail from './components/orderDetail.vue'
   import powerCharts from './components/powerCharts.vue'
   import downExcel from './components/downExcel.vue'
@@ -382,7 +374,6 @@
         list: [],
         total: 10,
         tableKey: 0,
-        dealerList: [],
         chargingStationList: [],
         listQuery: {
           page: 1,
@@ -397,7 +388,6 @@
           createTimeEnd: '',
           networkProvince: '',
           networkName: '',
-          adminId: '',
           orderType: 1,
           ruleId: 1,
           chargingStationIds: ''
@@ -608,15 +598,6 @@
           }
         })
       },
-      findDealerList() {
-        findDealerList().then(res => {
-          if (res.code == 200) {
-            this.dealerList = res.data
-          } else {
-            this.$message.error(res.msg)
-          }
-        })
-      },
       //删除订单
       deleteOrder(orderCode) {
         this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
@@ -741,7 +722,6 @@
       } else {
         this.getLists();
       }
-      this.findDealerList()
     },
   }
 

@@ -57,7 +57,6 @@
 					orderType: this.queryData.orderType,
 					userCode: this.queryData.userCode,
 					phoneNumber: this.queryData.phoneNumber,
-					adminId: this.queryData.adminId,
 					createTimeStart: this.queryData.createTimeStart,
 					createTimeEnd: this.queryData.createTimeEnd,
 					networkProvince: this.queryData.networkProvince,

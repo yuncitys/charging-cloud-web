@@ -22,11 +22,6 @@
             :value="item.id">
           </el-option>
       </el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable
-        clearable @change="handleFilter()" placeholder="请选择代理商">
-        <el-option v-for="item in dealerList" :key="item.id" :label="item.adminFullname" :value="item.id">
-        </el-option>
-      </el-select>
       <el-select v-model="listQuery.orderStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请选择订单状态" clearable @change="handleFilter">
         <el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -311,9 +306,6 @@
     abnormalOrderSettlement,
   } from '@/api/order/cardOrderList.js'
   import {
-    findDealerList,
-  } from '@/api/device/deviceList.js'
-  import {
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
   import {
@@ -347,7 +339,6 @@
         list: [],
         total: 10,
         tableKey: 0,
-        dealerList: [],
         chargingStationList: [],
         listQuery: {
           page: 1,
@@ -363,7 +354,6 @@
           createTimeEnd: '',
           networkProvince: '',
           networkName: '',
-          adminId: '',
           orderType: 0,
           ruleId: 1,
           chargingStationIds: ''
@@ -655,15 +645,6 @@
           })
         })
       },
-      findDealerList() {
-        findDealerList().then(res => {
-          if (res.code == 200) {
-            this.dealerList = res.data
-          } else {
-            this.$message.error(res.msg)
-          }
-        })
-      },
       //获取当前时间
       getTime() {
         var date = new Date()
@@ -687,7 +668,6 @@
         }
       }
       this.getLists()
-      this.findDealerList()
     },
   }
 

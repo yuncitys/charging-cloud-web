@@ -22,11 +22,6 @@
             :value="item.id">
           </el-option>
       </el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable
-        clearable @change="handleFilter()" placeholder="请选择代理商">
-        <el-option v-for="item in dealerList" :key="item.id" :label="item.adminFullname" :value="item.id">
-        </el-option>
-      </el-select>
       <el-select v-model="listQuery.payStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请选择支付状态" clearable @change="handleFilter">
         <el-option v-for="item in payTags" :key="item.id" :label="item.title" :value="item.id" />
@@ -324,9 +319,6 @@
     abnormalOrderSettlement,
   } from '@/api/order/scanOrderList.js'
   import {
-    findDealerList,
-  } from '@/api/device/deviceList.js'
-  import {
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
   import {
@@ -363,7 +355,6 @@
         list: [],
         total: 10,
         tableKey: 0,
-        dealerList: [],
         chargingStationList: [],
         listQuery: {
           page: 1,
@@ -378,7 +369,6 @@
           createTimeEnd: '',
           networkProvince: '',
           networkName: '',
-          adminId: '',
           orderType: 2,
           ruleId: 1,
           chargingStationIds: ''
@@ -647,15 +637,6 @@
         var ss = (date.getSeconds() < 10 ? '0' + (date.getSeconds()) : date.getSeconds())
         return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
       },
-      findDealerList() {
-        findDealerList().then(res => {
-          if (res.code == 200) {
-            this.dealerList = res.data
-          } else {
-            this.$message.error(res.msg)
-          }
-        })
-      },
     },
     created() {
       // 进入页面时读缓存
@@ -668,7 +649,6 @@
         }
       }
       this.getLists()
-      this.findDealerList()
     },
   }
 
