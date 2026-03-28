@@ -218,7 +218,7 @@ export default {
   },
   data() {
     return {
-      activeName: '1',
+      activeName: '2',
       ruleIdList: [
         { id: '1', title: '单车' },
         { id: '2', title: '汽车' }
@@ -231,7 +231,7 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        ruleId: 1,
+        ruleId: 2,
         type: 1,
         adminId: '',
         merchantId: '',
