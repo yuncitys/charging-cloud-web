@@ -4,12 +4,12 @@
 			<div class="statistics-search-bar">
 				<el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入设备号" v-model="listQuery.deviceCode" class="filter-item" clearable
 					@keyup.enter.native="handleFilter" @clear="handleFilter()" />
-				<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()"
-				placeholder="请选择代理商">
+				<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
+				placeholder="请选择商户">
 					<el-option
-					v-for="item in dealerList"
+					v-for="item in merchantList"
 					:key="item.id"
-					:label="item.adminFullname"
+					:label="item.name"
 					:value="item.id">
 					</el-option>
 				</el-select>
@@ -116,10 +116,10 @@
 
 <script>
 	import {
-    	findDealerList,
 		getReportsStatistics,
     	getDeviceStatistics
 	} from '@/api/business/businessStatistics.js'
+	import { getMerchant } from '@/api/merchant/merchant.js'
 	import {
 		getChargingStationList
 	} from '@/api/netWorkDot/netWorkDotList.js'
@@ -152,7 +152,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-					dealerId: '',
+					merchantId: '',
 					deviceCode: '',
 					allocationStatus: 1,
 					chargingStationIds:'',
@@ -217,7 +217,7 @@
 					},
 				],
 				currentUser: {"totalAmount":0,"balanceAmount":0},
-				dealerList: [],
+				merchantList: [],
 				chargingStationList: [],
 			}
 		},
@@ -415,13 +415,15 @@
 					}
 				})
 			},
-			findDealerList() {
-				findDealerList().then(res => {
+			getMerchantList() {
+				getMerchant().then(res => {
 					if (res.code == 200) {
-						this.dealerList = res.data;
+						this.merchantList = res.data || []
 					} else {
 						this.$message.error(res.msg)
 					}
+				}).catch(() => {
+					this.merchantList = []
 				})
 			},
 			dateChange(e) {
@@ -498,7 +500,7 @@
 		created() {
 			// this.getRouters()
 			this.getCurrentUser()
-			this.findDealerList()
+			this.getMerchantList()
 			this.getChargingStationList()
 			this.getReportsStatistics()
 			this.getLists()
