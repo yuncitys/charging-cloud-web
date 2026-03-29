@@ -96,13 +96,6 @@
 					</el-table-column>
 					<el-table-column prop="countCashByScan" label="扫码收入" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
-					<el-table-column prop="adminId" label="代理商" align="center" :show-overflow-tooltip="isPc">
-						<template slot-scope="scope">
-							<div v-if="scope.row.adminId">
-								<deviceAdmin :row_data="scope.row"></deviceAdmin>
-							</div>
-						</template>
-					</el-table-column>
 				</el-table>
 				<div class="pagination-container">
 					<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="limit" :total="total"
