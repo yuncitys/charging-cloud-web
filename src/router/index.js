@@ -442,6 +442,16 @@ export const constantRoutes = [{
         title: '包月订单',
         icon: 'el-icon-connection',
       }
+    }, {
+      path: 'orderDetail',
+      component: () => import('@/views/order/components/orderDetail.vue'),
+      name: 'orderDetail',
+      hidden: true,
+      meta: {
+        title: '订单详情',
+        noCache: true,
+        activeMenu: '/order/scanOrderList'
+      }
     }, ]
   },
   {
