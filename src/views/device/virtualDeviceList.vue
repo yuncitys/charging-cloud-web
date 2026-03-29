@@ -373,6 +373,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import addPage from './components/addPage.vue'
 	import wxCode from './components/wxCode.vue'
 	import deviceDetail from './components/deviceDetail.vue'
@@ -401,14 +402,7 @@
 		name: 'virtualDeviceList',
 		data() {
 			return {
-				activeName: '2',
-				ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
-				}],
+				activeName: getDefaultRuleIdTabName('2'),
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -425,7 +419,7 @@
 					// allocationStatus: 1,
 					page: 1,
 					limit: 10,
-					ruleId: 2,
+					ruleId: getDefaultRuleIdNumber('2'),
           			chargingStationIds: '',
 					devicePurpose: 'VIRTUAL_CONNECTION'
 				},
@@ -478,7 +472,7 @@
 				PriceType: {
 					deviceCode: '',
 					devicePriceId: '',
-					ruleId: 1
+					ruleId: getDefaultRuleIdNumber('2')
 				},
 				priceTypeList0: [],
 				//批量设置收费方案
@@ -486,11 +480,11 @@
 				PriceTypes: {
 					deviceCodes: '',
 					devicePriceId: '',
-					ruleId: 1
+					ruleId: getDefaultRuleIdNumber('2')
 				},
 				deviceCodes: '',
 				deviceChagePattern: 0,
-				ruleId: 1,
+				ruleId: getDefaultRuleIdNumber('2'),
 				priceTypeDialog: ''
 			}
 		},
@@ -516,6 +510,9 @@
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
+			},
 			exportKeys() {
 				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
 			},

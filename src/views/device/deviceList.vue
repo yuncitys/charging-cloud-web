@@ -370,6 +370,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import wxCode from './components/wxCode.vue'
 	import deviceDetail from './components/deviceDetail.vue'
 	import miniCode from './components/miniAppCode.vue'
@@ -398,14 +399,7 @@
 		name: 'deviceList',
 		data() {
 			return {
-				activeName: '1',
-				ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
-				}],
+				activeName: getDefaultRuleIdTabName(),
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -422,7 +416,7 @@
 					allocationStatus: 1,
 					page: 1,
 					limit: 10,
-					ruleId: 1,
+					ruleId: getDefaultRuleIdNumber(),
           			chargingStationIds: '',
 					devicePurpose: 'DIRECT_CONNECTION',
 				},
@@ -476,7 +470,7 @@
 				PriceType: {
 					deviceCode: '',
 					devicePriceId: '',
-					ruleId: 1
+					ruleId: getDefaultRuleIdNumber()
 				},
 				priceTypeList0: [],
 				//批量设置收费方案
@@ -484,11 +478,11 @@
 				PriceTypes: {
 					deviceCodes: '',
 					devicePriceId: '',
-					ruleId: 1
+					ruleId: getDefaultRuleIdNumber()
 				},
 				deviceCodes: '',
 				deviceChagePattern: 0,
-				ruleId: 1,
+				ruleId: getDefaultRuleIdNumber(),
 				priceTypeDialog: '',
 				//同步设备二维码
 				syncQRCodeBoxVisible: false,
@@ -516,6 +510,9 @@
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
+			},
 			exportKeys() {
 				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
 			},

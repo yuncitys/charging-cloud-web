@@ -202,12 +202,12 @@
 import { getList, getByStationId as getInfo, saveOrUpdate, batchSaveOrUpdate } from '@/api/finance/commissionStrategy'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
+import { getRuleIdTabs, getDefaultRuleIdTabName } from '@/utils/ruleIdTabs'
 export default {
   name: 'CommissionStrategy',
   data() {
     return {
-      activeName: '1',
-      ruleIdList: [{ id: '1', title: '单车' }, { id: '2', title: '汽车' }],
+      activeName: getDefaultRuleIdTabName(),
       listLoading: false,
       tableKey: 0,
       page: 1,
@@ -221,7 +221,7 @@ export default {
         stationName: '',
         merchantId: '',
         collectFlag: '',
-        ruleId: '1'
+        ruleId: getDefaultRuleIdTabName()
       },
       selectedIds: [],
       editDialog: {
@@ -252,6 +252,11 @@ export default {
         powerRate: [{ required: true, message: '请输入电费抽成', trigger: 'blur' }],
         serviceRate: [{ required: true, message: '请输入服务费抽成', trigger: 'blur' }]
       }
+    }
+  },
+  computed: {
+    ruleIdList() {
+      return getRuleIdTabs()
     }
   },
   filters: {

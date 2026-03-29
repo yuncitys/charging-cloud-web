@@ -132,6 +132,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import addPage from '../netWorkDot/components/chargeStationDialog.vue'
 	import editPage from '../netWorkDot/components/editPage.vue'
   	import setSplitAccountPage from '../netWorkDot/components/setSplitAccountPage.vue'
@@ -146,14 +147,7 @@
 		},
 		data() {
 			return {
-				activeName: '2',
-        		ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
-				}],
+				activeName: getDefaultRuleIdTabName('2'),
 				listLoading: true,
 				showSyncStation: false,
 				page: 1,
@@ -165,7 +159,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-					ruleId: 2,
+					ruleId: getDefaultRuleIdNumber('2'),
 					type: 2,
 					merchantId: '',
 					networkName: '',
@@ -184,6 +178,11 @@
 						trigger: 'blur'
 					}],
 				}
+			}
+		},
+		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
 			}
 		},
 		filters: {

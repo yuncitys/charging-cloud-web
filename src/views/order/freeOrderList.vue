@@ -324,6 +324,7 @@
     formatSeconds,
     getNowTime
   } from '@/utils/index'
+  import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
   import downExcel from './components/downExcel.vue'
   import imgView from '@/components/Common/imgView.vue'
   export default {
@@ -334,14 +335,7 @@
     },
     data() {
       return {
-        activeName: '1',
-        ruleIdList: [{
-          id: '1',
-          title: '单车'
-        }, {
-          id: '2',
-          title: '汽车'
-        }],
+        activeName: getDefaultRuleIdTabName(),
         listLoading: true,
         page: 1,
         limit: 10,
@@ -363,7 +357,7 @@
           networkProvince: '',
           networkName: '',
           orderType: 2,
-          ruleId: 1,
+          ruleId: getDefaultRuleIdNumber(),
           chargingStationIds: ''
         },
         cacheKey: 'freeOrderList',
@@ -429,6 +423,11 @@
           }
         ],
         time: ''
+      }
+    },
+    computed: {
+      ruleIdList() {
+        return getRuleIdTabs()
       }
     },
     filters: {

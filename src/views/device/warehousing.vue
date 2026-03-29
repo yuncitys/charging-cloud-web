@@ -238,6 +238,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import QRCode from 'qrcodejs2'
 	import wxCode from './components/wxCode.vue'
 	import deviceDetail from './components/deviceDetail.vue'
@@ -265,7 +266,7 @@
 		name: 'warehousing',
 		data() {
 			return {
-				activeName: '1',
+				activeName: getDefaultRuleIdTabName(),
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -282,7 +283,7 @@
 					allocationStatus: 2,
 					page: 1,
 					limit: 10,
-					ruleId: 1,
+					ruleId: getDefaultRuleIdNumber(),
           			chargingStationIds: '',
 					devicePurpose: 'DIRECT_CONNECTION'
 				},
@@ -312,13 +313,6 @@
 				}, {
 					title: '在线',
 					id: 1,
-				}],
-				ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
 				}]
 			}
 		},
@@ -346,6 +340,9 @@
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
+			},
 			exportKeys() {
 				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
 			},

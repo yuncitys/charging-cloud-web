@@ -148,6 +148,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import downExcel from '../netWorkDot/components/downExcel.vue'
 	export default {
 		name: 'interconnectionChargeStationList',
@@ -156,14 +157,7 @@
 		},
 		data() {
 			return {
-				activeName: '2',
-				ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
-				}],
+				activeName: getDefaultRuleIdTabName('2'),
 				listLoading: true,
 				showSyncStation: false,
 				page: 1,
@@ -175,7 +169,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
-					ruleId: 2,
+					ruleId: getDefaultRuleIdNumber('2'),
 					type: 2,
 					adminId: '',
 					merchantId: '',
@@ -197,6 +191,11 @@
 						trigger: 'blur'
 					}],
 				}
+			}
+		},
+		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
 			}
 		},
 		filters: {

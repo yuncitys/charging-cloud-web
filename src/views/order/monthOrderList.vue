@@ -320,6 +320,7 @@
   import {
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
+  import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
   import downExcel from './components/downExcel.vue'
   import imgView from '@/components/Common/imgView.vue'
   export default {
@@ -330,14 +331,7 @@
     },
     data() {
       return {
-        activeName: '1',
-        ruleIdList: [{
-          id: '1',
-          title: '单车'
-        }, {
-          id: '2',
-          title: '汽车'
-        }],
+        activeName: getDefaultRuleIdTabName(),
         listLoading: true,
         page: 1,
         limit: 10,
@@ -360,7 +354,7 @@
           networkProvince: '',
           networkName: '',
           adminName: '',
-          ruleId: 1,
+          ruleId: getDefaultRuleIdNumber(),
           chargingStationIds: ''
         },
         cacheKey: 'monthOrderList',
@@ -426,6 +420,11 @@
           }
         ],
         time: ''
+      }
+    },
+    computed: {
+      ruleIdList() {
+        return getRuleIdTabs()
       }
     },
     filters: {
