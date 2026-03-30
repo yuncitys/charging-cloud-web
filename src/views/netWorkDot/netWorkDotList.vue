@@ -204,6 +204,7 @@
 import { getList, updateSwitch, deleteNetworkDot } from '@/api/netWorkDot/netWorkDotList.js'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
+import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 import downExcel from './components/downExcel.vue'
 import ChargeStationDialog from './components/chargeStationDialog.vue'
 
@@ -218,11 +219,7 @@ export default {
   },
   data() {
     return {
-      activeName: '2',
-      ruleIdList: [
-        { id: '1', title: '单车' },
-        { id: '2', title: '汽车' }
-      ],
+      activeName: getDefaultRuleIdTabName('2'),
       listLoading: true,
       list: [],
       total: 10,
@@ -231,7 +228,7 @@ export default {
       listQuery: {
         page: 1,
         limit: 10,
-        ruleId: 2,
+        ruleId: getDefaultRuleIdNumber('2'),
         type: 1,
         adminId: '',
         merchantId: '',
@@ -240,6 +237,11 @@ export default {
         networkAddress: ''
       },
       tableKey: 0
+    }
+  },
+  computed: {
+    ruleIdList() {
+      return getRuleIdTabs()
     }
   },
   created() {
