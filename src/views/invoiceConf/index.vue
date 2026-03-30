@@ -1,6 +1,7 @@
 <template>
-  <div class="app-container">
-		<div class="filter-container" v-show="isAdd && isShowInfoConf">
+  <div>
+    <div class="app-container" v-show="isAdd && isShowInfoConf">
+		<div class="filter-container">
       <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">
         查询
@@ -11,7 +12,7 @@
         新增
       </el-button>
     </div>
-    <div v-show="isAdd && isShowInfoConf">
+    <div>
       <el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
         <el-table-column type="index" width="55" label="序号" align="center">
           <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
@@ -60,6 +61,7 @@
           :total="total" background layout="total, sizes, prev, pager, next, jumper"
           @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
+    </div>
     </div>
 
     <InvoiceForm ref="invoiceForm" v-show="!isAdd" :isAdd="isAdd"></InvoiceForm>

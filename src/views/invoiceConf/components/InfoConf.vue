@@ -1,7 +1,7 @@
 <template>
-  <transition name="el-zoom-in-center">
-    <div>
-      <div class="edit-preview-main" v-show="isAdd">
+  <div class="app-container">
+  <div class="invoice-conf-root">
+    <div class="edit-preview-main" v-show="isAdd">
         <div class="common-page-header">
           <el-page-header @back="goBack" :content="'开票信息配置'"/>
           <div class="options">
@@ -58,9 +58,9 @@
         </div>
       </div>
 
-      <LoginConfForm ref="loginForm" v-show="!isAdd" :isAdd="isAdd"></LoginConfForm>
-    </div>
-  </transition>
+    <LoginConfForm ref="loginForm" v-show="!isAdd" :isAdd="isAdd"></LoginConfForm>
+  </div>
+  </div>
 </template>
 
 <script>
@@ -208,17 +208,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.invoice-conf-root {
+  position: relative;
+  width: 100%;
+}
+
 .edit-preview-main {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  bottom: 0px;
-  left: 15px;
-  height: calc(100vh - 100px);
-  background: rgba(255, 255, 255, 1);
-  z-index: 1;
+  position: relative;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .common-page-header {
@@ -247,8 +247,7 @@ export default {
 }
 
 .common-page-main {
-  padding: 20px;
-  height: 100%;
+  padding: 16px 0 0;
 
   .common-title {
     border-bottom: 1px solid #dcdfe6;

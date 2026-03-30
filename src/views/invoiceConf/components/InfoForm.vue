@@ -1,6 +1,5 @@
 <template>
-  <transition name="el-zoom-in-center">
-    <div class="edit-preview-main">
+  <div class="edit-preview-main">
       <div class="common-page-header">
         <el-page-header @back="goBack" :content="isViewFlag ? '查看': dataForm.id ? '编辑' : '新增'"/>
         <div class="options">
@@ -8,7 +7,7 @@
           <el-button @click="goBack">取 消</el-button>
         </div>
       </div>
-      <el-row :gutter="50" class="main" :style="{margin: '0 auto',width: '100%', padding: '30px 0', flex:1, overflowY:'auto'}">
+      <el-row :gutter="50" class="main">
         <el-form ref="elForm" :model="dataForm" :rules="rules" size="small" label-width="120px" label-position="right">
           <el-col :span="18" style="height: 100%;">
             <el-row :gutter="10">
@@ -84,8 +83,7 @@
           </el-col>
         </el-form>
       </el-row>
-    </div>
-  </transition>
+  </div>
 </template>
 
 <script>
@@ -282,16 +280,21 @@ export default {
 
 <style lang="scss" scoped>
 .edit-preview-main {
-  position: absolute;
-  top: 0px;
-  right: 0px;
-  bottom: 0px;
-  left: 0px;
-  height: calc(100vh - 100px);
-  background: rgba(255, 255, 255, 1);
-  z-index: 1;
+  position: relative;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  max-height: calc(100vh - 140px);
+  overflow: hidden;
+
+  .main {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    margin: 0 auto;
+    width: 100%;
+    padding: 16px 0 0;
+  }
 }
 
 .common-page-header {
