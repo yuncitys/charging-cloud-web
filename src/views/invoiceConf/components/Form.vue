@@ -1,5 +1,4 @@
 <template>
-  <div class="app-container">
   <div class="edit-preview-main">
       <div class="common-page-header">
         <el-page-header @back="goBack" :content="dataForm.id ? '编辑' : isViewFlag ? '查看': '新增'"/>
@@ -10,7 +9,7 @@
       </div>
       <el-row :gutter="50" class="main">
         <el-form ref="elForm" :model="dataForm" :rules="rules" size="small" label-width="120px" label-position="right">
-          <el-col :span="18" style="height: 100%;">
+          <el-col :span="18">
             <el-row :gutter="10">
               <el-col :span="12">
                 <el-form-item label="运营商户" prop="tenantId">
@@ -154,7 +153,6 @@
           </el-col>
         </el-form>
       </el-row>
-  </div>
   </div>
 </template>
 
@@ -366,16 +364,13 @@ export default {
 .edit-preview-main {
   position: relative;
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 140px);
-  overflow: hidden;
+  overflow: visible;
 
   .main {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    margin: 0 auto;
     width: 100%;
     padding: 16px 0 0;
   }

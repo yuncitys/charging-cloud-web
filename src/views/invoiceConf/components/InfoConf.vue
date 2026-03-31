@@ -1,5 +1,4 @@
 <template>
-  <div class="app-container">
   <div class="invoice-conf-root">
     <div class="edit-preview-main" v-show="isAdd">
         <div class="common-page-header">
@@ -59,7 +58,6 @@
       </div>
 
     <LoginConfForm ref="loginForm" v-show="!isAdd" :isAdd="isAdd"></LoginConfForm>
-  </div>
   </div>
 </template>
 
@@ -211,6 +209,8 @@ export default {
 .invoice-conf-root {
   position: relative;
   width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .edit-preview-main {
@@ -218,7 +218,7 @@ export default {
   width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .common-page-header {
