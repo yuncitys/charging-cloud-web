@@ -52,7 +52,7 @@
         </el-table-column>
       </el-table-column>
       <el-table-column label="金额信息" align="center">
-        <el-table-column prop="invoiceTaxPrice" label="税额" min-width="110" align="center">
+        <!-- <el-table-column prop="invoiceTaxPrice" label="税额" min-width="110" align="center">
           <template v-slot="scope">
             {{ Number(scope.row.invoiceTaxPrice) * 0.01 }}元
           </template>
@@ -61,7 +61,7 @@
           <template v-slot="scope">
             {{ Number(scope.row.invoiceExTaxPrice) * 0.01 }}元
           </template>
-        </el-table-column>
+        </el-table-column> -->
         <el-table-column prop="invoicePrice" label="总金额" min-width="120" align="center">
           <template v-slot="scope">
             {{ (Number(scope.row.invoicePrice) * 0.01).toFixed(2) }}元
