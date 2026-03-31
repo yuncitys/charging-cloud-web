@@ -64,7 +64,7 @@
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)"
 								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:edit')">编辑</el-button>
 							<el-button type="primary" size="mini" @click="toTradeEntryAdd(scope.row)"
-								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:edit')">进件</el-button>
+							v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:add')">进件</el-button>
 							<el-button type="primary" size = "mini" @click="toTradeEntryDetail(scope.row)">详情</el-button>
 							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.id)"
 								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:delete')">删除</el-button>
