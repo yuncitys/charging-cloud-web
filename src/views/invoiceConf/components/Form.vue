@@ -12,14 +12,25 @@
           <el-col :span="18">
             <el-row :gutter="10">
               <el-col :span="12">
-                <el-form-item label="运营商户" prop="tenantId">
-                  <el-select v-model="dataForm.tenantId" placeholder="请选择商户" :style='{"width":"100%"}' :disabled="isViewFlag">
+                <el-form-item label="运营商户" prop="merchantId">
+                  <el-select v-model="dataForm.merchantId" placeholder="请选择商户" :style='{"width":"100%"}' :disabled="isViewFlag">
                     <el-option
                       v-for="item in merchantList"
-                      :key="item.operatorId"
+                      :key="item.id"
                       :label="item.name"
-                      :value="item.operatorId + ''">
+                      :value="String(item.id)">
                     </el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="发票渠道" prop="type">
+                  <el-select v-model="dataForm.type" placeholder="请选择发票渠道" :style='{"width":"100%"}' :disabled="isViewFlag">
+                    <el-option v-for="item in typeList"
+                               :key="item.enCode"
+                               :label="item.fullName"
+                               :value="item.enCode"
+                    ></el-option>
                   </el-select>
                 </el-form-item>
               </el-col>
@@ -39,17 +50,6 @@
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="发票渠道" prop="type">
-                  <el-select v-model="dataForm.type" placeholder="请选择发票渠道" :style='{"width":"100%"}' :disabled="isViewFlag">
-                    <el-option v-for="item in typeList"
-                               :key="item.enCode"
-                               :label="item.fullName"
-                               :value="item.enCode"
-                    ></el-option>
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
                 <el-form-item label="开票人" prop="drawer">
                   <el-input v-model="dataForm.drawer" placeholder="请输入开票人" maxlength="50" clearable :style='{"width":"100%"}' :disabled="isViewFlag"></el-input>
                 </el-form-item>
@@ -64,12 +64,35 @@
                   <el-input v-model="dataForm.backAccount" placeholder="请输入银行账户" maxlength="50" clearable :style='{"width":"100%"}' :disabled="isViewFlag"></el-input>
                 </el-form-item>
               </el-col>
-              
-              <el-col :span="12">
+              <!-- <el-col :span="12">
                 <el-form-item label="税率" prop="taxRate">
                   <el-input v-model="dataForm.taxRate" oninput="value=value.replace(/[^\d]/g,'')" maxlength="3" placeholder="请输入税率" clearable :style='{"width":"100%"}' :disabled="isViewFlag">
                     <template slot="append">%</template>
                   </el-input>
+                </el-form-item>
+              </el-col> -->
+              <el-col :span="12">
+                <el-form-item label="电费税率" prop="electricityTaxRate">
+                  <el-input v-model="dataForm.electricityTaxRate" oninput="value=value.replace(/[^\d]/g,'')" maxlength="3" placeholder="电费税率" clearable :style='{"width":"100%"}' :disabled="isViewFlag">
+                    <template slot="append">%</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="服务费税率" prop="serviceTaxRate">
+                  <el-input v-model="dataForm.serviceTaxRate" oninput="value=value.replace(/[^\d]/g,'')" maxlength="3" placeholder="服务费税率" clearable :style='{"width":"100%"}' :disabled="isViewFlag">
+                    <template slot="append">%</template>
+                  </el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="电费税收编号" prop="electricityTaxClassificationCode">
+                  <el-input v-model="dataForm.electricityTaxClassificationCode" placeholder="电费税收分类编码" maxlength="50" clearable :style='{"width":"100%"}' :disabled="isViewFlag"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="服务费税收编号" prop="serviceTaxClassificationCode">
+                  <el-input v-model="dataForm.serviceTaxClassificationCode" placeholder="服务费税收分类编码" maxlength="50" clearable :style='{"width":"100%"}' :disabled="isViewFlag"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
@@ -158,7 +181,7 @@
 
 <script>
 import { save, update, get as getInfo } from '@/api/invoiceConf/invoiceConf'
-import { getOperator } from '@/api/operator/operator.js'
+import { getMerchant } from '@/api/merchant/merchant.js'
 export default {
   name: 'Form',
   props: {
@@ -169,10 +192,14 @@ export default {
         id:null,
         address:'',
         drawer:'',
-        tenantId:'',
+        merchantId:'',
         name:'',
         taxNumber:'',
         taxRate:'',
+        electricityTaxRate:'',
+        serviceTaxRate:'',
+        electricityTaxClassificationCode:'',
+        serviceTaxClassificationCode:'',
         back:'',
         backAccount:'',
         billingTerminal:'',
@@ -206,14 +233,26 @@ export default {
         taxNumber:[
           { required: true, message: '请输入企业税号', trigger: 'blur' },
         ],
-        tenantId:[
-          { required: true, message: '请输入商户', trigger: 'blur' },
+        merchantId:[
+          { required: true, message: '请选择商户', trigger: 'change' },
         ],
         type:[
           { required: true, message: '请输入发票类型', trigger: 'blur' },
         ],
         taxRate:[
           { required: true, message: '请输入税率', trigger: 'blur' },
+        ],
+        electricityTaxRate:[
+          { required: true, message: '请输入电费税率', trigger: 'blur' },
+        ],
+        serviceTaxRate:[
+          { required: true, message: '请输入服务费税率', trigger: 'blur' },
+        ],
+        electricityTaxClassificationCode:[
+          { required: true, message: '请输入电费税收编号', trigger: 'blur' },
+        ],
+        serviceTaxClassificationCode:[
+          { required: true, message: '请输入服务费税收编号', trigger: 'blur' },
         ],
         telephoneNumber:[
           { required: true, message: '请输入联系电话', trigger: 'blur' },
@@ -245,8 +284,10 @@ export default {
       this.$parent.isAdd = true
     },
     getOperator() {
-      getOperator().then(res => {
-        this.merchantList = res.data
+      getMerchant({ page: 1, limit: 9999 }).then(res => {
+        if (res.code === 200 && res.data) {
+          this.merchantList = res.data
+        }
       })
     },
     initInfo(id) {
@@ -263,10 +304,14 @@ export default {
             id:res.data.id,
             address:res.data.address,
             drawer:res.data.drawer,
-            tenantId:res.data.tenantId,
+            merchantId: res.data.merchantId != null ? String(res.data.merchantId) : (res.data.tenantId != null ? String(res.data.tenantId) : ''),
             name:res.data.name,
             taxNumber:res.data.taxNumber,
             taxRate:res.data.taxRate,
+            electricityTaxRate: res.data.electricityTaxRate,
+            serviceTaxRate: res.data.serviceTaxRate,
+            electricityTaxClassificationCode: res.data.electricityTaxClassificationCode,
+            serviceTaxClassificationCode: res.data.serviceTaxClassificationCode,
             back:res.data.back,
             backAccount:res.data.backAccount,
             billingTerminal:res.data.billingTerminal,
@@ -276,7 +321,7 @@ export default {
             machineCoding:res.data.machineCoding,
             password:res.data.password,
             payee:res.data.payee,
-            pirKey:res.data.pirKey,
+            pirKey: res.data.privateKey,
             platformAlias:res.data.platformAlias,
             platformCode:res.data.platformCode,
             secret:res.data.secret,
@@ -302,10 +347,14 @@ export default {
         id:null,
         address:'',
         drawer:'',
-        tenantId:'',
+        merchantId:'',
         name:'',
         taxNumber:'',
         taxRate:'',
+        electricityTaxRate:'',
+        serviceTaxRate:'',
+        electricityTaxClassificationCode:'',
+        serviceTaxClassificationCode:'',
         back:'',
         backAccount:'',
         billingTerminal:'',
@@ -325,11 +374,23 @@ export default {
         url:''
       }
     },
+    buildSubmitPayload() {
+      const f = this.dataForm
+      const toInt = (v) => (v === '' || v === null || v === undefined ? null : parseInt(v, 10))
+      return {
+        ...f,
+        privateKey: f.pirKey,
+        taxRate: toInt(f.taxRate),
+        electricityTaxRate: toInt(f.electricityTaxRate),
+        serviceTaxRate: toInt(f.serviceTaxRate)
+      }
+    },
     dataFormSubmit() {
       this.$refs.elForm.validate(valid => {
         if (valid) {
+          const payload = this.buildSubmitPayload()
           if(this.dataForm.id){
-            update(this.dataForm).then(res => {
+            update(payload).then(res => {
               if (res.code === 200) {
                 this.$message.success(res.msg)
                 setTimeout(() => {
@@ -341,7 +402,7 @@ export default {
               }
             })
           }else{
-            save(this.dataForm).then(res => {
+            save(payload).then(res => {
               if (res.code === 200) {
                 this.$message.success(res.msg)
                 setTimeout(() => {
