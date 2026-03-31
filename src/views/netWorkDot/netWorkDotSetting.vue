@@ -690,8 +690,7 @@ export default {
         'AMap.DistrictLayer',
         'AMap.CustomLayer'
       ],
-      // key: '87331a23c6a4e734969f8621bc166eff',
-      key: '160cab8ad6c50752175d76e61ef92c50',
+      key: (window.BaseConfig && window.BaseConfig.VUE_MAP_KEY) ? window.BaseConfig.VUE_MAP_KEY : '',
       v: '1.4.4',
 
       loadingCommission: false,

@@ -4,7 +4,6 @@ var BaseConfig = {
   VUE_APP_DOWNLOAD: 'http://127.0.0.1:8868',
   VUE_WEBSOCKET_API: 'ws://127.0.0.1:8868/api/message/websocket',
   VUE_MAP_KEY: 'd9f3969bc9d54afb5b8fbf6f82885a77',
-  VUE_MAP_SECURITY_JS_CODE: '46ee4637e0c0895db4df1aa660a9dd12',
   /**
    * 订单列表、设备列表等页的「单车 / 汽车」Tab：按顺序展示；visible: false 可隐藏某项；id 对应接口 ruleId。
    */
