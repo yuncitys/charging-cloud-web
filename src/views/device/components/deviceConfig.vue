@@ -26,6 +26,11 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
+				<el-form-item :label="'总功率'" prop="deviceTotalPower">
+					<el-input v-model="configData.deviceTotalPower" clearable placeholder="请输入总设备功率">
+						<template slot="append">W</template>
+					</el-input>
+				</el-form-item>
 				<el-form-item :label="'编号长度'" prop="length">
 					<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
 						<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
@@ -47,17 +52,6 @@
 							:value="item.id" />
 					</el-select>
 				</el-form-item>
-				<!-- <el-form-item :label="'运营商'" prop="adminId">
-					<el-select style="width: 100%;" class="filter-item" v-model="configData.adminId" filterable clearable placeholder="请选择运营商">
-						<el-option
-							v-for="item in operatorList"
-							:key="item.id"
-							:label="item.adminFullname"
-							:value="item.id"
-							@click.native="handleOptionClick(item)">
-						</el-option>
-					</el-select>
-				</el-form-item> -->
 				<el-form-item>
 					<el-button type="primary" @click="DownloadConfig('configData')" v-loading.fullscreen.lock="loading">
 						确定</el-button>
@@ -75,9 +69,6 @@
 		findDevicePriceByPriceType,
 		downLoadDeviceCodes,
 	} from '@/api/device/deviceList.js'
-  import {
-    getOperator
-  } from '@/api/agent/agentList.js'
 	import {
 		getNowTime
 	} from '@/utils/index'
@@ -106,6 +97,7 @@
 					number: '',
 					deviceQrLink: '',
 					deviceTypeId: '',
+					deviceTotalPower: '',
 					deviceChagePattern: 0,
 					devicePriceId: '',
 					ruleId: 1
@@ -123,6 +115,11 @@
 					deviceTypeId: [{
 						required: true,
 						message: '请选择端口数',
+						trigger: 'blur',
+					}],
+					deviceTotalPower: [{
+						required: true,
+						message: '请输入设备总功率',
 						trigger: 'blur',
 					}],
 					deviceChagePattern: [{
@@ -176,11 +173,6 @@
 
 		},
 		methods: {
-			handleOptionClick(item) {
-				console.log('选中的值:', item);
-				// 在这里可以执行选中后的逻辑
-				this.domainName = item.domainName
-			},
 			//选择收费类型
 			changeChagePattern(e) {
 				console.log(e)
@@ -208,19 +200,9 @@
 					}
 				})
      		},
-			getOperator() {
-				getOperator().then(res => {
-					if (res.code == 200) {
-						this.operatorList = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
-			},
 			onShowConfig() {
 				this.showConfig = true
 				this.getTypeListss()
-				this.getOperator()
 				this.getDevicePriceByPriceType()
 			},
 			ruleIdChange() {
@@ -305,17 +287,14 @@
 											obj.deviceCode = deviceCode[index]
 											obj.userName = userName[index]
 											obj.upTopic = upTopic[index]
-											// let domainName = this.getFormat(this.domainName)
-											// let ruleId = this.configData.ruleId
-											// let baseUrl = domainName + `weixin${ruleId}/miniprogram`
 											let baseUrl = this.configData.deviceQrLink
 											let urls = deviceCode[index]
 											for (let i = 0; i <= port; i++) {
 												if (i == 0) {
-													obj.deviceCodeCom = baseUrl + '?qrcode=' + urls
+													obj.deviceCodeCom = baseUrl + urls
 												} else {
 													let str = 'port' + i
-													obj[str] = baseUrl + '?qrcode=' + urls + '&port=' + i
+													obj[str] = baseUrl + urls + '&port=' + i
 												}
 											}
 											list.push(obj)

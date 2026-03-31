@@ -20,12 +20,12 @@
 					placeholder="请选择设备状态" clearable @change="handleFilter">
 					<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 				</el-select>
-			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" 
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" 
 				filterable clearable @change="handleFilter()" placeholder="归属商户">
 				<el-option
-					v-for="item in dealerList"
+					v-for="item in merchantList"
 					:key="item.id"
-					:label="item.adminFullname"
+					:label="item.name"
 					:value="item.id">
 				</el-option>
 			</el-select>
@@ -315,7 +315,6 @@
 	import {
 		getList,
 		deleteDevice,
-		findDealerList,
 		addDevicePrice,
 		batchAddDevicePrice,
 		findDevicePriceByPriceType,
@@ -324,12 +323,14 @@
 		setDeviceChargeModel,
 		batchSetDeviceChargeModel
 	} from '@/api/device/deviceList.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	import {
 		getChargingStationList
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import addPage from '../device/components/addPage.vue'
 	import wxCode from '../device/components/wxCode.vue'
 	import deviceDetail from '../device/components/deviceDetail.vue'
@@ -358,14 +359,7 @@
 		name: 'virtualDeviceList',
 		data() {
 			return {
-				activeName: '2',
-				ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
-				}],
+				activeName: getDefaultRuleIdTabName('2'),
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -379,10 +373,10 @@
 					deviceStatus: '',
 					activateStatus: '',
 					allocationStatus: 1,
-					dealerId: '',
+					merchantId: '',
 					page: 1,
 					limit: 10,
-					ruleId: 2,
+					ruleId: getDefaultRuleIdNumber('2'),
           			chargingStationIds: '',
 					devicePurpose: 'INTER_CONNECTION'
 				},
@@ -413,7 +407,7 @@
 					id: 1,
 				}],
 				//分配设备
-				dealerList: [],
+				merchantList: [],
         		chargingStationList: [],
 				showAllocation: false,
 				allocation: {
@@ -434,7 +428,7 @@
 				PriceType: {
 					deviceCode: '',
 					devicePriceId: '',
-					ruleId: 1
+					ruleId: getDefaultRuleIdNumber('2')
 				},
 				priceTypeList0: [],
 				//批量设置收费方案
@@ -442,11 +436,11 @@
 				PriceTypes: {
 					deviceCodes: '',
 					devicePriceId: '',
-					ruleId: 1
+					ruleId: getDefaultRuleIdNumber('2')
 				},
 				deviceCodes: '',
 				deviceChagePattern: 0,
-				ruleId: 1,
+				ruleId: getDefaultRuleIdNumber('2'),
 				priceTypeDialog: ''
 			}
 		},
@@ -463,6 +457,9 @@
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
+			},
 			exportKeys() {
 				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
 			},
@@ -689,14 +686,15 @@
 					this.$refs.allocation.batchUpdate(this.ids, this.activeName)
 				})
 			},
-			// 代理商列表
-			findDealerList() {
-				findDealerList().then(res => {
-					if (res.code == 200) {
-						this.dealerList = res.data
+			getMerchantList() {
+				getMerchant().then(res => {
+					if (res && res.code == 200) {
+						this.merchantList = res.data || []
 					} else {
-						this.$message.error(res.msg)
+						this.merchantList = []
 					}
+				}).catch(() => {
+					this.merchantList = []
 				})
 			},
 			//批量设置收费方案
@@ -854,8 +852,7 @@
 		},
 		created() {
 			this.getLists()
-			this.findDealerList()
-			this.getfindDevicePriceByPriceType()
+			this.getMerchantList()
 		},
 	}
 </script>

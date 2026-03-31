@@ -24,15 +24,6 @@
       	@keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入用户手机号" v-model="listQuery.phoneNumber" class="filter-item" clearable
 	    	@keyup.enter.native="handleFilter" @clear="handleFilter()" />
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
-        placeholder="请选择代理商">
-          <el-option
-            v-for="item in dealerList"
-            :key="item.id"
-            :label="item.adminFullname"
-            :value="item.id">
-          </el-option>
-      </el-select>
       <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
         查询
       </el-button>
@@ -252,7 +243,6 @@
   import DownChargingUserChargeSingle from './components/DownChargingUserChargeSingle'
   import DownChargingUserChargeSection from './components/DownChargingUserChargeSection'
   import {
-    findDealerList,
     chargingUserChargeCurve,
     chargingUserChargeSingle,
     chargingUserChargeSection
@@ -298,7 +288,6 @@
         	timeType: 3,
         	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
         	endTime: this.formatDate(new Date(),3),
-        	adminId: '',
         	userCode: '',
           phoneNumber: '',
         	page: 1,
@@ -327,7 +316,6 @@
             // return time.getTime() > Date.now() + 7 * 24 * 60 * 60 * 1000 || time.getTime() < Date.now();
           }
         },
-        dealerList: [],
         chargingStationList: [],
       }
     },
@@ -426,15 +414,6 @@
         }
         this.listQuery.startTime = this.defaultDateRange[0]
         this.listQuery.endTime = this.defaultDateRange[1]
-      },
-      getDealerList() {
-      	findDealerList().then(res => {
-      		if (res.code == 200) {
-      			this.dealerList = res.data;
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
       },
       getChargingUserChargeCurve() {
         let listQuery = JSON.parse(JSON.stringify(this.listQuery))
@@ -539,7 +518,6 @@
       }
     },
     created() {
-      this.getDealerList()
       this.getChargingUserChargeCurve()
       this.getChargingUserChargeSingle()
       this.getChargingUserChargeSection()

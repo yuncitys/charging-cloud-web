@@ -90,7 +90,7 @@ export function orderRefund(data) {
 export function findDevicePowerDetails(data) {
 	return request({
 		url: '/api/web/order/findDevicePowerDetails',
-		method: 'POSt',
+		method: 'post',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
 		},

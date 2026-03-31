@@ -23,23 +23,30 @@ export function getList(data) {
 }
 
 //编辑运营商
+// export function updateAdminUser(data) {
+// 	return request({
+// 		url: '/api/permission/admin/updateAdminUser',
+// 		method: 'post',
+// 		headers: {
+// 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+// 		},
+// 		transformRequest: [
+// 			function(data) {
+// 				var ret = ''
+// 				for (var it in data) {
+// 					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+// 				}
+// 				ret = ret.substring(0, ret.lastIndexOf('&'))
+// 				return ret
+// 			}
+// 		],
+// 		data
+// 	})
+// }
 export function updateAdminUser(data) {
 	return request({
 		url: '/api/permission/admin/updateAdminUser',
 		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
 	})
 }
@@ -67,23 +74,30 @@ export function deleteAdminUser(data) {
 }
 
 //添加代理商
+// export function addAdminUser(data) {
+// 	return request({
+// 		url: '/api/permission/admin/addAdminUser',
+// 		method: 'post',
+// 		headers: {
+// 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+// 		},
+// 		transformRequest: [
+// 			function(data) {
+// 				var ret = ''
+// 				for (var it in data) {
+// 					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+// 				}
+// 				ret = ret.substring(0, ret.lastIndexOf('&'))
+// 				return ret
+// 			}
+// 		],
+// 		data
+// 	})
+// }
 export function addAdminUser(data) {
 	return request({
 		url: '/api/permission/admin/addAdminUser',
 		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
 	})
 }
@@ -204,6 +218,28 @@ export function unbindingAccount(data) {
 	return request({
 		url: '/api/permission/admin/unbindingAccount',
 		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
+//获取帐号权限ID
+export function getDataPermissionsIdList(data) {
+	return request({
+		url: '/api/permission/dataPermissions/getDataPermissionsIdList',
+		method: 'POST',
 		headers: {
 			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
 		},

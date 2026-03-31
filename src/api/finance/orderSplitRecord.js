@@ -42,4 +42,11 @@ export function exportExcel(data) {
 	})
 }
 
+export function getDetail(params) {
+	return request({
+		url: '/api/web/splitRecord/detail',
+		method: 'get',
+		params
+	})
+}
 

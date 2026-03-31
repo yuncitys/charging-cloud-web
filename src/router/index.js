@@ -350,6 +350,57 @@ export const constantRoutes = [{
     }]
   },
   {
+    path: '/tradeEntry',
+    component: Layout,
+    redirect: '/tradeEntry/list',
+    name: 'TradeEntry',
+    meta: {
+      title: '交易商户',
+      icon: 'money'
+    },
+    children: [
+      {
+        path: 'list',
+        name: 'TradeEntryList',
+        component: () => import('@/views/tradeEntry/index'),
+        meta: {
+          title: '进件列表',
+          icon: 'list'
+        }
+      },
+      {
+        path: 'add',
+        name: 'AddTradeEntry',
+        component: () => import('@/views/tradeEntry/entry'),
+        hidden: true,
+        meta: {
+          title: '商户进件',
+          noCache: true
+        }
+      },
+      {
+        path: 'edit/:id',
+        name: 'EditTradeEntry',
+        component: () => import('@/views/tradeEntry/entry'),
+        hidden: true,
+        meta: {
+          title: '修改进件',
+          noCache: true
+        }
+      },
+      {
+        path: 'detail/:id',
+        name: 'DetailTradeEntry',
+        component: () => import('@/views/tradeEntry/detail'),
+        hidden: true,
+        meta: {
+          title: '进件详情',
+          noCache: true
+        }
+      }
+    ]
+  },
+  {
     path: '/order',
     component: Layout,
     redirect: '/order/scanOrderList',
@@ -390,6 +441,16 @@ export const constantRoutes = [{
       meta: {
         title: '包月订单',
         icon: 'el-icon-connection',
+      }
+    }, {
+      path: 'orderDetail',
+      component: () => import('@/views/order/components/orderDetail.vue'),
+      name: 'orderDetail',
+      hidden: true,
+      meta: {
+        title: '订单详情',
+        noCache: true,
+        activeMenu: '/order/scanOrderList'
       }
     }, ]
   },
@@ -450,6 +511,15 @@ export const constantRoutes = [{
       meta: {
         title: '站点管理',
         icon: 'el-icon-help',
+      }
+    }, {
+      path: 'setting/:id',
+      component: () => import('@/views/netWorkDot/netWorkDotSetting'),
+      name: 'netWorkDotSetting',
+      hidden: true,
+      meta: {
+        title: '站点设置',
+        noCache: true
       }
     }, ]
   },
@@ -583,6 +653,15 @@ export const constantRoutes = [{
         icon: 'el-icon-document',
       }
     }, {
+      path: 'rechargeRecordDetail',
+      component: () => import('@/views/finance/rechargeRecordDetail'),
+      name: 'rechargeRecordDetail',
+      hidden: true,
+      meta: {
+        title: '充值记录详情',
+        icon: 'el-icon-document',
+      }
+    }, {
       path: 'refundRecord',
       component: () => import('@/views/finance/refundRecord'),
       name: 'refundRecord',
@@ -604,6 +683,15 @@ export const constantRoutes = [{
       name: 'orderSplitRecord',
       meta: {
         title: '分成记录',
+        icon: 'el-icon-document',
+      }
+    }, {
+      path: 'orderSplitRecordDetail',
+      component: () => import('@/views/finance/orderSplitRecordDetail'),
+      name: 'orderSplitRecordDetail',
+      hidden: true,
+      meta: {
+        title: '分成记录详情',
         icon: 'el-icon-document',
       }
     }, {
@@ -652,6 +740,14 @@ export const constantRoutes = [{
       name: 'invoiceRecord',
       meta: {
         title: '开票记录',
+        icon: 'el-icon-document',
+      }
+    }, {
+      path: 'commissionStrategy',
+      component: () => import('@/views/finance/commissionStrategy/index'),
+      name: 'commissionStrategy',
+      meta: {
+        title: '抽成费用策略',
         icon: 'el-icon-document',
       }
     }]
@@ -747,6 +843,25 @@ export const constantRoutes = [{
         meta: {
           title: '租户管理',
           icon: 'el-icon-s-operation',
+        }
+      },
+      {
+        path: 'merchantList',
+        component: () => import('@/views/merchant/merchantList'),
+        name: 'merchantList',
+        meta: {
+          title: '商户管理',
+          icon: 'el-icon-s-operation',
+        }
+      },
+      {
+        path: 'merchantTradeEntryDetail',
+        component: () => import('@/views/merchant/merchantTradeEntryDetail'),
+        name: 'merchantTradeEntryDetail',
+        hidden: true,
+        meta: {
+          title: '商户进件详情',
+          icon: 'el-icon-document'
         }
       },
       {
@@ -946,6 +1061,42 @@ export const constantRoutes = [{
       meta: {
         title: '互联电桩管理',
         icon: 'el-icon-setting',
+      }
+    }]
+  },
+  {
+    path: '/payment',
+    component: Layout,
+    redirect: '/billPaymentInfo',
+    alwaysShow: true, // will always show the root menu
+    name: 'payment',
+    meta: {
+      title: '支付中心',
+      icon: 'peoples',
+    },
+    children: [{
+      path: 'billPaymentInfo',
+      component: () => import('@/views/payment/billPaymentInfo'),
+      name: 'billPaymentInfo',
+      meta: {
+        title: '支付流水',
+        icon: 'el-icon-s-check',
+      }
+    },{
+      path: 'billPaymentLog',
+      component: () => import('@/views/payment/billPaymentLog'),
+      name: 'billPaymentLog',
+      meta: {
+        title: '支付日志',
+        icon: 'el-icon-s-check',
+      }
+    },{
+      path: 'billRefundInfo',
+      component: () => import('@/views/payment/billRefundInfo'),
+      name: 'billRefundInfo',
+      meta: {
+        title: '退款流水',
+        icon: 'el-icon-s-check',
       }
     }]
   },

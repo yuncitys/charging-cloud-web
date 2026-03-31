@@ -2,7 +2,7 @@
 	<div class="app-container">
 		<div class="filter-container">
 			<el-input v-model="listQuery.name" style="width: 200px;margin-right: 20px ;" class="filter-item"
-				placeholder="请输入商户名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+				placeholder="请输入租户名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.manageName" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入管理员名称" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.managePhone" style="width: 200px;margin-right: 20px ;" class="filter-item"
@@ -26,7 +26,7 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-				<el-table-column prop="name" label="运营商户名称" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column prop="name" label="租户名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="companyName" label="公司名称" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>

@@ -1,12 +1,7 @@
 <template>
-	<div> <!-- style="display: inline-block;" -->
-		<!-- <el-button style="margin-right: 20px ;" type="primary" @click="onshowAdd" class="filter-item"
-			v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:add')">
-      		新增充电站
-		</el-button> -->
-
+	<div> 
 		<!-- 新增充电站 -->
-		<el-dialog :visible.sync="showAdd" :title="title" @close="showAdd = false" :destroy-on-close="true" :append-to-body="true" width="60%">
+		<el-dialog :visible.sync="showAdd" :title="title" @close="showAdd = false" :destroy-on-close="true" :append-to-body="true" width="60%" :close-on-click-modal="false">
 			<div style="width: 100%; height:100px;">
 				<el-steps :active="currentStep" align-center>
 					<el-step title="基础信息"></el-step>
@@ -15,30 +10,40 @@
 				</el-steps>
 			</div>
 			<el-form v-if="currentStep === 1" ref="formData" :model="formData" label-position="left" label-width="120px" style="width: 800px; margin-left:50px;" :rules="rules">
-				<el-form-item :label="'充电站类型'" prop="ruleId">
+				<!-- <el-form-item :label="'充电站类型'" prop="ruleId">
 					<el-radio-group v-model="formData.ruleId" :disabled = "isDetail">
 						<el-radio :label="1">单车充电站</el-radio>
 						<el-radio :label="2">汽车充电站</el-radio>
 					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'运营商户'" prop="tenantId">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.tenantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
+				</el-form-item> -->
+				<el-form-item :label="'运营商户'" prop="merchantId">
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.merchantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
 						<el-option
-							v-for="item in operatorList"
-							:key="item.operatorId"
+							v-for="item in merchantList"
+							:key="item.id"
 							:label="item.name"
-							:value="item.operatorId + ''">
+							:value="item.id">
+						</el-option>
+					</el-select>
+				</el-form-item>
+				<el-form-item :label="'计费标准'" prop="pricingRuleId" v-if="formData.ruleId == 2">
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.pricingRuleId" filterable clearable placeholder="请选择站点计费标准" :disabled = "isDetail">
+						<el-option
+							v-for="item in priceTypeList"
+							:key="item.id"
+							:label="item.feeName"
+							:value="item.id">
 						</el-option>
 					</el-select>
 				</el-form-item>
 				<el-form-item :label="'充电站名称'" prop="networkName">
 					<el-input v-model="formData.networkName" placeholder="请输入充电站名称" clearable :disabled = "isDetail"/>
 				</el-form-item>
-				<el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
+				<!-- <el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
 					<el-input v-model="formData.startingPrice" placeholder="请输入充电站最低起充电价(元)" clearable type = "number" :disabled = "isDetail">
 						<template slot="append">元</template>
 					</el-input>
-				</el-form-item>
+				</el-form-item> -->
 				<el-form-item :label="'充电站位置'" prop="networkAddress">
 					<el-input v-model="formData.networkAddress" placeholder="请在下方投放地输入地址查询或者手动输入" clearable :disabled = "isDetail"/>
 				</el-form-item>
@@ -158,7 +163,7 @@
 					<el-input v-model="formData.parkFeeTip" placeholder="请输入停车收费提示" clearable type="text" :disabled = "isDetail"/>
 				</el-form-item>
 				<el-form-item :label="'站点标签'" prop="stationTag">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple collapse-tags placeholder="请选择站点标签" :disabled = "isDetail">
+					<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple placeholder="请选择站点标签" :disabled = "isDetail">
 						<el-option
 							v-for="item in stationTagList"
 							:key="item.id + ''"
@@ -166,6 +171,37 @@
 							:value="item.id + ''">
 						</el-option>
 					</el-select>
+				</el-form-item>
+				<el-form-item :label="'电站图片'" prop="stationPictures">
+					<div class="picture-grid">
+						<div class="picture-slot" v-for="slot in stationPictureSlots" :key="slot.sort">
+							<el-upload
+								action=""
+								:show-file-list="false"
+								:disabled="isDetail"
+								:http-request="(p) => handleStationPictureUpload(slot.sort, p)"
+								accept=".jpg,.jpeg,.png,.gif">
+								<div class="picture-box">
+									<el-image
+										v-if="isDetail && getPictureUrl(slot.sort)"
+										:src="getPictureUrl(slot.sort)"
+										:preview-src-list="[getPictureUrl(slot.sort)]"
+										style="width: 100%; height: 100%;"
+										fit="contain">
+									</el-image>
+									<el-image
+										v-else-if="getPictureUrl(slot.sort)"
+										:src="getPictureUrl(slot.sort)"
+										style="width: 100%; height: 100%;"
+										fit="contain">
+									</el-image>
+									<i v-else class="el-icon-plus picture-plus"></i>
+								</div>
+							</el-upload>
+							<div class="picture-label">{{ slot.label }}</div>
+						</div>
+					</div>
+					<div class="picture-tip">图片仅支持 .jpg、.jpeg、.png、.gif，建议比例4:3，最多5张</div>
 				</el-form-item>
 				<el-form-item :label="'站场备注'" prop="remark">
 					<el-input v-model="formData.remark" placeholder="请输入备注信息" clearable  type="textarea" :disabled = "isDetail"/>
@@ -187,8 +223,15 @@
 		updateNetworkDot
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
-      getOperator
+    	getOperator
     } from '@/api/operator/operator.js'
+	import {
+    	getMerchant
+    } from '@/api/merchant/merchant.js'
+	import {
+		findDevicePriceByPriceType
+	} from '@/api/device/deviceList.js'
+	import { upload } from '@/api/upload/file'
 	import loadMap from "../../../utils/loadMap.js";
 	import {
 		parseTime
@@ -380,7 +423,7 @@
 						message: '请输入充电站名称',
 						trigger: 'blur'
 					}],
-					tenantId: [{
+					merchantId: [{
 						required: true,
 						message: '请选择归属运营商户',
 						trigger: 'change'
@@ -466,14 +509,26 @@
 						trigger: 'blur'
 					}],
 					stationTag: [{
+						type: 'array',
 						required: true,
 						message: '请选择站点标签',
-						trigger: 'blur'
+						trigger: 'change'
 					}],
 					businessHours: [{
+						type: 'array',
 						required: true,
 						message: '请选择营业时间',
-						trigger: 'blur'
+						trigger: 'change'
+					}],
+					stationPictures: [{
+						type: 'array',
+						required: true,
+						validator: (rule, value, callback) => {
+							const hasPicture = (this.stationPictureSlots || []).some(s => s && s.url)
+							if (!hasPicture) callback(new Error('请至少上传1张站点图片'))
+							else callback()
+						},
+						trigger: 'change'
 					}],
 					remark: [{
 						required: true,
@@ -483,7 +538,12 @@
 					auxiliaryDeviceCheckList: [{
 						required: true,
 						message: '请选择站场辅助设备',
-						trigger: 'blur'
+						trigger: 'change'
+					}],
+					pricingRuleId: [{
+						required: true,
+						message: '请选择站场计费标准',
+						trigger: 'change'
 					}],
 				},
 				title: "新增站点",
@@ -492,6 +552,15 @@
 				currentStep: 1,
 				showAdd: false,
         		operatorList: [],
+				merchantList: [],
+				priceTypeList: [],
+				stationPictureSlots: [
+					{ sort: 1, label: '主入口图', url: '' },
+					{ sort: 2, label: '标志路径', url: '' },
+					{ sort: 3, label: '电站全景', url: '' },
+					{ sort: 4, label: '电桩特写', url: '' },
+					{ sort: 5, label: '其它图片', url: '' }
+				],
 				formData: {
 					networkAddress: '',
 					networkName: '',
@@ -517,9 +586,12 @@
 					phone: '',
 					parkFeeType: '',
 					parkFeeTip: '',
-					stationTag: '',
-					businessHours: '',
+					stationTag: [],
+					businessHours: [],
+					stationPictures: [],
 					remark: '',
+					pricingRuleId: '',
+					merchantId: ''
 				},
 				mapInput: "",
 				// 地图实例
@@ -536,8 +608,7 @@
 					"AMap.DistrictLayer",
 					"AMap.CustomLayer"
 				],
-				key: '87331a23c6a4e734969f8621bc166eff',
-				// key: '160cab8ad6c50752175d76e61ef92c50',
+				key: (window.BaseConfig && window.BaseConfig.VUE_MAP_KEY) ? window.BaseConfig.VUE_MAP_KEY : '',
 				v: "1.4.4"// 地图版本
 			}
 		},
@@ -576,39 +647,6 @@
 				this.formData.isBarrierGate = auxiliaryDeviceCheckList.includes("isBarrierGate")
 				console.log("表单数据:",this.formData)
 			},
-			// querySearch(queryString, cb) {
-			// 	var restaurants = this.restaurants;
-			// 	let restaurantsText = []
-			// 	if (restaurants.length != '') {
-			// 		restaurants.forEach((item, index) => {
-			// 			let obj = {
-			// 				value: '',
-			// 				dealerId: ''
-			// 			}
-			// 			let value = item.adminName + "(" + item.adminFullname + ")"
-			// 			obj.value = value
-			// 			obj.dealerId = item.id
-			// 			restaurantsText.push(obj)
-			// 		})
-			// 	}
-			// 	var results = queryString ? restaurantsText.filter(this.createFilter(queryString)) : restaurantsText;
-			// 	// 调用 callback 返回建议列表的数据
-			// 	cb(results);
-			// },
-			// createFilter(queryString) {
-			// 	return (restaurant) => {
-			// 		return (restaurant.value.toLowerCase().indexOf(queryString.toLowerCase()) > -1);
-			// 	};
-			// },
-			// changeName() {
-			// 	if (this.formData.adminName == '') {
-			// 		this.formData.adminId = ''
-			// 	}
-			// },
-			// addchangeDealer(item) {
-			// 	this.formData.adminId = item.dealerId
-			// 	this.formData.adminName = item.value + ''
-			// },
 			initMap() {
 				let _this = this
 				loadMap(_this.key, _this.plugins, _this.v).then(AMap => {
@@ -710,7 +748,7 @@
 					}
 				})
 			},
-			onshowAdd(formData,isDetail) {
+			onshowAdd(formData,isDetail, defaultRuleId) {
 				this.showAdd = true
 				if(formData == null){
 					this.isEdit = false
@@ -728,7 +766,7 @@
 						networkCity: '',
 						networkRegion: '',
 						startingPrice: 0.0,
-						ruleId: 1,
+						ruleId: Number(defaultRuleId || 1),
 						type: 1,
 						locationAddress: 1,
 						capacity: '',
@@ -742,10 +780,11 @@
 						phone: '',
 						parkFeeType: '',
 						parkFeeTip: '',
-						stationTag: '',
-						businessHours: '',
+						stationTag: [],
+						businessHours: [],
 						remark: '',
 					}
+					this.resetStationPictures([])
 				} else if (!isDetail) {
 					this.isEdit = true
 					this.isDetail = false
@@ -755,7 +794,7 @@
 					this.formData.isLockFlag = !!formData.isLockFlag;
 					this.formData.businessHours = JSON.parse(formData.businessHours) || []
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
-					
+					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
 				} else {
 					this.isDetail = true
 					this.isEdit = false
@@ -765,27 +804,36 @@
 					this.formData.isLockFlag = !!formData.isLockFlag;
 					this.formData.businessHours = JSON.parse(formData.businessHours) || []
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
+					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
 				}
 				this.mapInput = ''
-				this.getOperator()
+				this.getMerchant()
+				this.getDevicePriceByPriceType()
 				this.$nextTick(() => {
 					this.initMap()
 				})
 			},
 			onformData(formName) {
 				let data = this.formData
-				if (data.tenantId == '' || data.tenantId == null || data.tenantId == undefined) {
-					this.$message.error('请选择运营商')
-					return false
-				}
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
 					if (valid) {
 						console.log("通过")
-						data.businessHours = JSON.stringify(this.formData.businessHours)
-						data.stationTag = JSON.stringify(this.formData.stationTag)
+						const payload = {
+							...data,
+							businessHours: JSON.stringify(Array.isArray(this.formData.businessHours) ? this.formData.businessHours : []),
+							stationTag: JSON.stringify(Array.isArray(this.formData.stationTag) ? this.formData.stationTag : []),
+							stationPictures: this.stationPictureSlots.filter(s => s.url).slice(0, 5).map(s => ({
+							pictureUrl: s.url,
+							sort: s.sort
+							}))
+						}
+						if (!payload.stationPictures || payload.stationPictures.length < 1) {
+							this.$message.error('请至少上传1张站点图片')
+							return false
+						}
 						if (!this.isEdit){
-							addNetworkDot(data).then(res => {
+							addNetworkDot(payload).then(res => {
 								if (res.code == 200) {
 									this.showAdd = false
 									this.resetForm(formName)
@@ -796,7 +844,7 @@
 								}
 							})
 						} else {
-							updateNetworkDot(data).then(res => {
+							updateNetworkDot(payload).then(res => {
 								if (res.code == 200) {
 									this.showAdd = false
 									this.resetForm(formName)
@@ -818,9 +866,80 @@
 			},
 			getOperator() {
 				getOperator().then(res => {
-					this.operatorList = res.data
+					this.operatorList = res.data || []
 				})
 			},
+			 getMerchant() {
+				getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
+					if (res && res.code == 200) {
+					this.merchantList = res.data || []
+					}
+				})
+			},
+			getDevicePriceByPriceType() {
+				let data = {
+					priceType: 1,
+					ruleId: 2
+				}
+				findDevicePriceByPriceType(data).then(res => {
+					if (res.code == 200) {
+						this.priceTypeList = res.data || []
+					}
+				})
+			},
+				getPictureUrl(sort) {
+					const f = this.stationPictureSlots.find(s => s.sort === sort)
+					return f ? f.url : ''
+				},
+				setPictureUrl(sort, url) {
+					const idx = this.stationPictureSlots.findIndex(s => s.sort === sort)
+					if (idx !== -1) {
+						this.$set(this.stationPictureSlots, idx, {
+							...this.stationPictureSlots[idx],
+							url
+						})
+					}
+					this.formData.stationPictures = this.stationPictureSlots.filter(s => s && s.url).map(s => s.url)
+					this.$refs['formData'] && this.$refs['formData'].validateField('stationPictures')
+				},
+				handleStationPictureUpload(sort, params) {
+					const file = params.file
+					if (!file) return
+					const name = file.name || ''
+					const type = file.type || ''
+					const extOk = /\.(jpe?g|png|gif)$/i.test(name)
+					const mimeOk = /^image\/(jpeg|png|gif)$/i.test(type)
+					if (!extOk && !mimeOk) {
+						this.$message.error('仅支持 jpg/jpeg/png/gif')
+						return
+					}
+					const form = new FormData()
+					form.append('file', file)
+					upload('WebAnnexFile', form).then(res => {
+						const url = res && res.data && (res.data.url || res.data)
+						this.setPictureUrl(sort, url || res.data)
+						this.$message.success('上传成功')
+					}).catch(() => {
+						this.$message.error('上传失败')
+					})
+				},
+				resetStationPictures(list) {
+					const base = [
+						{ sort: 1, label: '主入口图', url: '' },
+						{ sort: 2, label: '标志路径', url: '' },
+						{ sort: 3, label: '电站全景', url: '' },
+						{ sort: 4, label: '电桩特写', url: '' },
+						{ sort: 5, label: '其它图片', url: '' }
+					]
+					if (Array.isArray(list)) {
+						list.forEach(it => {
+							const s = base.find(b => String(b.sort) === String(it.sort))
+							if (s) s.url = it.pictureUrl || ''
+						})
+					}
+					this.stationPictureSlots = base
+					this.formData.stationPictures = this.stationPictureSlots.filter(s => s && s.url).map(s => s.url)
+				}
 		},
 		created() {
 
@@ -913,5 +1032,40 @@
 		-webkit-transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 		transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 		width: 100%;
+	}
+
+	.picture-grid {
+		display: flex;
+		align-items: flex-start;
+		gap: 20px;
+		flex-wrap: wrap;
+	}
+	.picture-slot {
+		width: 120px;
+	}
+	.picture-box {
+		width: 120px;
+		height: 120px;
+		border: 1px solid #e4e7ed;
+		border-radius: 6px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #fff;
+	}
+	.picture-plus { 
+		font-size: 28px; 
+		color: #909399;
+	}
+	.picture-label {
+		text-align: center;
+		color: #409EFF;
+		margin-top: 8px;
+		font-size: 12px;
+	}
+	.picture-tip {
+		margin-top: 8px;
+		color: #909399;
+		font-size: 12px;
 	}
 </style>

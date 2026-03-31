@@ -20,11 +20,11 @@
 				placeholder="请选择设备状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
-			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.dealerId" filterable clearable @change="handleFilter()" placeholder="请选择代理商">
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()" placeholder="归属商户">
 			    <el-option
-			      v-for="item in dealerList"
+			      v-for="item in merchantList"
 			      :key="item.id"
-			      :label="item.adminFullname"
+			      :label="item.name"
 			      :value="item.id">
 			    </el-option>
 			</el-select>
@@ -225,19 +225,20 @@
 	import {
 		getList,
 		deleteDevice,
-		findDealerList,
 		addDevicePrice,
 		batchAddDevicePrice,
 		findDevicePriceByPriceType,
 		updateDeviceStatus,
 		operationDevice
 	} from '@/api/device/deviceList.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	import {
 		getChargingStationList
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 	import QRCode from 'qrcodejs2'
 	import wxCode from './components/wxCode.vue'
 	import deviceDetail from './components/deviceDetail.vue'
@@ -265,7 +266,7 @@
 		name: 'warehousing',
 		data() {
 			return {
-				activeName: '1',
+				activeName: getDefaultRuleIdTabName(),
 				tableKey: 0,
 				page: 1,
 				limit: 10,
@@ -278,15 +279,15 @@
 					networkAddress: '',
 					deviceStatus: '',
 					activateStatus: '',
-          			dealerId: '',
+          			merchantId: '',
 					allocationStatus: 2,
 					page: 1,
 					limit: 10,
-					ruleId: 1,
+					ruleId: getDefaultRuleIdNumber(),
           			chargingStationIds: '',
 					devicePurpose: 'DIRECT_CONNECTION'
 				},
-				dealerList: [],
+				merchantList: [],
 				chargingStationList: [],
 				cacheKey: 'warehousingList',
 				formThead: {
@@ -312,13 +313,6 @@
 				}, {
 					title: '在线',
 					id: 1,
-				}],
-				ruleIdList: [{
-					id: '1',
-					title: '单车'
-				}, {
-					id: '2',
-					title: '汽车'
 				}]
 			}
 		},
@@ -338,16 +332,17 @@
 			deep: true   // 监听内部任意属性变化
 		},
 		mounted() {
-			findDealerList().then(res => {
-				if (res.code == 200) {
-					this.dealerList = res.data
-				} else {
-					this.$message.error(res.msg)
-				}
+			getMerchant().then(res => {
+				this.merchantList = (res && res.code == 200) ? (res.data || []) : []
+			}).catch(() => {
+				this.merchantList = []
 			}),
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {
+			ruleIdList() {
+				return getRuleIdTabs()
+			},
 			exportKeys() {
 				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
 			},

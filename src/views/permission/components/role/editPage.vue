@@ -4,14 +4,18 @@
 			@click="showDidlaoEditData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':permission:role:edit')">编辑
 		</el-button>
-		<el-dialog :visible.sync="showEdit" title="编辑角色" @close="showEdit = false" :append-to-body="true">
+		<el-dialog :visible.sync="showEdit" title="编辑角色" @close="showEdit = false" @opened="syncRoleTypeRadioOptions"
+			:append-to-body="true">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;" :rules="rules">
 				<el-form-item :label="'角色名称'" prop="roleName">
 					<el-input v-model="editData.roleName" placeholder="请输入角色名称" clearable />
 				</el-form-item>
-				<el-form-item :label="'角色备注'" prop="roleRemark">
-					<el-input v-model="editData.roleRemark" placeholder="请输入角色备注" clearable />
+				<el-form-item :label="'角色类型'" prop="roleType">
+					<el-radio-group v-model="editData.roleType" @change="onRoleTypeChange">
+						<el-radio v-for="opt in roleTypeRadioOptions" :key="'rt-' + opt.value" :label="opt.value"
+							:disabled="opt.disabled">{{ opt.label }}</el-radio>
+					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'数据权限'" prop="dataScope">
 					<el-select v-model="editData.dataScope" class="filter-item" placeholder="请选择数据权限"
@@ -19,6 +23,9 @@
 						<el-option v-for="item in dataScopeList" :key="item.id" :label="item.title"
 							:value="item.id" />
 					</el-select>
+				</el-form-item>
+				<el-form-item :label="'角色备注'" prop="roleRemark">
+					<el-input v-model="editData.roleRemark" placeholder="请输入角色备注" clearable />
 				</el-form-item>
 				<el-form-item :label="'功能权限'">
 					<el-input v-model="filterTextEdit" placeholder="输入关键字进行过滤" />
@@ -43,6 +50,7 @@
 		updateRole,
 		deleteRole
 	} from '@/api/permission/role.js'
+	import { getRoleTypeOptionsForEdit } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		props:{
 			row_data:{
@@ -54,13 +62,15 @@
 		},
 		data(){
 			return {
+				roleTypeRadioOptions: [],
 				showEdit: false,
 				editData: {
 					myRoleId: '',
 					roleName: '',
 					roleRemark: '',
 					menuIdArray: '',
-					dataScope:''
+					dataScope:'',
+					roleType:''
 				},
 				rules: {
 					roleName: [{
@@ -81,6 +91,11 @@
 					menuIdArray: [{
 						required: true,
 						message: '请选择功能权限',
+						trigger: 'change'
+					}],
+					roleType: [{
+						required: true,
+						message: '请选择角色类型',
 						trigger: 'change'
 					}],
 				},
@@ -114,6 +129,12 @@
 			}
 		},
 		methods:{
+			syncRoleTypeRadioOptions() {
+				this.roleTypeRadioOptions = getRoleTypeOptionsForEdit(this.$store.getters.adminUser, this.editData.roleType)
+			},
+			onRoleTypeChange() {
+				this.$nextTick(() => this.syncRoleTypeRadioOptions())
+			},
 			showDidlaoEditData() {
 				let item=this.row_data
 				this.ger_role_id=[]
@@ -123,6 +144,7 @@
 				this.editData.roleRemark = item.remark
 				this.editData.menuIdArray = item.menuIdArray
 				this.editData.dataScope = item.dataScope ? item.dataScope : ''
+				this.editData.roleType = item.roleType ? item.roleType : ''
 				let data = {
 					roleId: item.id
 				}
@@ -131,10 +153,12 @@
 						let menuList = res.data
 						this.treeData = menuList
 						this.showEdit = true
+						this.syncRoleTypeRadioOptions()
 						if (menuList.length != '') {
 							this.test_parse(menuList)
 						}
 						this.$nextTick(() => {
+							this.syncRoleTypeRadioOptions()
 							this.$refs.editTree.setCheckedKeys(this.ger_role_id)
 						})
 					}else {

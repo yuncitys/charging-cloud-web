@@ -22,11 +22,6 @@
             :value="item.id">
           </el-option>
       </el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable
-        clearable @change="handleFilter()" placeholder="请选择代理商">
-        <el-option v-for="item in dealerList" :key="item.id" :label="item.adminFullname" :value="item.id">
-        </el-option>
-      </el-select>
       <el-select v-model="listQuery.orderStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
         placeholder="请选择订单状态" clearable @change="handleFilter">
         <el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
@@ -275,25 +270,24 @@
             <span>{{ scope.row.createTime | formatDate }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="380" fixed="right">
+        <el-table-column label="操作" align="center" width="200" fixed="right">
           <template slot-scope="scope">
-            <order-detail :row_data="scope.row" />
-            <power-charts :row_data="scope.row" />
             <el-button
               size="mini"
-              type="danger"
-              icon="el-icon-delete"
-              style="margin-left: 10px;"
-              @click="deleteOrder(scope.row.orderCode)"
-              v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')"
-            >删除</el-button>
-            <el-dropdown size="mini" @command="(command) => handleCommand(command, scope.row)">
-              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 10px;">更多</el-button>
+              type="primary"
+              icon="el-icon-view"
+              @click="goOrderDetail(scope.row)"
+              v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
+            >详情</el-button>
+            <el-dropdown size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
+              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 8px;">更多</el-button>
               <el-dropdown-menu slot="dropdown">
                 <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
                   v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1">结束订单</el-dropdown-item>
                 <el-dropdown-item command="handleAbnormalOrderSettlement" icon="el-icon-warning-outline"
                   v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement') && scope.row.orderStatus == 1">异常结算</el-dropdown-item>
+                <el-dropdown-item command="handleDeleteOrder" icon="el-icon-delete" divided
+                  v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">删除</el-dropdown-item>
               </el-dropdown-menu>
             </el-dropdown>
           </template>
@@ -312,11 +306,9 @@
   import {
     getList,
     deleteOrder,
-    findOrderInfoById,
     closeOrder,
     downloadExcel,
     orderRefund,
-    findDevicePowerDetails,
     abnormalOrderSettlement,
   } from '@/api/order/scanOrderList.js'
   import {
@@ -326,38 +318,24 @@
     getNowTime
   } from '@/utils/index'
   import {
-    findDealerList,
-  } from '@/api/device/deviceList.js'
-  import {
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
-  import orderDetail from './components/orderDetail.vue'
-  import powerCharts from './components/powerCharts.vue'
+  import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
   import downExcel from './components/downExcel.vue'
   import imgView from '@/components/Common/imgView.vue'
   export default {
     name: 'monthOrderList',
     components: {
-      orderDetail,
-      powerCharts,
       downExcel,
       imgView
     },
     data() {
       return {
-        activeName: '1',
-        ruleIdList: [{
-          id: '1',
-          title: '单车'
-        }, {
-          id: '2',
-          title: '汽车'
-        }],
+        activeName: getDefaultRuleIdTabName(),
         listLoading: true,
         page: 1,
         limit: 10,
         list: [],
-        dealerList: [],
         chargingStationList: [],
         total: 10,
         tableKey: 0,
@@ -375,9 +353,8 @@
           createTimeEnd: '',
           networkProvince: '',
           networkName: '',
-          adminId: '',
           adminName: '',
-          ruleId: 1,
+          ruleId: getDefaultRuleIdNumber(),
           chargingStationIds: ''
         },
         cacheKey: 'monthOrderList',
@@ -445,6 +422,11 @@
         time: ''
       }
     },
+    computed: {
+      ruleIdList() {
+        return getRuleIdTabs()
+      }
+    },
     filters: {
       formatDate: function (time) {
         if (!time) {
@@ -466,6 +448,13 @@
       this.getChargingStationList(this.activeName)
     },
     methods: {
+      goOrderDetail(row) {
+        if (!row || row.id == null) {
+          this.$message.warning('缺少订单 ID')
+          return
+        }
+        this.$router.push({ path: '/order/orderDetail', query: { orderId: row.id }})
+      },
       getChargingStationList(ruleId){
         const data = {
           ruleId: ruleId
@@ -492,6 +481,9 @@
             break;
           case "handleOrderSplitRecord":
             this.toOrderSplitRecord(row.orderCode)
+            break;
+          case "handleDeleteOrder":
+            this.deleteOrder(row.orderCode)
             break;
           default:
             break;
@@ -557,15 +549,6 @@
             this.list = list
             this.total = res.count
             this.listLoading = false
-          } else {
-            this.$message.error(res.msg)
-          }
-        })
-      },
-      findDealerList() {
-        findDealerList().then(res => {
-          if (res.code == 200) {
-            this.dealerList = res.data
           } else {
             this.$message.error(res.msg)
           }
@@ -665,7 +648,6 @@
         }
       }
       this.getLists()
-      this.findDealerList()
     },
 
   }

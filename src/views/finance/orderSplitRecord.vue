@@ -9,12 +9,12 @@
 				placeholder="请选择状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
 			</el-select>
-			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
-				placeholder="请选择分账用户">
+			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
+				placeholder="请选择商户">
 				<el-option
-					v-for="item in dealerList"
+					v-for="item in merchantList"
 					:key="item.id"
-					:label="item.adminFullname + '(' + item.adminName + ')'"
+					:label="item.name"
 					:value="item.id">
 				</el-option>
 			</el-select>
@@ -38,12 +38,14 @@
 				</el-table-column>
 				<el-table-column label="分账订单" prop="splitOrderCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="收款账号" prop="adminFullname" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="业务订单" prop="bizOrderCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
+				<!-- <el-table-column label="收款账号" prop="merchantName" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column label="分账金额(元)" prop="splitAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
+				<!-- <el-table-column label="到账金额(元)" prop="amount" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column label="追回金额(元)" prop="refundedAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
@@ -52,19 +54,19 @@
 				</el-table-column>
 				<el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
 				<template slot-scope="scope">
-					<el-tag v-if="scope.row.splitType === 0">分成</el-tag>
+					<span v-if="scope.row.splitType === 0">充电</span>
 				</template>
 				</el-table-column>
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
             			<el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
-						<el-tag v-if="scope.row.status == 'RPOCESSED'">处理中</el-tag>
-						<el-tag type="success"v-if="scope.row.status == 'FINISH'">已完成</el-tag>
+						<el-tag type="danger" v-if="scope.row.status == 'PROCESSING'">处理中</el-tag>
+						<el-tag type="success" v-if="scope.row.status == 'FINISH'">已完成</el-tag>
 						<el-tag type="danger" v-if="scope.row.status == 'FAIL'">分账失败</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
+				<!-- <el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column> -->
 				<el-table-column prop="failReason" label="失败原因" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
@@ -77,6 +79,11 @@
 				<el-table-column prop="updateTime" label="更新时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.updateTime | formatDate }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="操作" align="center" width="120" fixed="right">
+					<template slot-scope="scope">
+						<el-button type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -95,8 +102,8 @@
 		getList,
 	} from '@/api/finance/orderSplitRecord.js'
 	import {
-		getAgent
-	} from '@/api/agent/agentList.js'
+		getMerchant
+	} from '@/api/merchant/merchant.js'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -117,7 +124,7 @@
 					page: 1,
 					limit: 10,
 					status: '',
-					adminId: '',
+					merchantId: 0,
 					orderCode: '',
 					splitOrderCode: '',
 					createTimeStart: '',
@@ -143,7 +150,7 @@
 				],
 
 				time: '',
-        		dealerList: [],
+        		merchantList: [],
 			}
 		},
 		filters: {
@@ -202,12 +209,27 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
-			findDealerList() {
-				getAgent().then(res => {
-					if (res.code == 200) {
-						this.dealerList = res.data
+			getMerchantList() {
+				getMerchant({ type: 1 }).then(res => {
+					if (res && res.code == 200) {
+						const list = Array.isArray(res.data) ? res.data : []
+						const hasPlatform = list.some(i => String(i.id) === '0')
+						this.merchantList = hasPlatform ? list : [{ id: 0, name: '平台商户' }].concat(list)
 					} else {
+						this.merchantList = []
 						this.$message.error(res.msg)
+					}
+				}).catch(() => {
+					this.merchantList = []
+				})
+			},
+			handleDetail(row) {
+				const id = row && (row.id || row.splitRecordId) ? (row.id || row.splitRecordId) : ''
+				if (id === null || id === undefined || id === '') return
+				this.$router.push({
+					name: 'orderSplitRecordDetail',
+					query: {
+						id
 					}
 				})
 			},
@@ -215,7 +237,7 @@
 		created() {
 			this.listQuery.splitOrderCode = this.$route.query.orderCode || ''
 			this.getList()
-			this.findDealerList()
+			this.getMerchantList()
 		},
 	}
 </script>

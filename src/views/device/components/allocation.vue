@@ -7,12 +7,12 @@
 						placeholder="请选择代理商" @select="changeDealer" clearable :debounce='0' style="width: 100%;"
 						@change="changeName" :disabled="showAdmin"></el-autocomplete>
 				</el-form-item> -->
-				<el-form-item :label="'代理商户'" prop="dealerId">
-					<el-select style="width: 100%" class="filter-item" v-model="allocation.dealerId" @change="changeDealer" filterable placeholder="请选择代理商">
+				<el-form-item :label="'归属商户'" prop="merchantId">
+					<el-select style="width: 100%" class="filter-item" v-model="allocation.merchantId" @change="changeDealer" filterable placeholder="请选择归属商户">
 						<el-option
-							v-for="item in dealerList"
+							v-for="item in merchantList"
 							:key="item.id"
-							:label="item.adminFullname + '(' + item.adminName + ')'"
+							:label="item.name"
 							:value="item.id">
 						</el-option>
 					</el-select>
@@ -46,28 +46,28 @@
 
 <script>
 	import {
-		findDealerList,
 		findNetworkList,
 		deviceAllocation,
 		batchUpdateNetworkDot
 	} from '@/api/device/deviceList.js'
+	import { getMerchant } from '@/api/merchant/merchant'
 	export default {
 		data() {
 			return {
-				dealerList: [],
+				merchantList: [],
 				dotList: [],
 				showAllocation: false,
 				allocation: {
 					deviceId: '',
 					networkDotId: '',
-					dealerId: '',
+					merchantId: '',
 					deviceName: '',
 				},
 				showNetwork: true,
 				chooseRules: {
-					dealerId: [{
+					merchantId: [{
 						required: true,
-						message: '请选择代理商',
+						message: '请选择归属商户',
 						trigger: 'change'
 					}],
 					deviceName: [{
@@ -140,36 +140,38 @@
 				};
 			},
 			changeName() {
-				this.allocation.dealerId = ''
+				this.allocation.merchantId = ''
 				this.allocation.networkDotId = ''
 			},
 			//选择代理商
 			changeDealer(id) {
 				this.showNetwork = false
-				this.allocation.dealerId = id
+				this.allocation.merchantId = id
 				this.allocation.networkDotId = ''
 				this.dotList = []
 				this.findNetworkList(id)
 			},
 			//代理商列表
-			findDealerList() {
-				findDealerList().then(res => {
-					if (res.code == 200) {
-						this.dealerList = res.data
+			getMerchantList() {
+				getMerchant().then(res => {
+					if (res && res.code == 200) {
+						this.merchantList = res.data || []
 						this.showAdmin = false
 					} else {
-						this.$message.error(res.msg)
+						this.merchantList = []
 					}
+				}).catch(() => {
+					this.merchantList = []
 				})
 			},
 			ruleIdChange() {
 				this.allocation.networkDotId = ''
-				this.findNetworkList(this.allocation.dealerId)
+				this.findNetworkList(this.allocation.merchantId)
 			},
 			//充电站列表
 			findNetworkList(id) {
 				let data = {
-					dealerId: id,
+					merchantId: id,
 					ruleId: this.ruleId
 				}
 				findNetworkList(data).then(res => {
@@ -189,14 +191,13 @@
 				}
 				this.dotList = []
 				this.showAllocation = true
-				this.showNetwork = false
+				this.showNetwork = true
 				this.delType = "more"
 				this.allocation.networkDotId = ''
-				this.allocation.dealerId = ''
+				this.allocation.merchantId = ''
 				this.allocation.deviceName = ''
 				this.ruleId = Number(activeName)
-				this.findDealerList()
-				this.findNetworkList(item.adminId)
+				this.getMerchantList()
 			},
 			//显示单个分配弹窗
 			showallocation(item) {
@@ -206,12 +207,12 @@
 				this.showNetwork = false
 				this.delType = "one"
 				this.ruleId = item.ruleId
-				this.findDealerList()
-				this.findNetworkList(item.adminId)
+				this.getMerchantList()
 				this.allocation.deviceId = item.id
 				this.allocation.deviceName = item.deviceName
-				this.allocation.dealerId = item.adminId
+				this.allocation.merchantId = item.merchantId || item.adminId || item.dealerId
 				this.allocation.networkDotId = item.networkDotId
+				this.findNetworkList(this.allocation.merchantId)
 			},
 			//确定分配
 			onallocation(formName) {
@@ -224,14 +225,14 @@
 							let data = {
 								ids: this.ids,
 								networkDotId: this.allocation.networkDotId,
-								dealerId: this.allocation.dealerId,
+								merchantId: this.allocation.merchantId,
 								deviceName: this.allocation.deviceName
 							}
 							console.log(data)
 							batchUpdateNetworkDot(data).then(res => {
 								if (res.code == 200) {
 									this.showAllocation = false
-									this.dealerId = ''
+									this.allocation.merchantId = ''
 									this.resetForm(formName)
 									this.$message.success(res.msg)
 									this.$emit('getLists')
@@ -244,7 +245,7 @@
 							deviceAllocation(this.allocation).then(res => {
 								if (res.code == 200) {
 									this.showAllocation = false
-									this.dealerId = ''
+									this.allocation.merchantId = ''
 									this.resetForm(formName)
 									this.$message.success(res.msg)
 									this.$emit('getLists')

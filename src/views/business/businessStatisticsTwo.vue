@@ -20,12 +20,12 @@
         :picker-options="pickerOptions"
         :clearable="false">
       </el-date-picker>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
-        placeholder="请选择代理商">
+      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
+        placeholder="请选择商户">
           <el-option
-            v-for="item in dealerList"
+            v-for="item in merchantList"
             :key="item.id"
-            :label="item.adminFullname"
+            :label="item.name"
             :value="item.id">
           </el-option>
       </el-select>
@@ -52,33 +52,33 @@
       </div>
       <div class="summary-cards">
         <div class="summary-card summary-card--service-count">
-          <div class="summary-label">订单总数(笔)</div>
+          <div class="summary-label">充电次数(笔)</div>
           <div class="summary-value summary-count">{{ formatNumber(summaryTotal.totalChargeNumber, 0) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--duration">
-          <div class="summary-label">总充电时长(分)</div>
-          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.totalChargeDurations, 0) }}</div>
+          <div class="summary-label">充电时长合计(h)</div>
+          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.chargeDurationHours, 2) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--amount">
-          <div class="summary-label">扫码收入(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.scanActualPrice) }}</div>
+          <div class="summary-label">订单总金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.orderTotalAmount) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--electric">
-          <div class="summary-label">刷卡收入(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.swipeActualPrice) }}</div>
+          <div class="summary-label">用户实付合计(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.userActualPayTotal) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--servicefee">
-          <div class="summary-label">实际收益(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.actualPrice) }}</div>
+          <div class="summary-label">商户实收合计(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.merchantReceiptTotal) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--power">
           <div class="summary-label">总使用电量(度)</div>
-          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 2) }}</div>
+          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
       </div>
@@ -100,25 +100,21 @@
         <DownChargingTrendStatistics :queryData="listQuery" />
       </div>
 
-      <el-table v-loading="listLoading" :key="chargingTrendList.datetime" :data="chargingTrendList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading" :key="tableKey" :data="chargingTrendList" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
       	</el-table-column>
-        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
-        </el-table-column>
-      	<el-table-column label="订单总数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="充电时长(分)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="扫码收入(元)" prop="scanActualPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="刷卡收入(元)" prop="swipeActualPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="实际收益(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
+        <el-table-column label="时间" prop="datetime" align="center" min-width="110" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="电量(度)" prop="totalPower" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="充电时长(h)" prop="chargeDurationHours" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="充电次数" prop="totalChargeNumber" align="center" sortable min-width="100" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="电费(元)" prop="electricityFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="服务费(元)" prop="serviceFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="订单总金额(元)" prop="orderTotalAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="用户实付合计(元)" prop="userActualPayTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="平台抽成费用(元)" prop="drainageCommission" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="商户实收合计(元)" prop="merchantReceiptTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
       </el-table>
       <div class="pagination-container">
       	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
@@ -133,12 +129,10 @@
   import ChargingTrendLineChart from './components/ChargingTrendLineChart'
   import DownChargingTrendStatistics from './components/DownChargingTrendStatistics'
   import {
-    findDealerList,
     chargingTrend,
-    chargingTrendList,
-    chargingStationSection,
-    chargingStationSingle
+    chargingTrendList
   } from '@/api/business/businessStatistics.js'
+  import { getMerchant } from '@/api/merchant/merchant.js'
   import {
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
@@ -165,10 +159,10 @@
         },
         summaryTotal: {
           totalChargeNumber: 0,
-          totalChargeDurations: 0,
-          scanActualPrice: 0,
-          swipeActualPrice: 0,
-          actualPrice: 0,
+          chargeDurationHours: 0,
+          orderTotalAmount: 0,
+          userActualPayTotal: 0,
+          merchantReceiptTotal: 0,
           totalPower: 0
         },
         page: 1,
@@ -181,7 +175,7 @@
         	timeType: 3,
         	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
         	endTime: this.formatDate(new Date(),3),
-        	adminId: '',
+        	merchantId: '',
         	chargingStationIds: '',
         	page: 1,
         	limit: 10,
@@ -209,7 +203,7 @@
             // return time.getTime() > Date.now() + 6 * 24 * 60 * 60 * 1000 || time.getTime() < Date.now();
           }
         },
-        dealerList: [],
+        merchantList: [],
         chargingStationList: [],
       }
     },
@@ -221,19 +215,19 @@
       updateSummaryTotalFromTrendList(list) {
         const total = {
           totalChargeNumber: 0,
-          totalChargeDurations: 0,
-          scanActualPrice: 0,
-          swipeActualPrice: 0,
-          actualPrice: 0,
+          chargeDurationHours: 0,
+          orderTotalAmount: 0,
+          userActualPayTotal: 0,
+          merchantReceiptTotal: 0,
           totalPower: 0
         }
         if (Array.isArray(list) && list.length) {
           list.forEach(item => {
             total.totalChargeNumber += Number(item.totalChargeNumber) || 0
-            total.totalChargeDurations += Number(item.totalChargeDurations) || 0
-            total.scanActualPrice += Number(item.scanActualPrice) || 0
-            total.swipeActualPrice += Number(item.swipeActualPrice) || 0
-            total.actualPrice += Number(item.actualPrice) || 0
+            total.chargeDurationHours += Number(item.chargeDurationHours) || 0
+            total.orderTotalAmount += Number(item.orderTotalAmount) || 0
+            total.userActualPayTotal += Number(item.userActualPayTotal) || 0
+            total.merchantReceiptTotal += Number(item.merchantReceiptTotal) || 0
             total.totalPower += Number(item.totalPower) || 0
           })
         }
@@ -294,14 +288,16 @@
         this.listQuery.startTime = this.defaultDateRange[0]
         this.listQuery.endTime = this.defaultDateRange[1]
       },
-      getDealerList() {
-      	findDealerList().then(res => {
-      		if (res.code == 200) {
-      			this.dealerList = res.data;
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
+      getMerchantList() {
+        getMerchant().then(res => {
+          if (res.code == 200) {
+            this.merchantList = res.data || []
+          } else {
+            this.$message.error(res.msg)
+          }
+        }).catch(() => {
+          this.merchantList = []
+        })
       },
       getChargingStationList() {
       	getChargingStationList(0).then(res => {
@@ -329,7 +325,8 @@
               chargingTrendStatistics.forEach((item, index) => {
                 lineChartData.totalPower.push(item.totalPower)
                 lineChartData.orderCount.push(item.totalChargeNumber)
-                lineChartData.orderPrice.push(item.actualPrice)
+                const amount = item.orderTotalAmount != null ? item.orderTotalAmount : item.actualPrice
+                lineChartData.orderPrice.push(amount)
                 lineChartData.datetime.push(item.datetime)
               })
             }
@@ -343,16 +340,17 @@
         this.listLoading = true
         let listQuery = JSON.parse(JSON.stringify(this.listQuery))
         chargingTrendList(listQuery).then(res => {
+          this.listLoading = false
           if (res.code == 200) {
-            this.listLoading = false
             this.total = res.count
             this.chargingTrendList = res.data
+            this.tableKey += 1
             this.updateSummaryTotalFromTrendList(res.data)
-            // console.log("chargingTrendList：",this.chargingTrendList)
-            // this.$forceUpdate()
-          }else {
-						this.$message.error(res.msg)
-					}
+          } else {
+            this.$message.error(res.msg)
+          }
+        }).catch(() => {
+          this.listLoading = false
         })
       },
       handleSetLineChartData(type) {
@@ -395,7 +393,7 @@
       }
     },
     created() {
-      this.getDealerList()
+      this.getMerchantList()
       this.getChargingStationList()
       this.getChargingTrend()
       this.getChargingTrendList()

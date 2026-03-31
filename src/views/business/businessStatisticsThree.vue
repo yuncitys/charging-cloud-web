@@ -20,12 +20,12 @@
         :picker-options="pickerOptions"
         :clearable="false">
       </el-date-picker>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.adminId" filterable clearable @change="handleFilter()"
-        placeholder="请选择代理商">
+      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
+        placeholder="请选择商户">
           <el-option
-            v-for="item in dealerList"
+            v-for="item in merchantList"
             :key="item.id"
-            :label="item.adminFullname"
+            :label="item.name"
             :value="item.id">
           </el-option>
       </el-select>
@@ -244,13 +244,13 @@
   import DownChargingStationFundStatistics from './components/DownChargingStationFundStatistics'
   import DownChargingStationSingleStatistics from './components/DownChargingStationSingleStatistics'
   import {
-    findDealerList,
     chargingTrend,
     chargingTrendList,
     chargingStationSection,
     chargingStationSingle,
     chargingStationFund
   } from '@/api/business/businessStatistics.js'
+  import { getMerchant } from '@/api/merchant/merchant.js'
   import {
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
@@ -303,7 +303,7 @@
         	timeType: 3,
         	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
         	endTime: this.formatDate(new Date(),3),
-        	adminId: '',
+        	merchantId: '',
         	chargingStationIds: '',
         	page: 1,
         	limit: 10,
@@ -331,7 +331,7 @@
             // return time.getTime() > Date.now() + 6 * 24 * 60 * 60 * 1000 || time.getTime() < Date.now();
           }
         },
-        dealerList: [],
+        merchantList: [],
         chargingStationList: [],
       }
     },
@@ -416,14 +416,16 @@
         this.listQuery.startTime = this.defaultDateRange[0]
         this.listQuery.endTime = this.defaultDateRange[1]
       },
-      getDealerList() {
-      	findDealerList().then(res => {
-      		if (res.code == 200) {
-      			this.dealerList = res.data;
-      		} else {
-      			this.$message.error(res.msg)
-      		}
-      	})
+      getMerchantList() {
+        getMerchant().then(res => {
+          if (res.code == 200) {
+            this.merchantList = res.data || []
+          } else {
+            this.$message.error(res.msg)
+          }
+        }).catch(() => {
+          this.merchantList = []
+        })
       },
       getChargingStationList() {
       	getChargingStationList(0).then(res => {
@@ -451,7 +453,8 @@
               chargingTrendStatistics.forEach((item, index) => {
                 lineChartData.totalPower.push(item.totalPower)
                 lineChartData.orderCount.push(item.totalChargeNumber)
-                lineChartData.orderPrice.push(item.actualPrice)
+                const amount = item.orderTotalAmount != null ? item.orderTotalAmount : item.actualPrice
+                lineChartData.orderPrice.push(amount)
                 lineChartData.datetime.push(item.datetime)
               })
             }
@@ -527,7 +530,7 @@
       },
       handleSizeChange(val) {
       	this.listQuery.limit = val
-      	this.getChargingStationSingleList()()
+      	this.getChargingStationSingleList()
       },
       handleCurrentChange(val) {
       	this.listQuery.page = val
@@ -562,7 +565,7 @@
       }
     },
     created() {
-      this.getDealerList()
+      this.getMerchantList()
       this.getChargingStationList()
       this.getChargingTrend()
       this.getChargingStationSingleList()
