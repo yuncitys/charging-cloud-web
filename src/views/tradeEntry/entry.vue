@@ -892,8 +892,17 @@ export default {
           const request = isUpdate ? updateTradeEntry : addTradeEntry
           request(this.form).then(res => {
             if (res && res.code === 200) {
-              const merNoFromResp = res.data && (res.data.busTradeMerNo || res.data)
-              const busTradeMerNo = merNoFromResp || this.form.busTradeMerNo
+              const data = (res && res.data) || {}
+              const merNoFromResp =
+                (data && typeof data === 'string' ? data : '') ||
+                (data && data.busTradeMerNo) ||
+                (data && data.tradeEntry && data.tradeEntry.busTradeMerNo) ||
+                ''
+
+              // 保存成功后，把接口返回的商户号写回表单，避免二次提交仍为空
+              if (merNoFromResp) this.$set(this.form, 'busTradeMerNo', merNoFromResp)
+
+              const busTradeMerNo = this.form.busTradeMerNo
               return submitTradeEntry(busTradeMerNo).then(sres => {
                 if (sres && sres.code === 200) {
                   this.$message({ message: '提交成功', type: 'success' })
