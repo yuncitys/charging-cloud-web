@@ -67,10 +67,10 @@
 				</el-table-column>
 				<!-- <el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column> -->
-				<el-table-column prop="failReason" label="失败原因" align="center" :show-overflow-tooltip="isPc">
+				<!-- <el-table-column prop="failReason" label="失败原因" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
+				</el-table-column> -->
 				<el-table-column prop="createTime" label="分账时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
@@ -124,7 +124,7 @@
 					page: 1,
 					limit: 10,
 					status: '',
-					merchantId: 0,
+					merchantId: '',
 					orderCode: '',
 					splitOrderCode: '',
 					createTimeStart: '',
