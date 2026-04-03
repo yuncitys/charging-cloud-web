@@ -278,7 +278,7 @@
 				return ordered.map(prop => ({ prop, label: labelMap[prop] || prop }))
 			},
 			getSplitColumns(list) {
-				const hiddenProps = ['splitType', 'userId', 'adminId', 'tenantId']
+				const hiddenProps = ['splitType', 'userId', 'adminId', 'tenantId', 'amount', 'transactionAmount', 'billingDetails', 'failReason', 'remark']
 				const labelMap = {
 					id: 'ID',
 					orderCode: '分账单号',
@@ -287,18 +287,18 @@
 					bizOrderCode: '业务订单号',
 					// splitType: '分账类型',
 					splitAmount: '分账金额',
-					amount: '到账金额',
+					// amount: '到账金额',
 					refundedAmount: '已退款金额',
-					transactionAmount: '交易金额',
+					// transactionAmount: '交易金额',
 					serviceCharge: '手续费',
 					splitRate: '分账比例',
 					status: '状态',
 					payType: '支付方式',
-					billingDetails: '计费明细',
-					remark: '备注',
-					failReason: '失败原因',
-					createTime: '创建时间',
-					updateTime: '更新时间'
+					// billingDetails: '计费明细',
+					// remark: '备注',
+					// failReason: '失败原因',
+					createTime: '分账时间',
+					updateTime: '成功时间'
 				}
 				const preferredProps = [
                     'id',
@@ -308,16 +308,16 @@
                     'bizOrderCode',
 					// 'splitType',
 					'splitAmount',
-                    'amount',
+                    // 'amount',
                     'refundedAmount',
-                    'transactionAmount',
+                    // 'transactionAmount',
                     'serviceCharge',
 					'splitRate',
 					'status',
                     'payType',
-					'billingDetails',
-                    'remark',
-					'failReason',
+					// 'billingDetails',
+                    // 'remark',
+					// 'failReason',
 					'createTime',
 					'updateTime',
 				]
