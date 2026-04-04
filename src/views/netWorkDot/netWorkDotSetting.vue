@@ -192,7 +192,7 @@
 
         <el-form v-else ref="detailForm" :model="editStation" :rules="detailFormRules" label-position="left" label-width="120px" size="medium" class="detail-edit">
           <el-divider content-position="left">基础信息</el-divider>
-          <el-row>
+          <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="站点名称">
                 <el-input v-model="editStation.networkName" />
@@ -284,7 +284,7 @@
           <div id="GDMapSetting" class="detail-map" v-show="activeTab === 'detail'"></div>
 
           <el-divider content-position="left">监管信息</el-divider>
-          <el-row>
+          <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="电站位置">
                 <el-radio-group v-model="editStation.locationAddress">
@@ -341,7 +341,7 @@
           </el-row>
 
           <el-divider content-position="left">运营信息</el-divider>
-          <el-row>
+          <el-row :gutter="20">
             <el-col :span="24">
               <el-form-item label="站场辅助设备">
                 <el-checkbox v-model="editStation.isBarrierGate" label="道闸">道闸</el-checkbox>
