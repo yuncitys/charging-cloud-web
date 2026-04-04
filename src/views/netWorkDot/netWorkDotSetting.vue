@@ -60,6 +60,12 @@
               </el-col>
               <el-col :span="24">
                 <div class="kv">
+                  <div class="kv__label">归属地区</div>
+                  <div class="kv__value">{{ stationAreaDisplayText }}</div>
+                </div>
+              </el-col>
+              <el-col :span="24">
+                <div class="kv">
                   <div class="kv__label">电站图片</div>
                   <div class="kv__value">
                     <div class="station-picture-view-grid">
@@ -184,7 +190,7 @@
           </div>
         </div>
 
-        <el-form v-else ref="detailForm" :model="editStation" label-position="left" label-width="120px" size="medium" class="detail-edit">
+        <el-form v-else ref="detailForm" :model="editStation" :rules="detailFormRules" label-position="left" label-width="120px" size="medium" class="detail-edit">
           <el-divider content-position="left">基础信息</el-divider>
           <el-row>
             <el-col :span="12">
@@ -204,6 +210,22 @@
                 <el-select v-model="editStation.pricingRuleId" filterable clearable style="width: 100%;">
                   <el-option v-for="item in priceTypeList" :key="item.id" :label="item.feeName" :value="item.id" />
                 </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="24">
+              <el-form-item label="归属地区" prop="areaPath">
+                <el-cascader
+                  :key="settingAreaCascaderKey"
+                  v-model="editStation.areaPath"
+                  :options="settingAreaOptions"
+                  :props="settingAreaCascaderProps"
+                  clearable
+                  filterable
+                  placeholder="请选择省 / 市 / 区"
+                  style="width: 100%;"
+                  append-to-body
+                  @change="handleSettingAreaChange"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="24">
@@ -571,6 +593,7 @@
 
 <script>
 import { getChargeStationById, getNetworkDotPictures, updateNetworkDot } from '@/api/netWorkDot/netWorkDotList'
+import { getAreaSelector } from '@/api/area/index.js'
 import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
 import { getMerchant } from '@/api/merchant/merchant'
 import { findDevicePriceByPriceType } from '@/api/device/deviceList'
@@ -674,7 +697,10 @@ export default {
         createUser: '',
         createTime: '',
         updateUser: '',
-        updateTime: ''
+        updateTime: '',
+        networkProvince: '',
+        networkCity: '',
+        networkRegion: ''
       },
       loadingStation: false,
       mapInput: '',
@@ -726,7 +752,31 @@ export default {
       splitLoaded: false,
       splitSaving: false,
       payeeList: [],
-      splitTableData: []
+      splitTableData: [],
+
+      settingAreaOptions: [],
+      settingAreaCascaderKey: 1,
+      settingAreaCascaderProps: {
+        value: 'id',
+        label: 'fullName',
+        children: 'children',
+        emitPath: true,
+        lazy: true,
+        lazyLoad: (node, resolve) => {
+          this.loadSettingAreaChildren(node, resolve)
+        }
+      },
+      detailFormRules: {
+        // areaPath: [{
+        //   type: 'array',
+        //   required: true,
+        //   len: 3,
+        //   message: '请选择完整的省 / 市 / 区',
+        //   trigger: 'change'
+        // }]
+      },
+      /** 基本信息只读：归属地区展示为区划名称（由 id 解析） */
+      stationAreaDisplayText: '-'
     }
   },
   created() {
@@ -741,6 +791,172 @@ export default {
       const hit = list.find(i => String(i.id) === String(id))
       if (!hit) return ''
       return hit[labelKey] || hit.name || hit.label || ''
+    },
+    formatStationAreaReadonly(row) {
+      const p = (row && row.networkProvince != null ? String(row.networkProvince) : '').trim()
+      const c = (row && row.networkCity != null ? String(row.networkCity) : '').trim()
+      const r = (row && row.networkRegion != null ? String(row.networkRegion) : '').trim()
+      if (!p && !c && !r) return '-'
+      return [p, c, r].filter(Boolean).join(' / ') || '-'
+    },
+    async loadStationAreaDisplayText() {
+      const row = this.station || {}
+      const p = (row.networkProvince != null ? String(row.networkProvince) : '').trim()
+      const c = (row.networkCity != null ? String(row.networkCity) : '').trim()
+      const d = (row.networkRegion != null ? String(row.networkRegion) : '').trim()
+      if (!p && !c && !d) {
+        this.stationAreaDisplayText = '-'
+        return
+      }
+      this.stationAreaDisplayText = '-'
+      try {
+        const res1 = await getAreaSelector('-1')
+        const provinces = this.normalizeSettingAreaList(res1)
+        const pi = this.findSettingAreaNodeBySavedValue(provinces, p)
+        if (!pi) {
+          this.stationAreaDisplayText = this.formatStationAreaReadonly(row)
+          return
+        }
+        const pName = (pi.fullName || p).trim()
+        if (!c) {
+          this.stationAreaDisplayText = pName || '-'
+          return
+        }
+        const res2 = await getAreaSelector(String(pi.id))
+        const cities = this.normalizeSettingAreaList(res2)
+        const ci = this.findSettingAreaNodeBySavedValue(cities, c)
+        if (!ci) {
+          this.stationAreaDisplayText = [pName, c, d].filter(Boolean).join(' / ')
+          return
+        }
+        const cName = (ci.fullName || c).trim()
+        if (!d) {
+          this.stationAreaDisplayText = [pName, cName].filter(Boolean).join(' / ') || '-'
+          return
+        }
+        const res3 = await getAreaSelector(String(ci.id))
+        const dists = this.normalizeSettingAreaList(res3)
+        const di = this.findSettingAreaNodeBySavedValue(dists, d)
+        const dName = di ? String(di.fullName || d).trim() : d
+        this.stationAreaDisplayText = [pName, cName, dName].filter(Boolean).join(' / ') || '-'
+      } catch (e) {
+        this.stationAreaDisplayText = this.formatStationAreaReadonly(row)
+      }
+    },
+    normalizeSettingAreaList(res) {
+      const data = res && res.data
+      const list = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : (Array.isArray(res) ? res : []))
+      return list.map(item => ({
+        ...item,
+        id: item && item.id != null ? String(item.id) : item.id
+      }))
+    },
+    findSettingAreaNodeBySavedValue(list, saved) {
+      const s = String(saved || '').trim()
+      if (!s || !Array.isArray(list)) return null
+      const byId = list.find(n => String(n.id) === s)
+      if (byId) return byId
+      return list.find(n => this.settingAreaNameMatch(n.fullName, s))
+    },
+    settingAreaNameMatch(apiName, savedName) {
+      if (!apiName || !savedName) return false
+      const a = String(apiName).replace(/\s/g, '')
+      const b = String(savedName).replace(/\s/g, '')
+      return a === b || a.includes(b) || b.includes(a)
+    },
+    loadSettingAreaChildren(node, resolve) {
+      if (!node) {
+        resolve([])
+        return
+      }
+      const level = node.level
+      const parentId = level === 0 ? '-1' : (node.value != null ? String(node.value) : '')
+      getAreaSelector(parentId).then(res => {
+        const nodes = this.normalizeSettingAreaList(res).map(item => ({
+          ...item,
+          leaf: level >= 2
+        }))
+        resolve(nodes)
+      }).catch(() => {
+        resolve([])
+      })
+    },
+    loadSettingAreaOptionsForPath(provinceId, cityId, countyId) {
+      if (!provinceId) return Promise.resolve()
+      return getAreaSelector('-1').then(res => {
+        const provinces = this.normalizeSettingAreaList(res)
+        provinces.forEach(p => {
+          p.leaf = false
+        })
+        this.settingAreaOptions = provinces
+        const provinceNode = this.settingAreaOptions.find(p => String(p.id) === String(provinceId))
+        if (!provinceNode || !cityId) return Promise.resolve()
+        return getAreaSelector(provinceId).then(res2 => {
+          const cities = this.normalizeSettingAreaList(res2)
+          cities.forEach(c => {
+            c.leaf = false
+          })
+          this.$set(provinceNode, 'children', cities)
+          const cityNode = cities.find(c => String(c.id) === String(cityId))
+          if (!cityNode || !countyId) return Promise.resolve()
+          return getAreaSelector(cityId).then(res3 => {
+            const counties = this.normalizeSettingAreaList(res3)
+            counties.forEach(a => {
+              a.leaf = true
+            })
+            this.$set(cityNode, 'children', counties)
+          })
+        })
+      }).catch(() => {
+        this.settingAreaOptions = []
+      })
+    },
+    hydrateSettingStationArea() {
+      if (!this.editStation) return Promise.resolve()
+      const p = (this.editStation.networkProvince || '').trim()
+      const c = (this.editStation.networkCity || '').trim()
+      const d = (this.editStation.networkRegion || '').trim()
+      if (!p || !c || !d) {
+        this.$set(this.editStation, 'areaPath', [])
+        return Promise.resolve()
+      }
+      return getAreaSelector('-1').then(res1 => {
+        const provinces = this.normalizeSettingAreaList(res1)
+        const pi = this.findSettingAreaNodeBySavedValue(provinces, p)
+        if (!pi) return
+        return getAreaSelector(String(pi.id)).then(res2 => {
+          const cities = this.normalizeSettingAreaList(res2)
+          const ci = this.findSettingAreaNodeBySavedValue(cities, c)
+          if (!ci) return
+          return getAreaSelector(String(ci.id)).then(res3 => {
+            const dists = this.normalizeSettingAreaList(res3)
+            const di = this.findSettingAreaNodeBySavedValue(dists, d)
+            if (!di) return
+            return this.loadSettingAreaOptionsForPath(String(pi.id), String(ci.id), String(di.id)).then(() => {
+              this.$nextTick(() => {
+                this.$set(this.editStation, 'areaPath', [String(pi.id), String(ci.id), String(di.id)])
+              })
+            })
+          })
+        })
+      }).catch(() => {})
+    },
+    handleSettingAreaChange(val) {
+      if (!this.editStation) return
+      const path = Array.isArray(val) ? val.map(v => String(v)) : []
+      this.$set(this.editStation, 'areaPath', path)
+      if (path.length === 3) {
+        this.editStation.networkProvince = path[0]
+        this.editStation.networkCity = path[1]
+        this.editStation.networkRegion = path[2]
+      } else {
+        this.editStation.networkProvince = ''
+        this.editStation.networkCity = ''
+        this.editStation.networkRegion = ''
+      }
+      this.$nextTick(() => {
+        this.$refs.detailForm && this.$refs.detailForm.validateField('areaPath')
+      })
     },
     formatBusinessHours(val) {
       const arr = Array.isArray(val) ? val : this.parseJsonArray(val)
@@ -826,17 +1042,23 @@ export default {
       this.editStation = JSON.parse(JSON.stringify(this.station || {}))
       const bh = this.parseJsonArray(this.editStation && this.editStation.businessHours)
       this.editStation.businessHours = Array.isArray(bh) ? bh : []
+      this.$set(this.editStation, 'areaPath', [])
+      this.settingAreaOptions = []
+      this.settingAreaCascaderKey += 1
       this.editStationPictureSlots = JSON.parse(JSON.stringify(this.stationPictureSlots || []))
       this.$nextTick(() => {
         this.resetMapInstance()
         this.initMap()
         this.updateMapPosition()
+        this.hydrateSettingStationArea()
       })
     },
     cancelEdit() {
       this.isEditing = false
       this.detailSaving = false
       this.editStation = null
+      this.settingAreaOptions = []
+      this.settingAreaCascaderKey += 1
       this.editStationPictureSlots = JSON.parse(JSON.stringify(this.stationPictureSlots || []))
       this.mapInput = ''
       this.$nextTick(() => {
@@ -876,6 +1098,7 @@ export default {
         pictureUrl: s.url,
         sort: s.sort
       }))
+      delete payload.areaPath
       return payload
     },
     saveStation() {
@@ -885,21 +1108,26 @@ export default {
         this.$message.error('请至少上传1张站点图片')
         return
       }
-      this.detailSaving = true
-      const payload = this.buildStationUpdatePayload()
-      updateNetworkDot(payload).then(res => {
-        if (res && res.code === 200) {
-          this.$message.success(res.msg || '保存成功')
-          this.isEditing = false
-          this.editStation = null
-          this.initStation()
-        } else {
-          this.$message.error((res && res.msg) || '保存失败')
-        }
-      }).catch(() => {
-        this.$message.error('保存失败')
-      }).finally(() => {
-        this.detailSaving = false
+      this.$refs.detailForm.validate(valid => {
+        if (!valid) return
+        this.detailSaving = true
+        const payload = this.buildStationUpdatePayload()
+        updateNetworkDot(payload).then(res => {
+          if (res && res.code === 200) {
+            this.$message.success(res.msg || '保存成功')
+            this.isEditing = false
+            this.editStation = null
+            this.settingAreaOptions = []
+            this.settingAreaCascaderKey += 1
+            this.initStation()
+          } else {
+            this.$message.error((res && res.msg) || '保存失败')
+          }
+        }).catch(() => {
+          this.$message.error('保存失败')
+        }).finally(() => {
+          this.detailSaving = false
+        })
       })
     },
     handleTabClick(tab) {
@@ -953,8 +1181,12 @@ export default {
             isBarrierGate: this.normalizeBool(data.isBarrierGate),
             isLockFlag: this.normalizeBool(data.isLockFlag),
             businessHours,
-            stationTag
+            stationTag,
+            networkProvince: data.networkProvince ?? data.network_province ?? '',
+            networkCity: data.networkCity ?? data.network_city ?? '',
+            networkRegion: data.networkRegion ?? data.network_region ?? ''
           }
+          this.loadStationAreaDisplayText()
           this.loadStationPictures()
           this.getPayeeList()
           this.$nextTick(() => {
