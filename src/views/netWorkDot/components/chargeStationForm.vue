@@ -190,6 +190,8 @@
 								start-placeholder="开始时间"
 								end-placeholder="结束时间"
 								placeholder="选择时间范围"
+								append-to-body
+								popper-class="charge-station-form__time-popper"
 								style="width: 100%; max-width: 100%;">
 							</el-time-picker>
 						</el-form-item>
@@ -583,9 +585,14 @@
 						trigger: 'change'
 					}],
 					businessHours: [{
-						type: 'array',
 						required: true,
-						message: '请选择营业时间',
+						validator: (rule, value, callback) => {
+							if (Array.isArray(value) && value.length === 2 && value[0] && value[1]) {
+								callback()
+							} else {
+								callback(new Error('请选择营业时间'))
+							}
+						},
 						trigger: 'change'
 					}],
 					stationPictures: [{
@@ -654,7 +661,7 @@
 					parkFeeType: '',
 					parkFeeTip: '',
 					stationTag: [],
-					businessHours: [],
+					businessHours: null,
 					stationPictures: [],
 					remark: '',
 					pricingRuleId: '',
@@ -701,6 +708,20 @@
 			normalizeRadioBool(val) {
 				if (val === true || val === 1 || val === '1') return true
 				return false
+			},
+			parseBusinessHoursForForm(val) {
+				if (val == null || val === '') return null
+				let arr = val
+				if (typeof val === 'string') {
+					try {
+						arr = JSON.parse(val)
+					} catch (e) {
+						return null
+					}
+				}
+				if (!Array.isArray(arr) || arr.length !== 2) return null
+				if (arr[0] == null || arr[1] == null || arr[0] === '' || arr[1] === '') return null
+				return arr
 			},
 			goBackList() {
 				this.$router.push({ path: '/netWorkDot/netWorkDotList' })
@@ -894,7 +915,7 @@
 						parkFeeType: '',
 						parkFeeTip: '',
 						stationTag: [],
-						businessHours: [],
+						businessHours: null,
 						remark: '',
 					}
 					this.resetStationPictures([])
@@ -908,7 +929,7 @@
 					this.formData.isDuty = this.normalizeRadioBool(formData.isDuty)
 					this.formData.isAloneApply = this.normalizeRadioBool(formData.isAloneApply)
 					this.formData.isPublicParkingLot = this.normalizeRadioBool(formData.isPublicParkingLot)
-					this.formData.businessHours = JSON.parse(formData.businessHours) || []
+					this.formData.businessHours = this.parseBusinessHoursForForm(this.formData.businessHours)
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
 				} else {
@@ -921,7 +942,7 @@
 					this.formData.isDuty = this.normalizeRadioBool(formData.isDuty)
 					this.formData.isAloneApply = this.normalizeRadioBool(formData.isAloneApply)
 					this.formData.isPublicParkingLot = this.normalizeRadioBool(formData.isPublicParkingLot)
-					this.formData.businessHours = JSON.parse(formData.businessHours) || []
+					this.formData.businessHours = this.parseBusinessHoursForForm(this.formData.businessHours)
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
 				}
@@ -1113,6 +1134,10 @@
 		overflow: auto;
 		padding-bottom: 16px;
 		min-height: 0;
+		overscroll-behavior: contain;
+	}
+	.charge-station-form__time-popper {
+		z-index: 3100 !important;
 	}
 	.charge-station-form {
 		width: 100%;
