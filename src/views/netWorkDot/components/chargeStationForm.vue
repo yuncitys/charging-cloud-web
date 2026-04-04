@@ -47,6 +47,26 @@
 						</el-form-item>
 					</el-col>
 				</el-row>
+				<el-row :gutter="24" class="charge-station-form__row">
+					<el-col :span="24">
+						<el-form-item :label="'归属地区'" prop="areaPath">
+							<el-cascader
+								:key="areaCascaderKey"
+								v-model="formData.areaPath"
+								:options="areaOptions"
+								:props="stationAreaCascaderProps"
+								:disabled="isDetail"
+								clearable
+								filterable
+								placeholder="请选择省 / 市 / 区"
+								style="width: 100%;"
+								append-to-body
+								popper-class="charge-station-form__area-popper"
+								@change="handleStationAreaChange"
+							/>
+						</el-form-item>
+					</el-col>
+				</el-row>
 				<el-row :gutter="24" type="flex" class="charge-station-form__row">
 					<el-col :xs="24" :sm="12">
 						<el-form-item :label="'充电站名称'" prop="networkName">
@@ -306,6 +326,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { getAreaSelector } from '@/api/area/index'
 	export default {
 		name: 'ChargeStationForm',
 		components: {},
@@ -518,20 +539,16 @@
 						message: '请选择电站位置',
 						trigger: 'blur'
 					}],
-					networkProvince: [{
+					areaPath: [{
 						required: true,
-						message: '请选择电站位置',
-						trigger: 'blur'
-					}],
-					networkCity: [{
-						required: true,
-						message: '请选择电站位置',
-						trigger: 'blur'
-					}],
-					networkRegion: [{
-						required: true,
-						message: '请选择电站位置',
-						trigger: 'blur'
+						validator: (rule, value, callback) => {
+							if (Array.isArray(value) && value.length === 3 && value[0] && value[1] && value[2]) {
+								callback()
+							} else {
+								callback(new Error('请选择归属地区（省、市、区）'))
+							}
+						},
+						trigger: 'change'
 					}],
 					capacity: [{
 						required: true,
@@ -625,6 +642,18 @@
 				isEdit: false,
 				isDetail: false,
 				currentStep: 1,
+				areaOptions: [],
+				areaCascaderKey: 1,
+				stationAreaCascaderProps: {
+					value: 'id',
+					label: 'fullName',
+					children: 'children',
+					emitPath: true,
+					lazy: true,
+					lazyLoad: (node, resolve) => {
+						this.loadStationAreaChildren(node, resolve)
+					}
+				},
         		operatorList: [],
 				merchantList: [],
 				priceTypeList: [],
@@ -645,6 +674,7 @@
 					networkProvince: '',
 					networkCity: '',
 					networkRegion: '',
+					areaPath: [],
           			startingPrice: 0.0,
 					ruleId: 1,
 					type: 1,
@@ -722,6 +752,119 @@
 				if (!Array.isArray(arr) || arr.length !== 2) return null
 				if (arr[0] == null || arr[1] == null || arr[0] === '' || arr[1] === '') return null
 				return arr
+			},
+			normalizeStationAreaList(res) {
+				const data = res && res.data
+				const list = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : (Array.isArray(res) ? res : []))
+				return list.map(item => ({
+					...item,
+					id: item && item.id != null ? String(item.id) : item.id
+				}))
+			},
+			findStationAreaNodeBySavedValue(list, saved) {
+				const s = String(saved || '').trim()
+				if (!s || !Array.isArray(list)) return null
+				const byId = list.find(n => String(n.id) === s)
+				if (byId) return byId
+				return list.find(n => this.stationAreaNameMatch(n.fullName, s))
+			},
+			stationAreaNameMatch(apiName, savedName) {
+				if (!apiName || !savedName) return false
+				const a = String(apiName).replace(/\s/g, '')
+				const b = String(savedName).replace(/\s/g, '')
+				return a === b || a.includes(b) || b.includes(a)
+			},
+			loadStationAreaChildren(node, resolve) {
+				if (!node) {
+					resolve([])
+					return
+				}
+				const level = node.level
+				const parentId = level === 0 ? '-1' : (node.value != null ? String(node.value) : '')
+				getAreaSelector(parentId).then(res => {
+					const nodes = this.normalizeStationAreaList(res).map(item => ({
+						...item,
+						leaf: level >= 2
+					}))
+					resolve(nodes)
+				}).catch(() => {
+					resolve([])
+				})
+			},
+			loadStationAreaOptionsForPath(provinceId, cityId, countyId) {
+				if (!provinceId) return Promise.resolve()
+				return getAreaSelector('-1').then(res => {
+					const provinces = this.normalizeStationAreaList(res)
+					provinces.forEach(p => {
+						p.leaf = false
+					})
+					this.areaOptions = provinces
+					const provinceNode = this.areaOptions.find(p => String(p.id) === String(provinceId))
+					if (!provinceNode || !cityId) return Promise.resolve()
+					return getAreaSelector(provinceId).then(res2 => {
+						const cities = this.normalizeStationAreaList(res2)
+						cities.forEach(c => {
+							c.leaf = false
+						})
+						this.$set(provinceNode, 'children', cities)
+						const cityNode = cities.find(c => String(c.id) === String(cityId))
+						if (!cityNode || !countyId) return Promise.resolve()
+						return getAreaSelector(cityId).then(res3 => {
+							const counties = this.normalizeStationAreaList(res3)
+							counties.forEach(a => {
+								a.leaf = true
+							})
+							this.$set(cityNode, 'children', counties)
+						})
+					})
+				}).catch(() => {
+					this.areaOptions = []
+				})
+			},
+			hydrateStationAreaFromSavedNames() {
+				const p = (this.formData.networkProvince || '').trim()
+				const c = (this.formData.networkCity || '').trim()
+				const d = (this.formData.networkRegion || '').trim()
+				if (!p || !c || !d) {
+					this.$set(this.formData, 'areaPath', [])
+					return Promise.resolve()
+				}
+				return getAreaSelector('-1').then(res1 => {
+					const provinces = this.normalizeStationAreaList(res1)
+					const pi = this.findStationAreaNodeBySavedValue(provinces, p)
+					if (!pi) return
+					return getAreaSelector(String(pi.id)).then(res2 => {
+						const cities = this.normalizeStationAreaList(res2)
+						const ci = this.findStationAreaNodeBySavedValue(cities, c)
+						if (!ci) return
+						return getAreaSelector(String(ci.id)).then(res3 => {
+							const dists = this.normalizeStationAreaList(res3)
+							const di = this.findStationAreaNodeBySavedValue(dists, d)
+							if (!di) return
+							return this.loadStationAreaOptionsForPath(String(pi.id), String(ci.id), String(di.id)).then(() => {
+								this.$nextTick(() => {
+									this.$set(this.formData, 'areaPath', [String(pi.id), String(ci.id), String(di.id)])
+								})
+							})
+						})
+					})
+				}).catch(() => {})
+			},
+			handleStationAreaChange(val) {
+				const path = Array.isArray(val) ? val.map(v => String(v)) : []
+				this.$set(this.formData, 'areaPath', path)
+				if (path.length === 3) {
+					this.formData.networkProvince = path[0]
+					this.formData.networkCity = path[1]
+					this.formData.networkRegion = path[2]
+				} else {
+					this.formData.networkProvince = ''
+					this.formData.networkCity = ''
+					this.formData.networkRegion = ''
+				}
+				this.$nextTick(() => {
+					this.$refs.formData && this.$refs.formData.validateField('areaPath')
+				})
 			},
 			goBackList() {
 				this.$router.push({ path: '/netWorkDot/netWorkDotList' })
@@ -840,17 +983,8 @@
 							geocoder.getAddress(lnglatXY, (status, result) => {
 								if (status === 'complete' && result.info === 'OK') {
 									console.log(result)
-									let province = result.regeocode.addressComponent
-										.province;
-									let city = result.regeocode.addressComponent
-										.city;
-									let district = result.regeocode.addressComponent
-										.district;
 									let towncode = result.regeocode.addressComponent.towncode;
 									_this.formData.towncode = towncode
-									_this.formData.networkProvince = province
-									_this.formData.networkCity = city
-									_this.formData.networkRegion = district
 									_this.formData.networkAddress = result.regeocode
 										.formattedAddress
 
@@ -884,6 +1018,7 @@
 				})
 			},
 			onshowAdd(formData,isDetail, defaultRuleId) {
+				this.areaOptions = []
 				if(formData == null){
 					this.isEdit = false
 					this.isDetail = false
@@ -899,6 +1034,7 @@
 						networkProvince: '',
 						networkCity: '',
 						networkRegion: '',
+						areaPath: [],
 						startingPrice: 0.0,
 						ruleId: Number(defaultRuleId || 1),
 						type: 1,
@@ -919,6 +1055,7 @@
 						remark: '',
 					}
 					this.resetStationPictures([])
+					this.areaCascaderKey++
 				} else if (!isDetail) {
 					this.isEdit = true
 					this.isDetail = false
@@ -932,6 +1069,10 @@
 					this.formData.businessHours = this.parseBusinessHoursForForm(this.formData.businessHours)
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
+					this.$set(this.formData, 'areaPath', [])
+					this.hydrateStationAreaFromSavedNames().finally(() => {
+						this.areaCascaderKey++
+					})
 				} else {
 					this.isDetail = true
 					this.isEdit = false
@@ -945,6 +1086,10 @@
 					this.formData.businessHours = this.parseBusinessHoursForForm(this.formData.businessHours)
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
+					this.$set(this.formData, 'areaPath', [])
+					this.hydrateStationAreaFromSavedNames().finally(() => {
+						this.areaCascaderKey++
+					})
 				}
 				this.mapInput = ''
 				this.getMerchant()
@@ -959,15 +1104,16 @@
 					console.log(valid)
 					if (valid) {
 						console.log("通过")
-						const payload = {
-							...data,
+						const payload = { ...data }
+						delete payload.areaPath
+						Object.assign(payload, {
 							businessHours: JSON.stringify(Array.isArray(this.formData.businessHours) ? this.formData.businessHours : []),
 							stationTag: JSON.stringify(Array.isArray(this.formData.stationTag) ? this.formData.stationTag : []),
 							stationPictures: this.stationPictureSlots.filter(s => s.url).slice(0, 5).map(s => ({
 							pictureUrl: s.url,
 							sort: s.sort
 							}))
-						}
+						})
 						if (!payload.stationPictures || payload.stationPictures.length < 1) {
 							this.$message.error('请至少上传1张站点图片')
 							return false
@@ -1136,7 +1282,8 @@
 		min-height: 0;
 		overscroll-behavior: contain;
 	}
-	.charge-station-form__time-popper {
+	.charge-station-form__time-popper,
+	.charge-station-form__area-popper {
 		z-index: 3100 !important;
 	}
 	.charge-station-form {
