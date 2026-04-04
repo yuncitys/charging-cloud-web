@@ -168,16 +168,15 @@
 				<el-row :gutter="24" type="flex" class="charge-station-form__row">
 					<el-col :xs="24" :sm="12">
 						<el-form-item :label="'站场辅助设备'" prop="">
-							<!-- <el-checkbox-group v-model="formData.auxiliaryDeviceCheckList">
-								<el-checkbox v-for="item in auxiliaryDeviceList"
-									:key="item.id"
-									:label="item.id"
-									:checked="item.default"
-									@change="changeSelect(item)"
-								>{{item.name}}</el-checkbox>
-							</el-checkbox-group> -->
 							<el-checkbox v-model="formData.isBarrierGate" label="道闸" :disabled = "isDetail">道闸</el-checkbox>
 							<el-checkbox v-model="formData.isLockFlag" label="地锁" :disabled = "isDetail">地锁</el-checkbox>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'管理员电话'" prop="phone">
+							<el-input v-model="formData.phone" placeholder="请输入管理员联系方式" clearable type="text" :disabled = "isDetail"/>
 						</el-form-item>
 					</el-col>
 					<el-col :xs="24" :sm="12">
@@ -198,11 +197,6 @@
 				</el-row>
 				<el-row :gutter="24" type="flex" class="charge-station-form__row">
 					<el-col :xs="24" :sm="12">
-						<el-form-item :label="'管理员电话'" prop="phone">
-							<el-input v-model="formData.phone" placeholder="请输入管理员联系方式" clearable type="text" :disabled = "isDetail"/>
-						</el-form-item>
-					</el-col>
-					<el-col :xs="24" :sm="12">
 						<el-form-item :label="'停车收费模式'" prop="parkFeeType">
 							<el-select style="width: 100%;" class="filter-item" v-model="formData.parkFeeType" filterable clearable placeholder="请选择停车收费类型" :disabled = "isDetail">
 								<el-option
@@ -214,14 +208,14 @@
 							</el-select>
 						</el-form-item>
 					</el-col>
-				</el-row>
-				<el-row :gutter="24" type="flex" class="charge-station-form__row">
 					<el-col :xs="24" :sm="12">
 						<el-form-item :label="'停车收费提示'" prop="parkFeeTip">
 							<el-input v-model="formData.parkFeeTip" placeholder="请输入停车收费提示" clearable type="text" :disabled = "isDetail"/>
 						</el-form-item>
 					</el-col>
-					<el-col :xs="24" :sm="12">
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :span="24">
 						<el-form-item :label="'站点标签'" prop="stationTag">
 							<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple placeholder="请选择站点标签" :disabled = "isDetail">
 								<el-option
@@ -651,9 +645,9 @@
 					capacity: '',
 					stationType: '',
 					buildAddress: '',
-					isDuty: 0,
-					isAloneApply: 0,
-					isPublicParkingLot: 0,
+					isDuty: false,
+					isAloneApply: false,
+					isPublicParkingLot: false,
 					isLockFlag: false,
 					isBarrierGate: false,
 					phone: '',
@@ -704,6 +698,10 @@
 			}
 		},
 		methods: {
+			normalizeRadioBool(val) {
+				if (val === true || val === 1 || val === '1') return true
+				return false
+			},
 			goBackList() {
 				this.$router.push({ path: '/netWorkDot/netWorkDotList' })
 			},
@@ -887,9 +885,9 @@
 						capacity: '',
 						stationType: '',
 						buildAddress: '',
-						isDuty: 0,
-						isAloneApply: 0,
-						isPublicParkingLot: 0,
+						isDuty: false,
+						isAloneApply: false,
+						isPublicParkingLot: false,
 						isLockFlag: false,
 						isBarrierGate: false,
 						phone: '',
@@ -907,6 +905,9 @@
 					this.formData = JSON.parse(JSON.stringify(formData));
 					this.formData.isBarrierGate = !!formData.isBarrierGate;
 					this.formData.isLockFlag = !!formData.isLockFlag;
+					this.formData.isDuty = this.normalizeRadioBool(formData.isDuty)
+					this.formData.isAloneApply = this.normalizeRadioBool(formData.isAloneApply)
+					this.formData.isPublicParkingLot = this.normalizeRadioBool(formData.isPublicParkingLot)
 					this.formData.businessHours = JSON.parse(formData.businessHours) || []
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
@@ -917,6 +918,9 @@
 					this.formData = JSON.parse(JSON.stringify(formData));
 					this.formData.isBarrierGate = !!formData.isBarrierGate;
 					this.formData.isLockFlag = !!formData.isLockFlag;
+					this.formData.isDuty = this.normalizeRadioBool(formData.isDuty)
+					this.formData.isAloneApply = this.normalizeRadioBool(formData.isAloneApply)
+					this.formData.isPublicParkingLot = this.normalizeRadioBool(formData.isPublicParkingLot)
 					this.formData.businessHours = JSON.parse(formData.businessHours) || []
 					this.formData.stationTag = JSON.parse(formData.stationTag) || []
 					this.resetStationPictures(Array.isArray(formData.stationPictures) ? formData.stationPictures : [])
