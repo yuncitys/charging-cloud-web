@@ -133,7 +133,7 @@
 		parseTime
 	} from '@/utils/index'
 	import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
-	import addPage from '../netWorkDot/components/chargeStationDialog.vue'
+	import addPage from '../netWorkDot/components/chargeStationForm.vue'
 	import editPage from '../netWorkDot/components/editPage.vue'
   	import setSplitAccountPage from '../netWorkDot/components/setSplitAccountPage.vue'
 	import downExcel from '../netWorkDot/components/downExcel.vue'

@@ -94,7 +94,7 @@
 						<!-- 抽成规则 -->
 						<el-button type="primary" size="mini" @click="toStationSetting(scope.row)">设置</el-button>
 						<!-- 编辑 -->
-						<!-- <chargeStationDialog :row_data="scope.row" @getLists="getLists" /> -->
+						<!-- <charge-station-form :row_data="scope.row" @getLists="getLists" /> -->
 						<!-- <el-button type="primary" style="margin-left: 10px;" size = "mini" @click="addOrUpdateHandle(scope.row,false)" 
 							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')">编辑
 						</el-button> -->
