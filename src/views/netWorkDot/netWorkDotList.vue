@@ -196,7 +196,6 @@
         />
       </div>
     </div>
-    <ChargeStationDialog ref="chargeStationForm" @getLists="getLists" />
   </div>
 </template>
 
@@ -206,11 +205,10 @@ import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
 import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
 import downExcel from './components/downExcel.vue'
-import ChargeStationDialog from './components/chargeStationDialog.vue'
 
 export default {
   name: 'NetWorkDotList',
-  components: { ChargeStationDialog, downExcel },
+  components: { downExcel },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -289,9 +287,21 @@ export default {
       })
     },
     addOrUpdateHandle(row, isDetail) {
-      this.$nextTick(() => {
-        const defaultRuleId = Number(this.activeName || this.listQuery.ruleId || 1)
-        this.$refs.chargeStationForm.onshowAdd(row, isDetail, defaultRuleId)
+      const defaultRuleId = Number(this.activeName || this.listQuery.ruleId || 1)
+      if (row && row.id) {
+        this.$router.push({
+          path: '/netWorkDot/chargeStationForm',
+          query: {
+            id: String(row.id),
+            ruleId: String(defaultRuleId),
+            detail: isDetail ? '1' : '0'
+          }
+        })
+        return
+      }
+      this.$router.push({
+        path: '/netWorkDot/chargeStationForm',
+        query: { ruleId: String(defaultRuleId) }
       })
     },
     handleClick(tab) {

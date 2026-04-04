@@ -1,226 +1,300 @@
 <template>
-	<div> 
-		<!-- 新增充电站 -->
-		<el-dialog :visible.sync="showAdd" :title="title" @close="showAdd = false" :destroy-on-close="true" :append-to-body="true" width="60%" :close-on-click-modal="false">
-			<div style="width: 100%; height:100px;">
+	<div class="charge-station-page app-container">
+		<div class="charge-station-page__toolbar">
+			<el-button icon="el-icon-arrow-left" @click="handleCancel">返回</el-button>
+			<span class="charge-station-page__title">{{ title }}</span>
+		</div>
+		<div class="charge-station-page__content">
+			<div class="charge-station-page__center-wrap">
+			<div class="charge-station-page__steps">
 				<el-steps :active="currentStep" align-center>
 					<el-step title="基础信息"></el-step>
 					<el-step title="监管信息"></el-step>
 					<el-step title="运营信息"></el-step>
 				</el-steps>
 			</div>
-			<el-form v-if="currentStep === 1" ref="formData" :model="formData" label-position="left" label-width="120px" style="width: 800px; margin-left:50px;" :rules="rules">
+			<div class="charge-station-page__body-scroll">
+			<el-form v-if="currentStep === 1" ref="formData" :model="formData" label-position="left" label-width="120px" class="charge-station-form" :rules="rules">
 				<!-- <el-form-item :label="'充电站类型'" prop="ruleId">
 					<el-radio-group v-model="formData.ruleId" :disabled = "isDetail">
 						<el-radio :label="1">单车充电站</el-radio>
 						<el-radio :label="2">汽车充电站</el-radio>
 					</el-radio-group>
 				</el-form-item> -->
-				<el-form-item :label="'运营商户'" prop="merchantId">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.merchantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
-						<el-option
-							v-for="item in merchantList"
-							:key="item.id"
-							:label="item.name"
-							:value="item.id">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'计费标准'" prop="pricingRuleId" v-if="formData.ruleId == 2">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.pricingRuleId" filterable clearable placeholder="请选择站点计费标准" :disabled = "isDetail">
-						<el-option
-							v-for="item in priceTypeList"
-							:key="item.id"
-							:label="item.feeName"
-							:value="item.id">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'充电站名称'" prop="networkName">
-					<el-input v-model="formData.networkName" placeholder="请输入充电站名称" clearable :disabled = "isDetail"/>
-				</el-form-item>
-				<!-- <el-form-item :label="'充电起始价'" prop="startingPrice" v-if="formData.ruleId == 2">
-					<el-input v-model="formData.startingPrice" placeholder="请输入充电站最低起充电价(元)" clearable type = "number" :disabled = "isDetail">
-						<template slot="append">元</template>
-					</el-input>
-				</el-form-item> -->
-				<el-form-item :label="'充电站位置'" prop="networkAddress">
-					<el-input v-model="formData.networkAddress" placeholder="请在下方投放地输入地址查询或者手动输入" clearable :disabled = "isDetail"/>
-				</el-form-item>
-				<el-form-item :label="'充电站经度'" prop="networkLongitude">
-					<el-input v-model="formData.networkLongitude" placeholder="请在下方投放地输入地址查询" clearable type="number" :disabled = "isDetail"/>
-				</el-form-item>
-				<el-form-item :label="'充电站纬度'" prop="networkLatitude">
-					<el-input v-model="formData.networkLatitude" placeholder="请在下方投放地输入地址查询" clearable type="number" :disabled = "isDetail"/>
-				</el-form-item>
-				<!-- <el-form-item :label="'省'" prop="networkProvince">
-					<el-input v-model="formData.networkProvince" placeholder="请在下方投放地输入地址查询" clearable disabled />
-				</el-form-item>
-				<el-form-item :label="'市'" prop="networkCity">
-					<el-input v-model="formData.networkCity" placeholder="请在下方投放地输入地址查询" clearable disabled />
-				</el-form-item>
-				<el-form-item :label="'区'" prop="networkRegion">
-					<el-input v-model="formData.networkRegion" placeholder="请在下方投放地输入地址查询" clearable disabled />
-				</el-form-item> -->
-				<el-form-item :label="'投放地查询'" prop="">
-					<input id="tipinput" placeholder="请输入大概地址查询" type="text" v-model="mapInput" autocomplete="off" v-if="showAdd" :disabled = "isDetail"/>
-				</el-form-item>
-				<el-form-item :label="''" prop="">
-					<el-tag type="warning" style="font-size: 16px;">在投放地输入框内查询小区位置后，可点击地图再次选取更详细的楼层或街道地址</el-tag>
-				</el-form-item>
-				<div id="GDMap" style="height:400px;width: 900px;margin: 60px 0;" v-if="showAdd"></div>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="formData.ruleId == 2 ? 12 : 24">
+						<el-form-item :label="'运营商户'" prop="merchantId">
+							<el-select style="width: 100%;" class="filter-item" v-model="formData.merchantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
+								<el-option
+									v-for="item in merchantList"
+									:key="item.id"
+									:label="item.name"
+									:value="item.id">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					</el-col>
+					<el-col v-if="formData.ruleId == 2" :xs="24" :sm="12">
+						<el-form-item :label="'计费标准'" prop="pricingRuleId">
+							<el-select style="width: 100%;" class="filter-item" v-model="formData.pricingRuleId" filterable clearable placeholder="请选择站点计费标准" :disabled = "isDetail">
+								<el-option
+									v-for="item in priceTypeList"
+									:key="item.id"
+									:label="item.feeName"
+									:value="item.id">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'充电站名称'" prop="networkName">
+							<el-input v-model="formData.networkName" placeholder="请输入充电站名称" clearable :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'充电站位置'" prop="networkAddress">
+							<el-input v-model="formData.networkAddress" placeholder="请在下方投放地输入地址查询或者手动输入" clearable :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'充电站经度'" prop="networkLongitude">
+							<el-input v-model="formData.networkLongitude" placeholder="请在下方投放地输入地址查询" clearable type="number" :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'充电站纬度'" prop="networkLatitude">
+							<el-input v-model="formData.networkLatitude" placeholder="请在下方投放地输入地址查询" clearable type="number" :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" class="charge-station-form__row">
+					<el-col :span="24">
+						<el-form-item :label="'投放地查询'" prop="">
+							<input id="tipinput" placeholder="请输入大概地址查询" type="text" v-model="mapInput" autocomplete="off" :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" class="charge-station-form__row">
+					<el-col :span="24">
+						<el-form-item :label="''" prop="">
+							<el-tag type="warning" style="font-size: 16px;">在投放地输入框内查询小区位置后，可点击地图再次选取更详细的楼层或街道地址</el-tag>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row class="charge-station-form__row">
+					<el-col :span="24">
+						<div id="GDMap" class="charge-station-page__map"></div>
+					</el-col>
+				</el-row>
 			</el-form>
-			<el-form v-if="currentStep === 2" ref="formData" :model="formData" label-position="left" label-width="120px" style="width: 800px; margin-left:50px;" :rules="rules">
-				<el-form-item :label="'电站位置'" prop="locationAddress">
-					<el-radio-group v-model="formData.locationAddress" :disabled = "isDetail">
-						<el-radio :label="1">地上电站</el-radio>
-						<el-radio :label="2">地下电站</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'可用电容'" prop="capacity">
-					<el-input v-model="formData.capacity" placeholder="请输入充电站最大电容" clearable type="number" :disabled = "isDetail">
-						<template slot="append">KWA</template>
-					</el-input>
-				</el-form-item>
-				<el-form-item :label="'电站类型'" prop="stationType">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.stationType" filterable clearable placeholder="请选择电站类型" :disabled = "isDetail">
-						<el-option
-							v-for="item in stationTypeList"
-							:key="item.id"
-							:label="item.name"
-							:value="item.id">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'建设场所'" prop="buildAddress">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.buildAddress" filterable clearable placeholder="请选择电站建设场所" :disabled = "isDetail">
-						<el-option
-							v-for="item in buildAddressList"
-							:key="item.id"
-							:label="item.name"
-							:value="item.id">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'人员值守'" prop="isDuty">
-					<el-radio-group v-model="formData.isDuty" :disabled = "isDetail">
-						<el-radio :label="false">否</el-radio>
-						<el-radio :label="true">是</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'独立报装'" prop="isAloneApply">
-					<el-radio-group v-model="formData.isAloneApply" :disabled = "isDetail">
-						<el-radio :label="false">否</el-radio>
-						<el-radio :label="true">是</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item :label="'公共停车场'" prop="isPublicParkingLot">
-					<el-radio-group v-model="formData.isPublicParkingLot" :disabled = "isDetail">
-						<el-radio :label="false">否</el-radio>
-						<el-radio :label="true">是</el-radio>
-					</el-radio-group>
-				</el-form-item>
+			<el-form v-if="currentStep === 2" ref="formData" :model="formData" label-position="left" label-width="120px" class="charge-station-form" :rules="rules">
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'电站位置'" prop="locationAddress">
+							<el-radio-group v-model="formData.locationAddress" :disabled = "isDetail">
+								<el-radio :label="1">地上电站</el-radio>
+								<el-radio :label="2">地下电站</el-radio>
+							</el-radio-group>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'可用电容'" prop="capacity">
+							<el-input v-model="formData.capacity" placeholder="请输入充电站最大电容" clearable type="number" :disabled = "isDetail">
+								<template slot="append">KWA</template>
+							</el-input>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'电站类型'" prop="stationType">
+							<el-select style="width: 100%;" class="filter-item" v-model="formData.stationType" filterable clearable placeholder="请选择电站类型" :disabled = "isDetail">
+								<el-option
+									v-for="item in stationTypeList"
+									:key="item.id"
+									:label="item.name"
+									:value="item.id">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'建设场所'" prop="buildAddress">
+							<el-select style="width: 100%;" class="filter-item" v-model="formData.buildAddress" filterable clearable placeholder="请选择电站建设场所" :disabled = "isDetail">
+								<el-option
+									v-for="item in buildAddressList"
+									:key="item.id"
+									:label="item.name"
+									:value="item.id">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'人员值守'" prop="isDuty">
+							<el-radio-group v-model="formData.isDuty" :disabled = "isDetail">
+								<el-radio :label="false">否</el-radio>
+								<el-radio :label="true">是</el-radio>
+							</el-radio-group>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'独立报装'" prop="isAloneApply">
+							<el-radio-group v-model="formData.isAloneApply" :disabled = "isDetail">
+								<el-radio :label="false">否</el-radio>
+								<el-radio :label="true">是</el-radio>
+							</el-radio-group>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'公共停车场'" prop="isPublicParkingLot">
+							<el-radio-group v-model="formData.isPublicParkingLot" :disabled = "isDetail">
+								<el-radio :label="false">否</el-radio>
+								<el-radio :label="true">是</el-radio>
+							</el-radio-group>
+						</el-form-item>
+					</el-col>
+				</el-row>
 			</el-form>
-			<el-form v-if="currentStep === 3" ref="formData" :model="formData" label-position="left" label-width="120px" style="width: 800px; margin-left:50px;" :rules="rules">
-				<el-form-item :label="'站场辅助设备'" prop="">
-					<!-- <el-checkbox-group v-model="formData.auxiliaryDeviceCheckList">
-						<el-checkbox v-for="item in auxiliaryDeviceList"
-							:key="item.id"
-							:label="item.id"
-							:checked="item.default"
-							@change="changeSelect(item)"
-						>{{item.name}}</el-checkbox>
-					</el-checkbox-group> -->
-					<el-checkbox v-model="formData.isBarrierGate" label="道闸" :disabled = "isDetail">道闸</el-checkbox>
-					<el-checkbox v-model="formData.isLockFlag" label="地锁" :disabled = "isDetail">地锁</el-checkbox>
-				</el-form-item>
-				<el-form-item :label="'营业时间'" prop="businessHours">
-					<el-time-picker
-						:disabled = "isDetail"
-						is-range
-						v-model="formData.businessHours"
-						value-format="HH:mm:ss"
-						range-separator="至"
-						start-placeholder="开始时间"
-						end-placeholder="结束时间"
-						placeholder="选择时间范围">
-					</el-time-picker>
-				</el-form-item>
-				<el-form-item :label="'管理员电话'" prop="phone">
-					<el-input v-model="formData.phone" placeholder="请输入管理员联系方式" clearable type="text" :disabled = "isDetail"/>
-				</el-form-item>
-				<el-form-item :label="'停车收费模式'" prop="parkFeeType">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.parkFeeType" filterable clearable placeholder="请选择停车收费类型" :disabled = "isDetail">
-						<el-option
-							v-for="item in parkFeeType"
-							:key="item.id"
-							:label="item.name"
-							:value="item.id">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'停车收费提示'" prop="parkFeeTip">
-					<el-input v-model="formData.parkFeeTip" placeholder="请输入停车收费提示" clearable type="text" :disabled = "isDetail"/>
-				</el-form-item>
-				<el-form-item :label="'站点标签'" prop="stationTag">
-					<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple placeholder="请选择站点标签" :disabled = "isDetail">
-						<el-option
-							v-for="item in stationTagList"
-							:key="item.id + ''"
-							:label="item.name"
-							:value="item.id + ''">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'电站图片'" prop="stationPictures">
-					<div class="picture-grid">
-						<div class="picture-slot" v-for="slot in stationPictureSlots" :key="slot.sort">
-							<el-upload
-								action=""
-								:show-file-list="false"
-								:disabled="isDetail"
-								:http-request="(p) => handleStationPictureUpload(slot.sort, p)"
-								accept=".jpg,.jpeg,.png,.gif">
-								<div class="picture-box">
-									<el-image
-										v-if="isDetail && getPictureUrl(slot.sort)"
-										:src="getPictureUrl(slot.sort)"
-										:preview-src-list="[getPictureUrl(slot.sort)]"
-										style="width: 100%; height: 100%;"
-										fit="contain">
-									</el-image>
-									<el-image
-										v-else-if="getPictureUrl(slot.sort)"
-										:src="getPictureUrl(slot.sort)"
-										style="width: 100%; height: 100%;"
-										fit="contain">
-									</el-image>
-									<i v-else class="el-icon-plus picture-plus"></i>
+			<el-form v-if="currentStep === 3" ref="formData" :model="formData" label-position="left" label-width="120px" class="charge-station-form" :rules="rules">
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'站场辅助设备'" prop="">
+							<!-- <el-checkbox-group v-model="formData.auxiliaryDeviceCheckList">
+								<el-checkbox v-for="item in auxiliaryDeviceList"
+									:key="item.id"
+									:label="item.id"
+									:checked="item.default"
+									@change="changeSelect(item)"
+								>{{item.name}}</el-checkbox>
+							</el-checkbox-group> -->
+							<el-checkbox v-model="formData.isBarrierGate" label="道闸" :disabled = "isDetail">道闸</el-checkbox>
+							<el-checkbox v-model="formData.isLockFlag" label="地锁" :disabled = "isDetail">地锁</el-checkbox>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'营业时间'" prop="businessHours">
+							<el-time-picker
+								:disabled = "isDetail"
+								is-range
+								v-model="formData.businessHours"
+								value-format="HH:mm:ss"
+								range-separator="至"
+								start-placeholder="开始时间"
+								end-placeholder="结束时间"
+								placeholder="选择时间范围"
+								style="width: 100%; max-width: 100%;">
+							</el-time-picker>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'管理员电话'" prop="phone">
+							<el-input v-model="formData.phone" placeholder="请输入管理员联系方式" clearable type="text" :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'停车收费模式'" prop="parkFeeType">
+							<el-select style="width: 100%;" class="filter-item" v-model="formData.parkFeeType" filterable clearable placeholder="请选择停车收费类型" :disabled = "isDetail">
+								<el-option
+									v-for="item in parkFeeType"
+									:key="item.id"
+									:label="item.name"
+									:value="item.id">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" type="flex" class="charge-station-form__row">
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'停车收费提示'" prop="parkFeeTip">
+							<el-input v-model="formData.parkFeeTip" placeholder="请输入停车收费提示" clearable type="text" :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+					<el-col :xs="24" :sm="12">
+						<el-form-item :label="'站点标签'" prop="stationTag">
+							<el-select style="width: 100%;" class="filter-item" v-model="formData.stationTag" multiple placeholder="请选择站点标签" :disabled = "isDetail">
+								<el-option
+									v-for="item in stationTagList"
+									:key="item.id + ''"
+									:label="item.name"
+									:value="item.id + ''">
+								</el-option>
+							</el-select>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" class="charge-station-form__row">
+					<el-col :span="24">
+						<el-form-item :label="'电站图片'" prop="stationPictures">
+							<div class="picture-grid">
+								<div class="picture-slot" v-for="slot in stationPictureSlots" :key="slot.sort">
+									<el-upload
+										action=""
+										:show-file-list="false"
+										:disabled="isDetail"
+										:http-request="(p) => handleStationPictureUpload(slot.sort, p)"
+										accept=".jpg,.jpeg,.png,.gif">
+										<div class="picture-box">
+											<el-image
+												v-if="isDetail && getPictureUrl(slot.sort)"
+												:src="getPictureUrl(slot.sort)"
+												:preview-src-list="[getPictureUrl(slot.sort)]"
+												style="width: 100%; height: 100%;"
+												fit="contain">
+											</el-image>
+											<el-image
+												v-else-if="getPictureUrl(slot.sort)"
+												:src="getPictureUrl(slot.sort)"
+												style="width: 100%; height: 100%;"
+												fit="contain">
+											</el-image>
+											<i v-else class="el-icon-plus picture-plus"></i>
+										</div>
+									</el-upload>
+									<div class="picture-label">{{ slot.label }}</div>
 								</div>
-							</el-upload>
-							<div class="picture-label">{{ slot.label }}</div>
-						</div>
-					</div>
-					<div class="picture-tip">图片仅支持 .jpg、.jpeg、.png、.gif，建议比例4:3，最多5张</div>
-				</el-form-item>
-				<el-form-item :label="'站场备注'" prop="remark">
-					<el-input v-model="formData.remark" placeholder="请输入备注信息" clearable  type="textarea" :disabled = "isDetail"/>
-				</el-form-item>
+							</div>
+							<div class="picture-tip">图片仅支持 .jpg、.jpeg、.png、.gif，建议比例4:3，最多5张</div>
+						</el-form-item>
+					</el-col>
+				</el-row>
+				<el-row :gutter="24" class="charge-station-form__row">
+					<el-col :span="24">
+						<el-form-item :label="'站场备注'" prop="remark">
+							<el-input v-model="formData.remark" placeholder="请输入备注信息" clearable  type="textarea" :disabled = "isDetail"/>
+						</el-form-item>
+					</el-col>
+				</el-row>
 			</el-form>
-			<span slot="footer" class="dialog-footer">
-				<el-button @click="showAdd = false">取 消</el-button>
+			</div>
+			<div class="charge-station-page__footer">
+				<el-button @click="handleCancel">取 消</el-button>
 				<el-button v-if="currentStep > 1" @click="prevStep('formData')">上一步</el-button>
         		<el-button v-if="currentStep < 3" type="primary" @click="nextStep('formData')">下一步</el-button>
 				<el-button v-if="currentStep === 3  && !isDetail"type="primary" @click="onformData('formData')">保 存</el-button>
-			</span>
-		</el-dialog>
+			</div>
+			</div>
+		</div>
 	</div>
 </template>
 
 <script>
 	import {
 		addNetworkDot,
-		updateNetworkDot
+		updateNetworkDot,
+		getChargeStationById,
+		getNetworkDotPictures
 	} from '@/api/netWorkDot/netWorkDotList.js'
 	import {
     	getOperator
@@ -237,7 +311,7 @@
 		parseTime
 	} from '@/utils/index'
 	export default {
-		name: 'addChargingStation',
+		name: 'ChargeStationForm',
 		components: {},
 		props: {
 			row_data: {
@@ -550,7 +624,6 @@
 				isEdit: false,
 				isDetail: false,
 				currentStep: 1,
-				showAdd: false,
         		operatorList: [],
 				merchantList: [],
 				priceTypeList: [],
@@ -621,9 +694,52 @@
 			},
 		},
 		mounted() {
-
+			this.bootstrapFromRoute()
+		},
+		watch: {
+			'$route.fullPath'() {
+				if ((this.$route.path || '').includes('chargeStationForm')) {
+					this.bootstrapFromRoute()
+				}
+			}
 		},
 		methods: {
+			goBackList() {
+				this.$router.push({ path: '/netWorkDot/netWorkDotList' })
+			},
+			handleCancel() {
+				this.goBackList()
+			},
+			bootstrapFromRoute() {
+				if (!(this.$route.path || '').includes('chargeStationForm')) return
+				const id = this.$route.query.id
+				const ruleId = Number(this.$route.query.ruleId || 1)
+				const isDetail = this.$route.query.detail === '1' || this.$route.query.detail === 'true'
+				if (!id) {
+					this.onshowAdd(null, false, ruleId)
+					return
+				}
+				Promise.all([
+					getChargeStationById(id),
+					getNetworkDotPictures(id)
+				]).then(([res, picRes]) => {
+					if (!res || res.code !== 200) {
+						this.$message.error((res && res.msg) || '加载站点失败')
+						this.goBackList()
+						return
+					}
+					const row = { ...(res.data || {}), id: (res.data && res.data.id) || id }
+					let pics = []
+					if (picRes && picRes.code === 200 && Array.isArray(picRes.data)) {
+						pics = picRes.data
+					}
+					row.stationPictures = pics
+					this.onshowAdd(row, isDetail, Number(row.ruleId || ruleId))
+				}).catch(() => {
+					this.$message.error('加载站点失败')
+					this.goBackList()
+				})
+			},
 			nextStep(formName) {
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
@@ -749,7 +865,6 @@
 				})
 			},
 			onshowAdd(formData,isDetail, defaultRuleId) {
-				this.showAdd = true
 				if(formData == null){
 					this.isEdit = false
 					this.isDetail = false
@@ -835,10 +950,10 @@
 						if (!this.isEdit){
 							addNetworkDot(payload).then(res => {
 								if (res.code == 200) {
-									this.showAdd = false
 									this.resetForm(formName)
 									this.$message.success(res.msg)
 									this.$emit('getLists')
+									this.goBackList()
 								} else {
 									this.$message.error(res.msg)
 								}
@@ -846,10 +961,10 @@
 						} else {
 							updateNetworkDot(payload).then(res => {
 								if (res.code == 200) {
-									this.showAdd = false
 									this.resetForm(formName)
 									this.$message.success(res.msg)
 									this.$emit('getLists')
+									this.goBackList()
 								} else {
 									this.$message.error(res.msg)
 								}
@@ -948,23 +1063,78 @@
 </script>
 
 <style>
-	.el-dialog {
+	.charge-station-page {
 		display: flex;
 		flex-direction: column;
-		margin: 0 !important;
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		/*height:600px;*/
-		max-height: calc(100% - 30px);
-		max-width: calc(100% - 30px);
+		min-height: calc(100vh - 120px);
+		box-sizing: border-box;
 	}
-
-	.el-dialog .el-dialog__body {
+	.charge-station-page__toolbar {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		margin-bottom: 16px;
+		flex-shrink: 0;
+	}
+	.charge-station-page__title {
+		font-size: 18px;
+		font-weight: 600;
+		color: #303133;
+	}
+	.charge-station-page__content {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+		min-width: 0;
+	}
+	.charge-station-page__center-wrap {
+		max-width: 1160px;
+		width: 100%;
+		margin: 0 auto;
+		box-sizing: border-box;
+		padding: 0 16px;
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		min-height: 0;
+	}
+	.charge-station-page__steps {
+		flex-shrink: 0;
+		margin-bottom: 8px;
+		width: 100%;
+	}
+	.charge-station-page__body-scroll {
 		flex: 1;
 		overflow: auto;
-
+		padding-bottom: 16px;
+		min-height: 0;
+	}
+	.charge-station-form {
+		width: 100%;
+		max-width: 100%;
+		margin-left: 0;
+	}
+	.charge-station-form__row {
+		margin-bottom: 0;
+	}
+	.charge-station-form .el-col .el-form-item {
+		margin-bottom: 18px;
+	}
+	.charge-station-page__footer {
+		flex-shrink: 0;
+		padding: 16px 0 0;
+		border-top: 1px solid #ebeef5;
+		text-align: right;
+	}
+	.charge-station-page__footer .el-button + .el-button {
+		margin-left: 10px;
+	}
+	.charge-station-page__map {
+		height: 400px;
+		width: 100%;
+		max-width: 100%;
+		margin: 24px 0 60px;
 	}
 
 	.avatar-uploader-icon {
