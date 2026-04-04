@@ -299,10 +299,9 @@ export default {
     formatAuditStatus(val) {
       const n = Number(val)
       const map = {
-        0: '待审核',
-        10: '审核中',
-        20: '审核通过',
-        30: '审核拒绝'
+        10: '待审核',
+        20: '审核拒绝',
+        30: '审核通过'
       }
       return map[n] || this.formatValue(val)
     }
