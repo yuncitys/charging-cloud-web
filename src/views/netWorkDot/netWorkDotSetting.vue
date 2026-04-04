@@ -1329,9 +1329,9 @@ export default {
         id: this.commissionExists ? (this.commission.id || '') : '',
         stationId: this.stationId,
         collectFlag: this.commissionExists ? String(this.commission.collectFlag ?? '0') : '0',
-        powerRateType: this.commissionExists ? String(this.commission.powerRateType ?? '0') : '0',
+        powerRateType: this.commissionExists ? String(this.commission.powerRateType ?? '1') : '1',
         powerRate: this.commissionExists ? (this.commission.powerRate ?? '0') : '0',
-        serviceRateType: this.commissionExists ? String(this.commission.serviceRateType ?? '0') : '0',
+        serviceRateType: this.commissionExists ? String(this.commission.serviceRateType ?? '1') : '1',
         serviceRate: this.commissionExists ? (this.commission.serviceRate ?? '0') : '0'
       }
     },
