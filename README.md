@@ -168,7 +168,7 @@ npm install --registry=https://registry.npm.taobao.org
 npm run dev
 
 # 更换GD地图key
-src/views/netWorkDot/components/chargeStationDialog.vue文件中539行中替换
+src/views/netWorkDot/components/chargeStationForm.vue文件中539行中替换
 
 # 更换服务域名
 src/utils/global_variable.js文件中替换APIURl参数
