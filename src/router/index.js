@@ -521,6 +521,16 @@ export const constantRoutes = [{
         title: '站点设置',
         noCache: true
       }
+    }, {
+      path: 'chargeStationForm',
+      component: () => import('@/views/netWorkDot/components/chargeStationForm.vue'),
+      name: 'chargeStationForm',
+      hidden: true,
+      meta: {
+        title: '添加站点',
+        noCache: true,
+        activeMenu: '/netWorkDot/netWorkDotList'
+      }
     }, ]
   },
   {
