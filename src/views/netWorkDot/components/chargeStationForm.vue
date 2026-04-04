@@ -1,7 +1,7 @@
 <template>
 	<div class="charge-station-page app-container">
 		<div class="charge-station-page__toolbar">
-			<el-button icon="el-icon-arrow-left" @click="handleCancel">返回</el-button>
+			<el-button size="mini" type="primary" icon="el-icon-arrow-left" @click="handleCancel">返回</el-button>
 			<span class="charge-station-page__title">{{ title }}</span>
 		</div>
 		<div class="charge-station-page__content">
