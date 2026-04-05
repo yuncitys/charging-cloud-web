@@ -5,9 +5,9 @@
       		生成设备
 		</el-button>
 		<el-dialog :visible.sync="showConfig" title="生成设备" @close="showConfig = false" :append-to-body="true">
-			<el-form ref="configData" :model="configData" :rules="configrules" label-position="left" label-width="100px"
+			<el-form ref="configData" :model="configData" :rules="formConfigRules" label-position="left" label-width="100px"
 				style="width: 600px; margin-left:50px;">
-				<el-form-item :label="'产品类型'" prop="ruleId">
+				<el-form-item v-if="!syncRuleIdFromList" :label="'产品类型'" prop="ruleId">
 					<el-radio-group v-model="configData.ruleId" @change="ruleIdChange">
 						<el-radio :label="1">单车</el-radio>
 						<el-radio :label="2">汽车</el-radio>
@@ -74,7 +74,14 @@
 	} from '@/utils/index'
 	export default {
 		props: {
-
+			syncRuleIdFromList: {
+				type: Boolean,
+				default: false
+			},
+			listRuleId: {
+				type: Number,
+				default: 1
+			}
 		},
 		data() {
 			let checkNum = (rule, value, callback) => {
@@ -137,12 +144,7 @@
 						message: '请选择运营商',
 						trigger: 'blur',
 					}],
-					ruleId: [{
-						required: true,
-						message: '请选择产品',
-						trigger: 'blur',
-					}],
-          			length: [{
+					length: [{
 						required: true,
 						message: '请选择设备号长度',
 						trigger: 'blur',
@@ -171,6 +173,19 @@
 		},
 		mounted() {
 
+		},
+		computed: {
+			formConfigRules() {
+				const r = { ...this.configrules }
+				if (!this.syncRuleIdFromList) {
+					r.ruleId = [{
+						required: true,
+						message: '请选择产品',
+						trigger: 'blur',
+					}]
+				}
+				return r
+			}
 		},
 		methods: {
 			//选择收费类型
@@ -201,9 +216,16 @@
 				})
      		},
 			onShowConfig() {
+				if (this.syncRuleIdFromList) {
+					this.configData.ruleId = this.listRuleId
+				}
 				this.showConfig = true
-				this.getTypeListss()
-				this.getDevicePriceByPriceType()
+				if (this.syncRuleIdFromList) {
+					this.ruleIdChange()
+				} else {
+					this.getTypeListss()
+					this.getDevicePriceByPriceType()
+				}
 			},
 			ruleIdChange() {
         		this.configData.deviceTypeId = ''

@@ -21,7 +21,7 @@
 			</el-button>
 
 			<div style="margin: 15px 0;">
-				<addPage @getLists="getLists" />
+				<addPage @getLists="getLists" :list-rule-id="listRuleIdForChild" :sync-rule-id-from-list="true" />
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item"
 					@click="onbatchDevicePutState"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchPutDevice')">
@@ -34,15 +34,15 @@
 				<!-- 收费标准 -->
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='batchAddDevicePrice'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allCharge')">
-					批量设置收费方案
+					批量设置收费标准
 				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="handleDownload"
 					:loading="downloadLoading" icon="el-icon-download">模板下载
 				</el-button>
 				<!-- 批量导入设备 -->
-				<batchAddDevice @getLists="getLists" />
+				<batchAddDevice @getLists="getLists" :list-rule-id="listRuleIdForChild" />
 				<!-- 导出配置 -->
-				<device-config @getLists="getLists" />
+				<device-config @getLists="getLists" :list-rule-id="listRuleIdForChild" :sync-rule-id-from-list="true" />
 				<!--导出Excel  -->
 				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
 			</div>
@@ -437,6 +437,11 @@
 			},
 			exportKeys() {
 				return Object.keys(this.formThead).filter(k => this.formThead[k] === true)
+			},
+			/** 与当前列表 Tab 一致，供新增/批量导入/生成设备弹窗默认 ruleId */
+			listRuleIdForChild() {
+				const n = Number(this.activeName)
+				return Number.isFinite(n) ? n : getDefaultRuleIdNumber()
 			},
 		},
 		methods: {

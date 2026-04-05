@@ -4,9 +4,9 @@
 			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneAdd')">新增设备
 		</el-button>
 		<el-dialog :visible.sync="showDevice" title="新增设备" @close="showDevice = false" :append-to-body="true">
-			<el-form ref="addDeviceData" :model="addDeviceData" :rules="deviceRules" label-position="left"
+			<el-form ref="addDeviceData" :model="addDeviceData" :rules="formDeviceRules" label-position="left"
 				label-width="100px" style="width: 600px; margin-left:50px;">
-				<el-form-item :label="'归属系列'" prop="ruleId">
+				<el-form-item v-if="!syncRuleIdFromList" :label="'归属系列'" prop="ruleId">
 					<el-radio-group v-model="addDeviceData.ruleId" @change="ruleIdChange($event)">
 						<el-radio :label="1">单车</el-radio>
 						<el-radio :label="2">汽车</el-radio>
@@ -77,6 +77,17 @@
     	findDevicePriceByPriceType
 	} from '@/api/device/deviceList.js'
 	export default {
+		props: {
+			/** 为 true 时隐藏「归属系列」，打开弹窗用 listRuleId（列表 Tab） */
+			syncRuleIdFromList: {
+				type: Boolean,
+				default: false
+			},
+			listRuleId: {
+				type: Number,
+				default: 1
+			}
+		},
 		data() {
 			let checkNum = (rule, value, callback) => {
 				if (!value) {
@@ -108,11 +119,6 @@
 				},
         		priceTypeList: [],
 				deviceRules: {
-					ruleId: [{
-						required: true,
-						message: '请选择归属系列',
-						trigger: 'blur'
-					}],
 					deviceCode: [{
 						required: true,
 						message: '请输入设备号',
@@ -170,6 +176,19 @@
 				]
 			}
 		},
+		computed: {
+			formDeviceRules() {
+				const r = { ...this.deviceRules }
+				if (!this.syncRuleIdFromList) {
+					r.ruleId = [{
+						required: true,
+						message: '请选择归属系列',
+						trigger: 'blur'
+					}]
+				}
+				return r
+			}
+		},
 		methods: {
 			//选择收费类型
 			changeChagePattern(e) {
@@ -199,8 +218,11 @@
 				})
 			},
 			onShowDevice() {
+				if (this.syncRuleIdFromList) {
+					this.addDeviceData.ruleId = this.listRuleId
+				}
 				this.showDevice = true
-        		this.ruleIdChange(this.addDeviceData.ruleId)
+				this.ruleIdChange(this.addDeviceData.ruleId)
 			},
 			ruleIdChange(ruleId) {
 				this.addDeviceData.deviceTypeId = ''

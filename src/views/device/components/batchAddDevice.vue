@@ -7,12 +7,6 @@
 		<el-dialog :visible.sync="showDevice" title="批量导入设备" @close="closeDialog()" :append-to-body="true">
 			<el-form ref="addDeviceData" :model="addDeviceData" :rules="deviceRules" label-position="left"
 				label-width="100px" style="width: 600px; margin-left:50px;">
-				<el-form-item :label="'归属系列'" prop="ruleId">
-					<el-radio-group v-model="addDeviceData.ruleId" @change="ruleIdChange($event)">
-						<el-radio :label="1">单车</el-radio>
-						<el-radio :label="2">汽车</el-radio>
-					</el-radio-group>
-				</el-form-item>
 				<el-form-item :label="'电流输出'" prop="electricOut">
 					<el-select v-model="addDeviceData.electricOut" placeholder="请选择电流输出类型" style="width: 100%;" @change="currElectricOutChange">
 						<el-option v-for="item in electricOutList" :key="item.value" :label="item.label" :value="item.value"
@@ -76,6 +70,12 @@
 		importData
 	} from '@/api/device/deviceList.js'
 	export default {
+		props: {
+			listRuleId: {
+				type: Number,
+				default: 1
+			}
+		},
 		data() {
 			let checkNum = (rule, value, callback) => {
 				if (!value) {
@@ -104,11 +104,6 @@
 				},
         		priceTypeList: [],
 				deviceRules: {
-					ruleId: [{
-						required: true,
-						message: '请选择归属系列',
-						trigger: 'blur'
-					}],
 					deviceCode: [{
 						required: true,
 						message: '请输入设备号',
@@ -275,8 +270,9 @@
 			},
 			onShowDevice() {
 				this.fileList = []
+				this.addDeviceData.ruleId = this.listRuleId
 				this.showDevice = true
-        		this.ruleIdChange(this.addDeviceData.ruleId)
+				this.ruleIdChange(this.addDeviceData.ruleId)
 			},
 			ruleIdChange(ruleId) {
 				this.addDeviceData.deviceTypeId = ''
