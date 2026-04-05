@@ -379,13 +379,6 @@
 				}],
 				//分配设备
 				merchantList: [],
-				chooseRules: {
-					dealerId: [{
-						required: true,
-						message: '请选择代理商',
-						trigger: 'change'
-					}],
-				},
 				ids: '',
 				priceTypeDialog: '',
 				deviceChagePattern: 0,

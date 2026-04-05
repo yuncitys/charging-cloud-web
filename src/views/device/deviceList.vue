@@ -457,13 +457,6 @@
 					networkDotId: '',
 					merchantId: ''
 				},
-				chooseRules: {
-					merchantId: [{
-						required: true,
-						message: '请选择归属商户',
-						trigger: 'change'
-					}],
-				},
 				ids: '',
 				//设置收费方案
 				showPriceType: false,

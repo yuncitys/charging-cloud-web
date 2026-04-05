@@ -459,13 +459,6 @@
 					networkDotId: '',
 					dealerId: ''
 				},
-				chooseRules: {
-					dealerId: [{
-						required: true,
-						message: '请选择代理商',
-						trigger: 'change'
-					}],
-				},
 				ids: '',
 				//设置收费方案
 				showPriceType: false,

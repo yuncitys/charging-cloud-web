@@ -16,10 +16,10 @@
 					:value="item.id">
 				</el-option>
 			</el-select>
-				<el-select v-model="listQuery.deviceStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
-					placeholder="请选择设备状态" clearable @change="handleFilter">
-					<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
-				</el-select>
+			<el-select v-model="listQuery.deviceStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请选择设备状态" clearable @change="handleFilter">
+				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
 			<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" 
 				filterable clearable @change="handleFilter()" placeholder="归属商户">
 				<el-option
@@ -37,6 +37,10 @@
 			<div style="margin: 15px 0;">
 				<!--导出Excel  -->
 				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
+				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='batchAddDevicePrice'
+					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allCharge')">
+					批量设置收费标准
+				</el-button>
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onupdateDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
@@ -413,14 +417,7 @@
 				allocation: {
 					deviceId: '',
 					networkDotId: '',
-					dealerId: ''
-				},
-				chooseRules: {
-					dealerId: [{
-						required: true,
-						message: '请选择代理商',
-						trigger: 'change'
-					}],
+					merchantId: ''
 				},
 				ids: '',
 				//设置收费方案
