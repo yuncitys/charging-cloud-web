@@ -22,25 +22,13 @@
 					</el-radio-group>
 				</el-form-item> -->
 				<el-row :gutter="24" type="flex" class="charge-station-form__row">
-					<el-col :xs="24" :sm="formData.ruleId == 2 ? 12 : 24">
+					<el-col :xs="24" :sm="24">
 						<el-form-item :label="'运营商户'" prop="merchantId">
 							<el-select style="width: 100%;" class="filter-item" v-model="formData.merchantId" filterable clearable placeholder="请选择归属运营商户" :disabled = "isDetail">
 								<el-option
 									v-for="item in merchantList"
 									:key="item.id"
 									:label="item.name"
-									:value="item.id">
-								</el-option>
-							</el-select>
-						</el-form-item>
-					</el-col>
-					<el-col v-if="formData.ruleId == 2" :xs="24" :sm="12">
-						<el-form-item :label="'计费标准'" prop="pricingRuleId">
-							<el-select style="width: 100%;" class="filter-item" v-model="formData.pricingRuleId" filterable clearable placeholder="请选择站点计费标准" :disabled = "isDetail">
-								<el-option
-									v-for="item in priceTypeList"
-									:key="item.id"
-									:label="item.feeName"
 									:value="item.id">
 								</el-option>
 							</el-select>
@@ -318,9 +306,6 @@
 	import {
     	getMerchant
     } from '@/api/merchant/merchant.js'
-	import {
-		findDevicePriceByPriceType
-	} from '@/api/device/deviceList.js'
 	import { upload } from '@/api/upload/file'
 	import loadMap from "../../../utils/loadMap.js";
 	import {
@@ -529,11 +514,6 @@
 						message: '请输入充电站纬度',
 						trigger: 'blur'
 					}],
-					startingPrice: [{
-						required: true,
-						message: '请输入充电站最低起充电价',
-						trigger: 'blur'
-					}],
 					locationAddress: [{
 						required: true,
 						message: '请选择电站位置',
@@ -632,11 +612,6 @@
 						message: '请选择站场辅助设备',
 						trigger: 'change'
 					}],
-					pricingRuleId: [{
-						required: true,
-						message: '请选择站场计费标准',
-						trigger: 'change'
-					}],
 				},
 				title: "新增站点",
 				isEdit: false,
@@ -656,7 +631,6 @@
 				},
         		operatorList: [],
 				merchantList: [],
-				priceTypeList: [],
 				stationPictureSlots: [
 					{ sort: 1, label: '主入口图', url: '' },
 					{ sort: 2, label: '标志路径', url: '' },
@@ -675,7 +649,6 @@
 					networkCity: '',
 					networkRegion: '',
 					areaPath: [],
-          			startingPrice: 0.0,
 					ruleId: 1,
 					type: 1,
 					locationAddress: 1,
@@ -694,7 +667,6 @@
 					businessHours: null,
 					stationPictures: [],
 					remark: '',
-					pricingRuleId: '',
 					merchantId: ''
 				},
 				mapInput: "",
@@ -1035,7 +1007,6 @@
 						networkCity: '',
 						networkRegion: '',
 						areaPath: [],
-						startingPrice: 0.0,
 						ruleId: Number(defaultRuleId || 1),
 						type: 1,
 						locationAddress: 1,
@@ -1093,7 +1064,6 @@
 				}
 				this.mapInput = ''
 				this.getMerchant()
-				this.getDevicePriceByPriceType()
 				this.$nextTick(() => {
 					this.initMap()
 				})
@@ -1106,6 +1076,7 @@
 						console.log("通过")
 						const payload = { ...data }
 						delete payload.areaPath
+						delete payload.pricingRuleId
 						Object.assign(payload, {
 							businessHours: JSON.stringify(Array.isArray(this.formData.businessHours) ? this.formData.businessHours : []),
 							stationTag: JSON.stringify(Array.isArray(this.formData.stationTag) ? this.formData.stationTag : []),
@@ -1155,21 +1126,10 @@
 					this.operatorList = res.data || []
 				})
 			},
-			 getMerchant() {
+			getMerchant() {
 				getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
 					if (res && res.code == 200) {
 					this.merchantList = res.data || []
-					}
-				})
-			},
-			getDevicePriceByPriceType() {
-				let data = {
-					priceType: 1,
-					ruleId: 2
-				}
-				findDevicePriceByPriceType(data).then(res => {
-					if (res.code == 200) {
-						this.priceTypeList = res.data || []
 					}
 				})
 			},

@@ -52,12 +52,6 @@
                   <div class="kv__value">{{ station.merchantName || getNameById(merchantList, station.merchantId) || '-' }}</div>
                 </div>
               </el-col>
-              <el-col :span="12" v-if="station.ruleId == 2">
-                <div class="kv">
-                  <div class="kv__label">计费标准</div>
-                  <div class="kv__value">{{ getNameById(priceTypeList, station.pricingRuleId, 'feeName') || '-' }}</div>
-                </div>
-              </el-col>
               <el-col :span="24">
                 <div class="kv">
                   <div class="kv__label">归属地区</div>
@@ -202,13 +196,6 @@
               <el-form-item label="运营商户">
                 <el-select v-model="editStation.merchantId" filterable clearable style="width: 100%;" @change="handleMerchantChange">
                   <el-option v-for="item in merchantList" :key="item.id" :label="item.name" :value="item.id" />
-                </el-select>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12" v-if="editStation.ruleId == 2">
-              <el-form-item label="计费标准">
-                <el-select v-model="editStation.pricingRuleId" filterable clearable style="width: 100%;">
-                  <el-option v-for="item in priceTypeList" :key="item.id" :label="item.feeName" :value="item.id" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -596,7 +583,6 @@ import { getChargeStationById, getNetworkDotPictures, updateNetworkDot } from '@
 import { getAreaSelector } from '@/api/area/index.js'
 import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
 import { getMerchant } from '@/api/merchant/merchant'
-import { findDevicePriceByPriceType } from '@/api/device/deviceList'
 import { upload } from '@/api/upload/file'
 import loadMap from '@/utils/loadMap.js'
 import { getByStationId as getSplitConfigByStationId, saveOrUpdate as saveSplitConfigApi } from '@/api/finance/stationCommissionSettlementAccount'
@@ -668,7 +654,6 @@ export default {
         { id: 5, name: '其它' }
       ],
       merchantList: [],
-      priceTypeList: [],
       station: {
         id: '',
         networkName: '',
@@ -678,7 +663,6 @@ export default {
         networkLatitude: '',
         merchantId: '',
         merchantName: '',
-        pricingRuleId: '',
         locationAddress: 1,
         capacity: '',
         stationType: '',
@@ -694,10 +678,6 @@ export default {
         stationTag: [],
         businessHours: [],
         remark: '',
-        createUser: '',
-        createTime: '',
-        updateUser: '',
-        updateTime: '',
         networkProvince: '',
         networkCity: '',
         networkRegion: ''
@@ -783,7 +763,6 @@ export default {
     this.stationId = this.$route.params.id || ''
     this.initStation()
     this.getMerchant()
-    this.getDevicePriceByPriceType()
   },
   methods: {
     getNameById(list, id, labelKey = 'name') {
@@ -1099,6 +1078,7 @@ export default {
         sort: s.sort
       }))
       delete payload.areaPath
+      delete payload.pricingRuleId
       return payload
     },
     saveStation() {
@@ -1173,7 +1153,6 @@ export default {
             merchantId: data.merchantId || data.merchant_id || this.$route.query.merchantId || '',
             merchantName: data.merchantName || data.merchant_name || this.$route.query.merchantName || '',
             networkName: data.networkName || this.$route.query.stationName || '',
-            pricingRuleId: data.pricingRuleId ?? data.pricing_rule_id ?? this.station.pricingRuleId,
             locationAddress: Number(data.locationAddress ?? data.location_address ?? 1),
             isDuty: this.normalizeFlag01(data.isDuty),
             isAloneApply: this.normalizeFlag01(data.isAloneApply),
@@ -1272,14 +1251,6 @@ export default {
       getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
         if (res && res.code === 200) {
           this.merchantList = res.data || []
-        }
-      })
-    },
-    getDevicePriceByPriceType() {
-      const payload = { priceType: 1, ruleId: 2 }
-      findDevicePriceByPriceType(payload).then(res => {
-        if (res && res.code === 200) {
-          this.priceTypeList = res.data || []
         }
       })
     },
