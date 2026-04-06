@@ -52,6 +52,11 @@
         </el-table-column>
         <el-table-column prop="networkName" label="充电站名称" align="center" show-overflow-tooltip />
         <el-table-column prop="merchantName" label="运营商户" align="center" show-overflow-tooltip />
+        <el-table-column label="直连/互联" align="center" width="120">
+          <template slot-scope="scope">
+            <span>{{ formatType(scope.row.type) }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" align="center" width="120">
           <template slot-scope="scope">
             <span>{{ formatSetPrice(scope.row.isSetPrice) }}</span>
@@ -65,7 +70,8 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="200" fixed="right">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" @click="toPricingAddPage(scope.row)">
+            <el-button type="primary" size="mini" @click="toPricingAddPage(scope.row)" 
+              v-if="btnAuthen.permsVerifAuthention(':station:charge:carCharge:set')">
               设置
             </el-button>
             <el-button type="info" size="mini" @click="toPricingDetailPage(scope.row)">
@@ -130,6 +136,11 @@ export default {
     formatSetPrice(val) {
       if (val === 1 || val === '1' || val === true) return '已配置'
       return '未配置'
+    },
+    formatType(val) {
+      if (val === 1) return '直连'
+      if (val === 2) return '互联'
+      return '-'
     },
     handleFilter() {
       this.listQuery.page = 1
