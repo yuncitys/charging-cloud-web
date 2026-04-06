@@ -7,7 +7,7 @@
 
     <el-card v-loading="currentLoading" class="detail-card" shadow="never">
       <div slot="header" class="card-header">
-        <span>当前汽车时段计费</span>
+        <span>当前计费策略</span>
       </div>
       <template v-if="currentError">
         <el-alert :title="currentError" type="warning" :closable="false" show-icon />
@@ -43,7 +43,10 @@
           </el-table-column>
         </el-table>
       </template>
-      <el-empty v-else description="该站点尚未配置汽车时段计费" :image-size="80" />
+      <div v-else class="current-pricing-empty">
+        <i class="el-icon-document" />
+        <p>该站点尚未配置计费策略</p>
+      </div>
     </el-card>
 
     <el-card v-loading="historyLoading" class="detail-card" shadow="never">
@@ -299,5 +302,20 @@ export default {
   font-size: 12px;
   color: #909399;
   font-weight: normal;
+}
+.current-pricing-empty {
+  padding: 40px 16px;
+  text-align: center;
+  color: #909399;
+  font-size: 14px;
+}
+.current-pricing-empty .el-icon-document {
+  display: block;
+  margin: 0 auto 12px;
+  font-size: 48px;
+  color: #c0c4cc;
+}
+.current-pricing-empty p {
+  margin: 0;
 }
 </style>
