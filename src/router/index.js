@@ -513,6 +513,34 @@ export const constantRoutes = [{
         icon: 'el-icon-help',
       }
     }, {
+      path: 'stationPricingList',
+      component: () => import('@/views/netWorkDot/stationPricingList'),
+      name: 'stationPricingList',
+      meta: {
+        title: '电价管理',
+        icon: 'el-icon-coin',
+      }
+    }, {
+      path: 'stationPricingCarAdd',
+      component: () => import('@/views/netWorkDot/stationPricingCarAdd'),
+      name: 'stationPricingCarAdd',
+      hidden: true,
+      meta: {
+        title: '电价设置',
+        noCache: true,
+        activeMenu: '/netWorkDot/stationPricingList'
+      }
+    }, {
+      path: 'stationPricingDetail',
+      component: () => import('@/views/netWorkDot/stationPricingDetail'),
+      name: 'stationPricingDetail',
+      hidden: true,
+      meta: {
+        title: '电价详情',
+        noCache: true,
+        activeMenu: '/netWorkDot/stationPricingList'
+      }
+    }, {
       path: 'setting/:id',
       component: () => import('@/views/netWorkDot/netWorkDotSetting'),
       name: 'netWorkDotSetting',

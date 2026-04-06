@@ -1,0 +1,303 @@
+<template>
+  <div class="app-container station-pricing-detail">
+    <div class="detail-header">
+      <el-button type="text" icon="el-icon-arrow-left" @click="goBack">返回</el-button>
+      <span class="detail-title">{{ pageTitle }}</span>
+    </div>
+
+    <el-card v-loading="currentLoading" class="detail-card" shadow="never">
+      <div slot="header" class="card-header">
+        <span>当前汽车时段计费</span>
+      </div>
+      <template v-if="currentError">
+        <el-alert :title="currentError" type="warning" :closable="false" show-icon />
+      </template>
+      <template v-else-if="currentVo && currentVo.pricing">
+        <el-descriptions :column="2" border size="small">
+          <el-descriptions-item label="方案名称">{{ currentVo.pricing.feeName || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="更新人">{{ currentVo.pricing.updateUser || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="更新时间">{{ currentVo.pricing.updateTime | formatDate }}</el-descriptions-item>
+        </el-descriptions>
+        <el-table
+          :data="currentPriceRows"
+          border
+          size="small"
+          style="width: 100%; margin-top: 16px;"
+          empty-text="暂无时段明细"
+        >
+          <el-table-column type="index" label="序号" width="50" align="center" />
+          <el-table-column label="开始时段" align="center" width="110">
+            <template slot-scope="scope">{{ formatHm(scope.row.beginTime) }}</template>
+          </el-table-column>
+          <el-table-column label="结束时段" align="center" width="110">
+            <template slot-scope="scope">{{ formatHm(scope.row.endTime) }}</template>
+          </el-table-column>
+          <el-table-column label="时段类型" align="center" width="100">
+            <template slot-scope="scope">{{ flagLabelFromContent(scope.row.flag) }}</template>
+          </el-table-column>
+          <el-table-column label="电费(元/度)" align="center">
+            <template slot-scope="scope">{{ scope.row.electricityPrice }}</template>
+          </el-table-column>
+          <el-table-column label="服务费(元/度)" align="center">
+            <template slot-scope="scope">{{ scope.row.serviceChargePrice }}</template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <el-empty v-else description="该站点尚未配置汽车时段计费" :image-size="80" />
+    </el-card>
+
+    <el-card v-loading="historyLoading" class="detail-card" shadow="never">
+      <div slot="header" class="card-header">
+        <span>历史计费策略</span>
+        <span class="card-sub">（编辑保存前自动归档）</span>
+      </div>
+      <el-table :data="historyList" border size="small" empty-text="暂无历史记录">
+        <el-table-column type="index" label="序号" width="50" align="center" />
+        <el-table-column prop="createTime" label="归档时间" width="170" align="center">
+          <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
+        </el-table-column>
+        <el-table-column prop="createUser" label="操作人" width="120" align="center" show-overflow-tooltip />
+        <el-table-column label="策略类型" width="120" align="center">
+          <template slot-scope="scope">{{ formatHistoryPriceType(scope.row.priceType) }}</template>
+        </el-table-column>
+        <el-table-column label="有效" width="80" align="center">
+          <template slot-scope="scope">{{ scope.row.validFlag === '1' ? '是' : '否' }}</template>
+        </el-table-column>
+        <el-table-column prop="historyId" label="历史ID" min-width="200" show-overflow-tooltip />
+        <el-table-column label="操作" width="100" align="center" fixed="right">
+          <template slot-scope="scope">
+            <el-button type="text" size="small" @click="openSnapshot(scope.row)">查看快照</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <el-dialog
+      title="历史快照明细"
+      :visible.sync="snapshotVisible"
+      width="800px"
+      append-to-body
+      @closed="onSnapshotClosed"
+    >
+      <div v-loading="snapshotLoading">
+        <el-descriptions v-if="snapshotStrategy" :column="2" border size="small">
+          <el-descriptions-item label="归档时间">{{ snapshotStrategy.createTime | formatDate }}</el-descriptions-item>
+          <el-descriptions-item label="操作人">{{ snapshotStrategy.createUser || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="策略类型">{{ formatHistoryPriceType(snapshotStrategy.priceType) }}</el-descriptions-item>
+          <el-descriptions-item label="历史ID">{{ snapshotStrategy.historyId }}</el-descriptions-item>
+        </el-descriptions>
+        <el-table
+          :data="snapshotPrices"
+          border
+          size="small"
+          style="width: 100%; margin-top: 12px;"
+          empty-text="无明细"
+        >
+          <el-table-column type="index" label="序号" width="50" align="center" />
+          <el-table-column label="时段类型" width="90" align="center">
+            <template slot-scope="scope">{{ periodTypeLabel(scope.row.periodType) }}</template>
+          </el-table-column>
+          <el-table-column label="开始" align="center" width="100">
+            <template slot-scope="scope">{{ formatHm(scope.row.beginTime) }}</template>
+          </el-table-column>
+          <el-table-column label="结束" align="center" width="100">
+            <template slot-scope="scope">{{ formatHm(scope.row.endTime) }}</template>
+          </el-table-column>
+          <el-table-column label="尖峰平谷" align="center" width="100">
+            <template slot-scope="scope">{{ flagLabelFromHistory(scope.row.flag) }}</template>
+          </el-table-column>
+          <el-table-column label="电费(元/度)" align="center">
+            <template slot-scope="scope">{{ scope.row.electricityPrice }}</template>
+          </el-table-column>
+          <el-table-column label="服务费(元/度)" align="center">
+            <template slot-scope="scope">{{ scope.row.serviceChargePrice }}</template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import {
+  getStationCarPricingDetail,
+  getStationChargePriceHistoryList,
+  getStationChargePriceHistoryDetail
+} from '@/api/netWorkDot/stationPricingRule.js'
+import { parseTime } from '@/utils/index'
+
+export default {
+  name: 'StationPricingDetail',
+  filters: {
+    formatDate(time) {
+      if (!time) return ''
+      return parseTime(time)
+    }
+  },
+  data() {
+    return {
+      stationId: null,
+      stationName: '',
+      currentLoading: false,
+      currentError: '',
+      currentVo: null,
+      historyLoading: false,
+      historyList: [],
+      snapshotVisible: false,
+      snapshotLoading: false,
+      snapshotStrategy: null,
+      snapshotPrices: []
+    }
+  },
+  computed: {
+    pageTitle() {
+      const n = this.stationName || '站点'
+      return `${n} — 电价详情`
+    },
+    currentPriceRows() {
+      const p = this.currentVo && this.currentVo.pricing
+      if (!p || !Array.isArray(p.priceContents)) return []
+      return p.priceContents
+    }
+  },
+  created() {
+    const q = this.$route.query || {}
+    this.stationId = q.stationId != null && q.stationId !== '' ? Number(q.stationId) : null
+    this.stationName = q.stationName || ''
+    if (!this.stationId || Number.isNaN(this.stationId)) {
+      this.$message.error('缺少站点ID')
+      this.goBack()
+      return
+    }
+    this.loadCurrent()
+    this.loadHistory()
+  },
+  methods: {
+    goBack() {
+      this.$router.push({ path: '/netWorkDot/stationPricingList' })
+    },
+    loadCurrent() {
+      this.currentLoading = true
+      this.currentError = ''
+      getStationCarPricingDetail({ stationId: this.stationId })
+        .then(res => {
+          if (res && res.code === 200) {
+            this.currentVo = res.data || null
+          } else {
+            this.currentError = (res && res.msg) || '加载当前方案失败'
+          }
+        })
+        .catch(() => {
+          this.currentError = '加载当前方案失败'
+        })
+        .finally(() => {
+          this.currentLoading = false
+        })
+    },
+    loadHistory() {
+      this.historyLoading = true
+      getStationChargePriceHistoryList({ stationId: this.stationId })
+        .then(res => {
+          if (res && res.code === 200) {
+            this.historyList = Array.isArray(res.data) ? res.data : []
+          } else {
+            this.$message.error((res && res.msg) || '加载历史失败')
+            this.historyList = []
+          }
+        })
+        .catch(() => {
+          this.$message.error('加载历史失败')
+          this.historyList = []
+        })
+        .finally(() => {
+          this.historyLoading = false
+        })
+    },
+    openSnapshot(row) {
+      const historyId = row && row.historyId
+      if (!historyId) {
+        this.$message.error('缺少历史ID')
+        return
+      }
+      this.snapshotVisible = true
+      this.snapshotLoading = true
+      this.snapshotStrategy = null
+      this.snapshotPrices = []
+      getStationChargePriceHistoryDetail({ historyId })
+        .then(res => {
+          if (res && res.code === 200 && res.data) {
+            this.snapshotStrategy = res.data.strategy || null
+            this.snapshotPrices = Array.isArray(res.data.prices) ? res.data.prices : []
+          } else {
+            this.$message.error((res && res.msg) || '加载快照失败')
+            this.snapshotVisible = false
+          }
+        })
+        .catch(() => {
+          this.$message.error('加载快照失败')
+          this.snapshotVisible = false
+        })
+        .finally(() => {
+          this.snapshotLoading = false
+        })
+    },
+    onSnapshotClosed() {
+      this.snapshotStrategy = null
+      this.snapshotPrices = []
+    },
+    formatHm(val) {
+      if (val == null || val === '') return '—'
+      const s = String(val).replace(/\D/g, '')
+      if (!s) return String(val)
+      const p = s.padStart(4, '0')
+      return `${p.slice(0, 2)}:${p.slice(2)}`
+    },
+    flagLabelFromContent(flag) {
+      const m = { 0: '尖', 1: '峰', 2: '平', 3: '谷' }
+      return m[flag] != null ? m[flag] : '—'
+    },
+    flagLabelFromHistory(flag) {
+      const m = { 1: '尖', 2: '峰', 3: '平', 4: '谷' }
+      return m[flag] != null ? m[flag] : '—'
+    },
+    formatHistoryPriceType(t) {
+      if (t === '1') return '48费率'
+      if (t === '0') return '尖峰平谷'
+      return t != null && t !== '' ? String(t) : '—'
+    },
+    periodTypeLabel(t) {
+      if (t === '2') return '时间'
+      if (t === '1') return '时段'
+      return t != null && t !== '' ? String(t) : '—'
+    }
+  }
+}
+</script>
+
+<style scoped>
+.station-pricing-detail {
+  padding-bottom: 24px;
+}
+.detail-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.detail-title {
+  margin-left: 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.detail-card {
+  margin-bottom: 16px;
+}
+.card-header {
+  font-weight: 600;
+}
+.card-sub {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #909399;
+  font-weight: normal;
+}
+</style>
