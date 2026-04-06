@@ -28,6 +28,12 @@
                   <div class="kv__value">{{ station.networkName || '-' }}</div>
                 </div>
               </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">运营商户</div>
+                  <div class="kv__value">{{ station.merchantName || getNameById(merchantList, station.merchantId) || '-' }}</div>
+                </div>
+              </el-col>
               <el-col :span="24">
                 <div class="kv">
                   <div class="kv__label">充电站位置</div>
@@ -44,12 +50,6 @@
                 <div class="kv">
                   <div class="kv__label">充电站纬度</div>
                   <div class="kv__value">{{ station.networkLatitude || '-' }}</div>
-                </div>
-              </el-col>
-              <el-col :span="12">
-                <div class="kv">
-                  <div class="kv__label">运营商户</div>
-                  <div class="kv__value">{{ station.merchantName || getNameById(merchantList, station.merchantId) || '-' }}</div>
                 </div>
               </el-col>
               <el-col :span="24">

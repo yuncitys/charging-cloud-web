@@ -15,12 +15,6 @@
 			</div>
 			<div class="charge-station-page__body-scroll">
 			<el-form v-if="currentStep === 1" ref="formData" :model="formData" label-position="left" label-width="120px" class="charge-station-form" :rules="rules">
-				<!-- <el-form-item :label="'充电站类型'" prop="ruleId">
-					<el-radio-group v-model="formData.ruleId" :disabled = "isDetail">
-						<el-radio :label="1">单车充电站</el-radio>
-						<el-radio :label="2">汽车充电站</el-radio>
-					</el-radio-group>
-				</el-form-item> -->
 				<el-row :gutter="24" type="flex" class="charge-station-form__row">
 					<el-col :xs="24" :sm="24">
 						<el-form-item :label="'运营商户'" prop="merchantId">
