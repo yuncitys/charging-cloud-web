@@ -788,6 +788,14 @@ export const constantRoutes = [{
         title: '抽成费用策略',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'stationSettlementRule',
+      component: () => import('@/views/finance/stationSettlementRule/index'),
+      name: 'stationSettlementRule',
+      meta: {
+        title: '站点结算规则',
+        icon: 'el-icon-document',
+      }
     }]
   },
   {
