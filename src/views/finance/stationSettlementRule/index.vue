@@ -57,6 +57,12 @@
         </el-table-column>
         <el-table-column prop="stationName" label="电站名称" align="center" width="280" show-overflow-tooltip></el-table-column>
         <el-table-column prop="merchantName" label="归属商户" align="center" show-overflow-tooltip></el-table-column>
+        <el-table-column prop="isSettlementRule" label="配置状态" align="center" width="100">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.isSettlementRule" type="success">已配置</el-tag>
+            <el-tag v-else type="info">未配置</el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="settlementCycleType" label="结算周期" align="center" width="140">
           <template slot-scope="scope">
             <span>{{ cycleLabel(scope.row.settlementCycleType) }}</span>
