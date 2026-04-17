@@ -464,7 +464,7 @@ export default {
     },
     splitMerchantLabel(item) {
       if (!item) return '—'
-      if (item.isPlatformMerchant) return '平台商户(merchantId=0)'
+      if (item.isPlatformMerchant) return '平台抽成'
       const name = item.merchantName || ''
       const no = item.merchantNo || ''
       if (name && no) return `${name} (${no})`
