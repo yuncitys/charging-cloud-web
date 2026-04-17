@@ -796,6 +796,14 @@ export const constantRoutes = [{
         title: '站点结算规则',
         icon: 'el-icon-document',
       }
+    }, {
+      path: 'settlementLedger',
+      component: () => import('@/views/finance/settlementLedger/index'),
+      name: 'settlementLedger',
+      meta: {
+        title: '台账与分账',
+        icon: 'el-icon-s-order',
+      }
     }]
   },
   {
