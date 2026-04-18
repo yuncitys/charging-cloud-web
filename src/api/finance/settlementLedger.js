@@ -31,6 +31,32 @@ export function submitPayout(data) {
   })
 }
 
+/** 账期下分账执行批次列表 */
+export function payoutBatchList(periodId) {
+  return request({
+    url: '/api/web/settlementLedger/payout/batch/list',
+    method: 'get',
+    params: { periodId }
+  })
+}
+
+/** 分账批次详情 */
+export function payoutBatchDetail(batchId) {
+  return request({
+    url: `/api/web/settlementLedger/payout/batch/${batchId}`,
+    method: 'get'
+  })
+}
+
+/** 分账批次明细分页；itemStatus 可选 SUCCESS / SKIPPED / FAILED */
+export function payoutBatchItems(batchId, params) {
+  return request({
+    url: `/api/web/settlementLedger/payout/batch/${batchId}/items`,
+    method: 'get',
+    params
+  })
+}
+
 export function ingestTaskStats() {
   return request({
     url: '/api/web/settlementLedger/ingestTask/stats',

@@ -210,6 +210,34 @@
           </el-col>
         </el-row>
 
+        <el-divider content-position="left">分账执行记录</el-divider>
+        <div class="payout-batch-toolbar">
+          <el-button size="mini" type="primary" plain :loading="payoutBatchLoading" @click="loadPayoutBatches">刷新批次</el-button>
+        </div>
+        <el-table v-loading="payoutBatchLoading" :data="payoutBatches" border size="small" style="width: 100%; margin-bottom: 12px">
+          <el-table-column label="执行时间" width="168" align="center">
+            <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
+          </el-table-column>
+          <el-table-column label="触发" width="88" align="center">
+            <template slot-scope="scope">{{ payoutTriggerLabel(scope.row.triggerType) }}</template>
+          </el-table-column>
+          <el-table-column label="批次状态" width="108" align="center">
+            <template slot-scope="scope">{{ payoutBatchStatusLabel(scope.row.batchStatus) }}</template>
+          </el-table-column>
+          <el-table-column label="成功/跳过/失败" width="130" align="center">
+            <template slot-scope="scope">
+              {{ scope.row.successCount }}/{{ scope.row.skipCount }}/{{ scope.row.failCount }}
+            </template>
+          </el-table-column>
+          <el-table-column prop="operatorUserName" label="操作人" width="100" show-overflow-tooltip />
+          <el-table-column prop="failSummary" label="失败摘要" min-width="200" show-overflow-tooltip />
+          <el-table-column label="操作" width="88" align="center">
+            <template slot-scope="scope">
+              <el-button type="text" size="small" @click="openPayoutBatchItemDialog(scope.row)">明细</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+
         <el-form :inline="true" :model="lineQuery" class="line-filter" @submit.native.prevent="loadLines">
           <el-form-item label="商户">
             <el-select v-model="lineQuery.merchantId" clearable filterable placeholder="全部" style="width: 200px">
@@ -312,6 +340,56 @@
         </div>
       </div>
     </el-drawer>
+
+    <el-dialog
+      title="分账批次 — 逐单结果"
+      :visible.sync="payoutItemDialog.visible"
+      width="900px"
+      append-to-body
+      @close="onPayoutItemDialogClose"
+    >
+      <div v-if="payoutItemDialog.currentBatch" class="payout-item-meta">
+        <span>批次 #{{ payoutItemDialog.currentBatch.id }}</span>
+        <span class="sep">|</span>
+        <span>{{ payoutBatchStatusLabel(payoutItemDialog.currentBatch.batchStatus) }}</span>
+        <span class="sep">|</span>
+        <span>成功 {{ payoutItemDialog.currentBatch.successCount }} / 跳过 {{ payoutItemDialog.currentBatch.skipCount }} / 失败 {{ payoutItemDialog.currentBatch.failCount }}</span>
+      </div>
+      <el-form :inline="true" size="small" style="margin: 10px 0">
+        <el-form-item label="状态筛选">
+          <el-select v-model="payoutItemDialog.itemStatus" clearable placeholder="全部" style="width: 130px" @change="loadPayoutItemPage(1)">
+            <el-option label="全部" value="" />
+            <el-option label="成功" value="SUCCESS" />
+            <el-option label="跳过" value="SKIPPED" />
+            <el-option label="失败" value="FAILED" />
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <el-table v-loading="payoutItemDialog.loading" :data="payoutItemDialog.items" border size="small" style="width: 100%">
+        <el-table-column prop="orderCode" label="订单号" min-width="160" show-overflow-tooltip />
+        <el-table-column label="结果" width="96" align="center">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row.itemStatus === 'SUCCESS'" type="success" size="mini">成功</el-tag>
+            <el-tag v-else-if="scope.row.itemStatus === 'SKIPPED'" type="info" size="mini">跳过</el-tag>
+            <el-tag v-else-if="scope.row.itemStatus === 'FAILED'" type="danger" size="mini">失败</el-tag>
+            <span v-else>{{ scope.row.itemStatus }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="skipReason" label="跳过原因" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="failMessage" label="失败原因" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="payTrace" label="支付摘要" min-width="180" show-overflow-tooltip />
+      </el-table>
+      <div class="pagination-container" style="margin-top: 10px">
+        <el-pagination
+          small
+          :current-page="payoutItemDialog.page"
+          :page-size="payoutItemDialog.limit"
+          :total="payoutItemDialog.total"
+          layout="total, prev, pager, next"
+          @current-change="onPayoutItemPageChange"
+        />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -321,7 +399,10 @@ import {
   periodDetail,
   linePage,
   submitPayout,
-  ingestTaskStats
+  ingestTaskStats,
+  payoutBatchList,
+  payoutBatchDetail,
+  payoutBatchItems
 } from '@/api/finance/settlementLedger'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
@@ -378,6 +459,19 @@ export default {
         merchantId: '',
         stationId: '',
         bizOrderCode: ''
+      },
+      payoutBatches: [],
+      payoutBatchLoading: false,
+      payoutItemDialog: {
+        visible: false,
+        batchId: null,
+        currentBatch: null,
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        itemStatus: '',
+        loading: false
       }
     }
   },
@@ -564,13 +658,88 @@ export default {
           this.$message.error(res.msg || '加载账期详情失败')
         }
         this.loadLines()
+        this.loadPayoutBatches()
       })
+    },
+    loadPayoutBatches() {
+      if (!this.drawer.periodId) return
+      this.payoutBatchLoading = true
+      payoutBatchList(this.drawer.periodId)
+        .then(res => {
+          if (res.code === 200) {
+            this.payoutBatches = res.data || []
+          } else {
+            this.$message.error(res.msg || '加载分账批次失败')
+          }
+        })
+        .finally(() => {
+          this.payoutBatchLoading = false
+        })
+    },
+    payoutTriggerLabel(t) {
+      if (t === 2) return '调度'
+      return '手工'
+    },
+    payoutBatchStatusLabel(s) {
+      if (s === 0) return '进行中'
+      if (s === 1) return '成功'
+      if (s === 2) return '部分失败'
+      return '—'
+    },
+    openPayoutBatchItemDialog(batchRow) {
+      if (!batchRow || !batchRow.id) return
+      this.payoutItemDialog.batchId = batchRow.id
+      this.payoutItemDialog.currentBatch = { ...batchRow }
+      this.payoutItemDialog.visible = true
+      this.payoutItemDialog.page = 1
+      this.payoutItemDialog.itemStatus = ''
+      this.loadPayoutItemPage(1)
+      payoutBatchDetail(batchRow.id).then(res => {
+        if (res.code === 200 && res.data && res.data.batch) {
+          this.payoutItemDialog.currentBatch = res.data.batch
+        }
+      })
+    },
+    onPayoutItemDialogClose() {
+      this.payoutItemDialog.batchId = null
+      this.payoutItemDialog.currentBatch = null
+      this.payoutItemDialog.items = []
+      this.payoutItemDialog.total = 0
+      this.payoutItemDialog.itemStatus = ''
+    },
+    onPayoutItemPageChange(p) {
+      this.loadPayoutItemPage(p)
+    },
+    loadPayoutItemPage(page) {
+      if (!this.payoutItemDialog.batchId) return
+      this.payoutItemDialog.page = page || 1
+      this.payoutItemDialog.loading = true
+      const params = {
+        page: this.payoutItemDialog.page,
+        limit: this.payoutItemDialog.limit
+      }
+      if (this.payoutItemDialog.itemStatus) {
+        params.itemStatus = this.payoutItemDialog.itemStatus
+      }
+      payoutBatchItems(this.payoutItemDialog.batchId, params)
+        .then(res => {
+          if (res.code === 200 && res.data) {
+            this.payoutItemDialog.items = res.data.records || []
+            this.payoutItemDialog.total = res.data.total || 0
+          } else {
+            this.$message.error((res && res.msg) || '加载明细失败')
+          }
+        })
+        .finally(() => {
+          this.payoutItemDialog.loading = false
+        })
     },
     onDrawerClose() {
       this.drawer.summary = null
       this.drawer.lines = []
       this.drawer.lineTotal = 0
       this.drawer.periodId = null
+      this.payoutBatches = []
     },
     loadLines() {
       if (!this.drawer.periodId) return
@@ -612,8 +781,38 @@ export default {
         { type: 'warning' }
       ).then(() => {
         submitPayout({ periodId: row.id }).then(res => {
-          if (res.code === 200) {
-            this.$message.success(res.msg || '分账完成')
+          const data = res && res.data
+          const payload = data && data.batchId != null ? data : null
+          const hasFails = payload && Number(payload.failCount) > 0
+          const allOk = res.code === 200 && (!payload || !hasFails)
+          const partialOk = res.code !== 200 && hasFails
+
+          if (allOk || partialOk) {
+            if (allOk) {
+              this.$message.success(res.msg || '分账完成')
+            } else {
+              this.$message.warning(res.msg || '分账已结束，存在失败订单，账期未标记为已支付')
+            }
+            if (hasFails && payload.batchId) {
+              this.$confirm(
+                `本账期存在 ${payload.failCount} 笔订单分账失败，可在「台账明细」内「分账执行记录」追溯，或立即查看失败明细。`,
+                '分账部分失败',
+                {
+                  confirmButtonText: '查看失败明细',
+                  cancelButtonText: '关闭',
+                  type: 'warning'
+                }
+              )
+                .then(() => {
+                  this.openDrawer(row)
+                  this.$nextTick(() => {
+                    this.openPayoutBatchItemDialog({ id: payload.batchId })
+                    this.payoutItemDialog.itemStatus = 'FAILED'
+                    this.loadPayoutItemPage(1)
+                  })
+                })
+                .catch(() => {})
+            }
             this.getList()
             if (this.drawer.visible && this.drawer.periodId === row.id) {
               periodDetail(row.id).then(r => {
@@ -621,9 +820,26 @@ export default {
                   this.drawer.summary = r.data.summary
                 }
               })
+              this.loadPayoutBatches()
             }
           } else {
             this.$message.error(res.msg || '分账失败')
+            if (hasFails && payload.batchId) {
+              this.$confirm('存在失败订单，是否打开失败明细？', '分账失败', {
+                confirmButtonText: '查看',
+                cancelButtonText: '关闭',
+                type: 'warning'
+              })
+                .then(() => {
+                  this.openDrawer(row)
+                  this.$nextTick(() => {
+                    this.openPayoutBatchItemDialog({ id: payload.batchId })
+                    this.payoutItemDialog.itemStatus = 'FAILED'
+                    this.loadPayoutItemPage(1)
+                  })
+                })
+                .catch(() => {})
+            }
           }
         })
       }).catch(() => {})
@@ -724,5 +940,17 @@ export default {
   font-size: 13px;
   font-weight: 600;
   color: #303133;
+}
+.payout-batch-toolbar {
+  margin-bottom: 8px;
+}
+.payout-item-meta {
+  font-size: 13px;
+  color: #606266;
+  margin-bottom: 6px;
+}
+.payout-item-meta .sep {
+  margin: 0 8px;
+  color: #dcdfe6;
 }
 </style>
