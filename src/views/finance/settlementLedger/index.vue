@@ -15,20 +15,20 @@
           <span class="task-monitor-time">最近刷新：{{ taskStats.lastRefreshTime || '—' }}</span>
           <el-button
             v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:ingestTask:stats')"
+            class="task-monitor-refresh-btn"
             size="mini"
             type="primary"
-            plain
             :loading="taskStatsLoading"
             @click="loadTaskStats(false)"
           >刷新</el-button>
         </div>
       </div>
       <el-row :gutter="12" class="task-monitor-cards">
-        <el-col :span="4"><div class="task-card"><div class="k">Pending</div><div class="v">{{ taskStats.pending }}</div></div></el-col>
-        <el-col :span="4"><div class="task-card"><div class="k">Running</div><div class="v">{{ taskStats.running }}</div></div></el-col>
-        <el-col :span="4"><div class="task-card"><div class="k">Success</div><div class="v">{{ taskStats.success }}</div></div></el-col>
-        <el-col :span="4"><div class="task-card"><div class="k">Failed</div><div class="v warn">{{ taskStats.failed }}</div></div></el-col>
-        <el-col :span="4"><div class="task-card"><div class="k">Dead</div><div class="v danger">{{ taskStats.dead }}</div></div></el-col>
+        <el-col :span="4"><div class="task-card"><div class="k">待处理</div><div class="v">{{ taskStats.pending }}</div></div></el-col>
+        <el-col :span="4"><div class="task-card"><div class="k">运行中</div><div class="v">{{ taskStats.running }}</div></div></el-col>
+        <el-col :span="4"><div class="task-card"><div class="k">成功</div><div class="v">{{ taskStats.success }}</div></div></el-col>
+        <el-col :span="4"><div class="task-card"><div class="k">失败</div><div class="v warn">{{ taskStats.failed }}</div></div></el-col>
+        <el-col :span="4"><div class="task-card"><div class="k">死信</div><div class="v danger">{{ taskStats.dead }}</div></div></el-col>
       </el-row>
       <el-alert
         v-if="taskStatsError"
@@ -69,9 +69,9 @@
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" clearable placeholder="全部" style="width: 130px">
-            <el-option :value="0" label="OPEN（待关账）" />
-            <el-option :value="1" label="LOCKED（已关账）" />
-            <el-option :value="2" label="PAID（已分账）" />
+            <el-option :value="0" label="待关账" />
+            <el-option :value="1" label="已关账" />
+            <el-option :value="2" label="已分账" />
           </el-select>
         </el-form-item>
         <el-form-item label="结算方式">
@@ -119,11 +119,10 @@
         highlight-current-row
         style="width: 100%"
       >
-        <el-table-column type="index" width="50" label="#" align="center" :index="indexMethod" />
+        <el-table-column type="index" width="50" label="序号" align="center" :index="indexMethod" />
         <el-table-column label="商户" min-width="140" align="center" show-overflow-tooltip>
           <template slot-scope="scope">
             <span>{{ scope.row.merchantName || '—' }}</span>
-            <span v-if="scope.row.merchantId != null" class="sub-id">（ID {{ scope.row.merchantId }}）</span>
           </template>
         </el-table-column>
         <el-table-column prop="periodKey" label="账期主键" min-width="220" show-overflow-tooltip />
@@ -140,9 +139,11 @@
         </el-table-column>
         <el-table-column label="状态" width="120" align="center">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.status === 0" type="info">OPEN</el-tag>
-            <el-tag v-else-if="scope.row.status === 1" type="warning">LOCKED</el-tag>
-            <el-tag v-else-if="scope.row.status === 2" type="success">PAID</el-tag>
+            <el-tag
+              v-if="scope.row.status === 0 || scope.row.status === 1 || scope.row.status === 2"
+              :type="scope.row.status === 0 ? 'info' : scope.row.status === 1 ? 'warning' : 'success'"
+              size="small"
+            >{{ statusLabel(scope.row.status) }}</el-tag>
             <span v-else>—</span>
           </template>
         </el-table-column>
@@ -642,9 +643,9 @@ export default {
       return '—'
     },
     statusLabel(s) {
-      if (s === 0) return 'OPEN（待关账）'
-      if (s === 1) return 'LOCKED（已关账）'
-      if (s === 2) return 'PAID（已分账）'
+      if (s === 0) return '待关账'
+      if (s === 1) return '已关账'
+      if (s === 2) return '已分账'
       return '—'
     },
     search() {
@@ -1009,6 +1010,13 @@ export default {
   color: #909399;
   font-size: 12px;
   margin-right: 8px;
+}
+.task-monitor-refresh-btn.el-button--primary {
+  color: #fff;
+}
+.task-monitor-refresh-btn.el-button--primary:focus,
+.task-monitor-refresh-btn.el-button--primary:hover {
+  color: #fff;
 }
 .task-monitor-cards {
   margin-bottom: 8px;
