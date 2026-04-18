@@ -108,138 +108,144 @@
       </div>
     </div>
 
-    <el-dialog
-      :visible.sync="editDialog.visible"
+    <el-drawer
       title="修改结算周期"
-      custom-class="settlement-cycle-dialog"
+      :visible.sync="editDialog.visible"
+      custom-class="settlement-cycle-drawer"
+      direction="rtl"
+      size="480px"
+      append-to-body
       @close="editDialog.visible = false"
-      :append-to-body="true"
-      width="520px"
     >
-      <el-form ref="editForm" :model="editDialog.form" :rules="editRules" label-position="left" label-width="0">
-        <div class="dialog-station-block">
-          <div class="dialog-station-label">电站名称</div>
-          <div class="dialog-station-name">{{ editDialog.form.stationName || '—' }}</div>
-        </div>
-        <el-alert
-          class="settlement-cycle-tip"
-          type="info"
-          :closable="false"
-          show-icon
-          title="设置后，当天及后续的结算按照该周期进行，每个自然月仅可修改一次。"
-        />
-        <el-form-item prop="settlementCycleType" class="cycle-form-item" label-width="0">
-          <div class="cycle-card-list">
-            <div
-              v-for="opt in cycleOptions"
-              :key="opt.value"
-              class="cycle-card"
-              :class="{ 'is-selected': editDialog.form.settlementCycleType === opt.value }"
-              @click="selectCycle('edit', opt.value)"
-            >
-              <div class="cycle-card-title">{{ opt.title }}</div>
-              <div class="cycle-card-desc">{{ opt.desc }}</div>
-              <div v-show="editDialog.form.settlementCycleType === opt.value" class="cycle-card-corner-wrap">
-                <i class="el-icon-check cycle-card-check" />
+      <div class="settlement-drawer-body">
+        <el-form ref="editForm" :model="editDialog.form" :rules="editRules" label-position="left" label-width="0">
+          <div class="dialog-station-block">
+            <div class="dialog-station-label">电站名称</div>
+            <div class="dialog-station-name">{{ editDialog.form.stationName || '—' }}</div>
+          </div>
+          <el-alert
+            class="settlement-cycle-tip"
+            type="info"
+            :closable="false"
+            show-icon
+            title="设置后，当天及后续的结算按照该周期进行，每个自然月仅可修改一次。"
+          />
+          <el-form-item prop="settlementCycleType" class="cycle-form-item" label-width="0">
+            <div class="cycle-card-list">
+              <div
+                v-for="opt in cycleOptions"
+                :key="opt.value"
+                class="cycle-card"
+                :class="{ 'is-selected': editDialog.form.settlementCycleType === opt.value }"
+                @click="selectCycle('edit', opt.value)"
+              >
+                <div class="cycle-card-title">{{ opt.title }}</div>
+                <div class="cycle-card-desc">{{ opt.desc }}</div>
+                <div v-show="editDialog.form.settlementCycleType === opt.value" class="cycle-card-corner-wrap">
+                  <i class="el-icon-check cycle-card-check" />
+                </div>
               </div>
             </div>
-          </div>
-        </el-form-item>
-        <el-form-item prop="settlementMode" class="mode-form-item" label-width="0">
-          <div class="mode-section-label">结算方式</div>
-          <div class="mode-card-row">
-            <div
-              v-for="m in modeOptions"
-              :key="'e-mode-' + m.value"
-              class="mode-card"
-              :class="{ 'is-selected': editDialog.form.settlementMode === m.value }"
-              @click="selectMode('edit', m.value)"
-            >
-              <div class="mode-card-title">{{ m.title }}</div>
-              <div class="mode-card-desc">{{ m.desc }}</div>
-              <div v-show="editDialog.form.settlementMode === m.value" class="mode-card-corner-wrap">
-                <i class="el-icon-check mode-card-check" />
+          </el-form-item>
+          <el-form-item prop="settlementMode" class="mode-form-item" label-width="0">
+            <div class="mode-section-label">结算方式</div>
+            <div class="mode-card-row">
+              <div
+                v-for="m in modeOptions"
+                :key="'e-mode-' + m.value"
+                class="mode-card"
+                :class="{ 'is-selected': editDialog.form.settlementMode === m.value }"
+                @click="selectMode('edit', m.value)"
+              >
+                <div class="mode-card-title">{{ m.title }}</div>
+                <div class="mode-card-desc">{{ m.desc }}</div>
+                <div v-show="editDialog.form.settlementMode === m.value" class="mode-card-corner-wrap">
+                  <i class="el-icon-check mode-card-check" />
+                </div>
               </div>
             </div>
-          </div>
-        </el-form-item>
-        <el-form-item class="dialog-actions" label-width="0">
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':web:stationSettlementRule:save')"
-            type="primary"
-            @click="onEditSubmit"
-          >
-            确定
-          </el-button>
-          <el-button @click="editDialog.visible=false">取消</el-button>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
+          </el-form-item>
+          <el-form-item class="drawer-form-actions" label-width="0">
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:stationSettlementRule:save')"
+              type="primary"
+              @click="onEditSubmit"
+            >
+              确定
+            </el-button>
+            <el-button @click="editDialog.visible = false">取消</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-drawer>
 
-    <el-dialog
-      :visible.sync="batchDialog.visible"
+    <el-drawer
       title="批量修改结算周期"
-      custom-class="settlement-cycle-dialog"
+      :visible.sync="batchDialog.visible"
+      custom-class="settlement-cycle-drawer"
+      direction="rtl"
+      size="480px"
+      append-to-body
       @close="batchDialog.visible = false"
-      :append-to-body="true"
-      width="520px"
     >
-      <div class="batch-selected-hint">已选择站点：{{ selectedStationIds.length }} 个</div>
-      <el-form ref="batchForm" :model="batchDialog.form" :rules="editRules" label-position="left" label-width="0">
-        <el-alert
-          class="settlement-cycle-tip"
-          type="info"
-          :closable="false"
-          show-icon
-          title="设置后，当天及后续的结算按照该周期进行，每个自然月仅可修改一次。"
-        />
-        <el-form-item prop="settlementCycleType" class="cycle-form-item" label-width="0">
-          <div class="cycle-card-list">
-            <div
-              v-for="opt in cycleOptions"
-              :key="'b-' + opt.value"
-              class="cycle-card"
-              :class="{ 'is-selected': batchDialog.form.settlementCycleType === opt.value }"
-              @click="selectCycle('batch', opt.value)"
-            >
-              <div class="cycle-card-title">{{ opt.title }}</div>
-              <div class="cycle-card-desc">{{ opt.desc }}</div>
-              <div v-show="batchDialog.form.settlementCycleType === opt.value" class="cycle-card-corner-wrap">
-                <i class="el-icon-check cycle-card-check" />
+      <div class="settlement-drawer-body">
+        <div class="batch-selected-hint">已选择站点：{{ selectedStationIds.length }} 个</div>
+        <el-form ref="batchForm" :model="batchDialog.form" :rules="editRules" label-position="left" label-width="0">
+          <el-alert
+            class="settlement-cycle-tip"
+            type="info"
+            :closable="false"
+            show-icon
+            title="设置后，当天及后续的结算按照该周期进行，每个自然月仅可修改一次。"
+          />
+          <el-form-item prop="settlementCycleType" class="cycle-form-item" label-width="0">
+            <div class="cycle-card-list">
+              <div
+                v-for="opt in cycleOptions"
+                :key="'b-' + opt.value"
+                class="cycle-card"
+                :class="{ 'is-selected': batchDialog.form.settlementCycleType === opt.value }"
+                @click="selectCycle('batch', opt.value)"
+              >
+                <div class="cycle-card-title">{{ opt.title }}</div>
+                <div class="cycle-card-desc">{{ opt.desc }}</div>
+                <div v-show="batchDialog.form.settlementCycleType === opt.value" class="cycle-card-corner-wrap">
+                  <i class="el-icon-check cycle-card-check" />
+                </div>
               </div>
             </div>
-          </div>
-        </el-form-item>
-        <el-form-item prop="settlementMode" class="mode-form-item" label-width="0">
-          <div class="mode-section-label">结算方式</div>
-          <div class="mode-card-row">
-            <div
-              v-for="m in modeOptions"
-              :key="'b-mode-' + m.value"
-              class="mode-card"
-              :class="{ 'is-selected': batchDialog.form.settlementMode === m.value }"
-              @click="selectMode('batch', m.value)"
-            >
-              <div class="mode-card-title">{{ m.title }}</div>
-              <div class="mode-card-desc">{{ m.desc }}</div>
-              <div v-show="batchDialog.form.settlementMode === m.value" class="mode-card-corner-wrap">
-                <i class="el-icon-check mode-card-check" />
+          </el-form-item>
+          <el-form-item prop="settlementMode" class="mode-form-item" label-width="0">
+            <div class="mode-section-label">结算方式</div>
+            <div class="mode-card-row">
+              <div
+                v-for="m in modeOptions"
+                :key="'b-mode-' + m.value"
+                class="mode-card"
+                :class="{ 'is-selected': batchDialog.form.settlementMode === m.value }"
+                @click="selectMode('batch', m.value)"
+              >
+                <div class="mode-card-title">{{ m.title }}</div>
+                <div class="mode-card-desc">{{ m.desc }}</div>
+                <div v-show="batchDialog.form.settlementMode === m.value" class="mode-card-corner-wrap">
+                  <i class="el-icon-check mode-card-check" />
+                </div>
               </div>
             </div>
-          </div>
-        </el-form-item>
-        <el-form-item class="dialog-actions" label-width="0">
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':web:stationSettlementRule:batchSave')"
-            type="primary"
-            @click="onBatchSubmit"
-          >
-            确定
-          </el-button>
-          <el-button @click="batchDialog.visible=false">取消</el-button>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
+          </el-form-item>
+          <el-form-item class="drawer-form-actions" label-width="0">
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:stationSettlementRule:batchSave')"
+              type="primary"
+              @click="onBatchSubmit"
+            >
+              确定
+            </el-button>
+            <el-button @click="batchDialog.visible = false">取消</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -471,13 +477,21 @@ export default {
 
 <style>
 /* 与项目主题色一致（参见 style.scss 中 primary hover #08d374） */
-.settlement-cycle-dialog {
+.settlement-cycle-drawer {
   --settlement-theme: #08d374;
   --settlement-theme-soft: rgba(8, 211, 116, 0.18);
 }
 
-.settlement-cycle-dialog .el-dialog__body {
-  padding-top: 8px;
+.settlement-cycle-drawer .el-drawer__body {
+  padding: 12px 20px 24px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+  -webkit-overflow-scrolling: touch;
+}
+.settlement-drawer-body {
+  max-width: 100%;
 }
 .batch-selected-hint {
   margin: 0 0 12px;
@@ -517,9 +531,11 @@ export default {
 .cycle-form-item {
   margin-bottom: 8px;
 }
-.dialog-actions {
-  margin-top: 8px;
+.drawer-form-actions {
+  margin-top: 16px;
   margin-bottom: 0;
+  padding-top: 16px;
+  border-top: 1px solid #ebeef5;
 }
 .cycle-card-list {
   width: 100%;
