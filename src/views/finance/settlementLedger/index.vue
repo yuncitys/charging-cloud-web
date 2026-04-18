@@ -13,7 +13,14 @@
         <div class="task-monitor-title">实时入账任务监控</div>
         <div class="task-monitor-actions">
           <span class="task-monitor-time">最近刷新：{{ taskStats.lastRefreshTime || '—' }}</span>
-          <el-button size="mini" type="primary" plain :loading="taskStatsLoading" @click="loadTaskStats(false)">刷新</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:ingestTask:stats')"
+            size="mini"
+            type="primary"
+            plain
+            :loading="taskStatsLoading"
+            @click="loadTaskStats(false)"
+          >刷新</el-button>
         </div>
       </div>
       <el-row :gutter="12" class="task-monitor-cards">
@@ -95,7 +102,12 @@
           />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:page')"
+            type="primary"
+            icon="el-icon-search"
+            @click="search"
+          >查询</el-button>
         </el-form-item>
       </el-form>
 
@@ -108,7 +120,12 @@
         style="width: 100%"
       >
         <el-table-column type="index" width="50" label="#" align="center" :index="indexMethod" />
-        <el-table-column prop="merchantId" label="商户ID" width="88" align="center" />
+        <el-table-column label="商户" min-width="140" align="center" show-overflow-tooltip>
+          <template slot-scope="scope">
+            <span>{{ scope.row.merchantName || '—' }}</span>
+            <span v-if="scope.row.merchantId != null" class="sub-id">（ID {{ scope.row.merchantId }}）</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="periodKey" label="账期主键" min-width="220" show-overflow-tooltip />
         <el-table-column label="类型" width="88" align="center">
           <template slot-scope="scope">{{ periodTypeLabel(scope.row.periodType) }}</template>
@@ -146,9 +163,14 @@
         </el-table-column>
         <el-table-column label="操作" width="200" align="center" fixed="right">
           <template slot-scope="scope">
-            <el-button type="text" size="small" @click="openDrawer(scope.row)">台账明细</el-button>
             <el-button
-              v-if="scope.row.status !== 2"
+              v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:detail')"
+              type="text"
+              size="small"
+              @click="openDrawer(scope.row)"
+            >台账明细</el-button>
+            <el-button
+              v-if="scope.row.status !== 2 && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
               type="text"
               size="small"
               :disabled="scope.row.settlementMode !== 2"
@@ -210,9 +232,31 @@
           </el-col>
         </el-row>
 
+        <el-row v-if="drawer.summary.merchantName || drawer.summary.stationNames" :gutter="16" class="summary-row" style="margin-top: 8px">
+          <el-col v-if="drawer.summary.merchantName" :span="12">
+            <div class="summary-card">
+              <div class="summary-label">商户</div>
+              <div class="summary-value">{{ drawer.summary.merchantName }}</div>
+            </div>
+          </el-col>
+          <el-col v-if="drawer.summary.stationNames" :span="12">
+            <div class="summary-card">
+              <div class="summary-label">涉及站点</div>
+              <div class="summary-value" style="font-size: 13px; font-weight: 500">{{ drawer.summary.stationNames }}</div>
+            </div>
+          </el-col>
+        </el-row>
+
         <el-divider content-position="left">分账执行记录</el-divider>
         <div class="payout-batch-toolbar">
-          <el-button size="mini" type="primary" plain :loading="payoutBatchLoading" @click="loadPayoutBatches">刷新批次</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:payoutBatch:list')"
+            size="mini"
+            type="primary"
+            plain
+            :loading="payoutBatchLoading"
+            @click="loadPayoutBatches"
+          >刷新批次</el-button>
         </div>
         <el-table v-loading="payoutBatchLoading" :data="payoutBatches" border size="small" style="width: 100%; margin-bottom: 12px">
           <el-table-column label="执行时间" width="168" align="center">
@@ -233,7 +277,12 @@
           <el-table-column prop="failSummary" label="失败摘要" min-width="200" show-overflow-tooltip />
           <el-table-column label="操作" width="88" align="center">
             <template slot-scope="scope">
-              <el-button type="text" size="small" @click="openPayoutBatchItemDialog(scope.row)">明细</el-button>
+              <el-button
+                v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:payoutBatch:items')"
+                type="text"
+                size="small"
+                @click="openPayoutBatchItemDialog(scope.row)"
+              >明细</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -251,7 +300,13 @@
             <el-input v-model="lineQuery.bizOrderCode" clearable placeholder="模糊" style="width: 180px" />
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" size="small" icon="el-icon-search" @click="loadLines">筛选</el-button>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:lines')"
+              type="primary"
+              size="small"
+              icon="el-icon-search"
+              @click="loadLines"
+            >筛选</el-button>
           </el-form-item>
         </el-form>
 
@@ -310,8 +365,18 @@
               <span v-else>{{ scope.row.lineType }}</span>
             </template>
           </el-table-column>
-          <el-table-column prop="merchantId" label="商户ID" width="88" align="center" />
-          <el-table-column prop="stationId" label="站点ID" width="88" align="center" />
+          <el-table-column label="商户" min-width="120" show-overflow-tooltip>
+            <template slot-scope="scope">
+              {{ scope.row.merchantName || '—' }}
+              <span v-if="scope.row.merchantId != null" class="sub-id">（{{ scope.row.merchantId }}）</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="站点" min-width="120" show-overflow-tooltip>
+            <template slot-scope="scope">
+              {{ scope.row.stationName || '—' }}
+              <span v-if="scope.row.stationId != null" class="sub-id">（{{ scope.row.stationId }}）</span>
+            </template>
+          </el-table-column>
           <el-table-column label="预分账概览" min-width="180" align="center">
             <template slot-scope="scope">
               <el-tag size="mini" type="info">明细 {{ splitItemCount(scope.row) }} 条</el-tag>
@@ -381,7 +446,7 @@
         <el-table-column label="操作" width="100" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button
-              v-if="scope.row.itemStatus === 'FAILED' && payoutItemDialog.periodId"
+              v-if="scope.row.itemStatus === 'FAILED' && payoutItemDialog.periodId && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:retry')"
               type="text"
               size="small"
               :loading="payoutItemDialog.retryingOrderCode === scope.row.orderCode"
@@ -500,8 +565,10 @@ export default {
   },
   created() {
     this.initMerchant()
-    this.loadTaskStats(true)
-    this.startTaskStatsAutoRefresh()
+    if (this.btnAuthen && this.btnAuthen.permsVerifAuthention(':web:settlementLedger:ingestTask:stats')) {
+      this.loadTaskStats(true)
+      this.startTaskStatsAutoRefresh()
+    }
     this.getList()
   },
   beforeDestroy() {
@@ -680,6 +747,10 @@ export default {
     },
     loadPayoutBatches() {
       if (!this.drawer.periodId) return
+      if (!this.btnAuthen || !this.btnAuthen.permsVerifAuthention(':web:settlementLedger:payoutBatch:list')) {
+        this.payoutBatches = []
+        return
+      }
       this.payoutBatchLoading = true
       payoutBatchList(this.drawer.periodId)
         .then(res => {
@@ -799,6 +870,11 @@ export default {
     },
     loadLines() {
       if (!this.drawer.periodId) return
+      if (!this.btnAuthen || !this.btnAuthen.permsVerifAuthention(':web:settlementLedger:lines')) {
+        this.drawer.lines = []
+        this.drawer.lineTotal = 0
+        return
+      }
       this.drawer.lineLoading = true
       const sid = this.lineQuery.stationId
       const payload = {
@@ -1008,5 +1084,10 @@ export default {
 .payout-item-meta .sep {
   margin: 0 8px;
   color: #dcdfe6;
+}
+.sub-id {
+  color: #909399;
+  font-size: 12px;
+  font-weight: normal;
 }
 </style>
