@@ -378,6 +378,20 @@
         <el-table-column prop="skipReason" label="跳过原因" min-width="160" show-overflow-tooltip />
         <el-table-column prop="failMessage" label="失败原因" min-width="200" show-overflow-tooltip />
         <el-table-column prop="payTrace" label="支付摘要" min-width="180" show-overflow-tooltip />
+        <el-table-column label="操作" width="100" align="center" fixed="right">
+          <template slot-scope="scope">
+            <el-button
+              v-if="scope.row.itemStatus === 'FAILED' && payoutItemDialog.periodId"
+              type="text"
+              size="small"
+              :loading="payoutItemDialog.retryingOrderCode === scope.row.orderCode"
+              @click="onRetryPayoutSingleOrder(scope.row)"
+            >
+              重试分账
+            </el-button>
+            <span v-else>—</span>
+          </template>
+        </el-table-column>
       </el-table>
       <div class="pagination-container" style="margin-top: 10px">
         <el-pagination
@@ -402,7 +416,8 @@ import {
   ingestTaskStats,
   payoutBatchList,
   payoutBatchDetail,
-  payoutBatchItems
+  payoutBatchItems,
+  retryPayoutSingleOrder
 } from '@/api/finance/settlementLedger'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
@@ -465,13 +480,15 @@ export default {
       payoutItemDialog: {
         visible: false,
         batchId: null,
+        periodId: null,
         currentBatch: null,
         items: [],
         total: 0,
         page: 1,
         limit: 10,
         itemStatus: '',
-        loading: false
+        loading: false,
+        retryingOrderCode: null
       }
     }
   },
@@ -689,6 +706,7 @@ export default {
     openPayoutBatchItemDialog(batchRow) {
       if (!batchRow || !batchRow.id) return
       this.payoutItemDialog.batchId = batchRow.id
+      this.payoutItemDialog.periodId = batchRow.periodId != null ? batchRow.periodId : this.drawer.periodId
       this.payoutItemDialog.currentBatch = { ...batchRow }
       this.payoutItemDialog.visible = true
       this.payoutItemDialog.page = 1
@@ -702,6 +720,8 @@ export default {
     },
     onPayoutItemDialogClose() {
       this.payoutItemDialog.batchId = null
+      this.payoutItemDialog.periodId = null
+      this.payoutItemDialog.retryingOrderCode = null
       this.payoutItemDialog.currentBatch = null
       this.payoutItemDialog.items = []
       this.payoutItemDialog.total = 0
@@ -732,6 +752,42 @@ export default {
         })
         .finally(() => {
           this.payoutItemDialog.loading = false
+        })
+    },
+    onRetryPayoutSingleOrder(row) {
+      const periodId = this.payoutItemDialog.periodId
+      const orderCode = row && row.orderCode
+      if (!periodId || !orderCode) return
+      this.$confirm(`确认对订单「${orderCode}」单独重试分账？不会整账期重跑。`, '单笔重试', { type: 'warning' })
+        .then(() => {
+          this.payoutItemDialog.retryingOrderCode = orderCode
+          return retryPayoutSingleOrder(periodId, orderCode)
+        })
+        .then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg || '重试成功')
+            if (this.drawer.visible && this.drawer.periodId === periodId) {
+              periodDetail(periodId).then(r => {
+                if (r.code === 200 && r.data) {
+                  this.drawer.summary = r.data.summary
+                }
+              })
+              this.loadPayoutBatches()
+            }
+            this.getList()
+            payoutBatchDetail(this.payoutItemDialog.batchId).then(r => {
+              if (r.code === 200 && r.data && r.data.batch) {
+                this.payoutItemDialog.currentBatch = r.data.batch
+              }
+            })
+            this.loadPayoutItemPage(this.payoutItemDialog.page)
+          } else {
+            this.$message.error(res.msg || '重试失败')
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          this.payoutItemDialog.retryingOrderCode = null
         })
     },
     onDrawerClose() {

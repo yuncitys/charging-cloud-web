@@ -57,6 +57,15 @@ export function payoutBatchItems(batchId, params) {
   })
 }
 
+/** 单笔失败订单重试分账（不整账期重跑） */
+export function retryPayoutSingleOrder(periodId, orderCode) {
+  return request({
+    url: '/api/web/settlementLedger/payout/order/retry',
+    method: 'post',
+    params: { periodId, orderCode }
+  })
+}
+
 export function ingestTaskStats() {
   return request({
     url: '/api/web/settlementLedger/ingestTask/stats',
