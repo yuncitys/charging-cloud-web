@@ -6,7 +6,7 @@
       :closable="false"
       show-icon
       title="使用说明"
-      description="正向台账由订单结算完成后的实时入账写入；异常单可看下方「实时入账任务监控」或依赖异步队列重试。分账由调度任务按日/周/月发起（见 doc/定期分账-账期状态流转与调度说明.md）。账期按商户+结算方式拆分，period_key 形如 M商户ID|SM结算方式|DAY|日期。"
+      description="正向台账由订单结算完成后的实时入账写入；异常单可看下方「实时入账任务监控」或依赖异步队列重试。分账由调度任务按日/周/月发起。账期按商户+结算方式拆分，账期主键 形如 M商户ID|SM结算方式|DAY|日期。"
     />
     <div class="task-monitor-container">
       <div class="task-monitor-header">
@@ -200,6 +200,7 @@
     <el-drawer
       :title="drawerTitle"
       :visible.sync="drawer.visible"
+      custom-class="settlement-ledger-drawer"
       direction="rtl"
       size="86%"
       append-to-body
@@ -252,9 +253,9 @@
         <div class="payout-batch-toolbar">
           <el-button
             v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:payoutBatch:list')"
+            class="payout-batch-refresh-btn"
             size="mini"
             type="primary"
-            plain
             :loading="payoutBatchLoading"
             @click="loadPayoutBatches"
           >刷新批次</el-button>
@@ -369,13 +370,11 @@
           <el-table-column label="商户" min-width="120" show-overflow-tooltip>
             <template slot-scope="scope">
               {{ scope.row.merchantName || '—' }}
-              <span v-if="scope.row.merchantId != null" class="sub-id">（{{ scope.row.merchantId }}）</span>
             </template>
           </el-table-column>
           <el-table-column label="站点" min-width="120" show-overflow-tooltip>
             <template slot-scope="scope">
               {{ scope.row.stationName || '—' }}
-              <span v-if="scope.row.stationId != null" class="sub-id">（{{ scope.row.stationId }}）</span>
             </template>
           </el-table-column>
           <el-table-column label="预分账概览" min-width="180" align="center">
@@ -1018,6 +1017,13 @@ export default {
 .task-monitor-refresh-btn.el-button--primary:hover {
   color: #fff;
 }
+.payout-batch-refresh-btn.el-button--primary {
+  color: #fff;
+}
+.payout-batch-refresh-btn.el-button--primary:focus,
+.payout-batch-refresh-btn.el-button--primary:hover {
+  color: #fff;
+}
 .task-monitor-cards {
   margin-bottom: 8px;
 }
@@ -1097,5 +1103,16 @@ export default {
   color: #909399;
   font-size: 12px;
   font-weight: normal;
+}
+</style>
+
+<style>
+/* append-to-body 时抽屉挂到 body，scoped 无法命中，单独写避免台账明细无法纵向滚动 */
+.settlement-ledger-drawer .el-drawer__body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
 }
 </style>
