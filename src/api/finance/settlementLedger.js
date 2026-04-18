@@ -23,36 +23,6 @@ export function linePage(data) {
   })
 }
 
-export function rebuildOpenPeriod(periodId) {
-  return request({
-    url: '/api/web/settlementLedger/rebuildOpenPeriod',
-    method: 'post',
-    params: { periodId }
-  })
-}
-
-export function syncDailyCycle(statDate) {
-  return request({
-    url: '/api/web/settlementLedger/syncDailyCycle',
-    method: 'post',
-    params: { statDate }
-  })
-}
-
-export function syncWeeklyLastWeek() {
-  return request({
-    url: '/api/web/settlementLedger/syncWeeklyLastWeek',
-    method: 'post'
-  })
-}
-
-export function syncMonthlyLastMonth() {
-  return request({
-    url: '/api/web/settlementLedger/syncMonthlyLastMonth',
-    method: 'post'
-  })
-}
-
 export function submitPayout(data) {
   return request({
     url: '/api/web/settlementLedger/submitPayout',

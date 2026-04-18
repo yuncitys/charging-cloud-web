@@ -6,7 +6,7 @@
       :closable="false"
       show-icon
       title="使用说明"
-      description="每日「日结同步」请选昨天：会把该日已关单按各场站结算周期（日/周/月）写入对应账期。周/月全量同步按钮仅作补账。分账：日结随每日任务走；周结请周一任务、月结请月初任务（见后台 doc/定期分账-账期状态流转与调度说明.md）。账期按商户+结算方式拆分，period_key 形如 M商户ID|SM结算方式|DAY|日期。"
+      description="正向台账由订单结算完成后的实时入账写入；异常单可看下方「实时入账任务监控」或依赖异步队列重试。分账由调度任务按日/周/月发起（见 doc/定期分账-账期状态流转与调度说明.md）。账期按商户+结算方式拆分，period_key 形如 M商户ID|SM结算方式|DAY|日期。"
     />
     <div class="task-monitor-container">
       <div class="task-monitor-header">
@@ -97,18 +97,6 @@
         <el-form-item>
           <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
         </el-form-item>
-        <el-form-item>
-          <el-date-picker
-            v-model="syncDay"
-            type="date"
-            value-format="yyyy-MM-dd"
-            placeholder="选择归属日"
-            style="width: 150px"
-          />
-          <el-button type="warning" plain style="margin-left: 8px" @click="onSyncDaily">日结同步</el-button>
-          <el-button type="warning" plain @click="onSyncWeekly">周结同步</el-button>
-          <el-button type="warning" plain @click="onSyncMonthly">月结同步</el-button>
-        </el-form-item>
       </el-form>
 
       <el-table
@@ -156,17 +144,9 @@
         <el-table-column label="更新时间" width="160" align="center">
           <template slot-scope="scope">{{ scope.row.updateTime | formatDate }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="280" align="center" fixed="right">
+        <el-table-column label="操作" width="200" align="center" fixed="right">
           <template slot-scope="scope">
             <el-button type="text" size="small" @click="openDrawer(scope.row)">台账明细</el-button>
-            <el-button
-              v-if="scope.row.status === 0"
-              type="text"
-              size="small"
-              @click="onRebuild(scope.row)"
-            >
-              重算
-            </el-button>
             <el-button
               v-if="scope.row.status !== 2"
               type="text"
@@ -340,10 +320,6 @@ import {
   periodPage,
   periodDetail,
   linePage,
-  rebuildOpenPeriod,
-  syncDailyCycle,
-  syncWeeklyLastWeek,
-  syncMonthlyLastMonth,
   submitPayout,
   ingestTaskStats
 } from '@/api/finance/settlementLedger'
@@ -364,7 +340,6 @@ export default {
       list: [],
       total: 0,
       dateRange: null,
-      syncDay: null,
       merchantList: [],
       taskStatsLoading: false,
       taskStatsError: '',
@@ -626,20 +601,6 @@ export default {
       this.lineQuery.page = p
       this.loadLines()
     },
-    onRebuild(row) {
-      this.$confirm(`确认重算账期「${row.periodKey}」的正向台账？仅 OPEN 状态有效。`, '重算台账', {
-        type: 'warning'
-      }).then(() => {
-        rebuildOpenPeriod(row.id).then(res => {
-          if (res.code === 200) {
-            this.$message.success(res.msg || '已提交重算')
-            this.getList()
-          } else {
-            this.$message.error(res.msg || '重算失败')
-          }
-        })
-      }).catch(() => {})
-    },
     onPayout(row) {
       if (row.settlementMode !== 2) {
         this.$message.warning('仅手动结算方式账期允许提交分账')
@@ -663,46 +624,6 @@ export default {
             }
           } else {
             this.$message.error(res.msg || '分账失败')
-          }
-        })
-      }).catch(() => {})
-    },
-    onSyncDaily() {
-      if (!this.syncDay) {
-        this.$message.warning('请选择订单归属日')
-        return
-      }
-      this.$confirm(`按归属日 ${this.syncDay} 执行日结台账同步？`, '日结同步', { type: 'warning' }).then(() => {
-        syncDailyCycle(this.syncDay).then(res => {
-          if (res.code === 200) {
-            this.$message.success(res.msg || '同步成功')
-            this.getList()
-          } else {
-            this.$message.error(res.msg || '同步失败')
-          }
-        })
-      }).catch(() => {})
-    },
-    onSyncWeekly() {
-      this.$confirm('执行上一 ISO 自然周的周结台账同步？', '周结同步', { type: 'warning' }).then(() => {
-        syncWeeklyLastWeek().then(res => {
-          if (res.code === 200) {
-            this.$message.success(res.msg || '同步成功')
-            this.getList()
-          } else {
-            this.$message.error(res.msg || '同步失败')
-          }
-        })
-      }).catch(() => {})
-    },
-    onSyncMonthly() {
-      this.$confirm('执行上一自然月的月结台账同步？', '月结同步', { type: 'warning' }).then(() => {
-        syncMonthlyLastMonth().then(res => {
-          if (res.code === 200) {
-            this.$message.success(res.msg || '同步成功')
-            this.getList()
-          } else {
-            this.$message.error(res.msg || '同步失败')
           }
         })
       }).catch(() => {})
