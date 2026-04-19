@@ -201,7 +201,7 @@ export default {
 			return { rowspan: 1, colspan: 1 }
 		},
 		getPayeeColumns(list) {
-			const hiddenProps = ['id', 'orderSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo']
+			const hiddenProps = ['id', 'orderProfitSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo']
 			const labelMap = {
 				merchantName: '收款商户',
 				merchantNo: '商户号',
@@ -252,7 +252,7 @@ export default {
 			return Object.keys(first)
 		},
 		getRefundRecordColumns(list) {
-			const hiddenProps = ['id', 'orderProfitRefundRecordId', 'orderSplitRecordId', 'stationId', 'merchantId', 'userId', 'adminId', 'tenantId', 'createUser', 'updateUser', 'busTradeMerNo', 'isPlatformMerchant']	
+			const hiddenProps = ['id', 'orderProfitRefundRecordId', 'orderProfitSplitRecordId', 'stationId', 'merchantId', 'userId', 'adminId', 'tenantId', 'createUser', 'updateUser', 'busTradeMerNo', 'isPlatformMerchant']	
 			const labelMap = {
 				orderProfitRefundRecordId: '退款记录ID',
 				stationId: '电站ID',
