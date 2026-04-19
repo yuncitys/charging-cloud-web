@@ -11,18 +11,18 @@
 					<el-col :span="12"><el-form-item label="业务记录号"><span>{{ detailPay.bizRecordId || '-' }}</span></el-form-item></el-col>
 					<el-col :span="12">
 						<el-form-item label="付款金额">
-							<span class="pay-money-inline">
+							<div class="pay-money-row">
 								<span class="pay-money-highlight">{{ formatNullable(detailPay.payMoney) }}</span>
 								<el-button
-								v-if="btnAuthen && btnAuthen.permsVerifAuthention(':web:refundCenter:tradingRefund')"
-								type="danger"
-								size="mini"
-								plain
-								class="pay-money-refund-btn"
-								:disabled="!effectivePayCode"
-								@click="openRefundDialog"
-							>退款</el-button>
-							</span>
+									v-if="showRefundButton"
+									type="danger"
+									size="mini"
+									plain
+									class="pay-money-refund-btn"
+									:disabled="!effectivePayCode"
+									@click="openRefundDialog"
+								>退款</el-button>
+							</div>
 						</el-form-item>
 					</el-col>
 					<el-col :span="12"><el-form-item label="赠送金额"><span>{{ formatNullable(detailPay.giftMoney) }}</span></el-form-item></el-col>
@@ -128,6 +128,15 @@
 			},
 			splitColumns() {
 				return this.getSplitColumns(this.detailSplitRecords)
+			},
+			/** 支付成功(已支付)=1、部分退款=30 时可退款；需权限 */
+			showRefundButton() {
+				if (!this.btnAuthen || !this.btnAuthen.permsVerifAuthention(':web:refundCenter:tradingRefund')) {
+					return false
+				}
+				const s = this.detailPay.payStatus
+				const v = typeof s === 'string' ? Number(s) : s
+				return v === 1 || v === 30
 			},
 		},
 		watch: {
@@ -361,18 +370,22 @@
 	.pay-money-highlight {
 		color: #f56c6c;
 		font-weight: 600;
-		line-height: 1;
+		line-height: 22px;
 	}
-	.pay-money-inline {
-		display: inline-flex;
+	.pay-money-row {
+		display: flex;
 		align-items: center;
-		gap: 8px;
-		white-space: nowrap;
-		vertical-align: middle;
+		justify-content: space-between;
+		width: 100%;
+		min-height: 28px;
+		gap: 12px;
+		flex-wrap: wrap;
 	}
 	.pay-money-refund-btn {
-		height: 24px;
-		line-height: 24px;
-		padding: 0 8px;
+		flex-shrink: 0;
+		height: 28px;
+		line-height: 26px;
+		padding: 0 12px;
+		margin-left: auto;
 	}
 </style>
