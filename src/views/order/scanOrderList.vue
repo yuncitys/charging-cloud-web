@@ -523,7 +523,7 @@
       	this.$router.push({
       		name: 'orderSplitRecord',
       		query: {
-      			orderCode: orderCode
+      			bizOrderCode: orderCode
       		}
       	})
       },

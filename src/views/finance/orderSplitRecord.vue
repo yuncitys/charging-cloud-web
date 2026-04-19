@@ -3,6 +3,8 @@
 		<div class="filter-container">
 			<el-input v-model="listQuery.orderCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入结算单号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
+			<el-input v-model="listQuery.bizOrderCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请输入业务订单" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-input v-model="listQuery.splitOrderCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入分账单号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
@@ -126,6 +128,7 @@
 					status: '',
 					merchantId: '',
 					orderCode: '',
+					bizOrderCode: '',
 					splitOrderCode: '',
 					createTimeStart: '',
 					createTimeEnd: ''
@@ -235,7 +238,8 @@
 			},
 		},
 		created() {
-			this.listQuery.splitOrderCode = this.$route.query.orderCode || ''
+			const q = this.$route.query || {}
+			this.listQuery.bizOrderCode = q.bizOrderCode || q.orderCode || ''
 			this.getList()
 			this.getMerchantList()
 		},
