@@ -47,7 +47,10 @@
 				let downloadData = {
 					limit: 5000,
 					orderCode: this.queryData.orderCode,
+					bizOrderCode: this.queryData.bizOrderCode,
+					splitOrderCode: this.queryData.splitOrderCode,
 					status: this.queryData.status,
+					merchantId: this.queryData.merchantId,
 					adminId: this.queryData.adminId,
 					createTimeStart: this.queryData.createTimeStart,
 					createTimeEnd: this.queryData.createTimeEnd
