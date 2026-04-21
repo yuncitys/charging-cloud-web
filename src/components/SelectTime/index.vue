@@ -1,6 +1,6 @@
 <template>
   <div class="select-container">
-    <el-select v-model="st_value" :clearable="true" @focus="selectFouce(0)" @change="onSelectedTime(0)" placeholder="请选择开始时间">
+    <el-select v-model="st_value" :disabled="disabled" :clearable="true" @focus="selectFouce(0)" @change="onSelectedTime(0)" placeholder="请选择开始时间">
       <el-option
         v-for="item in options"
         :key="item.value"
@@ -11,7 +11,7 @@
       </el-option>
     </el-select>
     <div class="time-interval">至</div>
-    <el-select :clearable="true" v-model="en_value" @focus="selectFouce(1)"  @change="onSelectedTime(1)" placeholder="请选择结束时间">
+    <el-select :clearable="true" :disabled="disabled" v-model="en_value" @focus="selectFouce(1)"  @change="onSelectedTime(1)" placeholder="请选择结束时间">
       <el-option
         v-for="item in options"
         :key="item.value"
@@ -27,7 +27,7 @@
 <script>
 export default {
   name: 'selectTIme',
-  props: ['disabledItems','stTime','enTime','itemIndex'],
+  props: ['disabledItems','stTime','enTime','itemIndex','disabled'],
   data() {
     return {
       st_value:'',
@@ -220,10 +220,16 @@ export default {
   }
   , methods: {
     selectFouce(value){
+      if (this.disabled) {
+        return
+      }
       let data = {itemIndex:this.parentIndex,selecterIndex:value}
       this.$emit('selectFouce',data)
     },
     onSelectedTime(value){
+      if (this.disabled) {
+        return
+      }
       var data ={st_time:this.st_value,en_time:this.en_value,itemIndex:this.parentIndex,selecterIndex:value}
       this.$emit('onSelectedTime',data)
     }

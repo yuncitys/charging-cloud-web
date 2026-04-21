@@ -12,47 +12,68 @@
 				<el-button class="station-pricing-car-add__back" type="text" @click="goBack">返回电价管理</el-button>
 			</div>
 			<el-form ref="addData" :model="addData" label-position="left" label-width="80px" class="station-pricing-car-add__form">
-				<el-form-item :label="'方案名称'" prop="name">
-					<el-input v-model="addData.name" placeholder="请输入方案名称" clearable />
+				<el-form-item :label="'计费模板'">
+					<el-select
+						v-model="selectedTemplateId"
+						filterable
+						clearable
+						placeholder="请选择汽车计费模板"
+						:loading="templateLoading"
+						@change="onTemplateSelected"
+						class="station-pricing-car-add__template-select"
+					>
+						<el-option
+							v-for="item in templateOptions"
+							:key="item.id"
+							:label="item.optionLabel"
+							:value="item.id"
+						/>
+					</el-select>
 				</el-form-item>
-				<el-form-item :label="'价格类别'" prop="realTimeCharging">
-					<div class="price-item" v-for="(item,index) in  addData.priceTier">
-						<el-input disabled :placeholder="item.periodTypeName" v-model="item.periodTypeName" size="medium" class="price-item__period-tag">
-							<!-- <template slot="prepend">时段</template> -->
-						</el-input>
-						<el-input class="price-input" size="medium" type = "number" placeholder="0.00" v-model="item.powerPrice">
-							<template slot="prepend">电费</template>
-							<template slot="append">元/度</template>
-						</el-input>
-						<el-input class="price-input" size="medium" type = "number" placeholder="0.00" v-model="item.serviceFee">
-							<template slot="prepend">服务费</template>
-							<template slot="append">元/度</template>
-						</el-input>
-					</div>
-				</el-form-item>
-				<el-form-item label="价格时区" prop="realTimeCharging">
-					<div class="price-period-item"
-						v-for="(_item,_index) in  addData.periodTimePrices.periodPriceList" :key="_index">
-						<div class="price-period-item__lead">
-							<i v-if="addData.periodTimePrices && addData.periodTimePrices.periodPriceList && addData.periodTimePrices.periodPriceList.length>1"
-								class="el-icon-remove price-period-item__icon price-period-item__icon--active"
-								@click="delPeridPriceItem(_index)"></i>
-							<i v-else class="el-icon-remove price-period-item__icon price-period-item__icon--muted"></i>
+				<template v-if="selectedTemplateId">
+					<el-form-item :label="'方案名称'" prop="name">
+						<el-input v-model="addData.name" placeholder="请输入方案名称" clearable disabled />
+					</el-form-item>
+					<el-form-item :label="'价格类别'" prop="realTimeCharging">
+						<div class="price-item" v-for="(item,index) in  addData.priceTier">
+							<el-input disabled :placeholder="item.periodTypeName" v-model="item.periodTypeName" size="medium" class="price-item__period-tag">
+								<!-- <template slot="prepend">时段</template> -->
+							</el-input>
+							<el-input class="price-input" size="medium" type = "number" placeholder="0.00" v-model="item.powerPrice" disabled>
+								<template slot="prepend">电费</template>
+								<template slot="append">元/度</template>
+							</el-input>
+							<el-input class="price-input" size="medium" type = "number" placeholder="0.00" v-model="item.serviceFee" disabled>
+								<template slot="prepend">服务费</template>
+								<template slot="append">元/度</template>
+							</el-input>
 						</div>
-						<div class="price-period-item__time">
-							<select-time @selectFouce="periodTimeFouce" :stTime="_item.stTime" :itemIndex="_index"
-								@onSelectedTime="onSelectedTime" :enTime="_item.enTime"
-								:disabled-items="addData.disabledItems"></select-time>
+					</el-form-item>
+					<el-form-item label="价格时区" prop="realTimeCharging">
+						<div class="price-period-item"
+							v-for="(_item,_index) in  addData.periodTimePrices.periodPriceList" :key="_index">
+							<div class="price-period-item__lead">
+								<i class="el-icon-remove price-period-item__icon price-period-item__icon--muted"></i>
+							</div>
+							<div class="price-period-item__time">
+								<select-time @selectFouce="periodTimeFouce" :stTime="_item.stTime" :itemIndex="_index"
+									@onSelectedTime="onSelectedTime" :enTime="_item.enTime"
+									:disabled-items="addData.disabledItems" :disabled="true"></select-time>
+							</div>
+							<div class="price-period-item__type">
+								<el-select class="select-priod-type" v-model="_item.periodTypeId" @change="addselectSelect" disabled>
+									<el-option v-for="(item,index) in  addData.priceTier" :value="item.periodTypeId"
+										:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元/度】 服务费 【'+item.serviceFee+' 元/度】' "
+										:key="index"></el-option>
+								</el-select>
+							</div>
 						</div>
-						<div class="price-period-item__type">
-							<el-select class="select-priod-type" v-model="_item.periodTypeId" @change="addselectSelect">
-								<el-option v-for="(item,index) in  addData.priceTier" :value="item.periodTypeId"
-									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元/度】 服务费 【'+item.serviceFee+' 元/度】' "
-									:key="index"></el-option>
-							</el-select>
-						</div>
-					</div>
-				</el-form-item>
+					</el-form-item>
+				</template>
+				<div v-else class="station-pricing-car-add__empty">
+					<i class="el-icon-document station-pricing-car-add__empty-icon"></i>
+					<div class="station-pricing-car-add__empty-text">该站点尚未配置计费策略</div>
+				</div>
 				<!-- 价格时区：其它统一时段（未覆盖时段的默认价格类型），暂不使用
 				<el-form-item>
 					<div class="price-period-item">
@@ -75,21 +96,16 @@
 					</div>
 				</el-form-item>
 				-->
-				<el-form-item>
-					<div class="price-period-item price-period-item--add add-period-item">
-						<div class="price-period-item__lead">
-							<i class="el-icon-circle-plus price-period-item__icon price-period-item__icon--plus" @click="addPeridPriceItem"></i>
-						</div>
-						<div class="price-period-item__add-text" @click="addPeridPriceItem">添加时间区间</div>
-					</div>
-				</el-form-item>
-
-				<el-form-item>
+				<el-form-item v-if="selectedTemplateId">
 					<el-button
 						type="primary"
+						:disabled="!selectedTemplateId"
 						@click="onaddData('addData')"
 						v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:carCharge:add')"
 					>确定</el-button>
+					<el-button @click="goBack">返回</el-button>
+				</el-form-item>
+				<el-form-item v-else>
 					<el-button @click="goBack">返回</el-button>
 				</el-form-item>
 			</el-form>
@@ -99,7 +115,9 @@
 <script>
 	import {
 		saveCarPricing,
-		getStationCarPricingDetail
+		getStationCarPricingDetail,
+		getCarPricingTemplateOptions,
+		getCarPricingTemplateDetail
 	} from '@/api/netWorkDot/stationPricingRule.js'
 	import {
 		parseTime
@@ -119,6 +137,9 @@
 			return {
 				stationId: null,
 				loadedDevicePriceId: null,
+				selectedTemplateId: null,
+				templateOptions: [],
+				templateLoading: false,
 				detailLoading: false,
 				periodTimeArray: [{
 					value: 0,
@@ -356,6 +377,32 @@
 			}
 		},
 		methods: {
+			loadTemplateOptions() {
+				this.templateLoading = true
+				getCarPricingTemplateOptions({ ruleId: 2, priceType: 1 }).then(res => {
+					if (!res || res.code !== 200) {
+						this.$message.error((res && res.msg) || '加载计费模板失败')
+						return
+					}
+					const rows = res.data || []
+					this.templateOptions = rows.map((r) => {
+						const id = r && r.id != null ? Number(r.id) : null
+						const feeName = r && r.feeName != null ? String(r.feeName) : ''
+						const status = r && r.status != null ? Number(r.status) : null
+						const suffix = status === 1 ? '' : '（未启用）'
+						return {
+							id,
+							feeName,
+							status,
+							optionLabel: `${feeName}${suffix}`
+						}
+					}).filter((r) => r.id != null)
+				}).catch(() => {
+					this.$message.error('加载计费模板失败')
+				}).finally(() => {
+					this.templateLoading = false
+				})
+			},
 			loadCarPricingDetail() {
 				if (this.stationId == null || this.stationId === '') {
 					return
@@ -368,16 +415,35 @@
 					}
 					const vo = res.data || {}
 					this.loadedDevicePriceId = vo.devicePriceId != null ? vo.devicePriceId : null
+					this.selectedTemplateId = vo.devicePriceId != null ? Number(vo.devicePriceId) : null
 					if (vo.pricing) {
 						this.applyPricingFromDetail(vo.pricing)
 					} else {
 						const q = this.$route.query || {}
-						if (q.stationName) {
-							this.addData.name = `${q.stationName}计费方案`
-						}
+						this.resetForm('addData')
 					}
 				}).catch(() => {
 					this.$message.error('加载计费详情失败')
+				}).finally(() => {
+					this.detailLoading = false
+				})
+			},
+			onTemplateSelected(value) {
+				const id = value != null && value !== '' ? Number(value) : null
+				this.selectedTemplateId = id
+				if (id == null) {
+					this.resetForm('addData')
+					return
+				}
+				this.detailLoading = true
+				getCarPricingTemplateDetail({ devicePriceId: id }).then(res => {
+					if (!res || res.code !== 200) {
+						this.$message.error((res && res.msg) || '加载计费模板详情失败')
+						return
+					}
+					this.applyPricingFromDetail(res.data || {})
+				}).catch(() => {
+					this.$message.error('加载计费模板详情失败')
 				}).finally(() => {
 					this.detailLoading = false
 				})
@@ -514,151 +580,28 @@
 				}
 			},
 			onaddData(formName) {
-				if (this.addData.name == '') {
-					this.$message.error('请输入方案名称')
-					return false
-				}
-				// 其它统一时段已注释，不再校验 defaultPeriodTypeId；无回显值时提交默认按尖(0)
-				// if (!this.addData.periodTimePrices.defaultPeriodTypeId) {
-				// 	this.$message.error('请选择其他时段统一价格类型')
-				// 	return false
-				// }
-				console.log('.....this.addData.periodTimePrices.periodPriceList.length......', this.addData.periodTimePrices.periodPriceList.length)
-				if (this.addData.periodTimePrices.periodPriceList.length < 1) {
-					this.$message.error('请至少添加一个时间区段价格')
-					return false
-				}
-        		//时区校验
-				let _Bean = true
-				this.addData.periodTimePrices.periodPriceList.forEach((item, index) => {
-					if (!item.periodTypeId) {
-						_Bean = false
-					}
-				})
-				if (!_Bean) {
-					this.$message.error('时间区段价格设置有误！')
-					return
-				}
-				console.log('.....this.addData.periodTimePrices.periodPriceList......', this.addData.periodTimePrices.periodPriceList)
-				if (!this.validePeriodTime(this.addData.periodTimePrices.periodPriceList)) {
-					this.$message.error('时间区段时间值错误')
-					return
-				}
-				// 传到后台数据
-				let returnData = {}
-				// returnData.defaultPeriodTypeId = this.addData.periodTimePrices.defaultPeriodTypeId
-				returnData.name = this.addData.name
-				returnData.carPriceTierList = []
-				this.addData.priceTier.forEach((item, index) => {
-					let tempData = {}
-					tempData.periodTypeId = item.periodTypeId
-					tempData.periodTypeName = item.periodTypeName
-					tempData.powerPrice = item.powerPrice
-					tempData.serviceFee = item.serviceFee
-					returnData.carPriceTierList.push(tempData)
-				})
-
-				returnData.carTimePeriodList = []
-				this.addData.periodTimePrices.periodPriceList.forEach((item, index) => {
-					let temData = {}
-					//{ stTime: '', enTime: '', periodTypeId: '', candel: true }
-					temData.enTime = item.enTime + ':00'
-					temData.stTime = item.stTime + ':00'
-					temData.periodTypeId = item.periodTypeId
-					returnData.carTimePeriodList.push(temData)
-				})
-				console.log(returnData)
-
-				let bill = {
-					"jian": 0,
-					"jianEx": 0,
-					"feng": 0,
-					"fengEx": 0,
-					"ping": 0,
-					"pingEx": 0,
-					"gu": 0,
-					"guEx": 0,
-				}
-				returnData.carPriceTierList.forEach((item, index) => {
-					if (item.periodTypeName === '尖') {
-						bill.jian = item.powerPrice
-						bill.jianEx = item.serviceFee
-					}
-					if (item.periodTypeName === '峰') {
-						bill.feng = item.powerPrice
-						bill.fengEx = item.serviceFee
-					}
-					if (item.periodTypeName === '平') {
-						bill.ping = item.powerPrice
-						bill.pingEx = item.serviceFee
-					}
-					if (item.periodTypeName === '谷') {
-						bill.gu = item.powerPrice
-						bill.guEx = item.serviceFee
-					}
-				})
-				bill = JSON.stringify(bill)
-				let beginTime = [],
-					endTime = [],
-					flag = []
-				returnData.carTimePeriodList.forEach((item, index) => {
-					let bTime = item.stTime.split(':')
-					let eTime = item.enTime.split(':')
-					beginTime.push(bTime[0] + bTime[1])
-					endTime.push(eTime[0] + eTime[1])
-					flag.push(item.periodTypeId)
-				})
-				let remainFlag = this.addData.periodTimePrices.defaultPeriodTypeId || '0'
-				let feeName = returnData.name
-				console.log(bill, beginTime, endTime, flag)
-
-				const priceViewJson = FIXED_CAR_STATION_PRICE_VIEW_JSON
-
 				const stationId = this.stationId
 				if (stationId == null || stationId === '') {
 					this.$message.error('缺少站点ID，请从电价管理进入')
 					return
 				}
-				const flagNums = flag.map((f) => parseInt(f, 10))
+				if (!this.selectedTemplateId) {
+					this.$message.warning('请选择计费模板')
+					return
+				}
 				const payload = {
 					stationId: Number(stationId),
-					devicePriceId: this.loadedDevicePriceId,
-					devicePrice: {
-						tdpId: this.loadedDevicePriceId || undefined,
-						feeName,
-						bill,
-						remainFlag: parseInt(remainFlag, 10),
-						priceView: priceViewJson,
-						ruleId: 2,
-						priceType: 1,
-						realTimeCharging: 0,
-						chargeType: 0,
-						electricityPrice: 0
-					},
-					priceContent: {
-						beginTime,
-						endTime,
-						flag: flagNums
-					}
+					devicePriceId: Number(this.selectedTemplateId)
 				}
-				this.$refs[formName].validate(valid => {
-					console.log('....valid.....', valid)
-					if (valid) {
-						console.log('通过')
-						saveCarPricing(payload).then(res => {
-							if (res.code == 200) {
-								this.$message.success(res.msg)
-								this.goBack()
-							} else {
-								if (res.msg) {
-									this.$message.error(res.msg)
-								}
-							}
-						})
-					} else {
-						console.log('不通过')
-						return false
+				saveCarPricing(payload).then(res => {
+					if (res && res.code === 200) {
+						this.$message.success(res.msg || '保存成功')
+						this.goBack()
+						return
 					}
+					this.$message.error((res && res.msg) || '保存失败')
+				}).catch(() => {
+					this.$message.error('保存失败')
 				})
 			},
 			validePeriodTime(periodTimes) {
@@ -753,6 +696,7 @@
 				this.$message.error('站点ID无效')
 				return
 			}
+			this.loadTemplateOptions()
 			this.loadCarPricingDetail()
 		}
 	}
@@ -798,6 +742,23 @@
 	.station-pricing-car-add__back {
 		flex-shrink: 0;
 		padding: 3px 0 !important;
+	}
+	.station-pricing-car-add__template-select {
+		width: 100%;
+	}
+	.station-pricing-car-add__empty {
+		padding: 30px 0 12px;
+		text-align: center;
+		color: #909399;
+	}
+	.station-pricing-car-add__empty-icon {
+		display: inline-block;
+		font-size: 34px;
+		margin-bottom: 6px;
+		color: #c0c4cc;
+	}
+	.station-pricing-car-add__empty-text {
+		font-size: 14px;
 	}
 
 	.flex {
