@@ -109,8 +109,8 @@
           <el-form-item label="选择站点">
             <div class="station-select-box">
               <div class="station-select-box__actions">
-                <el-button type="primary" size="mini" plain @click="expandStationTree(true)">全部展开</el-button>
-                <el-button type="primary" size="mini" plain @click="expandStationTree(false)">全部收起</el-button>
+                <el-button class="station-select-box__action-btn" type="primary" size="mini" @click="expandStationTree(true)">全部展开</el-button>
+                <el-button class="station-select-box__action-btn" type="primary" size="mini" @click="expandStationTree(false)">全部收起</el-button>
               </div>
               <el-tree
                 ref="stationTreeRef"
@@ -881,6 +881,13 @@ export default {
 .station-select-box__actions {
   text-align: right;
   margin-bottom: 6px;
+}
+
+.station-select-box__action-btn,
+.station-select-box__action-btn:hover,
+.station-select-box__action-btn:focus,
+.station-select-box__action-btn:active {
+  color: #fff !important;
 }
 
 .station-selected-tip {
