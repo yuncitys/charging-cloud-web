@@ -521,6 +521,14 @@ export const constantRoutes = [{
         icon: 'el-icon-coin',
       }
     }, {
+      path: 'stationPricingScheduleList',
+      component: () => import('@/views/netWorkDot/stationPricingScheduleList'),
+      name: 'stationPricingScheduleList',
+      meta: {
+        title: '调价任务',
+        icon: 'el-icon-time',
+      }
+    }, {
       path: 'stationPricingCarAdd',
       component: () => import('@/views/netWorkDot/stationPricingCarAdd'),
       name: 'stationPricingCarAdd',

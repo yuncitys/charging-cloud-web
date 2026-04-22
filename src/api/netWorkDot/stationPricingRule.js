@@ -90,3 +90,51 @@ export function getStationChargePriceHistoryDetail(params) {
     params
   })
 }
+
+export function createPricingSchedule(data) {
+  return request({
+    url: '/api/web/stationPricingRule/schedule/create',
+    method: 'post',
+    data
+  })
+}
+
+export function updatePricingSchedule(data) {
+  return request({
+    url: '/api/web/stationPricingRule/schedule/update',
+    method: 'post',
+    data
+  })
+}
+
+export function cancelPricingSchedule(data) {
+  return request({
+    url: '/api/web/stationPricingRule/schedule/cancel',
+    method: 'post',
+    data
+  })
+}
+
+export function getPricingScheduleDetail(params) {
+  return request({
+    url: '/api/web/stationPricingRule/schedule/detail',
+    method: 'get',
+    params
+  })
+}
+
+export function getPricingScheduleListByStation(params) {
+  return request({
+    url: '/api/web/stationPricingRule/schedule/listByStation',
+    method: 'get',
+    params
+  })
+}
+
+export function getPricingSchedulePage(data) {
+  return request(toFormUrlencodedRequestConfig(data, '/api/web/stationPricingRule/schedule/page'))
+}
+
+export function getPricingScheduleLogPage(data) {
+  return request(toFormUrlencodedRequestConfig(data, '/api/web/stationPricingRule/schedule/log/page'))
+}
