@@ -30,7 +30,7 @@
       />
       <el-button class="filter-item" type="primary" size="mini" icon="el-icon-search" @click="onSearch">查询</el-button>
       <el-button
-        v-if="btnAuthen.permsVerifAuthention(':station:charge:carCharge:set')"
+        v-if="btnAuthen.permsVerifAuthention(':station:charge:carSchedule:add')"
         class="filter-item"
         type="primary"
         size="mini"
@@ -63,13 +63,13 @@
         <template slot-scope="scope">
           <el-button type="primary" size="mini" @click="viewDetail(scope.row)">详情</el-button>
           <el-button
-            v-if="canEdit(scope.row) && btnAuthen.permsVerifAuthention(':station:charge:carCharge:set')"
+            v-if="canEdit(scope.row) && btnAuthen.permsVerifAuthention(':station:charge:carSchedule:edit')"
             type="warning"
             size="mini"
             @click="openDrawer('edit', scope.row)"
           >编辑</el-button>
           <el-button
-            v-if="canCancel(scope.row) && btnAuthen.permsVerifAuthention(':station:charge:carCharge:set')"
+            v-if="canCancel(scope.row) && btnAuthen.permsVerifAuthention(':station:charge:carSchedule:cancel')"
             type="danger"
             size="mini"
             @click="cancelSchedule(scope.row)"
@@ -323,6 +323,7 @@
           <el-table-column label="操作" width="110" align="center">
             <template slot-scope="scope">
               <el-button
+                v-if="btnAuthen.permsVerifAuthention(':station:charge:carSchedule:retry')"
                 type="primary"
                 size="mini"
                 :disabled="!canRetryDetailLog(scope.row)"
