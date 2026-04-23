@@ -320,6 +320,16 @@
           <el-table-column prop="errorMsg" label="调价结果说明" min-width="200" align="center" show-overflow-tooltip />
           <el-table-column prop="responseTimeText" label="设备响应时间" width="110" align="center" />
           <el-table-column prop="executeTimeText" label="平台执行时间" width="170" align="center" />
+          <el-table-column label="操作" width="110" align="center">
+            <template slot-scope="scope">
+              <el-button
+                type="primary"
+                size="mini"
+                :disabled="!canRetryDetailLog(scope.row)"
+                @click="onRetryDetailLog(scope.row)"
+              >重试校价</el-button>
+            </template>
+          </el-table-column>
         </el-table>
         <div class="pagination-container">
           <el-pagination
@@ -350,6 +360,7 @@ import {
   cancelPricingSchedule,
   getPricingSchedulePage,
   getPricingScheduleLogPage,
+  retryPricingScheduleLog,
   getCarPricingTemplateOptions,
   getCarPricingTemplateDetail
 } from '@/api/netWorkDot/stationPricingRule.js'
@@ -811,6 +822,25 @@ export default {
     onDetailLogPageChange(page) {
       this.detailLogQuery.page = page
       this.loadDetailLogPage()
+    },
+    canRetryDetailLog(row) {
+      if (!row || !row.id) return false
+      return Number(row.result) !== 1 && Number(row.result) !== 2
+    },
+    onRetryDetailLog(row) {
+      if (!this.canRetryDetailLog(row)) return
+      this.$confirm(`确认重试设备【${row.deviceCode || '-'}】校价吗？`, '提示', { type: 'warning' }).then(() => {
+        retryPricingScheduleLog({ logId: row.id }).then((res) => {
+          if (res && res.code === 200) {
+            this.$message.success(res.msg || '重试指令已下发')
+            this.loadDetailLogPage()
+            return
+          }
+          this.$message.error((res && res.msg) || '重试失败')
+        }).catch(() => {
+          this.$message.error('重试失败')
+        })
+      }).catch(() => {})
     },
     loadDetailLogPage() {
       if (!this.detailLogQuery.scheduleId) return

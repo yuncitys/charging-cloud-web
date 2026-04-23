@@ -138,3 +138,11 @@ export function getPricingSchedulePage(data) {
 export function getPricingScheduleLogPage(data) {
   return request(toFormUrlencodedRequestConfig(data, '/api/web/stationPricingRule/schedule/log/page'))
 }
+
+export function retryPricingScheduleLog(data) {
+  return request({
+    url: '/api/web/stationPricingRule/schedule/log/retry',
+    method: 'post',
+    data
+  })
+}
