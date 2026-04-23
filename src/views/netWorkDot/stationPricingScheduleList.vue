@@ -866,7 +866,7 @@ export default {
         const rows = Array.isArray(res.data) ? res.data : []
         this.detailLogTableData = rows.map((item) => ({
           ...item,
-          stationName: this.detail.stationNames || '-',
+          stationName: item.stationName || this.stationNameMap[Number(item.stationId)] || '-',
           resultLabel: this.formatLogResult(item.result),
           responseTimeText: item.responseTime != null ? `${item.responseTime}ms` : '--',
           executeTimeText: item.executeTime ? parseTime(item.executeTime) : '--'
