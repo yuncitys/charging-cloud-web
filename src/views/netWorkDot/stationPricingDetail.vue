@@ -13,11 +13,20 @@
         <el-alert :title="currentError" type="warning" :closable="false" show-icon />
       </template>
       <template v-else-if="currentVo && currentVo.pricing">
-        <el-descriptions :column="2" border size="small">
-          <el-descriptions-item label="方案名称">{{ currentVo.pricing.feeName || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="更新人">{{ currentVo.pricing.updateUser || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="更新时间">{{ currentVo.pricing.updateTime | formatDate }}</el-descriptions-item>
-        </el-descriptions>
+        <div class="detail-kv-grid">
+          <div class="detail-kv-item">
+            <div class="detail-kv-item__label">方案名称</div>
+            <div class="detail-kv-item__value">{{ currentVo.pricing.feeName || '—' }}</div>
+          </div>
+          <!-- <div class="detail-kv-item">
+            <div class="detail-kv-item__label">更新人</div>
+            <div class="detail-kv-item__value">{{ currentVo.pricing.updateUser || '—' }}</div>
+          </div> -->
+          <div class="detail-kv-item">
+            <div class="detail-kv-item__label">更新时间</div>
+            <div class="detail-kv-item__value">{{ currentVo.pricing.updateTime | formatDate }}</div>
+          </div>
+        </div>
         <el-table
           :data="currentPriceRows"
           border
@@ -83,12 +92,24 @@
       @closed="onSnapshotClosed"
     >
       <div v-loading="snapshotLoading">
-        <el-descriptions v-if="snapshotStrategy" :column="2" border size="small">
-          <el-descriptions-item label="归档时间">{{ snapshotStrategy.createTime | formatDate }}</el-descriptions-item>
-          <el-descriptions-item label="操作人">{{ snapshotStrategy.createUser || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="策略类型">{{ formatHistoryPriceType(snapshotStrategy.priceType) }}</el-descriptions-item>
-          <el-descriptions-item label="历史ID">{{ snapshotStrategy.historyId }}</el-descriptions-item>
-        </el-descriptions>
+        <div v-if="snapshotStrategy" class="detail-kv-grid">
+          <div class="detail-kv-item">
+            <div class="detail-kv-item__label">归档时间</div>
+            <div class="detail-kv-item__value">{{ snapshotStrategy.createTime | formatDate }}</div>
+          </div>
+          <div class="detail-kv-item">
+            <div class="detail-kv-item__label">操作人</div>
+            <div class="detail-kv-item__value">{{ snapshotStrategy.createUser || '—' }}</div>
+          </div>
+          <div class="detail-kv-item">
+            <div class="detail-kv-item__label">策略类型</div>
+            <div class="detail-kv-item__value">{{ formatHistoryPriceType(snapshotStrategy.priceType) }}</div>
+          </div>
+          <div class="detail-kv-item">
+            <div class="detail-kv-item__label">历史ID</div>
+            <div class="detail-kv-item__value">{{ snapshotStrategy.historyId }}</div>
+          </div>
+        </div>
         <el-table
           :data="snapshotPrices"
           border
@@ -302,6 +323,31 @@ export default {
   font-size: 12px;
   color: #909399;
   font-weight: normal;
+}
+.detail-kv-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 10px 12px;
+}
+.detail-kv-item {
+  display: flex;
+  min-height: 32px;
+  border: 1px solid #ebeef5;
+}
+.detail-kv-item__label {
+  width: 92px;
+  padding: 8px 10px;
+  color: #606266;
+  background: #fafafa;
+  border-right: 1px solid #ebeef5;
+  box-sizing: border-box;
+}
+.detail-kv-item__value {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  color: #303133;
+  word-break: break-all;
 }
 .current-pricing-empty {
   padding: 40px 16px;
