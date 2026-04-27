@@ -585,7 +585,7 @@ import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommiss
 import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
 import loadMap from '@/utils/loadMap.js'
-import { getByStationId as getSplitConfigByStationId, saveOrUpdate as saveSplitConfigApi } from '@/api/finance/stationCommissionSettlementAccount'
+import { getByStationId as getSplitConfigByStationId, batchSave as batchSaveSplitConfigApi } from '@/api/finance/stationCommissionSettlementAccount'
 import { listCompleted as listCompletedTradeMerchant } from '@/api/pay/tradeEntry'
 
 export default {
@@ -1541,19 +1541,7 @@ export default {
         }
       })
 
-      const callOneByOne = () => {
-        return payload.reduce((p, item) => {
-          return p.then(prev => {
-            if (prev && prev.code && prev.code !== 200) return prev
-            return saveSplitConfigApi(item)
-          })
-        }, Promise.resolve({ code: 200 })).then(res => {
-          if (res && res.code === 200) return { code: 200, msg: '保存成功' }
-          return res
-        })
-      }
-
-      callOneByOne().then(res => {
+      batchSaveSplitConfigApi(this.stationId, payload).then(res => {
         if (res && res.code === 200) {
           this.$message.success(res.msg || '保存成功')
           this.splitLoaded = false

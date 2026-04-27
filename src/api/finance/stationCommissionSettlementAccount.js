@@ -15,3 +15,10 @@ export function saveOrUpdate(data) {
   })
 }
 
+export function batchSave(stationId, data) {
+  return request({
+    url: `/api/web/stationCommissionSettlementAccount/batchSave/${stationId}`,
+    method: 'post',
+    data
+  })
+}
