@@ -11,7 +11,7 @@
 					<div class="textBox">
 						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">电站数量</div>
 						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">
-              {{countDevice.chargingStationCount}}
+              				{{countDevice.chargingStationCount}}
 						</div>
 					</div>
 				</div>
@@ -31,20 +31,20 @@
 					<div class="textBox">
 						<div :class="['label',isDark? 'dark_fontColor' : 'light_fontColor']">离线终端数量</div>
 						<div :class="['val',isDark? 'dark_fontColor' : 'light_fontColor']">
-              {{countDevice.unLineCount}}
+              				{{countDevice.unLineCount}}
 						</div>
 					</div>
 				</div>
 			</div>
 			<div class="tableBox">
 				<div :class="['title',isDark ? 'dark_fontColor' : 'light_fontColor']">设备上下线记录</div>
-				<vue-seamless-scroll :data="list" class="seamless-warp">
+				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['deviceCode','textLine1',isDark? 'dark_fontColor' : 'light_fontColor'] ">
 							设备号
-              <span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">
-                {{item.deviceCode}}
-              </span>
+							<span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">
+								{{item.deviceCode}}
+							</span>
 						</div>
 						<div :class="['time','textLine1',isDark? 'dark_fontColor' : 'light_fontColor']">
 							{{item.createTime}}
@@ -78,6 +78,15 @@
 			return {
 				list: [],
 				refreshTimer: null,
+				classOption: {
+					step: 0.35,
+					hoverStop: true,
+					openWatch: true,
+					direction: 1,
+					singleHeight: 40,
+					waitTime: 2500,
+					limitMoveNum: 4,
+				},
 				countDevice: {
 					onLineCount: 0,
 					unLineCount: 0,
@@ -117,7 +126,7 @@
 				this.refreshTimer = setInterval(() => {
 					this.getDeviceCount()
 					this.getDeviceLogList()
-				}, 5000)
+				}, 20000)
 			}
 		},
 		destroyed() {

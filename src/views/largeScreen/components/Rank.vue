@@ -14,11 +14,11 @@
 					<div class="headItem" style="width:10%">排名</div>
 					<div class="headItem" style="width:30%">站点名称</div>
 					<div class="headItem" style="width:30%">充电总量</div>
-          <div class="headItem" style="width:30%">充电金额</div>
-          <div class="headItem" style="width:30%">充电度数</div>
+					<div class="headItem" style="width:30%">充电金额</div>
+					<div class="headItem" style="width:30%">充电度数</div>
 					<div class="headItem" style="width:30%">统计时间</div>
 				</div>
-				<vue-seamless-scroll :data="list" class="seamless-warp">
+				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div :class="['tableList','flex',item.num%2 === 0 ? (isDark ? 'evenBoxDark' : 'evenBoxLight') : ''] "
 						v-for="(item,index) in list" :key="index">
 						<div class="listItem flex" v-if="index === 0" style="width:10%;justify-content: center;">
@@ -41,18 +41,18 @@
 							style="width:30%">
 							{{navIndex === 0 ? item.orderCount : item.orderMoeny}}{{navIndex === 0 ? '单' : '元'}}
 						</div>
-            <div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
-            	style="width:30%">
-              {{item.orderMoeny}}元
-            </div>
-            <div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
-            	style="width:30%">
-              {{item.chargingDegree || 0}}度
-            </div>
 						<div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
 							style="width:30%">
-              {{item.time}}
-            </div>
+							{{item.orderMoeny}}元
+						</div>
+						<div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
+							style="width:30%">
+							{{item.chargingDegree || 0}}度
+						</div>
+						<div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
+							style="width:30%">
+							{{item.time}}
+						</div>
 					</div>
 				</vue-seamless-scroll>
 			</div>
@@ -76,18 +76,27 @@
 		data() {
 			return {
 				navList: [
-          {
-					id: 1,
-					name: '充电站排名'
-          },
-        //   {
-        //     id: 2,
-        //     name: '站点消费金额排名'
-        //   },
-        ],
+					{
+						id: 1,
+						name: '充电站排名'
+					},
+					// {
+					// 	id: 2,
+					// 	name: '站点消费金额排名'
+					// },
+				],
 				navIndex: 0,
 				list: [],
 				refreshTimer: null,
+				classOption: {
+					step: 0.3,
+					hoverStop: true,
+					openWatch: true,
+					direction: 1,
+					singleHeight: 40,
+					waitTime: 3000,
+					limitMoveNum: 3,
+				},
 			}
 		},
 		watch: {
@@ -156,7 +165,7 @@
 			if (this.isMockMode()) {
 				this.refreshTimer = setInterval(() => {
 					this.getListByNetWorkDot()
-				}, 5000)
+				}, 20000)
 			}
 		},
 		destroyed() {

@@ -5,7 +5,7 @@
 				设备上下线通知
 			</div>
 			<div class="tableBox">
-				<vue-seamless-scroll :data="list" class="seamless-warp">
+				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['deviceCode','textLine1',isDark? 'dark_fontColor' : 'light_fontColor']">设备号
 							<span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">{{item.deviceCode}}</span>
@@ -39,6 +39,15 @@
 		data() {
 			return {
 				list: [],
+				classOption: {
+					step: 0.35,
+					hoverStop: true,
+					openWatch: true,
+					direction: 1,
+					singleHeight: 40,
+					waitTime: 2500,
+					limitMoveNum: 3,
+				},
 			}
 		},
 		watch: {

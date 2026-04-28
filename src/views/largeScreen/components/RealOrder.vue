@@ -8,22 +8,22 @@
 				<div class="tableHead flex">
 					<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">订单号</div>
 					<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">充电站点</div>
-          <div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">充电时长</div>
+          			<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">充电时长</div>
 					<div :class="['headItem',isDark ? 'dark_fontColor' : 'light_fontColor']">开始时间</div>
 				</div>
-				<vue-seamless-scroll :data="list" class="seamless-warp">
+				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
-              {{item.orderCode}}
+              				{{item.orderCode}}
 						</div>
 						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
 							{{item.networkName}}
 						</div>
-            <div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
-            	{{item.chargingDuration}}分钟
-            </div>
 						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
-              {{item.startTime}}
+							{{item.chargingDuration}}分钟
+						</div>
+						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+              				{{item.startTime}}
 						</div>
 					</div>
 				</vue-seamless-scroll>
@@ -49,6 +49,15 @@
 			return {
 				list: [],
 				refreshTimer: null,
+				classOption: {
+					step: 0.35,
+					hoverStop: true,
+					openWatch: true,
+					direction: 1,
+					singleHeight: 40,
+					waitTime: 2500,
+					limitMoveNum: 6,
+				},
 			}
 		},
 		watch: {
@@ -74,7 +83,7 @@
 			if (this.isMockMode()) {
 				this.refreshTimer = setInterval(() => {
 					this.getOrderList()
-				}, 3000)
+				}, 12000)
 			}
 		},
 		destroyed() {
