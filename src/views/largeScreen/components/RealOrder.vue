@@ -34,7 +34,8 @@
 
 <script>
 	import {
-		getOrderList
+		getOrderList,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -47,12 +48,16 @@
 		data() {
 			return {
 				list: [],
+				refreshTimer: null,
 			}
 		},
 		watch: {
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
 			getOrderList() {
 				getOrderList().then(res => {
 					if (res.code === 200) {
@@ -66,9 +71,14 @@
 		},
 		created() {
 			this.getOrderList()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getOrderList()
+				}, 3000)
+			}
 		},
 		destroyed() {
-
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>

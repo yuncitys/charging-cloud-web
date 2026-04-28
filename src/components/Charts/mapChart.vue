@@ -18,7 +18,8 @@
 	import Chart from '@/common/chart.vue';
 	import resize from './mixins/resize'
 	import {
-		getProvinceByDevice
+		getProvinceByDevice,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	export default {
 		mixins: [resize],
@@ -36,6 +37,7 @@
 			return {
 				mapName: '全国',
                 breadcrumbs: ['全国'],
+				refreshTimer: null,
 				cdata: [{
 						name: '北京市',
 						value: 0,
@@ -182,8 +184,19 @@
 		mounted() {},
 		created() {
 			this.getProvinceByDevice()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getProvinceByDevice()
+				}, 5000)
+			}
+		},
+		destroyed() {
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
             /**
              * 处理地图点击事件：仅在“下钻成功”（存在已注册地图）时更新面包屑与地图
              * - 全国 -> 省：只有当对应省份地图已注册时才切换并更新面包屑

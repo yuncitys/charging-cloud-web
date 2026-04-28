@@ -23,7 +23,8 @@
 
 <script>
 	import {
-		getCount
+		getCount,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -36,13 +37,17 @@
 		data() {
 			return {
 				netPayMoney: 0,
-				icPayMoney: 0
+				icPayMoney: 0,
+				refreshTimer: null,
 			}
 		},
 		watch: {
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
 			getCount() {
 				getCount().then(res => {
 					if (res.code === 200) {
@@ -63,9 +68,14 @@
 		},
 		created() {
 			this.getCount()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getCount()
+				}, 5000)
+			}
 		},
 		destroyed() {
-
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>

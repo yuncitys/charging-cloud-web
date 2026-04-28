@@ -62,7 +62,8 @@
 
 <script>
 	import {
-		getListByNetWorkDot
+		getListByNetWorkDot,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -86,12 +87,16 @@
         ],
 				navIndex: 0,
 				list: [],
+				refreshTimer: null,
 			}
 		},
 		watch: {
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
 			changeIndex(index) {
 				this.navIndex = index
 				this.getListByNetWorkDot()
@@ -148,9 +153,14 @@
 		},
 		created() {
 			this.getListByNetWorkDot()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getListByNetWorkDot()
+				}, 5000)
+			}
 		},
 		destroyed() {
-
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>

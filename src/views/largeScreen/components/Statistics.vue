@@ -154,7 +154,8 @@
 
 <script>
 	import {
-		getCount
+		getCount,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -169,6 +170,7 @@
 				dateDay: null,
 				dateYear: null,
 				dateWeek: null,
+				refreshTimer: null,
 				weekday: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
 				countOrderCard: {
 					currentDay: 0,
@@ -199,6 +201,9 @@
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
 			getCount() {
 				getCount().then(res => {
 					if (res.code === 200) {
@@ -259,9 +264,15 @@
 		created() {
 			this.timeFn()
 			this.getCount()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getCount()
+				}, 5000)
+			}
 		},
 		destroyed() {
-			clearInterval(this.setInt)
+			if (this.timing) clearInterval(this.timing)
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>

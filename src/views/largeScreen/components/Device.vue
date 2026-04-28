@@ -63,7 +63,8 @@
 <script>
 	import {
     getDeviceCount,
-		getDeviceLogList
+		getDeviceLogList,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -76,6 +77,7 @@
 		data() {
 			return {
 				list: [],
+				refreshTimer: null,
 				countDevice: {
 					onLineCount: 0,
 					unLineCount: 0,
@@ -87,6 +89,9 @@
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
       getDeviceCount(){
         getDeviceCount().then(res => {
 					if (res.code === 200) {
@@ -106,11 +111,17 @@
 
 		},
 		created() {
-      this.getDeviceCount(),
+			this.getDeviceCount()
 			this.getDeviceLogList()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getDeviceCount()
+					this.getDeviceLogList()
+				}, 5000)
+			}
 		},
 		destroyed() {
-
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>

@@ -11,7 +11,8 @@
 
 <script>
 	import {
-		getSevenDayTrendByOrder
+		getSevenDayTrendByOrder,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -31,12 +32,16 @@
         	chargingDegree: [],
         	DAY: []
         },
+				refreshTimer: null,
 			}
 		},
 		watch: {
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
 			getSevenDayTrendByOrder() {
 				getSevenDayTrendByOrder().then(res => {
 					if (res.code === 200) {
@@ -63,9 +68,14 @@
 		},
 		created() {
 			this.getSevenDayTrendByOrder()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getSevenDayTrendByOrder()
+				}, 5000)
+			}
 		},
 		destroyed() {
-
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>

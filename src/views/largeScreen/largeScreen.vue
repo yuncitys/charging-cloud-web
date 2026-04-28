@@ -43,6 +43,7 @@
 	import RealOrder from './components/RealOrder'
 	import Device from './components/Device'
 	import UpDownLine from './components/UpDownLine'
+	import { getLargeScreenDataMode } from '@/api/largeScreen/largeScreen.js'
 	export default {
 		components: {
 			Frame,
@@ -62,10 +63,14 @@
 			return {
 				pageWidth: 1920,
 				pageHeight: 1080,
+				dataMode: 'real',
 			}
 		},
 		created() {
-
+			this.dataMode = getLargeScreenDataMode()
+			try {
+				window.sessionStorage.setItem('largeScreenDataMode', this.dataMode)
+			} catch (e) {}
 		},
 		methods: {}
 	}

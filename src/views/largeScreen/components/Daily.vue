@@ -11,7 +11,8 @@
 
 <script>
 	import {
-		getCurve
+		getCurve,
+		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
 	import {
 		mapGetters
@@ -30,12 +31,16 @@
 					orderPrice: [],
 					DAY: []
 				},
+				refreshTimer: null,
 			}
 		},
 		watch: {
 
 		},
 		methods: {
+			isMockMode() {
+				return getLargeScreenDataMode() === 'mock'
+			},
 			getCurve() {
 				getCurve().then(res => {
 					if (res.code === 200) {
@@ -62,9 +67,14 @@
 		},
 		created() {
 			this.getCurve()
+			if (this.isMockMode()) {
+				this.refreshTimer = setInterval(() => {
+					this.getCurve()
+				}, 5000)
+			}
 		},
 		destroyed() {
-
+			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>
