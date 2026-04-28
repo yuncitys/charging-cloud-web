@@ -252,11 +252,7 @@
              * 省份中文全称转为已注册的地图名称（与 echarts.registerMap 保持一致）
              */
             toRegisteredMapName(fullName) {
-                const map = {
-                    '福建省': '福建',
-                    '山东省': '山东'
-                }
-                return map[fullName] || fullName
+                return fullName
             },
             /**
              * 判断地图是否已通过 echarts.registerMap 注册

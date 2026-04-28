@@ -3,9 +3,15 @@
 </template>
 
 <script>
+	import echarts from 'echarts'
 	import '../map/china.js'
-	import '../map/fujian.js'
-	import '../map/shangdong.js'
+	const provinceMapContext = require.context('../map/province', false, /\.json$/)
+	provinceMapContext.keys().forEach((key) => {
+		const mod = provinceMapContext(key)
+		const geoJson = mod && mod.default ? mod.default : mod
+		const mapName = key.replace('./', '').replace('.json', '')
+		echarts.registerMap(mapName, geoJson)
+	})
 	export default {
 		data() {
 			return {
