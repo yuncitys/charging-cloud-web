@@ -1,0 +1,771 @@
+<template>
+  <div class="app-container">
+    <div class="filter-container">
+      <el-input v-model="query.organizationName" class="filter-item" style="width: 180px;" placeholder="客户名称" clearable />
+      <el-input v-model="query.companyName" class="filter-item" style="width: 180px;" placeholder="公司名称" clearable />
+      <el-input v-model="query.administratorName" class="filter-item" style="width: 180px;" placeholder="管理员" clearable />
+      <el-input v-model="query.administratorPhone" class="filter-item" style="width: 180px;" placeholder="联系方式" clearable />
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search">查询</el-button>
+      <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增客户</el-button>
+    </div>
+
+    <el-table v-loading="loading" :data="list" fit highlight-current-row>
+      <el-table-column type="index" label="序号" width="60" align="center">
+        <template slot-scope="scope">{{ scope.$index + (query.page - 1) * query.limit + 1 }}</template>
+      </el-table-column>
+      <el-table-column prop="name" label="客户名称" align="center" />
+      <el-table-column prop="companyName" label="公司名称" align="center" />
+      <el-table-column prop="socialCreditCode" label="统一社会信用代码" min-width="180" align="center" />
+      <el-table-column prop="manageName" label="管理员" align="center" />
+      <el-table-column prop="contactInfo" label="联系方式" align="center" />
+      <el-table-column prop="createTime" label="创建时间" align="center">
+        <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
+      </el-table-column>
+      <el-table-column label="操作" width="300" align="center">
+        <template slot-scope="scope">
+          <el-button size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
+          <el-button size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
+          <el-button size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <div class="pagination-container">
+      <el-pagination
+        :current-page="query.page"
+        :page-size="query.limit"
+        :page-sizes="[10, 20, 30, 50]"
+        :total="total"
+        background
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="onSizeChange"
+        @current-change="onCurrentChange"
+      />
+    </div>
+
+    <el-drawer
+      :title="drawerTitle"
+      :visible.sync="drawerVisible"
+      size="820px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="drawer-body">
+        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+          <el-form-item label="客户名称" prop="name">
+            <el-input v-model="form.name" :disabled="isDetail" />
+          </el-form-item>
+          <el-form-item label="公司名称" prop="companyName">
+            <el-input v-model="form.companyName" :disabled="isDetail" />
+          </el-form-item>
+          <el-form-item label="社会信用代码" prop="socialCreditCode">
+            <el-input v-model="form.socialCreditCode" :disabled="isDetail || drawerMode === 'edit'" />
+          </el-form-item>
+          <el-form-item label="管理员" prop="manageName">
+            <el-input v-model="form.manageName" :disabled="isDetail" />
+          </el-form-item>
+          <el-form-item label="联系方式" prop="contactInfo">
+            <el-input v-model="form.contactInfo" :disabled="isDetail" />
+          </el-form-item>
+          <el-form-item label="机构类型" prop="orgType">
+            <el-radio-group v-model="form.orgType" :disabled="isDetail">
+              <el-radio :label="1">客户机构</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="电站维度">
+            <el-radio-group v-model="form.stationScopeType" :disabled="true">
+              <el-radio :label="2">按电站</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="可用站点" prop="dataId">
+            <el-input v-model="searchKey" placeholder="输入关键字过滤站点" clearable class="station-search" :disabled="isDetail" />
+            <div :class="['station-tree-wrap', { 'is-disabled': isDetail }]">
+              <el-tree
+                ref="stationTree"
+                :data="stationTreeData"
+                node-key="id"
+                show-checkbox
+                :props="treeProps"
+                :filter-node-method="filterTreeNode"
+                @check-change="onTreeCheck"
+              />
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="drawerVisible = false">取消</el-button>
+        <el-button v-if="!isDetail" type="primary" @click="submit">保存</el-button>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      title="财务"
+      :visible.sync="financeDrawerVisible"
+      size="86%"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="finance-drawer-body">
+        <div class="finance-cards">
+          <div class="finance-card finance-card-org">
+            <img :src="organizationImg" class="finance-card-icon" />
+            <div class="finance-card-content">
+              <div class="finance-card-title">{{ financeCustomer.name || '-' }}</div>
+              <div class="finance-card-sub">公司名称：{{ financeCustomer.companyName || '-' }}</div>
+              <div class="finance-card-sub">管理员：{{ financeCustomer.manageName || '-' }}</div>
+            </div>
+          </div>
+          <div class="finance-card finance-card-wallet">
+            <img :src="walletImg" class="finance-card-icon" />
+            <div class="finance-card-content">
+              <div class="finance-card-sub">钱包余额（元）</div>
+              <div class="finance-card-money">¥ {{ walletBalance }}</div>
+              <div class="finance-card-actions">
+                <el-button size="mini" type="primary" @click="openWalletAdjust">钱包充扣</el-button>
+                <el-button size="mini" type="warning" @click="openAllocationAdjust">分配扣回</el-button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="finance-section">
+          <div class="finance-section-title">
+            <span>资金流水</span>
+            <el-button size="mini" type="primary" plain icon="el-icon-download" @click="exportFlow">导出</el-button>
+          </div>
+
+          <div class="finance-filter">
+            <el-date-picker
+              v-model="flowQuery.dateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              value-format="yyyy-MM-dd"
+              class="filter-item"
+              style="width: 260px;"
+              clearable
+            />
+            <el-input v-model="flowQuery.flowNo" class="filter-item" style="width: 190px;" placeholder="请输入流水号" clearable />
+            <el-select v-model="flowQuery.flowType" class="filter-item" style="width: 190px;" placeholder="请选择流水类型" clearable>
+              <el-option v-for="opt in flowTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+            <el-input v-model="flowQuery.flowObject" class="filter-item" style="width: 190px;" placeholder="请输入流水对象" clearable />
+            <el-button class="filter-item" type="primary" icon="el-icon-search" @click="searchFlow">确认</el-button>
+            <el-button class="filter-item" plain @click="resetFlow">清空</el-button>
+          </div>
+
+          <el-table v-loading="flowLoading" :data="flowList" fit highlight-current-row>
+            <el-table-column prop="flowNo" label="流水号" min-width="180" align="center" />
+            <el-table-column prop="flowType" label="流水类型" min-width="120" align="center" />
+            <el-table-column prop="flowObject" label="流水对象" min-width="140" align="center" />
+            <el-table-column prop="flowTime" label="时间" min-width="160" align="center">
+              <template slot-scope="scope">{{ scope.row.flowTime | formatDate }}</template>
+            </el-table-column>
+            <el-table-column prop="flowAmount" label="流水金额" min-width="120" align="center">
+              <template slot-scope="scope">
+                <span :class="Number(scope.row.flowAmount) < 0 ? 'money-out' : 'money-in'">{{ scope.row.flowAmount }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="operatorAccount" label="操作账号" min-width="120" align="center" />
+          </el-table>
+
+          <div class="pagination-container">
+            <el-pagination
+              :current-page="flowQuery.page"
+              :page-size="flowQuery.limit"
+              :page-sizes="[10, 20, 30, 50]"
+              :total="flowTotal"
+              background
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="onFlowSizeChange"
+              @current-change="onFlowCurrentChange"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="finance-drawer-footer">
+        <el-button @click="financeDrawerVisible = false">关闭</el-button>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      :title="walletAdjustTitle"
+      :visible.sync="walletAdjustDrawerVisible"
+      size="420px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="adjust-drawer-body">
+        <el-form ref="walletAdjustRef" :model="walletAdjustForm" label-width="90px">
+          <el-form-item label="操作">
+            <el-radio-group v-model="walletAdjustForm.action">
+              <el-radio label="RECHARGE">充值</el-radio>
+              <el-radio label="DEDUCT">扣款</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="金额">
+            <el-input v-model="walletAdjustForm.amount" placeholder="请输入金额" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="walletAdjustForm.remark" type="textarea" :rows="3" placeholder="可选" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="adjust-drawer-footer">
+        <el-button @click="walletAdjustDrawerVisible = false">取消</el-button>
+        <el-button type="primary" :loading="walletAdjustLoading" @click="submitWalletAdjust">确定</el-button>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      :title="allocationAdjustTitle"
+      :visible.sync="allocationAdjustDrawerVisible"
+      size="420px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="adjust-drawer-body">
+        <el-form ref="allocationAdjustRef" :model="allocationAdjustForm" label-width="90px">
+          <el-form-item label="操作">
+            <el-radio-group v-model="allocationAdjustForm.action">
+              <el-radio label="ALLOCATE">分配</el-radio>
+              <el-radio label="RETURN">扣回</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="金额">
+            <el-input v-model="allocationAdjustForm.amount" placeholder="请输入金额" />
+          </el-form-item>
+          <el-form-item label="备注">
+            <el-input v-model="allocationAdjustForm.remark" type="textarea" :rows="3" placeholder="可选" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="adjust-drawer-footer">
+        <el-button @click="allocationAdjustDrawerVisible = false">取消</el-button>
+        <el-button type="primary" :loading="allocationAdjustLoading" @click="submitAllocationAdjust">确定</el-button>
+      </div>
+    </el-drawer>
+  </div>
+</template>
+
+<script>
+import { parseTime } from '@/utils/index'
+import { export_json_to_excel } from '@/vendor/Export2Excel'
+import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
+import {
+  addChargingCustomer,
+  adjustChargingCustomerAllocation,
+  adjustChargingCustomerWallet,
+  getChargingCustomerFinanceFlowPage,
+  getChargingCustomerFinanceWallet,
+  getChargingCustomerDetail,
+  getChargingCustomerPage,
+  updateChargingCustomer
+} from '@/api/chargingCustomer/index'
+import organizationImg from '@/assets/charging-customer/organization.png'
+import walletImg from '@/assets/charging-customer/wallet.png'
+
+export default {
+  name: 'ChargingCustomer',
+  data() {
+    return {
+      loading: false,
+      total: 0,
+      list: [],
+      query: {
+        page: 1,
+        limit: 10,
+        organizationName: '',
+        companyName: '',
+        administratorName: '',
+        administratorPhone: ''
+      },
+      drawerVisible: false,
+      drawerMode: 'create',
+      form: {
+        id: null,
+        name: '',
+        companyName: '',
+        socialCreditCode: '',
+        manageName: '',
+        contactInfo: '',
+        orgType: 1,
+        stationScopeType: 2,
+        dataId: []
+      },
+      rules: {
+        name: [{ required: true, message: '请输入客户名称', trigger: 'blur' }],
+        companyName: [{ required: true, message: '请输入公司名称', trigger: 'blur' }],
+        socialCreditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }],
+        manageName: [{ required: true, message: '请输入管理员', trigger: 'blur' }],
+        contactInfo: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
+        dataId: [{ required: true, message: '请选择站点', trigger: 'change' }]
+      },
+      stationTreeData: [],
+      treeProps: { children: 'children', label: 'label' },
+      searchKey: '',
+      financeDrawerVisible: false,
+      financeCustomer: {},
+      walletBalance: '0.00',
+      flowLoading: false,
+      flowList: [],
+      flowTotal: 0,
+      flowQuery: {
+        page: 1,
+        limit: 10,
+        dateRange: [],
+        flowNo: '',
+        flowType: '',
+        flowObject: ''
+      },
+      walletAdjustDrawerVisible: false,
+      walletAdjustLoading: false,
+      walletAdjustForm: {
+        action: 'RECHARGE',
+        amount: '',
+        remark: ''
+      },
+      allocationAdjustDrawerVisible: false,
+      allocationAdjustLoading: false,
+      allocationAdjustForm: {
+        action: 'ALLOCATE',
+        amount: '',
+        remark: ''
+      },
+      flowTypeOptions: [
+        { label: '后台充值', value: '后台充值' },
+        { label: '后台扣款', value: '后台扣款' },
+        { label: '分配给用户', value: '分配给用户' },
+        { label: '分配扣回', value: '分配扣回' }
+      ],
+      organizationImg,
+      walletImg
+    }
+  },
+  computed: {
+    isDetail() {
+      return this.drawerMode === 'detail'
+    },
+    drawerTitle() {
+      if (this.drawerMode === 'edit') return '编辑充电客户'
+      if (this.drawerMode === 'detail') return '充电客户详情'
+      return '新增充电客户'
+    },
+    walletAdjustTitle() {
+      return '钱包充扣'
+    },
+    allocationAdjustTitle() {
+      return '分配扣回'
+    }
+  },
+  watch: {
+    searchKey(val) {
+      if (this.$refs.stationTree) this.$refs.stationTree.filter(val)
+    }
+  },
+  filters: {
+    formatDate(v) {
+      return v ? parseTime(v) : ''
+    }
+  },
+  created() {
+    this.loadList()
+    this.loadStationTree()
+  },
+  methods: {
+    filterTreeNode(value, data) {
+      if (!value) return true
+      return String(data.label || '').indexOf(value) > -1
+    },
+    onTreeCheck() {
+      if (this.isDetail) return
+      if (!this.$refs.stationTree) return
+      const keys = this.$refs.stationTree.getCheckedKeys()
+      this.form.dataId = keys.filter(k => typeof k === 'number' || /^\d+$/.test(String(k))).map(v => Number(v))
+    },
+    loadStationTree() {
+      getChargeStationTreeByMerchant({}).then(res => {
+        if (res.code !== 200) return
+        this.stationTreeData = (res.data || []).map(merchant => ({
+          id: `merchant-${merchant.id}`,
+          label: merchant.name,
+          children: (merchant.chargingStationInfoVoList || []).map(station => ({
+            id: Number(station.id),
+            label: station.networkName
+          }))
+        }))
+      })
+    },
+    loadList() {
+      this.loading = true
+      const req = Object.assign({}, this.query, {
+        orgMold: 1,
+        orgType: '1,2'
+      })
+      getChargingCustomerPage(req).then(res => {
+        this.loading = false
+        if (res.code === 200) {
+          this.list = res.data || []
+          this.total = res.count || 0
+        } else {
+          this.$message.error(res.msg || '查询失败')
+        }
+      }).catch(() => {
+        this.loading = false
+      })
+    },
+    search() {
+      this.query.page = 1
+      this.loadList()
+    },
+    onSizeChange(val) {
+      this.query.limit = val
+      this.loadList()
+    },
+    onCurrentChange(val) {
+      this.query.page = val
+      this.loadList()
+    },
+    resetForm() {
+      this.form = {
+        id: null,
+        name: '',
+        companyName: '',
+        socialCreditCode: '',
+        manageName: '',
+        contactInfo: '',
+        orgType: 1,
+        stationScopeType: 2,
+        dataId: []
+      }
+      this.searchKey = ''
+      this.$nextTick(() => {
+        if (this.$refs.formRef) this.$refs.formRef.clearValidate()
+        if (this.$refs.stationTree) this.$refs.stationTree.setCheckedKeys([])
+      })
+    },
+    openDrawer(mode, row) {
+      this.drawerMode = mode
+      this.drawerVisible = true
+      this.resetForm()
+      if (!row) return
+      getChargingCustomerDetail(row.id).then(res => {
+        if (res.code !== 200) {
+          this.$message.error(res.msg || '详情加载失败')
+          return
+        }
+        this.form = Object.assign({}, this.form, res.data || {})
+        this.form.stationScopeType = 2
+        this.$nextTick(() => {
+          if (this.$refs.stationTree) this.$refs.stationTree.setCheckedKeys(this.form.dataId || [])
+        })
+      })
+    },
+    submit() {
+      this.$refs.formRef.validate(valid => {
+        if (!valid) return
+        const req = Object.assign({}, this.form, { stationScopeType: 2 })
+        const action = this.drawerMode === 'edit' ? updateChargingCustomer : addChargingCustomer
+        action(req).then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg || '保存成功')
+            this.drawerVisible = false
+            this.loadList()
+          } else {
+            this.$message.error(res.msg || '保存失败')
+          }
+        })
+      })
+    },
+    openFinance(row) {
+      this.financeCustomer = Object.assign({}, row || {})
+      this.financeDrawerVisible = true
+      this.flowQuery.page = 1
+      this.loadWallet()
+      this.loadFlow()
+    },
+    loadWallet() {
+      if (!this.financeCustomer || !this.financeCustomer.id) return
+      getChargingCustomerFinanceWallet(this.financeCustomer.id).then(res => {
+        if (res.code === 200) {
+          const v = res.data && res.data.walletBalance != null ? res.data.walletBalance : 0
+          this.walletBalance = Number(v).toFixed(2)
+        } else {
+          this.$message.error(res.msg || '查询钱包失败')
+        }
+      })
+    },
+    buildFlowReq() {
+      const range = this.flowQuery.dateRange || []
+      const startTime = range && range.length === 2 ? `${range[0]} 00:00:00` : ''
+      const endTime = range && range.length === 2 ? `${range[1]} 23:59:59` : ''
+      return {
+        organizationId: this.financeCustomer.id,
+        page: this.flowQuery.page,
+        limit: this.flowQuery.limit,
+        startTime,
+        endTime,
+        flowNo: this.flowQuery.flowNo,
+        flowType: this.flowQuery.flowType,
+        flowObject: this.flowQuery.flowObject
+      }
+    },
+    loadFlow() {
+      if (!this.financeCustomer || !this.financeCustomer.id) return
+      this.flowLoading = true
+      getChargingCustomerFinanceFlowPage(this.buildFlowReq()).then(res => {
+        this.flowLoading = false
+        if (res.code === 200) {
+          this.flowList = res.data || []
+          this.flowTotal = res.count || 0
+        } else {
+          this.$message.error(res.msg || '查询资金流水失败')
+        }
+      }).catch(() => {
+        this.flowLoading = false
+      })
+    },
+    searchFlow() {
+      this.flowQuery.page = 1
+      this.loadFlow()
+    },
+    resetFlow() {
+      this.flowQuery = Object.assign({}, this.flowQuery, {
+        page: 1,
+        limit: 10,
+        dateRange: [],
+        flowNo: '',
+        flowType: '',
+        flowObject: ''
+      })
+      this.loadFlow()
+    },
+    onFlowSizeChange(val) {
+      this.flowQuery.limit = val
+      this.flowQuery.page = 1
+      this.loadFlow()
+    },
+    onFlowCurrentChange(val) {
+      this.flowQuery.page = val
+      this.loadFlow()
+    },
+    openWalletAdjust() {
+      this.walletAdjustForm = { action: 'RECHARGE', amount: '', remark: '' }
+      this.walletAdjustDrawerVisible = true
+    },
+    submitWalletAdjust() {
+      const amount = Number(this.walletAdjustForm.amount)
+      if (!amount || amount <= 0) {
+        this.$message.error('请输入正确的金额')
+        return
+      }
+      this.walletAdjustLoading = true
+      adjustChargingCustomerWallet({
+        organizationId: this.financeCustomer.id,
+        action: this.walletAdjustForm.action,
+        amount,
+        remark: this.walletAdjustForm.remark
+      }).then(res => {
+        this.walletAdjustLoading = false
+        if (res.code === 200) {
+          this.$message.success(res.msg || '操作成功')
+          this.walletAdjustDrawerVisible = false
+          this.loadWallet()
+          this.loadFlow()
+        } else {
+          this.$message.error(res.msg || '操作失败')
+        }
+      }).catch(() => {
+        this.walletAdjustLoading = false
+      })
+    },
+    openAllocationAdjust() {
+      this.allocationAdjustForm = { action: 'ALLOCATE', amount: '', remark: '' }
+      this.allocationAdjustDrawerVisible = true
+    },
+    submitAllocationAdjust() {
+      const amount = Number(this.allocationAdjustForm.amount)
+      if (!amount || amount <= 0) {
+        this.$message.error('请输入正确的金额')
+        return
+      }
+      this.allocationAdjustLoading = true
+      adjustChargingCustomerAllocation({
+        organizationId: this.financeCustomer.id,
+        action: this.allocationAdjustForm.action,
+        amount,
+        remark: this.allocationAdjustForm.remark
+      }).then(res => {
+        this.allocationAdjustLoading = false
+        if (res.code === 200) {
+          this.$message.success(res.msg || '操作成功')
+          this.allocationAdjustDrawerVisible = false
+          this.loadWallet()
+          this.loadFlow()
+        } else {
+          this.$message.error(res.msg || '操作失败')
+        }
+      }).catch(() => {
+        this.allocationAdjustLoading = false
+      })
+    },
+    exportFlow() {
+      const header = ['流水号', '流水类型', '流水对象', '时间', '流水金额', '操作账号']
+      const data = (this.flowList || []).map(row => ([
+        row.flowNo || '',
+        row.flowType || '',
+        row.flowObject || '',
+        row.flowTime ? parseTime(row.flowTime) : '',
+        row.flowAmount != null ? String(row.flowAmount) : '',
+        row.operatorAccount || ''
+      ]))
+      export_json_to_excel({
+        header,
+        data,
+        filename: `资金流水_${this.financeCustomer && this.financeCustomer.name ? this.financeCustomer.name : ''}`
+      })
+    }
+  }
+}
+</script>
+
+<style scoped>
+.filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.station-search {
+  margin-bottom: 10px;
+}
+.station-tree-wrap.is-disabled {
+  pointer-events: none;
+  opacity: 0.75;
+}
+.drawer-body {
+  padding: 0 20px 70px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+}
+
+.finance-drawer-body {
+  padding: 16px 20px 76px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.finance-drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+}
+.finance-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.finance-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+}
+.finance-card-icon {
+  width: 52px;
+  height: 52px;
+}
+.finance-card-content {
+  flex: 1;
+}
+.finance-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+.finance-card-sub {
+  font-size: 13px;
+  color: #606266;
+  line-height: 18px;
+}
+.finance-card-money {
+  margin-top: 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+}
+.finance-card-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+.finance-section {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
+  padding: 14px 14px 6px;
+}
+.finance-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  font-weight: 600;
+  color: #303133;
+}
+.finance-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0 4px;
+}
+.adjust-drawer-body {
+  padding: 16px 20px 70px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.adjust-drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+}
+.money-in {
+  color: #67c23a;
+}
+.money-out {
+  color: #f56c6c;
+}
+</style>
