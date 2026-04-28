@@ -8,7 +8,7 @@
 				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['deviceCode','textLine1',isDark? 'dark_fontColor' : 'light_fontColor']">设备号
-							<span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">{{item.deviceCode}}</span>
+							<span :class="[isDark? 'dark_fontColor' : 'light_fontColor']" :title="item.deviceCode">{{item.deviceCode}}</span>
 						</div>
 						<div :class="['time','textLine1',isDark? 'dark_fontColor' : 'light_fontColor']">
 							{{item.createTime}}
@@ -137,9 +137,19 @@
 				.deviceCode {
 					font-size: 15px;
 					color: rgba(58, 56, 113, 1);
+					max-width: 200px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 
 					span {
 						color: rgba(40, 40, 40, 0.50);
+						display: inline-block;
+						max-width: 160px;
+						overflow: hidden;
+						text-overflow: ellipsis;
+						white-space: nowrap;
+						vertical-align: bottom;
 					}
 				}
 

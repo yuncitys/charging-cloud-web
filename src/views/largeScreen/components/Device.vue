@@ -41,8 +41,8 @@
 				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['deviceCode','textLine1',isDark? 'dark_fontColor' : 'light_fontColor'] ">
-							设备号
-							<span :class="[isDark? 'dark_fontColor' : 'light_fontColor']">
+							<span class="deviceLabel">设备号</span>
+							<span :class="['codeValue',isDark? 'dark_fontColor' : 'light_fontColor']" :title="item.deviceCode">
 								{{item.deviceCode}}
 							</span>
 						</div>
@@ -159,6 +159,8 @@
 		height: 430px;
 		border-radius: 20px 20px 20px 20px;
 		margin: 15px 0;
+		display: flex;
+		flex-direction: column;
 
 		.light_TipBox {
 			background: linear-gradient(90deg, #00BBE9 0%, rgba(255, 255, 255, 0) 100%);
@@ -215,6 +217,9 @@
 			width: 470px;
 			margin: 0 auto;
 			margin-top: 10px;
+			flex: 1;
+			display: flex;
+			flex-direction: column;
 
 			.title {
 				font-size: 15px;
@@ -223,7 +228,9 @@
 			}
 
 			.seamless-warp {
-				height: 140px;
+				flex: 1;
+				height: auto;
+				min-height: 0;
 				overflow: hidden;
 			}
 
@@ -237,12 +244,23 @@
 					width: 50%;
 					font-size: 14px;
 					color: rgba(40, 40, 40, 1);
+					display: flex;
+					align-items: center;
+					overflow: hidden;
 
-					span {
-						color: rgba(40, 40, 40, 0.50);
-						display: inline-block;
-						margin-left: 10px;
+					.deviceLabel {
+						flex: 0 0 auto;
 					}
+				}
+
+				.codeValue {
+					flex: 1 1 auto;
+					min-width: 0;
+					display: inline-block;
+					margin-left: 10px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 				}
 
 				.tip {

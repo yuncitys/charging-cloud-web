@@ -21,20 +21,14 @@
 				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div :class="['tableList','flex',item.num%2 === 0 ? (isDark ? 'evenBoxDark' : 'evenBoxLight') : ''] "
 						v-for="(item,index) in list" :key="index">
-						<div class="listItem flex" v-if="index === 0" style="width:10%;justify-content: center;">
-							<div class="round" style="background-color: rgba(234, 92, 148, 1);">{{index+1}}</div>
+						<div class="listItem flex" style="width:10%;justify-content: center;">
+							<div class="round" style="background-color: rgba(234, 92, 148, 1);" v-if="index === 0">{{index+1}}</div>
+							<div class="round" style="background-color: rgba(93, 129, 242, 1);" v-else-if="index === 1">{{index+1}}</div>
+							<div class="round" style="background-color: rgba(251, 129, 55, 1);" v-else-if="index === 2">{{index+1}}</div>
+							<div :class="['rankNum',isDark ? 'dark_rankNum' : 'light_rankNum']" v-else>{{index+1}}</div>
 						</div>
-						<div class="listItem flex" v-if="index === 1" style="width:10%;justify-content: center;">
-							<div class="round" style="background-color: rgba(93, 129, 242, 1);">{{index+1}}</div>
-						</div>
-						<div class="listItem flex" v-if="index === 2" style="width:10%;justify-content: center;">
-							<div class="round" style="background-color: rgba(251, 129, 55, 1);">{{index+1}}</div>
-						</div>
-						<!-- <div class="listItem" v-if="index > 2" :style="{width:'10%',color:isDark ? '#fff' : '#333'}">
-							{{index+1}}
-						</div> -->
 						<div :class="['listItem','text1','textLine1',isDark ? 'dark_text1' : 'light_text1']"
-							style="width:30%">
+							style="width:30%" :title="item.networkName">
 							{{item.networkName}}
 						</div>
 						<div :class="['listItem','text2','textLine1',isDark ? 'dark_text2' : 'light_text2']"
@@ -293,6 +287,9 @@
 
 				.listItem {
 					text-align: center;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
 
 					.round {
 						width: 17px;
@@ -303,6 +300,19 @@
 						text-align: center;
 						line-height: 17px;
 					}
+				}
+
+				.rankNum {
+					font-size: 14px;
+					line-height: 17px;
+				}
+
+				.dark_rankNum {
+					color: rgba(255, 255, 255, 0.50);
+				}
+
+				.light_rankNum {
+					color: rgba(40, 40, 40, 0.50);
 				}
 			}
 		}

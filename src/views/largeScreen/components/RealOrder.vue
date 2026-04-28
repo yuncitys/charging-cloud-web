@@ -13,16 +13,16 @@
 				</div>
 				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
-						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']" :title="item.orderCode">
               				{{item.orderCode}}
 						</div>
-						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']" :title="item.networkName">
 							{{item.networkName}}
 						</div>
 						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
 							{{item.chargingDuration}}分钟
 						</div>
-						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']">
+						<div :class="['tableItem',isDark ? 'dark_fontColor' : 'light_fontColor']" :title="item.startTime">
               				{{item.startTime}}
 						</div>
 					</div>

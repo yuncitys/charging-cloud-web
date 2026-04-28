@@ -237,8 +237,17 @@ function mockGetOrderList() {
 	for (let i = 0; i < size; i++) {
 		const seed = t * 23 + i * 5
 		const start = new Date(now - (i * 45 + Math.floor(seeded(seed) * 30)) * 1000)
+		const yy = String(start.getFullYear()).slice(-2)
+		const mm = pad2(start.getMonth() + 1)
+		const dd = pad2(start.getDate())
+		const hh = pad2(start.getHours())
+		const mi = pad2(start.getMinutes())
+		const pilePart = `${yy}${mm}${dd}${String(1 + ((t + i) % 99999999)).padStart(8, '0')}`
+		const gunPart = String(1 + ((t + i) % 99)).padStart(2, '0')
+		const dateTimePart = `${start.getFullYear()}${mm}${dd}${hh}${mi}`
+		const seqPart = String(1 + ((t * 37 + i * 11) % 9999)).padStart(4, '0')
 		out.push({
-			orderCode: `MOCK${String(now).slice(-8)}${pad2(i)}`,
+			orderCode: `${pilePart}${gunPart}${dateTimePart}${seqPart}`,
 			networkName: stationNames[(i + t) % stationNames.length],
 			chargingDuration: 12 + (t % 18) + Math.floor(seeded(seed + 1) * 40),
 			startTime: formatDateTime(start),
@@ -285,8 +294,12 @@ function mockGetDeviceLogList() {
 	for (let i = 0; i < size; i++) {
 		const seed = t * 31 + i * 11
 		const ts = new Date(now - (i * 28 + Math.floor(seeded(seed) * 20)) * 1000)
+		const yy = String(ts.getFullYear()).slice(-2)
+		const mm = pad2(ts.getMonth() + 1)
+		const dd = pad2(ts.getDate())
+		const seq = String(1 + ((t * 17 + i * 3) % 99999999)).padStart(8, '0')
 		out.push({
-			deviceCode: `D${String(100000 + ((t * 17 + i * 3) % 900000))}`,
+			deviceCode: `${yy}${mm}${dd}${seq}`,
 			createTime: formatDateTime(ts),
 			Type: (i + t) % 2 === 0 ? 1 : 0,
 		})
