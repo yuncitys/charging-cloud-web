@@ -7,7 +7,7 @@
                 class="crumb"
                 @click="goToLevel(idx)"
             >
-                {{ item }}<span v-if="idx !== breadcrumbs.length - 1"> / </span>
+                {{ formatCrumb(item, idx) }}<span v-if="idx !== breadcrumbs.length - 1"> / </span>
             </span>
         </div>
         <Chart :cdata="cdata" :mapName="mapName" @map-click="handleMapClick" :style="{height:height,width:width}" />
@@ -38,6 +38,7 @@
 				mapName: '全国',
                 breadcrumbs: ['全国'],
 				refreshTimer: null,
+				provinceCdataTemplate: [],
 				cdata: [{
 						name: '北京市',
 						value: 0,
@@ -181,12 +182,21 @@
 		components: {
 			Chart,
 		},
+		watch: {
+			mapName() {
+				this.refreshMapData()
+			},
+		},
 		mounted() {},
 		created() {
-			this.getProvinceByDevice()
+			this.provinceCdataTemplate = (this.cdata || []).map(item => ({
+				name: item.name,
+				value: 0,
+			}))
+			this.refreshMapData()
 			if (this.isMockMode()) {
 				this.refreshTimer = setInterval(() => {
-					this.getProvinceByDevice()
+					this.refreshMapData()
 				}, 5000)
 			}
 		},
@@ -205,7 +215,8 @@
             handleMapClick(params) {
                 if (!params || !params.name) return
                 if (this.mapName === '全国') {
-                    const targetFullName = params.name
+                    const targetFullName = this.toProvinceFullName(params.name)
+					if (!targetFullName) return
                     const targetMapName = this.toRegisteredMapName(targetFullName)
                     if (this.isMapRegistered(targetMapName)) {
                         this.mapName = targetMapName
@@ -254,6 +265,43 @@
             toRegisteredMapName(fullName) {
                 return fullName
             },
+			toProvinceFullName(name) {
+				if (!name) return ''
+				const n = String(name).trim()
+				if (n === '南海诸岛') return ''
+				if (/(省|市|自治区|特别行政区)$/.test(n)) return n
+				const special = {
+					'北京': '北京市',
+					'天津': '天津市',
+					'上海': '上海市',
+					'重庆': '重庆市',
+					'内蒙古': '内蒙古自治区',
+					'广西': '广西壮族自治区',
+					'西藏': '西藏自治区',
+					'宁夏': '宁夏回族自治区',
+					'新疆': '新疆维吾尔自治区',
+					'香港': '香港特别行政区',
+					'澳门': '澳门特别行政区',
+					'台湾': '台湾省',
+				}
+				if (special[n]) return special[n]
+				return `${n}省`
+			},
+			toProvinceShortName(name) {
+				if (!name) return ''
+				return String(name)
+					.replace(/特别行政区$/, '')
+					.replace(/维吾尔自治区$/, '')
+					.replace(/壮族自治区$/, '')
+					.replace(/回族自治区$/, '')
+					.replace(/自治区$/, '')
+					.replace(/省$/, '')
+					.replace(/市$/, '')
+			},
+			formatCrumb(name, idx) {
+				if (idx === 0) return name
+				return this.toProvinceShortName(name)
+			},
             /**
              * 判断地图是否已通过 echarts.registerMap 注册
              */
@@ -264,26 +312,61 @@
                     return false
                 }
             },
-			getProvinceByDevice() {
-				getProvinceByDevice().then(res => {
-					if (res.code === 200) {
-						let cdata = this.cdata
-						let netdata = res.data
+			getMapRegionNames(mapName) {
+				try {
+					const m = this.$echarts && this.$echarts.getMap(mapName)
+					const geoJson = m && (m.geoJson || m.geoJSON)
+					const features = geoJson && geoJson.features ? geoJson.features : []
+					const names = features
+						.map(f => (f && f.properties ? f.properties.name : ''))
+						.filter(Boolean)
+					return Array.from(new Set(names))
+				} catch (e) {
+					return []
+				}
+			},
+			refreshMapData() {
+				const isNational = this.mapName === '全国'
+				const requestData = isNational ? {} : { provinceName: this.mapName }
+				getProvinceByDevice(requestData).then(res => {
+					if (res.code !== 200) return
+					const netdata = Array.isArray(res.data) ? res.data : []
 
-						let map = {}
+					if (isNational) {
+						const cdata = (this.provinceCdataTemplate || []).map(item => ({
+							name: item.name,
+							value: 0,
+						}))
+						const valueMap = {}
 						netdata.forEach(item => {
-							let key = item.networkProvince;
-							map[key] = item.totalDevice;
+							if (!item) return
+							const key = item.networkProvince
+							valueMap[key] = Number(item.totalDevice) || 0
 						})
-						cdata.forEach((item, index) => {
-							if (map[item.name]) {
-								item.value = map[item.name]
-							}
+						cdata.forEach(item => {
+							item.value = valueMap[item.name] || 0
 						})
-						this.cdata = cdata;
+						this.cdata = cdata
+						return
 					}
+
+					const regionNames = this.getMapRegionNames(this.mapName)
+					const cdata = (regionNames.length ? regionNames : netdata.map(i => i && i.networkCity).filter(Boolean)).map(name => ({
+						name,
+						value: 0,
+					}))
+					const valueMap = {}
+					netdata.forEach(item => {
+						if (!item) return
+						const key = item.networkCity
+						valueMap[key] = Number(item.totalDevice) || 0
+					})
+					cdata.forEach(item => {
+						item.value = valueMap[item.name] || 0
+					})
+					this.cdata = cdata
 				})
-			}
+			},
 		}
 	}
 </script>

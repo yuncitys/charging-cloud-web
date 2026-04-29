@@ -204,7 +204,39 @@ const provinceNames = [
 	'澳门特别行政区',
 ]
 
-function mockGetProvinceByDevice() {
+const provinceGeoJsonContext = require.context('@/common/map/province', false, /\.json$/)
+
+function mockGetProvinceByDevice(data = {}) {
+	const provinceName = data && data.provinceName ? String(data.provinceName) : ''
+	if (provinceName) {
+		let geoJson = null
+		try {
+			const mod = provinceGeoJsonContext(`./${provinceName}.json`)
+			geoJson = mod && mod.default ? mod.default : mod
+		} catch (e) {
+			geoJson = null
+		}
+		if (!geoJson || !geoJson.features) {
+			return []
+		}
+		const t = mockState.tick
+		const cityNames = Array.from(
+			new Set(
+				geoJson.features
+					.map(f => (f && f.properties ? f.properties.name : ''))
+					.filter(Boolean)
+			)
+		)
+		return cityNames.map((city, idx) => {
+			const seed = t * 31 + idx * 7
+			const base = idx % 9 === 0 ? 0 : 10
+			return {
+				networkProvince: provinceName,
+				networkCity: city,
+				totalDevice: base + Math.floor(seeded(seed) * 180) + (t % 6),
+			}
+		})
+	}
 	const t = mockState.tick
 	return provinceNames.map((p, idx) => {
 		const seed = t * 19 + idx * 3
@@ -384,7 +416,7 @@ export function getSevenDayTrendByOrder(data) {
 //地图省份
 export function getProvinceByDevice(data) {
 	if (useMock()) {
-		return mockResolve(mockGetProvinceByDevice())
+		return mockResolve(mockGetProvinceByDevice(data))
 	}
 	return request({
 		url: '/api/web/visual/getProvinceByDevice',

@@ -7,6 +7,17 @@
 
 <script>
 	import Echart from '@/common/echart';
+	function formatProvinceShortName(name) {
+		if (!name) return ''
+		return String(name)
+			.replace(/特别行政区$/, '')
+			.replace(/维吾尔自治区$/, '')
+			.replace(/壮族自治区$/, '')
+			.replace(/回族自治区$/, '')
+			.replace(/自治区$/, '')
+			.replace(/省$/, '')
+			.replace(/市$/, '')
+	}
 	export default {
 		data() {
 			return {
@@ -49,6 +60,30 @@
 		},
 		methods: {
 			updateOptions(newData) {
+				const isNational = this.mapName === '全国'
+				const seriesData = isNational && Array.isArray(newData) ? newData.flatMap(item => {
+					const fullName = item && item.name ? String(item.name) : ''
+					const shortName = formatProvinceShortName(fullName)
+					const value = item && item.value
+					if (!fullName) return []
+					if (shortName && shortName !== fullName) {
+						return [{
+							name: fullName,
+							value,
+						}, {
+							name: shortName,
+							value,
+						}]
+					}
+					return [{
+						name: fullName,
+						value,
+					}]
+				}) : newData
+				const labelFormatter = params => {
+					const n = params && params.name ? params.name : ''
+					return isNational ? formatProvinceShortName(n) : n
+				}
 				if (this.isDark) {
 					this.options = {
 						showLegendSymbol: true,
@@ -125,7 +160,7 @@
 								},
 							},
 							label: {
-								formatter: params => `${params.name}`,
+								formatter: labelFormatter,
 								show: true,
 								position: 'insideRight',
 								textStyle: {
@@ -138,7 +173,7 @@
 									},
 								},
 							},
-							data: newData,
+							data: seriesData,
 						}, ],
 					};
 				} else {
@@ -217,7 +252,7 @@
 								},
 							},
 							label: {
-								formatter: params => `${params.name}`,
+								formatter: labelFormatter,
 								show: true,
 								position: 'insideRight',
 								textStyle: {
@@ -230,7 +265,7 @@
 									},
 								},
 							},
-							data: newData,
+							data: seriesData,
 						}, ],
 					};
 				}
