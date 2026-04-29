@@ -80,15 +80,66 @@ function mockResolve(data) {
 
 function mockGetCount() {
 	const t = mockState.tick
-	const totalMoney = 1280000 + t * 523 + Math.floor(seeded(t + 1) * 500)
+	let baseMoney = 130000000
+	let baseTs = Date.now()
+	let baseTotalUser = 320000
+	let baseWxTotalOrder = 1200000
+	let lastMinute = 0
+	let moneyNow = baseMoney
+	try {
+		const raw = window.sessionStorage.getItem('largeScreen_mock_growth_state')
+		if (raw) {
+			const parsed = JSON.parse(raw)
+			if (parsed && typeof parsed.baseMoney === 'number' && typeof parsed.baseTs === 'number') {
+				baseMoney = parsed.baseMoney
+				baseTs = parsed.baseTs
+			}
+			if (parsed && typeof parsed.baseTotalUser === 'number') {
+				baseTotalUser = parsed.baseTotalUser
+			}
+			if (parsed && typeof parsed.baseWxTotalOrder === 'number') {
+				baseWxTotalOrder = parsed.baseWxTotalOrder
+			}
+			if (parsed && typeof parsed.lastMinute === 'number') {
+				lastMinute = parsed.lastMinute
+			}
+			if (parsed && typeof parsed.moneyNow === 'number') {
+				moneyNow = parsed.moneyNow
+			} else {
+				moneyNow = baseMoney
+			}
+		} else {
+			window.sessionStorage.setItem(
+				'largeScreen_mock_growth_state',
+				JSON.stringify({ baseMoney, baseTs, baseTotalUser, baseWxTotalOrder, lastMinute, moneyNow })
+			)
+		}
+	} catch (e) {}
+	const elapsedMinutes = Math.max(0, Math.floor((Date.now() - baseTs) / 60000))
+	if (elapsedMinutes > lastMinute) {
+		for (let m = lastMinute + 1; m <= elapsedMinutes; m++) {
+			let delta = Math.floor(seeded(baseTs + m) * 10000) / 100
+			if (delta < 0.01) delta = 0.01
+			if (delta > 99.99) delta = 99.99
+			moneyNow += delta
+		}
+		lastMinute = elapsedMinutes
+		try {
+			window.sessionStorage.setItem(
+				'largeScreen_mock_growth_state',
+				JSON.stringify({ baseMoney, baseTs, baseTotalUser, baseWxTotalOrder, lastMinute, moneyNow })
+			)
+		} catch (e) {}
+	}
+	const totalMoney = moneyNow.toFixed(2)
 	const currentMonth = 186000 + t * 67 + Math.floor(seeded(t + 2) * 200)
 	const currentDay = 5200 + t * 11 + Math.floor(seeded(t + 3) * 50)
 
-	const totalUser = 36800 + t * 2 + Math.floor(seeded(t + 4) * 5)
+	const totalUser = baseTotalUser + elapsedMinutes * 3 + (t % 2)
 	const newUser = 18 + (t % 12)
 
 	const cardTotal = 82000 + t * 23 + Math.floor(seeded(t + 5) * 50)
-	const wxTotal = 136000 + t * 37 + Math.floor(seeded(t + 6) * 60)
+	const wxTotal = baseWxTotalOrder + elapsedMinutes * 15 + (t % 10)
 
 	const cardDay = 180 + (t % 30)
 	const wxDay = 260 + (t % 40)
@@ -168,13 +219,13 @@ function mockGetSevenDayTrendByOrder() {
 }
 
 const provinceNames = [
-	'北京市',
-	'天津市',
+	// '北京市',
+	// '天津市',
 	'河北省',
 	'山西省',
-	'内蒙古自治区',
-	'辽宁省',
-	'吉林省',
+	// '内蒙古自治区',
+	// '辽宁省',
+	// '吉林省',
 	'黑龙江省',
 	'上海市',
 	'江苏省',
@@ -188,20 +239,20 @@ const provinceNames = [
 	'湖南省',
 	'广东省',
 	'广西壮族自治区',
-	'海南省',
-	'重庆市',
-	'四川省',
-	'贵州省',
-	'云南省',
-	'西藏自治区',
-	'陕西省',
-	'甘肃省',
-	'青海省',
-	'宁夏回族自治区',
-	'新疆维吾尔自治区',
-	'台湾省',
-	'香港特别行政区',
-	'澳门特别行政区',
+	// '海南省',
+	// '重庆市',
+	// '四川省',
+	// '贵州省',
+	// '云南省',
+	// '西藏自治区',
+	// '陕西省',
+	// '甘肃省',
+	// '青海省',
+	// '宁夏回族自治区',
+	// '新疆维吾尔自治区',
+	// '台湾省',
+	// '香港特别行政区',
+	// '澳门特别行政区',
 ]
 
 const provinceGeoJsonContext = require.context('@/common/map/province', false, /\.json$/)

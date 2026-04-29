@@ -42,6 +42,35 @@
 			isMockMode() {
 				return getLargeScreenDataMode() === 'mock'
 			},
+			getCacheKey() {
+				const d = new Date()
+				const y = d.getFullYear()
+				const m = String(d.getMonth() + 1).padStart(2, '0')
+				const day = String(d.getDate()).padStart(2, '0')
+				return `largeScreen_mock_seven_day_trend_${y}-${m}-${day}`
+			},
+			tryLoadCache() {
+				try {
+					const raw = window.sessionStorage.getItem(this.getCacheKey())
+					if (!raw) return false
+					const parsed = JSON.parse(raw)
+					if (!parsed || !parsed.lineChartData) return false
+					this.lineChartData = parsed.lineChartData
+					return true
+				} catch (e) {
+					return false
+				}
+			},
+			saveCache() {
+				try {
+					window.sessionStorage.setItem(this.getCacheKey(), JSON.stringify({ lineChartData: this.lineChartData }))
+				} catch (e) {}
+			},
+			msUntilNextDay() {
+				const now = new Date()
+				const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 2)
+				return Math.max(1000, next.getTime() - now.getTime())
+			},
 			getSevenDayTrendByOrder() {
 				getSevenDayTrendByOrder().then(res => {
 					if (res.code === 200) {
@@ -59,6 +88,7 @@
 							lineChartData.chargingDegree.push(item.chargingDegree)
 						})
 						this.lineChartData = lineChartData
+						if (this.isMockMode()) this.saveCache()
 					}
 				})
 			}
@@ -67,15 +97,23 @@
 
 		},
 		created() {
-			this.getSevenDayTrendByOrder()
 			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
+				if (!this.tryLoadCache()) this.getSevenDayTrendByOrder()
+				this.refreshTimer = setTimeout(() => {
 					this.getSevenDayTrendByOrder()
-				}, 5000)
+					this.refreshTimer = setInterval(() => {
+						this.getSevenDayTrendByOrder()
+					}, 24 * 60 * 60 * 1000)
+				}, this.msUntilNextDay())
+			} else {
+				this.getSevenDayTrendByOrder()
 			}
 		},
 		destroyed() {
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
+			if (this.refreshTimer) {
+				clearInterval(this.refreshTimer)
+				clearTimeout(this.refreshTimer)
+			}
 		}
 	}
 </script>
