@@ -138,8 +138,8 @@
 							name: '设备数',
 							type: 'map',
 							aspectScale: 0.85, //长宽比
-							zoom: 1.2,
 							mapType: this.mapName, // 自定义扩展图表类型
+							zoom: 1.2,
 							top: '10%',
 							left: '16%',
 							itemStyle: {
@@ -174,7 +174,7 @@
 								},
 							},
 							data: seriesData,
-						}, ],
+						}],
 					};
 				} else {
 					this.options = {
@@ -230,8 +230,8 @@
 							name: '设备数',
 							type: 'map',
 							aspectScale: 0.85, //长宽比
-							zoom: 1.2,
 							mapType: this.mapName, // 自定义扩展图表类型
+							zoom: 1.2,
 							top: '10%',
 							left: '16%',
 							itemStyle: {
@@ -266,7 +266,7 @@
 								},
 							},
 							data: seriesData,
-						}, ],
+						}],
 					};
 				}
 				// 重新选择区域
