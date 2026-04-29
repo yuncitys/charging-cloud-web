@@ -374,6 +374,17 @@ function mockGetDeviceLogList() {
 	const now = Date.now()
 	const size = 22
 	const out = []
+	const alarmNames = [
+		'设备上线',
+		'设备下线',
+		'电桩故障',
+		'电压电流异常',
+		'实时数据异常',
+		'SOC异常',
+		'温度超高',
+		'充电阶段BMS中止',
+		'充电阶段充电机中止',
+	]
 	for (let i = 0; i < size; i++) {
 		const seed = t * 31 + i * 11
 		const ts = new Date(now - (i * 28 + Math.floor(seeded(seed) * 20)) * 1000)
@@ -381,10 +392,11 @@ function mockGetDeviceLogList() {
 		const mm = pad2(ts.getMonth() + 1)
 		const dd = pad2(ts.getDate())
 		const seq = String(1 + ((t * 17 + i * 3) % 99999999)).padStart(8, '0')
+		const alarmItem = { name: alarmNames[(t + i) % alarmNames.length] }
 		out.push({
 			deviceCode: `${yy}${mm}${dd}${seq}`,
 			createTime: formatDateTime(ts),
-			Type: (i + t) % 2 === 0 ? 1 : 0,
+			alarmItem,
 		})
 	}
 	return out

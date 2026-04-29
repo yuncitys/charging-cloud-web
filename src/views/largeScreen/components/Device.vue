@@ -37,7 +37,7 @@
 				</div>
 			</div>
 			<div class="tableBox">
-				<div :class="['title',isDark ? 'dark_fontColor' : 'light_fontColor']">设备上下线记录</div>
+				<div :class="['title',isDark ? 'dark_fontColor' : 'light_fontColor']">设备告警日志</div>
 				<vue-seamless-scroll :data="list" :class-option="classOption" class="seamless-warp">
 					<div class="tableList flex" v-for="(item,index) in list" :key="index">
 						<div :class="['deviceCode','textLine1',isDark? 'dark_fontColor' : 'light_fontColor'] ">
@@ -47,11 +47,8 @@
 							</span>
 						</div>
 						<div :class="['time','textLine1',isDark? 'dark_fontColor' : 'light_fontColor']">
-							{{item.createTime}}
-							<span :style="{color:isDark ? 'rgba(69, 102, 246, 1)' : 'rgba(72, 219, 195, 1)'}"
-								v-if="item.Type === 1">上线</span>
-							<span :style="{color:isDark ? 'rgba(255, 16, 112, 1)' : 'rgba(255, 114, 132, 1)'}"
-								v-if="item.Type === 0">离线</span>
+							<span class="timeText">{{item.createTime}}</span>
+							<span class="alarmTag" :style="{color: alarmColor(item)}" :title="alarmText(item)">{{alarmText(item)}}</span>
 						</div>
 					</div>
 				</vue-seamless-scroll>
@@ -90,7 +87,7 @@
 				countDevice: {
 					onLineCount: 0,
 					unLineCount: 0,
-          chargingStationCount: 0,
+          			chargingStationCount: 0,
 				}
 			}
 		},
@@ -101,17 +98,41 @@
 			isMockMode() {
 				return getLargeScreenDataMode() === 'mock'
 			},
-      getDeviceCount(){
-        getDeviceCount().then(res => {
+			alarmText(item) {
+				const ai = item ? item.alarmItem : null
+				if (ai && typeof ai === 'object') {
+					return ai.name || ai.alarmName || ai.title || ai.typeName || ''
+				}
+				if (typeof ai === 'string') return ai
+				return ''
+			},
+			alarmColor(item) {
+				const text = this.alarmText(item)
+				if (text === '设备上线') return this.isDark ? 'rgba(69, 102, 246, 1)' : 'rgba(72, 219, 195, 1)'
+				if (text === '设备下线') return this.isDark ? 'rgba(255, 16, 112, 1)' : 'rgba(255, 114, 132, 1)'
+				if (text === '电桩故障' || text === '温度超高') return this.isDark ? 'rgba(255, 173, 51, 1)' : 'rgba(255, 140, 0, 1)'
+				if (text === '电压电流异常' || text === '实时数据异常' || text === 'SOC异常') return this.isDark ? 'rgba(255, 114, 132, 1)' : 'rgba(255, 85, 105, 1)'
+				if (text === '充电阶段BMS中止' || text === '充电阶段充电机中止') return this.isDark ? 'rgba(255, 173, 51, 1)' : 'rgba(255, 140, 0, 1)'
+				return this.isDark ? 'rgba(255, 173, 51, 1)' : 'rgba(255, 140, 0, 1)'
+			},
+			getDeviceCount(){
+				getDeviceCount().then(res => {
 					if (res.code === 200) {
 						this.countDevice = res.data
 					}
 				})
-      },
+			},
 			getDeviceLogList() {
 				getDeviceLogList().then(res => {
 					if (res.code === 200) {
-						this.list = res.data
+						const arr = Array.isArray(res.data) ? res.data : []
+						this.list = arr.map((it) => {
+							const alarmItem = it && it.alarmItem != null ? it.alarmItem : (it && it.Type === 1 ? { name: '设备上线' } : it && it.Type === 0 ? { name: '设备下线' } : null)
+							return {
+								...it,
+								alarmItem,
+							}
+						})
 					}
 				})
 			}
@@ -237,19 +258,20 @@
 			.tableList {
 				width: 470px;
 				align-items: center;
-				justify-content: space-between;
+				justify-content: flex-start;
 				height: 40px;
 
 				.deviceCode {
-					width: 50%;
+					flex: 0 0 215px;
 					font-size: 14px;
 					color: rgba(40, 40, 40, 1);
 					display: flex;
 					align-items: center;
 					overflow: hidden;
+					padding-right: 10px;
 
 					.deviceLabel {
-						flex: 0 0 auto;
+						flex: 0 0 42px;
 					}
 				}
 
@@ -267,6 +289,34 @@
 					width: 50%;
 					font-size: 14px;
 					color: rgba(255, 114, 132, 1);
+				}
+
+				.time {
+					flex: 1 1 auto;
+					font-size: 14px;
+					display: flex;
+					align-items: center;
+					justify-content: flex-start;
+					overflow: hidden;
+					white-space: nowrap;
+					min-width: 0;
+				}
+
+				.timeText {
+					flex: 0 0 150px;
+					text-align: left;
+				}
+
+				.alarmTag {
+					display: inline-block;
+					flex: 1 1 auto;
+					min-width: 0;
+					text-align: left;
+					margin-left: 10px;
+					overflow: hidden;
+					text-overflow: ellipsis;
+					white-space: nowrap;
+					vertical-align: bottom;
 				}
 			}
 		}
