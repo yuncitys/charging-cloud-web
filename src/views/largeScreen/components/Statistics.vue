@@ -1,12 +1,12 @@
 <template>
 	<div>
 		<div class="statisticsBox flex">
-			<div :class="['statisticsItem',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
+			<div :class="['statisticsItem','statisticsItem--money',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
 				<div class="box1 flex">
 					<div class="box1_left">
 						<div :class="['label',isDark ? 'dark_label' : 'light_label']">总交易金额</div>
 						<div :class="['val',isDark ? 'dark_val' : 'light_val']">
-              {{countData.countOrderMoney.totalMoeny}}
+              				{{formatAmount(countData.countOrderMoney.totalMoeny)}}
 						</div>
 						<div class="lineListBox">
 							<div class="flex lineList">
@@ -45,7 +45,7 @@
 					<div class="box1_left">
 						<div :class="['label',isDark ? 'dark_label' : 'light_label']">扫码订单</div>
 						<div :class="['val',isDark ? 'dark_val' : 'light_val']">
-              {{countOrderWx.totalOrder}}
+              				{{countOrderWx.totalOrder}}
 						</div>
 						<img src="../../../assets/largeScreen/Slice429.png" class="img" v-if="isDark" />
 						<img src="../../../assets/largeScreen/Slice420.png" class="img" v-if="!isDark" />
@@ -75,7 +75,7 @@
 					</div>
 				</div>
 			</div>
-      <div :class="['statisticsItem',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
+      <div :class="['statisticsItem','statisticsItem--user',isDark ? 'dark_statisticsItem' : 'light_statisticsItem']">
       	<div class="box2 flex">
       		<div class="box2_left">
       			<div class="flex childBox">
@@ -204,6 +204,28 @@
 			isMockMode() {
 				return getLargeScreenDataMode() === 'mock'
 			},
+			formatAmount(value) {
+				if (value == null || value === '') return '0.00'
+				if (typeof value === 'string') {
+					const v = value.trim()
+					if (!v) return '0.00'
+					const n = Number(v.replace(/,/g, ''))
+					if (!Number.isFinite(n)) return v
+					value = n
+				}
+				const num = Number(value)
+				if (!Number.isFinite(num)) return String(value)
+				const fixed = num.toFixed(2)
+				const parts = fixed.split('.')
+				const intPart = parts[0]
+				const decPart = parts[1] || '00'
+				const withComma = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, ',') + '.' + decPart
+				const maxLen = 16
+				if (withComma.length <= maxLen) return withComma
+				const tailLen = 6
+				const headLen = Math.max(6, maxLen - tailLen - 1)
+				return withComma.slice(0, headLen) + '…' + withComma.slice(-tailLen)
+			},
 			getCount() {
 				getCount().then(res => {
 					if (res.code === 200) {
@@ -298,6 +320,23 @@
 			width: 344px;
 			height: 176px;
 			border-radius: 20px 20px 20px 20px;
+		}
+
+		.statisticsItem--money {
+			width: 420px;
+		}
+
+		.statisticsItem--user {
+			width: 300px;
+		}
+
+		.statisticsItem--user {
+			.box2_right {
+				margin-left: 10px;
+			}
+		}
+
+		.statisticsItem {
 
 			.box1 {
 				.box1_left {
@@ -329,6 +368,7 @@
 						font-size: 30px;
 						margin-top: 12px;
 						font-weight: bold;
+						white-space: nowrap;
 					}
 
 					.img {
