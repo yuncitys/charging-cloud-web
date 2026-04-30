@@ -1205,6 +1205,27 @@ export const constantRoutes = [{
     ]
   },
   {
+    path: '/chargingCustomerDriver',
+    component: Layout,
+    redirect: '/chargingCustomerDriver/index',
+    name: 'chargingCustomerDriver',
+    meta: {
+      title: '客户司机',
+      icon: 'peoples',
+    },
+    children: [
+      {
+        path: 'index',
+        component: () => import('@/views/chargingCustomerDriver/index'),
+        name: 'chargingCustomerDriver',
+        meta: {
+          title: '客户司机',
+          icon: 'peoples',
+        }
+      }
+    ]
+  },
+  {
     path: '*',
     redirect: '/404',
     hidden: true
