@@ -79,6 +79,15 @@ export function getOrganizationConfig(organizationId) {
 	})
 }
 
+// 获取机构下拉列表
+export function getOrganizationOptions(params) {
+	return request({
+		url: '/api/web/interconnection/selectList',
+		method: 'get',
+		params
+	})
+}
+
 
 
 
