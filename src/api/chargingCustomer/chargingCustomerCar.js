@@ -114,3 +114,12 @@ export function downloadCarTemplate() {
     responseType: 'blob'
   })
 }
+
+// 根据机构ID获取车辆列表
+export function getCarListByOrgId(belongToId) {
+  return request({
+    url: '/api/web/chargingCustomer/car/listByOrgId',
+    method: 'get',
+    params: { belongToId }
+  })
+}
