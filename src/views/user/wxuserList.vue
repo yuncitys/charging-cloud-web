@@ -24,16 +24,11 @@
 				</el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
+				<el-table-column label="用户帐号" prop="userAccount" align="center" :show-overflow-tooltip="isPc">
+				</el-table-column>
 				<el-table-column label="昵称" prop="userName" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
-				<el-table-column label="头像" prop="headImg" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope">
-						<imgView v-if="scope.row.headImg != '' && scope.row.headImg != null && scope.row.headImg != undefined" :imgSrc="scope.row.headImg"/>
-					</template>
-				</el-table-column>
 				<el-table-column label="手机号" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column label="微信ID" prop="wxOpenId" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column label="余额" prop="cash" align="center" sortable :show-overflow-tooltip="isPc">
 				</el-table-column>
@@ -111,12 +106,10 @@
 	} from '@/utils/index'
 	import addCash from './components/addCash.vue'
   	import subtractCash from './components/subtractCash.vue'
-	import imgView from '@/components/Common/imgView.vue'
 	export default {
 		components: {
 			addCash,
-      		subtractCash,
-			imgView
+      		subtractCash
 		},
 		name: 'wxuserList',
 		data() {
