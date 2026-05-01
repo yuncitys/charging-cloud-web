@@ -111,7 +111,7 @@
       <div class="finance-drawer-body">
         <div class="finance-cards">
           <div class="finance-card finance-card-org">
-            <img :src="organizationImg" class="finance-card-icon" />
+            <img :src="organizationImg" class="finance-card-icon" alt="" />
             <div class="finance-card-content">
               <div class="finance-card-title">{{ financeCustomer.name || '-' }}</div>
               <div class="finance-card-sub">公司名称：{{ financeCustomer.companyName || '-' }}</div>
@@ -119,14 +119,16 @@
             </div>
           </div>
           <div class="finance-card finance-card-wallet">
-            <img :src="walletImg" class="finance-card-icon" />
-            <div class="finance-card-content">
-              <div class="finance-card-sub">钱包余额（元）</div>
-              <div class="finance-card-money">¥ {{ walletBalance }}</div>
-              <div class="finance-card-actions">
-                <el-button size="mini" type="primary" @click="openWalletAdjust">钱包充扣</el-button>
-                <el-button size="mini" type="warning" @click="openAllocationAdjust">分配扣回</el-button>
+            <div class="finance-card-wallet-body">
+              <img :src="walletImg" class="finance-card-icon" alt="" />
+              <div class="finance-card-content">
+                <div class="finance-card-sub">钱包余额（元）</div>
+                <div class="finance-card-money">¥ {{ walletBalance }}</div>
               </div>
+            </div>
+            <div class="finance-card-actions-side">
+              <el-button size="small" type="primary" @click="openWalletAdjust">钱包充扣</el-button>
+              <el-button size="small" type="warning" @click="openAllocationAdjust">分配扣回</el-button>
             </div>
           </div>
         </div>
@@ -134,7 +136,7 @@
         <div class="finance-section">
           <div class="finance-section-title">
             <span>资金流水</span>
-            <el-button size="mini" type="primary" plain icon="el-icon-download" @click="exportFlow">导出</el-button>
+            <el-button size="mini" type="primary" icon="el-icon-download" @click="exportFlow">导出</el-button>
           </div>
 
           <div class="finance-filter">
@@ -776,25 +778,47 @@ export default {
 }
 .finance-cards {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 16px;
+  width: 100%;
   margin-bottom: 16px;
 }
 .finance-card {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 14px;
   padding: 16px 18px;
   border-radius: 12px;
   background: #fff;
   border: 1px solid #ebeef5;
+  min-height: 100px;
+  box-sizing: border-box;
+}
+@media (max-width: 768px) {
+  .finance-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.finance-card-wallet {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.finance-card-wallet-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
 }
 .finance-card-icon {
   width: 52px;
   height: 52px;
+  flex-shrink: 0;
 }
 .finance-card-content {
   flex: 1;
+  min-width: 0;
 }
 .finance-card-title {
   font-size: 18px;
@@ -808,15 +832,25 @@ export default {
   line-height: 18px;
 }
 .finance-card-money {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 22px;
   font-weight: 700;
   color: #303133;
+  line-height: 1.2;
 }
-.finance-card-actions {
-  margin-top: 10px;
+.finance-card-actions-side {
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-shrink: 0;
+  margin: 0;
+  min-width: 92px;
+}
+.finance-card-actions-side .el-button {
+  margin: 0;
 }
 .finance-section {
   background: #fff;
