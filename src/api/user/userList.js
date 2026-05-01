@@ -132,3 +132,23 @@ export function updateBalance(data) {
 	})
 }
 
+/** C 端用户财务：钱包余额 */
+export function getMiniAppUserFinanceWallet(userId) {
+	return request({
+		url: `/api/web/appUser/finance/wallet/${userId}`,
+		method: 'get'
+	})
+}
+
+/** C 端用户财务：资金流水分页 */
+export function getMiniAppUserFinanceFlowPage(data) {
+	return request({
+		url: '/api/web/appUser/finance/flow/page',
+		method: 'post',
+		headers: {
+			'Content-Type': 'application/json; charset=UTF-8'
+		},
+		data
+	})
+}
+
