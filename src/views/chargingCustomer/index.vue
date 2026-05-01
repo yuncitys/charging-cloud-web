@@ -54,19 +54,23 @@
       <div class="drawer-body">
         <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
           <el-form-item label="客户名称" prop="name">
-            <el-input v-model="form.name" :disabled="isDetail" />
+            <el-input v-model="form.name" :disabled="isDetail" placeholder="请输入客户名称" />
           </el-form-item>
           <el-form-item label="公司名称" prop="companyName">
-            <el-input v-model="form.companyName" :disabled="isDetail" />
+            <el-input v-model="form.companyName" :disabled="isDetail" placeholder="请输入公司名称" />
           </el-form-item>
           <el-form-item label="社会信用代码" prop="socialCreditCode">
-            <el-input v-model="form.socialCreditCode" :disabled="isDetail || drawerMode === 'edit'" />
+            <el-input
+              v-model="form.socialCreditCode"
+              :disabled="isDetail || drawerMode === 'edit'"
+              placeholder="请输入统一社会信用代码"
+            />
           </el-form-item>
           <el-form-item label="管理员" prop="manageName">
-            <el-input v-model="form.manageName" :disabled="isDetail" />
+            <el-input v-model="form.manageName" :disabled="isDetail" placeholder="请输入管理员姓名" />
           </el-form-item>
           <el-form-item label="联系方式" prop="contactInfo">
-            <el-input v-model="form.contactInfo" :disabled="isDetail" />
+            <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
           </el-form-item>
           <el-form-item label="机构类型" prop="orgType">
             <el-radio-group v-model="form.orgType" :disabled="isDetail">
