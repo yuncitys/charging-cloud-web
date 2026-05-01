@@ -67,6 +67,17 @@ export function getChargingCustomerFinanceFlowPage(data) {
   })
 }
 
+export function downloadChargingCustomerFinanceFlow(data) {
+  return request({
+    url: '/api/web/chargingCustomer/finance/flow/download',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8'
+    },
+    data
+  })
+}
+
 export function adjustChargingCustomerWallet(data) {
   return request({
     url: '/api/web/chargingCustomer/finance/wallet/adjust',

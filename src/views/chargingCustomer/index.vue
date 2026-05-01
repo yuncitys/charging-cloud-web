@@ -140,7 +140,7 @@
         <div class="finance-section">
           <div class="finance-section-title">
             <span>资金流水</span>
-            <el-button size="mini" type="primary" icon="el-icon-download" @click="exportFlow">导出</el-button>
+            <el-button size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
           </div>
 
           <div class="finance-filter">
@@ -296,17 +296,18 @@
         <el-button type="primary" :loading="allocationAdjustLoading" @click="submitAllocationAdjust">确定</el-button>
       </div>
     </el-drawer>
+    <downloadProgress ref="downloadProgress" />
   </div>
 </template>
 
 <script>
 import { parseTime } from '@/utils/index'
-import { export_json_to_excel } from '@/vendor/Export2Excel'
 import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
 import {
   addChargingCustomer,
   adjustChargingCustomerAllocation,
   adjustChargingCustomerWallet,
+  downloadChargingCustomerFinanceFlow,
   getChargingCustomerAllocationUsers,
   getChargingCustomerFinanceFlowPage,
   getChargingCustomerFinanceWallet,
@@ -314,11 +315,15 @@ import {
   getChargingCustomerPage,
   updateChargingCustomer
 } from '@/api/chargingCustomer/index'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
 import organizationImg from '@/assets/charging-customer/organization.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
 
 export default {
   name: 'ChargingCustomer',
+  components: {
+    downloadProgress
+  },
   data() {
     return {
       loading: false,
@@ -360,6 +365,7 @@ export default {
       financeCustomer: {},
       walletBalance: '0.00',
       flowLoading: false,
+      exportLoading: false,
       flowList: [],
       flowTotal: 0,
       flowQuery: {
@@ -715,19 +721,21 @@ export default {
       })
     },
     exportFlow() {
-      const header = ['流水号', '流水类型', '流水对象', '时间', '流水金额', '操作账号']
-      const data = (this.flowList || []).map(row => ([
-        row.flowNo || '',
-        row.flowType || '',
-        row.flowObject || '',
-        row.flowTime ? parseTime(row.flowTime) : '',
-        row.flowAmount != null ? String(row.flowAmount) : '',
-        row.operatorAccount || ''
-      ]))
-      export_json_to_excel({
-        header,
-        data,
-        filename: `资金流水_${this.financeCustomer && this.financeCustomer.name ? this.financeCustomer.name : ''}`
+      if (!this.financeCustomer || !this.financeCustomer.id) {
+        this.$message.error('客户信息缺失，无法导出')
+        return
+      }
+      this.exportLoading = true
+      const req = Object.assign({}, this.buildFlowReq(), { page: 1, limit: 5000 })
+      downloadChargingCustomerFinanceFlow(req).then(res => {
+        this.exportLoading = false
+        if (res.code === 200 && res.data && res.data.id) {
+          this.$refs.downloadProgress.open(res.data.id)
+        } else {
+          this.$message.error(res.msg || '导出失败')
+        }
+      }).catch(() => {
+        this.exportLoading = false
       })
     }
   }
