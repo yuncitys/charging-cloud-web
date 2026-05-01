@@ -395,10 +395,14 @@ export default {
       allocationUsers: [],
       allocationUserKeyword: '',
       flowTypeOptions: [
-        { label: '后台充值', value: '后台充值' },
-        { label: '后台扣款', value: '后台扣款' },
-        { label: '分配给用户', value: '分配给用户' },
-        { label: '分配扣回', value: '分配扣回' }
+        { label: '后台充值', value: '1' },
+        { label: '后台扣款', value: '2' },
+        { label: '上级分配', value: '3' },
+        { label: '上级扣回', value: '4' },
+        { label: '分配给用户', value: '5' },
+        { label: '从用户扣回', value: '6' },
+        { label: '分配给下级', value: '7' },
+        { label: '从下级扣回', value: '8' }
       ],
       organizationImg,
       walletImg
