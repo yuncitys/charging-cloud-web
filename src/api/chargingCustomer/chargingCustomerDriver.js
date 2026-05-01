@@ -30,6 +30,17 @@ export function getDriverFinanceFlowPage(data) {
   })
 }
 
+export function downloadDriverFinanceFlow(data) {
+  return request({
+    url: '/api/web/chargingCustomer/driver/finance/flow/download',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8'
+    },
+    data
+  })
+}
+
 // 保存客户司机（新增/修改）
 export function saveDriver(data) {
   return request({

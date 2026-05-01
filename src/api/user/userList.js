@@ -152,3 +152,15 @@ export function getMiniAppUserFinanceFlowPage(data) {
 	})
 }
 
+/** C 端用户财务：资金流水导出 */
+export function downloadMiniAppUserFinanceFlow(data) {
+	return request({
+		url: '/api/web/appUser/finance/flow/download',
+		method: 'post',
+		headers: {
+			'Content-Type': 'application/json; charset=UTF-8'
+		},
+		data
+	})
+}
+

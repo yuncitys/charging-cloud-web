@@ -136,6 +136,7 @@
 				<div class="finance-section">
 					<div class="finance-section-title">
 						<span>资金流水</span>
+						<el-button size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
 					</div>
 
 					<div class="finance-filter">
@@ -232,6 +233,7 @@
 				</el-form-item>
 			</el-form>
 		</el-dialog>
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -243,16 +245,21 @@
 		updateCash,
 		updateBalance,
 		getMiniAppUserFinanceWallet,
-		getMiniAppUserFinanceFlowPage
+		getMiniAppUserFinanceFlowPage,
+		downloadMiniAppUserFinanceFlow
 	} from '@/api/user/userList.js'
 	import {
 		parseTime
 	} from '@/utils/index'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	import userImg from '@/assets/charging-customer/user.png'
 	import walletImg from '@/assets/charging-customer/wallet.png'
 
 	export default {
 		name: 'wxuserList',
+		components: {
+			downloadProgress
+		},
 		data() {
 			return {
 				tableKey: 0,
@@ -302,6 +309,7 @@
 				realityPayDisplay: '0.00',
 				giveMoneyDisplay: '0.00',
 				flowLoading: false,
+				exportLoading: false,
 				flowList: [],
 				flowTotal: 0,
 				flowQuery: {
@@ -435,6 +443,24 @@
 			onFlowCurrentChange(val) {
 				this.flowQuery.page = val
 				this.loadMiniAppFlow()
+			},
+			exportFlow() {
+				if (!this.financeUser || !this.financeUser.id) {
+					this.$message.error('用户信息缺失，无法导出')
+					return
+				}
+				this.exportLoading = true
+				const req = Object.assign({}, this.buildMiniAppFlowReq(), { page: 1, limit: 5000 })
+				downloadMiniAppUserFinanceFlow(req).then(res => {
+					this.exportLoading = false
+					if (res.code === 200 && res.data && res.data.id) {
+						this.$refs.downloadProgress.open(res.data.id)
+					} else {
+						this.$message.error(res.msg || '导出失败')
+					}
+				}).catch(() => {
+					this.exportLoading = false
+				})
 			},
 			openRechargeDialog() {
 				this.rechargeForm = { money: '', remark: '' }

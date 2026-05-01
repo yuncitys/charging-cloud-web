@@ -232,6 +232,7 @@
         <div class="finance-section">
           <div class="finance-section-title">
             <span>资金流水</span>
+            <el-button size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
           </div>
 
           <div class="finance-filter">
@@ -288,6 +289,7 @@
         <el-button @click="financeDrawerVisible = false">关闭</el-button>
       </div>
     </el-drawer>
+    <downloadProgress ref="downloadProgress" />
   </div>
 </template>
 
@@ -297,6 +299,7 @@ import {
   getDriverPage, 
   getDriverFinanceWallet,
   getDriverFinanceFlowPage,
+  downloadDriverFinanceFlow,
   saveDriver, 
   deleteDriver,
   updateDriverStatus,
@@ -308,11 +311,15 @@ import {
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getCarListByOrgId } from '@/api/chargingCustomer/chargingCustomerCar'
 import { getAreaSelector } from '@/api/area/index'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
 import userImg from '@/assets/charging-customer/user.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
 
 export default {
   name: 'ChargingCustomerDriver',
+  components: {
+    downloadProgress
+  },
   data() {
     return {
       loading: false,
@@ -366,6 +373,7 @@ export default {
       financeDriver: {},
       walletBalance: '0.00',
       flowLoading: false,
+      exportLoading: false,
       flowList: [],
       flowTotal: 0,
       flowQuery: {
@@ -764,6 +772,24 @@ export default {
     onFlowCurrentChange(val) {
       this.flowQuery.page = val
       this.loadDriverFlow()
+    },
+    exportFlow() {
+      if (!this.financeDriver || !this.financeDriver.id) {
+        this.$message.error('司机信息缺失，无法导出')
+        return
+      }
+      this.exportLoading = true
+      const req = Object.assign({}, this.buildDriverFlowReq(), { page: 1, limit: 5000 })
+      downloadDriverFinanceFlow(req).then(res => {
+        this.exportLoading = false
+        if (res.code === 200 && res.data && res.data.id) {
+          this.$refs.downloadProgress.open(res.data.id)
+        } else {
+          this.$message.error(res.msg || '导出失败')
+        }
+      }).catch(() => {
+        this.exportLoading = false
+      })
     }
   }
 }
