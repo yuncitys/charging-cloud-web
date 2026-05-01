@@ -142,7 +142,7 @@
               <i class="el-icon-upload" />
               <div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
               <div slot="tip" class="el-upload__tip">
-                请先<el-link type="primary" :underline="false" @click="downloadTemplate">下载模板</el-link>，填写后上传 (文件限制 10MB)
+                请先<el-link type="primary" :underline="false" @click="downloadTemplate">下载模板</el-link>，填写后上传 (文件限制 5MB)
               </div>
             </el-upload>
           </el-form-item>
