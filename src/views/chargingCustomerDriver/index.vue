@@ -428,31 +428,43 @@ export default {
         this.provinceList = []
       })
     },
-    loadCities(provinceId) {
-      this.form.regionId = ''
-      this.form.countyId = ''
+    loadCities(provinceId, options = {}) {
+      const shouldReset = options.reset !== false
+      if (shouldReset) {
+        this.form.regionId = ''
+        this.form.countyId = ''
+      }
       this.cityList = []
       this.countyList = []
-      if (provinceId) {
-        getAreaSelector(provinceId).then(res => {
-          const data = res && res.data
-          this.cityList = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : [])
-        }).catch(() => {
-          this.cityList = []
-        })
+      if (!provinceId) {
+        return Promise.resolve([])
       }
+      return getAreaSelector(provinceId).then(res => {
+        const data = res && res.data
+        this.cityList = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : [])
+        return this.cityList
+      }).catch(() => {
+        this.cityList = []
+        return []
+      })
     },
-    loadCounties(cityId) {
-      this.form.countyId = ''
-      this.countyList = []
-      if (cityId) {
-        getAreaSelector(cityId).then(res => {
-          const data = res && res.data
-          this.countyList = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : [])
-        }).catch(() => {
-          this.countyList = []
-        })
+    loadCounties(cityId, options = {}) {
+      const shouldReset = options.reset !== false
+      if (shouldReset) {
+        this.form.countyId = ''
       }
+      this.countyList = []
+      if (!cityId) {
+        return Promise.resolve([])
+      }
+      return getAreaSelector(cityId).then(res => {
+        const data = res && res.data
+        this.countyList = Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : [])
+        return this.countyList
+      }).catch(() => {
+        this.countyList = []
+        return []
+      })
     },
     loadList() {
       this.loading = true
@@ -531,10 +543,14 @@ export default {
           carIds: (row.cars || []).map(c => c.id)
         }
         if (row.provinceId) {
-          this.loadCities(row.provinceId).then(() => {
+          this.loadCities(row.provinceId, { reset: false }).then(() => {
+            this.form.regionId = row.regionId || ''
             if (row.regionId) {
-              this.loadCounties(row.regionId)
+              return this.loadCounties(row.regionId, { reset: false })
             }
+            return Promise.resolve()
+          }).then(() => {
+            this.form.countyId = row.countyId || ''
           })
         }
         if (row.belongToId) {
