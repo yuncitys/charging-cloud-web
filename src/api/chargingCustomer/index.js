@@ -88,3 +88,10 @@ export function adjustChargingCustomerAllocation(data) {
     data
   })
 }
+
+export function getChargingCustomerAllocationUsers(organizationId) {
+  return request({
+    url: `/api/web/chargingCustomer/finance/allocation/users/${organizationId}`,
+    method: 'get'
+  })
+}

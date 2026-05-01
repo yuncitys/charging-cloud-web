@@ -225,21 +225,47 @@
     <el-drawer
       :title="allocationAdjustTitle"
       :visible.sync="allocationAdjustDrawerVisible"
-      size="420px"
+      size="640px"
       direction="rtl"
       :wrapper-closable="false"
       append-to-body
     >
       <div class="adjust-drawer-body">
-        <el-form ref="allocationAdjustRef" :model="allocationAdjustForm" label-width="90px">
-          <el-form-item label="操作">
-            <el-radio-group v-model="allocationAdjustForm.action">
-              <el-radio label="ALLOCATE">分配</el-radio>
-              <el-radio label="RETURN">扣回</el-radio>
+        <el-form ref="allocationAdjustRef" :model="allocationAdjustForm" label-width="110px">
+          <el-form-item label="客户名称">
+            <span>{{ financeCustomer.name || '-' }}</span>
+          </el-form-item>
+          <el-form-item label="可分配金额">
+            <div class="allocation-wallet">{{ walletBalance }} 元</div>
+          </el-form-item>
+          <el-form-item label="操作对象">
+            <el-radio-group v-model="allocationAdjustForm.operationObject">
+              <el-radio label="CHARGING_USER">充电用户</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="金额">
-            <el-input v-model="allocationAdjustForm.amount" placeholder="请输入金额" />
+          <el-form-item label="操作模式">
+            <el-radio-group v-model="allocationAdjustForm.operationMode">
+              <el-radio label="EQUAL">等额</el-radio>
+              <el-radio label="REPLENISH">补齐</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="设置金额">
+            <el-input v-model="allocationAdjustForm.amount" placeholder="请输入">
+              <template slot="append">元</template>
+            </el-input>
+          </el-form-item>
+          <el-form-item label="选择对象">
+            <div class="allocation-user-panel">
+              <div class="allocation-user-toolbar">
+                <el-checkbox :value="allocationAllChecked" @change="toggleSelectAllAllocationUsers">全选</el-checkbox>
+                <el-input v-model="allocationUserKeyword" placeholder="请输入关键字进行过滤" clearable class="allocation-user-search" />
+              </div>
+              <el-checkbox-group v-model="allocationAdjustForm.targetIds" class="allocation-user-list">
+                <el-checkbox v-for="item in filteredAllocationUsers" :key="item.id" :label="item.id" class="allocation-user-item">
+                  {{ item.userAccount }}
+                </el-checkbox>
+              </el-checkbox-group>
+            </div>
           </el-form-item>
           <el-form-item label="备注">
             <el-input v-model="allocationAdjustForm.remark" type="textarea" :rows="3" placeholder="可选" />
@@ -262,6 +288,7 @@ import {
   addChargingCustomer,
   adjustChargingCustomerAllocation,
   adjustChargingCustomerWallet,
+  getChargingCustomerAllocationUsers,
   getChargingCustomerFinanceFlowPage,
   getChargingCustomerFinanceWallet,
   getChargingCustomerDetail,
@@ -334,10 +361,14 @@ export default {
       allocationAdjustDrawerVisible: false,
       allocationAdjustLoading: false,
       allocationAdjustForm: {
-        action: 'ALLOCATE',
+        operationObject: 'CHARGING_USER',
+        operationMode: 'EQUAL',
         amount: '',
+        targetIds: [],
         remark: ''
       },
+      allocationUsers: [],
+      allocationUserKeyword: '',
       flowTypeOptions: [
         { label: '后台充值', value: '后台充值' },
         { label: '后台扣款', value: '后台扣款' },
@@ -362,6 +393,16 @@ export default {
     },
     allocationAdjustTitle() {
       return '分配扣回'
+    },
+    filteredAllocationUsers() {
+      const keyword = String(this.allocationUserKeyword || '').trim().toLowerCase()
+      if (!keyword) return this.allocationUsers
+      return this.allocationUsers.filter(item => String(item.userAccount || '').toLowerCase().indexOf(keyword) > -1)
+    },
+    allocationAllChecked() {
+      if (!this.filteredAllocationUsers.length) return false
+      const selectedSet = new Set(this.allocationAdjustForm.targetIds || [])
+      return this.filteredAllocationUsers.every(item => selectedSet.has(item.id))
     }
   },
   watch: {
@@ -586,20 +627,54 @@ export default {
       })
     },
     openAllocationAdjust() {
-      this.allocationAdjustForm = { action: 'ALLOCATE', amount: '', remark: '' }
+      this.allocationAdjustForm = { operationObject: 'CHARGING_USER', operationMode: 'EQUAL', amount: '', targetIds: [], remark: '' }
+      this.allocationUserKeyword = ''
+      this.allocationUsers = []
+      this.loadAllocationUsers()
       this.allocationAdjustDrawerVisible = true
     },
+    loadAllocationUsers() {
+      if (!this.financeCustomer || !this.financeCustomer.id) return
+      getChargingCustomerAllocationUsers(this.financeCustomer.id).then(res => {
+        if (res.code === 200) {
+          this.allocationUsers = res.data || []
+        } else {
+          this.$message.error(res.msg || '查询充电用户失败')
+        }
+      })
+    },
+    toggleSelectAllAllocationUsers(checked) {
+      const filteredIds = this.filteredAllocationUsers.map(item => item.id)
+      const selected = new Set(this.allocationAdjustForm.targetIds || [])
+      if (checked) {
+        filteredIds.forEach(id => selected.add(id))
+      } else {
+        filteredIds.forEach(id => selected.delete(id))
+      }
+      this.allocationAdjustForm.targetIds = Array.from(selected)
+    },
     submitAllocationAdjust() {
-      const amount = Number(this.allocationAdjustForm.amount)
-      if (!amount || amount <= 0) {
-        this.$message.error('请输入正确的金额')
+      const raw = this.allocationAdjustForm.amount
+      if (raw === '' || raw === null || raw === undefined) {
+        this.$message.error('请输入金额（正数分配，负数扣回）')
+        return
+      }
+      const amount = Number(raw)
+      if (!Number.isFinite(amount) || amount === 0) {
+        this.$message.error('请输入非0金额（正数分配，负数扣回）')
+        return
+      }
+      if (!this.allocationAdjustForm.targetIds || !this.allocationAdjustForm.targetIds.length) {
+        this.$message.error('请选择操作对象')
         return
       }
       this.allocationAdjustLoading = true
       adjustChargingCustomerAllocation({
         organizationId: this.financeCustomer.id,
-        action: this.allocationAdjustForm.action,
         amount,
+        operationObject: this.allocationAdjustForm.operationObject,
+        operationMode: this.allocationAdjustForm.operationMode,
+        targetIds: this.allocationAdjustForm.targetIds,
         remark: this.allocationAdjustForm.remark
       }).then(res => {
         this.allocationAdjustLoading = false
@@ -767,5 +842,38 @@ export default {
 }
 .money-out {
   color: #f56c6c;
+}
+.allocation-wallet {
+  height: 36px;
+  line-height: 36px;
+  padding: 0 12px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  background: #fff;
+  color: #303133;
+}
+.allocation-user-panel {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+}
+.allocation-user-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #ebeef5;
+}
+.allocation-user-search {
+  flex: 1;
+}
+.allocation-user-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+}
+.allocation-user-item {
+  margin-bottom: 8px;
 }
 </style>
