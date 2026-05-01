@@ -52,13 +52,14 @@
       <el-table-column prop="createTime" label="创建时间" align="center">
         <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="240" align="center">
+      <el-table-column label="操作" width="320" align="center">
         <template slot-scope="scope">
           <el-button
             size="mini"
             :type="scope.row.status === 0 ? 'warning' : 'success'"
             @click="handleStatusChange(scope.row)"
           >{{ scope.row.status === 0 ? '停用' : '启用' }}</el-button>
+          <el-button size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
           <el-button size="mini" type="primary" @click="openDrawer('edit', scope.row)">编辑</el-button>
           <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
@@ -197,6 +198,96 @@
           </div>
       </div>
     </el-drawer>
+
+    <el-drawer
+      title="财务"
+      :visible.sync="financeDrawerVisible"
+      size="86%"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="finance-drawer-body">
+        <div class="finance-cards">
+          <div class="finance-card finance-card-org">
+            <img :src="userImg" class="finance-card-icon" alt="" />
+            <div class="finance-card-content">
+              <div class="finance-card-title">{{ financeDriver.userName || financeDriver.userAccount || '-' }}</div>
+              <div class="finance-card-sub">用户账号：{{ financeDriver.userAccount || '-' }}</div>
+              <div class="finance-card-sub">手机号：{{ financeDriver.phoneNumber || '-' }}</div>
+              <div class="finance-card-sub">归属机构：{{ financeDriver.belongToName || '-' }}</div>
+            </div>
+          </div>
+          <div class="finance-card finance-card-wallet">
+            <div class="finance-card-wallet-body">
+              <img :src="walletImg" class="finance-card-icon" alt="" />
+              <div class="finance-card-content">
+                <div class="finance-card-sub">钱包余额（元）</div>
+                <div class="finance-card-money">¥ {{ walletBalance }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="finance-section">
+          <div class="finance-section-title">
+            <span>资金流水</span>
+          </div>
+
+          <div class="finance-filter">
+            <el-date-picker
+              v-model="flowQuery.dateRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              value-format="yyyy-MM-dd"
+              class="filter-item"
+              style="width: 260px;"
+              clearable
+            />
+            <el-input v-model="flowQuery.flowNo" class="filter-item" style="width: 190px;" placeholder="请输入流水号" clearable />
+            <el-select v-model="flowQuery.flowType" class="filter-item" style="width: 190px;" placeholder="请选择流水类型" clearable>
+              <el-option v-for="opt in flowTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
+            </el-select>
+            <el-input v-model="flowQuery.flowObject" class="filter-item" style="width: 190px;" placeholder="请输入流水对象" clearable />
+            <el-button class="filter-item" type="primary" icon="el-icon-search" @click="searchFlow">确认</el-button>
+            <el-button class="filter-item" plain @click="resetFlow">清空</el-button>
+          </div>
+
+          <el-table v-loading="flowLoading" :data="flowList" fit highlight-current-row>
+            <el-table-column prop="flowNo" label="流水号" min-width="180" align="center" />
+            <el-table-column prop="flowType" label="流水类型" min-width="120" align="center" />
+            <el-table-column prop="flowObject" label="流水对象" min-width="140" align="center" />
+            <el-table-column prop="flowTime" label="时间" min-width="160" align="center">
+              <template slot-scope="scope">{{ scope.row.flowTime | formatDate }}</template>
+            </el-table-column>
+            <el-table-column prop="flowAmount" label="流水金额" min-width="120" align="center">
+              <template slot-scope="scope">
+                <span :class="Number(scope.row.flowAmount) < 0 ? 'money-out' : 'money-in'">{{ scope.row.flowAmount }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="operatorAccount" label="操作账号" min-width="120" align="center" />
+          </el-table>
+
+          <div class="pagination-container">
+            <el-pagination
+              :current-page="flowQuery.page"
+              :page-size="flowQuery.limit"
+              :page-sizes="[10, 20, 30, 50]"
+              :total="flowTotal"
+              background
+              layout="total, sizes, prev, pager, next, jumper"
+              @size-change="onFlowSizeChange"
+              @current-change="onFlowCurrentChange"
+            />
+          </div>
+        </div>
+      </div>
+      <div class="finance-drawer-footer">
+        <el-button @click="financeDrawerVisible = false">关闭</el-button>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -204,6 +295,8 @@
 import { parseTime } from '@/utils/index'
 import { 
   getDriverPage, 
+  getDriverFinanceWallet,
+  getDriverFinanceFlowPage,
   saveDriver, 
   deleteDriver,
   updateDriverStatus,
@@ -215,6 +308,8 @@ import {
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getCarListByOrgId } from '@/api/chargingCustomer/chargingCustomerCar'
 import { getAreaSelector } from '@/api/area/index'
+import userImg from '@/assets/charging-customer/user.png'
+import walletImg from '@/assets/charging-customer/wallet.png'
 
 export default {
   name: 'ChargingCustomerDriver',
@@ -266,7 +361,35 @@ export default {
       importQuery: {
         page: 1,
         limit: 10
-      }
+      },
+      financeDrawerVisible: false,
+      financeDriver: {},
+      walletBalance: '0.00',
+      flowLoading: false,
+      flowList: [],
+      flowTotal: 0,
+      flowQuery: {
+        page: 1,
+        limit: 10,
+        dateRange: [],
+        flowNo: '',
+        flowType: '',
+        flowObject: ''
+      },
+      flowTypeOptions: [
+        { label: '微信充值', value: '1' },
+        { label: '支付宝充值', value: '2' },
+        { label: '退款', value: '3' },
+        { label: '充电消费', value: '5' },
+        { label: '占桩扣款', value: '6' },
+        { label: '占桩退款', value: '7' },
+        { label: '上级分配', value: '8' },
+        { label: '上级扣款', value: '9' },
+        { label: '后台充值', value: '10' },
+        { label: '后台扣款', value: '11' }
+      ],
+      userImg,
+      walletImg
     }
   },
   filters: {
@@ -553,6 +676,78 @@ export default {
         link.download = '客户司机导入模板.xlsx'
         link.click()
       })
+    },
+    openFinance(row) {
+      this.financeDriver = Object.assign({}, row || {})
+      this.financeDrawerVisible = true
+      this.flowQuery.page = 1
+      this.loadDriverWallet()
+      this.loadDriverFlow()
+    },
+    loadDriverWallet() {
+      if (!this.financeDriver || !this.financeDriver.id) return
+      getDriverFinanceWallet(this.financeDriver.id).then(res => {
+        if (res.code === 200) {
+          const v = res.data && res.data.walletBalance != null ? res.data.walletBalance : 0
+          this.walletBalance = Number(v).toFixed(2)
+        } else {
+          this.$message.error(res.msg || '查询钱包失败')
+        }
+      })
+    },
+    buildDriverFlowReq() {
+      const range = this.flowQuery.dateRange || []
+      const startTime = range && range.length === 2 ? `${range[0]} 00:00:00` : ''
+      const endTime = range && range.length === 2 ? `${range[1]} 23:59:59` : ''
+      return {
+        userId: this.financeDriver.id,
+        page: this.flowQuery.page,
+        limit: this.flowQuery.limit,
+        startTime,
+        endTime,
+        flowNo: this.flowQuery.flowNo,
+        flowType: this.flowQuery.flowType,
+        flowObject: this.flowQuery.flowObject
+      }
+    },
+    loadDriverFlow() {
+      if (!this.financeDriver || !this.financeDriver.id) return
+      this.flowLoading = true
+      getDriverFinanceFlowPage(this.buildDriverFlowReq()).then(res => {
+        this.flowLoading = false
+        if (res.code === 200) {
+          this.flowList = res.data || []
+          this.flowTotal = res.count || 0
+        } else {
+          this.$message.error(res.msg || '查询资金流水失败')
+        }
+      }).catch(() => {
+        this.flowLoading = false
+      })
+    },
+    searchFlow() {
+      this.flowQuery.page = 1
+      this.loadDriverFlow()
+    },
+    resetFlow() {
+      this.flowQuery = Object.assign({}, this.flowQuery, {
+        page: 1,
+        limit: 10,
+        dateRange: [],
+        flowNo: '',
+        flowType: '',
+        flowObject: ''
+      })
+      this.loadDriverFlow()
+    },
+    onFlowSizeChange(val) {
+      this.flowQuery.limit = val
+      this.flowQuery.page = 1
+      this.loadDriverFlow()
+    },
+    onFlowCurrentChange(val) {
+      this.flowQuery.page = val
+      this.loadDriverFlow()
     }
   }
 }
@@ -591,5 +786,111 @@ export default {
   text-align: right;
   border-top: 1px solid #ebeef5;
   background: #fff;
+}
+
+.finance-drawer-body {
+  padding: 16px 20px 76px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.finance-drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+}
+.finance-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+.finance-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #ebeef5;
+  min-height: 100px;
+  box-sizing: border-box;
+}
+@media (max-width: 768px) {
+  .finance-cards {
+    grid-template-columns: 1fr;
+  }
+}
+.finance-card-wallet {
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.finance-card-wallet-body {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+.finance-card-icon {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+.finance-card-content {
+  flex: 1;
+  min-width: 0;
+}
+.finance-card-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 8px;
+}
+.finance-card-sub {
+  font-size: 13px;
+  color: #606266;
+  line-height: 18px;
+}
+.finance-card-money {
+  margin-top: 4px;
+  font-size: 22px;
+  font-weight: 700;
+  color: #303133;
+  line-height: 1.2;
+}
+.finance-section {
+  background: #fff;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
+  padding: 14px 14px 6px;
+}
+.finance-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px 10px;
+  font-weight: 600;
+  color: #303133;
+}
+.finance-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 0 4px;
+}
+.money-in {
+  color: #67c23a;
+}
+.money-out {
+  color: #f56c6c;
 }
 </style>

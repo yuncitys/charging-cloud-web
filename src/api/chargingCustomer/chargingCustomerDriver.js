@@ -12,6 +12,24 @@ export function getDriverPage(data) {
   })
 }
 
+export function getDriverFinanceWallet(userId) {
+  return request({
+    url: `/api/web/chargingCustomer/driver/finance/wallet/${userId}`,
+    method: 'get'
+  })
+}
+
+export function getDriverFinanceFlowPage(data) {
+  return request({
+    url: '/api/web/chargingCustomer/driver/finance/flow/page',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8'
+    },
+    data
+  })
+}
+
 // 保存客户司机（新增/修改）
 export function saveDriver(data) {
   return request({
