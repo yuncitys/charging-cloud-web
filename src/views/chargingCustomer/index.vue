@@ -238,19 +238,32 @@
           <el-form-item label="可分配金额">
             <div class="allocation-wallet">{{ walletBalance }} 元</div>
           </el-form-item>
-          <el-form-item label="操作对象">
-            <el-radio-group v-model="allocationAdjustForm.operationObject">
-              <el-radio label="CHARGING_USER">充电用户</el-radio>
-            </el-radio-group>
-          </el-form-item>
           <el-form-item label="操作模式">
-            <el-radio-group v-model="allocationAdjustForm.operationMode">
-              <el-radio label="EQUAL">等额</el-radio>
-              <el-radio label="REPLENISH">补齐</el-radio>
-            </el-radio-group>
+            <div class="allocation-mode-wrap">
+              <el-radio-group v-model="allocationAdjustForm.operationMode">
+                <el-radio label="EQUAL">等额</el-radio>
+                <el-radio label="REPLENISH">补齐</el-radio>
+              </el-radio-group>
+              <div v-if="allocationAdjustForm.operationMode === 'EQUAL'" class="allocation-mode-tip">
+                <p class="allocation-mode-tip-title">等额：每位选中用户变动相同金额</p>
+                <ul class="allocation-mode-tip-list">
+                  <li><strong>正数</strong>为分配：每人增加相同金额，请确认上方「可分配金额」充足。</li>
+                  <li><strong>负数</strong>为扣回：每人按相同额度扣回；若某人余额不足，将<strong>扣尽其有效余额</strong>，其余人仍按规则扣款，不会因单人不足而整单失败。</li>
+                </ul>
+              </div>
+              <div v-else class="allocation-mode-tip">
+                <p class="allocation-mode-tip-title">补齐：按「目标余额」拉齐每人账户</p>
+                <ul class="allocation-mode-tip-list">
+                  <li>金额的<strong>绝对值</strong>表示目标余额；<strong>正负号</strong>表示方向（正数分配、负数扣回）。</li>
+                  <li><strong>正数</strong>：余额低于目标的用户会加到目标，已达或超过的不变。</li>
+                  <li><strong>负数</strong>：余额高于目标的会扣到目标，已在目标及以下不变。</li>
+                  <li>与等额不同，此处不是「每人固定加减同一数额」，而是统一到同一条余额线。</li>
+                </ul>
+              </div>
+            </div>
           </el-form-item>
           <el-form-item label="设置金额">
-            <el-input v-model="allocationAdjustForm.amount" placeholder="请输入">
+            <el-input v-model="allocationAdjustForm.amount" :placeholder="allocationAmountPlaceholder">
               <template slot="append">元</template>
             </el-input>
           </el-form-item>
@@ -393,6 +406,11 @@ export default {
     },
     allocationAdjustTitle() {
       return '分配扣回'
+    },
+    allocationAmountPlaceholder() {
+      return this.allocationAdjustForm.operationMode === 'EQUAL'
+        ? '正数：每人增加；负数：每人扣回（不足则扣至0）'
+        : '绝对值为目标余额；正数分配补齐，负数扣回补齐'
     },
     filteredAllocationUsers() {
       const keyword = String(this.allocationUserKeyword || '').trim().toLowerCase()
@@ -852,6 +870,34 @@ export default {
   background: #fff;
   color: #303133;
 }
+.allocation-mode-wrap {
+  width: 100%;
+}
+.allocation-mode-tip {
+  margin-top: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #606266;
+  background: #f5f7fa;
+  border-radius: 4px;
+  border-left: 3px solid #409eff;
+}
+.allocation-mode-tip-title {
+  margin: 0 0 6px;
+  font-weight: 600;
+  color: #303133;
+}
+.allocation-mode-tip-list {
+  margin: 0;
+  padding-left: 18px;
+}
+.allocation-mode-tip-list li {
+  margin-bottom: 4px;
+}
+.allocation-mode-tip-list li:last-child {
+  margin-bottom: 0;
+}
 .allocation-user-panel {
   border: 1px solid #ebeef5;
   border-radius: 4px;
@@ -869,11 +915,19 @@ export default {
 .allocation-user-list {
   max-height: 220px;
   overflow-y: auto;
-  padding: 10px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 .allocation-user-item {
-  margin-bottom: 8px;
+  margin: 0 0 2px;
+  margin-right: 0 !important;
+  height: auto;
+  line-height: 1.35;
+}
+.allocation-user-item ::v-deep .el-checkbox__label {
+  line-height: 1.35;
+  padding-left: 6px;
 }
 </style>
