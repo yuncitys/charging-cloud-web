@@ -311,6 +311,7 @@ import {
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getCarListByOrgId } from '@/api/chargingCustomer/chargingCustomerCar'
 import { getAreaSelector } from '@/api/area/index'
+import dictData from '@/utils/dictData'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import userImg from '@/assets/charging-customer/user.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
@@ -384,18 +385,7 @@ export default {
         flowType: '',
         flowObject: ''
       },
-      flowTypeOptions: [
-        { label: '微信充值', value: '1' },
-        { label: '支付宝充值', value: '2' },
-        { label: '退款', value: '3' },
-        { label: '充电消费', value: '5' },
-        { label: '占桩扣款', value: '6' },
-        { label: '占桩退款', value: '7' },
-        { label: '上级分配', value: '8' },
-        { label: '上级扣款', value: '9' },
-        { label: '后台充值', value: '10' },
-        { label: '后台扣款', value: '11' }
-      ],
+      flowTypeOptions: dictData.getFinanceUserFlowTypeOptions(),
       userImg,
       walletImg
     }

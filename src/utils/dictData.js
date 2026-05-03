@@ -9,7 +9,7 @@ class dictData {
 				return '进行中'
 			case 2:
 				return '已完成'
-			case 2:
+			case 3:
 				return '待结算'
 		}
 	}
@@ -1894,6 +1894,25 @@ class dictData {
 				"bank_name": "浙江省农村信用社联合社",
 				"bank_code": "402331000007"
 			}
+		]
+	}
+
+	/**
+	 * 用户资金流水 flow_type（t_finance_user_flow，与后端 FinanceUserFlowType 一致）
+	 */
+	getFinanceUserFlowTypeOptions() {
+		return [
+			{ label: '即充即用', value: '1' },
+			{ label: '钱包充值', value: '2' },
+			{ label: '即充退款', value: '3' },
+			{ label: '钱包退款', value: '4' },
+			{ label: '充电消费', value: '5' },
+			{ label: '占位订单扣款', value: '6' },
+			{ label: '占位订单退款', value: '7' },
+			{ label: '上级分配', value: '8' },
+			{ label: '上级扣回', value: '9' },
+			{ label: '后台充值', value: '10' },
+			{ label: '后台扣款', value: '11' }
 		]
 	}
 }
