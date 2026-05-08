@@ -32,6 +32,12 @@
 				default () {
 					return {}
 				}
+			},
+			exportKeys: {
+				type: Array,
+				default () {
+					return []
+				}
 			}
 		},
 		data() {
@@ -61,7 +67,8 @@
 					createTimeEnd: this.queryData.createTimeEnd,
 					networkProvince: this.queryData.networkProvince,
 					networkName: this.queryData.networkName,
-					ruleId: this.queryData.ruleId
+					ruleId: this.queryData.ruleId,
+					exportKeys: this.exportKeys.join(',')
 				}
 				downloadExcel(downloadData).then(res => {
 					if (res.code == 200) {

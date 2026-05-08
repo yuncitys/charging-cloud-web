@@ -40,7 +40,7 @@
       </el-button>
 
       <!-- 导出Excel -->
-      <downExcel :queryData="listQuery" />
+      <downExcel :queryData="listQuery" :exportKeys="exportKeys" />
 
       <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
         <el-tab-pane v-for="(item, index) in ruleIdList" :key="item.id" :label="item.title" :name="item.id">
@@ -340,6 +340,9 @@
     computed: {
       ruleIdList() {
         return getRuleIdTabs()
+      },
+      exportKeys() {
+        return Object.keys(this.formThead).filter((k) => this.formThead[k] === true)
       }
     },
     filters: {

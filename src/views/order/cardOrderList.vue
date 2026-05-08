@@ -97,7 +97,7 @@
         查询
       </el-button>
 
-      <downExcel :query-data="listQuery" />
+      <downExcel :query-data="listQuery" :export-keys="exportKeys" />
 
       <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
         <el-tab-pane v-for="item in ruleIdList" :key="item.id" :label="item.title" :name="item.id" />
@@ -424,6 +424,9 @@ export default {
   computed: {
     ruleIdList() {
       return getRuleIdTabs()
+    },
+    exportKeys() {
+      return Object.keys(this.formThead).filter((k) => this.formThead[k] === true)
     }
   },
   watch: {
