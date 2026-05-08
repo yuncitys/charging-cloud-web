@@ -516,10 +516,10 @@ export default {
     payTypeText(payType) {
       if (!payType) return '-'
       const text = String(payType).toUpperCase()
-      if (text === 'BALANCE_PAY' || text === 'BALANCE') return '个人支付-余额支付'
-      if (text === 'WECHAT_PAY' || text === 'WECHAT') return '个人支付-微信支付'
-      if (text === 'ALI_PAY' || text === 'ALIPAY') return '个人支付-支付宝支付'
-      if (text === 'WECHAT_SCORE_PAY') return '个人支付-微信支付分'
+      if (text === 'BALANCE_PAY' || text === 'BALANCE') return '个人钱包'
+      if (text === 'WECHAT_PAY' || text === 'WECHAT') return '微信支付'
+      if (text === 'ALI_PAY' || text === 'ALIPAY') return '支付宝支付'
+      if (text === 'WECHAT_SCORE_PAY') return '微信支付分'
       if (text === 'COMPANY_BALANC' || text === 'COMPANY_BALANCE' || text === 'COMPANY_BALANCE_PAY') return '企业钱包'
       if (text === 'SWIPE_CARD') return '刷卡支付'
       if (text === 'MONTH_CARD') return '月卡支付'
