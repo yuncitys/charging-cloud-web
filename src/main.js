@@ -17,6 +17,7 @@ import i18n from './lang' // internationalization
 import './icons' // icon
 import './permission' // permission control
 import './utils/error-log' // error log
+import './directives' // global directives
 
 import VueQuillEditor from 'vue-quill-editor'
 Vue.use(VueQuillEditor);
