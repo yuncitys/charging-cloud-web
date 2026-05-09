@@ -40,7 +40,7 @@
       </el-button>
 
       <!-- 导出Excel -->
-      <downExcel :queryData="listQuery" />
+      <downExcel :queryData="listQuery" :exportKeys="exportKeys" />
 
       <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
         <el-tab-pane v-for="(item, index) in ruleIdList" :key="item.id" :label="item.title" :name="item.id">
@@ -49,270 +49,153 @@
 
       <div class="filter-container" style="margin: 15px 0;">
         <el-row>
-          <el-col :span="1"> <span style="color:#08d374;font-weight:600;font-size:15px">用户：</span> </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.userName" label="用户昵称">用户昵称</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.userCode" label="用户ID">用户ID</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.phoneNumber" label="手机号">手机号</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.headImg" label="微信头像">微信头像</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.actualPrice" label="消费金额">消费金额</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.startCash" label="开始前余额">开始前余额</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.endCash" label="扣费后余额">扣费后余额</el-checkbox>
-          </el-col>
+          <el-col :span="1"><span style="color:#08d374;font-weight:600;font-size:15px">订单：</span></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.orderType" label="订单类型">订单类型</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.orderCode" label="业务单号">业务单号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.payCode" label="支付单号">支付单号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.channel" label="渠道">渠道</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.createTime" label="订单创建">订单创建</el-checkbox></el-col>
         </el-row>
         <el-row>
-          <el-col :span="1">
-            <span style="color:#08d374;font-weight:600;font-size:15px">设备：</span>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.deviceCode" label="设备号">设备号</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.devicePort" label="端口号">端口号</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.networkName" label="站点名称">站点名称</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.networkAddress" label="设备地址">设备地址</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.hours" label="工作时长/电量">工作时长/电量</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.totalPower" label="总用电量">总用电量</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.stopReason" label="停止原因">停止原因</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.avgPower" label="平均功率">平均功率</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.maxPower" label="最大功率">最大功率</el-checkbox>
-          </el-col>
+          <el-col :span="1"><span style="color:#08d374;font-weight:600;font-size:15px">电站：</span></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.networkName" label="电站名称">电站名称</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.deviceCode" label="桩编号">桩编号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.devicePort" label="端口/枪号">端口/枪号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.electricOut" label="设备类型">设备类型</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.networkAddress" label="设备地址">设备地址</el-checkbox></el-col>
         </el-row>
         <el-row>
-          <el-col :span="1">
-            <span style="color:#08d374;font-weight:600;font-size:15px">订单：</span>
-          </el-col>
-          <el-col :span="2">
-          <el-checkbox v-model="formThead.createTime" label="订单创建">订单创建</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.orderCode" label="订单号">订单号</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.payCode" label="支付单号">支付单号</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.orderStatus" label="订单状态">订单状态</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.payStatus" label="支付状态">支付状态</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.electricityPrice" label="电费">电费</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.totalPrice" label="订单总价">订单总价</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.userdTime" label="实际时长">实际时长</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.startTime" label="开始时间">开始时间</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.hasTime" label="剩余时间">剩余时间</el-checkbox>
-          </el-col>
-          <el-col :span="2">
-            <el-checkbox v-model="formThead.endTime" label="结束时间">结束时间</el-checkbox>
-          </el-col>
+          <el-col :span="1"><span style="color:#08d374;font-weight:600;font-size:15px">用户：</span></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.userCode" label="用户编号">用户编号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.userName" label="用户帐号">用户帐号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.companyName" label="企业名称">企业名称</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.plateNumber" label="车牌号">车牌号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.phoneNumber" label="手机号">手机号</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.vinCode" label="VIN码">VIN码</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.startType" label="启动方式">启动方式</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.startCash" label="开始前余额">开始前余额</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.endCash" label="扣费后余额">扣费后余额</el-checkbox></el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="1"><span style="color:#08d374;font-weight:600;font-size:15px">充电：</span></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.orderStatus" label="充电状态">充电状态</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.startTime" label="充电开始时间">充电开始时间</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.endTime" label="充电结束时间">充电结束时间</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.actualDuration" label="实际充电时长">实际充电时长</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.hours" label="工作时长/电量">工作时长/电量</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.stopReason" label="停止原因">停止原因</el-checkbox></el-col>
+        </el-row>
+        <el-row>
+          <el-col :span="1"><span style="color:#08d374;font-weight:600;font-size:15px">付款：</span></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.totalPower" label="订单电量">订单电量</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.totalPrice" label="订单原价金额">订单原价金额</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.electricityPrice" label="基础电费">基础电费</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.servicePrice" label="服务费">服务费</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.actualPrice" label="订单支付金额">订单支付金额</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.realityPayMoney" label="订单实付金额">订单实付金额</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.payStatus" label="支付状态">支付状态</el-checkbox></el-col>
+          <el-col :span="2"><el-checkbox v-model="formThead.payType" label="支付方式">支付方式</el-checkbox></el-col>
         </el-row>
       </div>
 
       <el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" fit
-        highlight-current-row style="width: 100%;" align="center" id="tableBox">
-        <!-- <el-table-column type="index" width="55" label="序号" align="center">
-          <template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
-        </el-table-column> -->
-        <el-table-column prop="orderCode" label="订单号"  v-if="formThead.orderCode" align="center"
-          :show-overflow-tooltip='isPc' width="150px" fixed="left">
-        </el-table-column>
-        <el-table-column prop="payCode" label="支付单号"  v-if="formThead.payCode" align="center"
-          :show-overflow-tooltip='isPc' width="150px">
-        </el-table-column>
-        <el-table-column prop="userCode" label="用户ID" v-if="formThead.userCode" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="startCash" label="开始前余额" v-if="formThead.startCash" width="100px" align="center" 
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="endCash" label="扣费后余额" v-if="formThead.endCash" width="100px" align="center" 
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="phoneNumber" label="手机号" v-if="formThead.phoneNumber" align="center"
-          :show-overflow-tooltip="isPc" fixed="left">
-        </el-table-column>
-        <el-table-column prop="deviceCode" label="设备号" v-if="formThead.deviceCode" align="center"
-          :show-overflow-tooltip='isPc' fixed="left">
-        </el-table-column>
-        <el-table-column prop="devicePort" label="端口号" v-if="formThead.devicePort" align="center"
-          :show-overflow-tooltip="isPc" fixed="left">
-        </el-table-column>
-        <el-table-column prop="userName" label="昵称" v-if="formThead.userName" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="headImg" label="微信头像" v-if="formThead.headImg" align="center"
-          :show-overflow-tooltip="isPc">
-          <template slot-scope="scope" style="text-align: center;">
-            <imgView :imgSrc="scope.row.headImg" />
+        :max-height="tableMaxHeight"
+        style="width: 100%;" id="tableBox" class="order-layout-table">
+        <el-table-column label="订单信息" min-width="260">
+          <template slot-scope="scope">
+            <div class="order-layout-col order-layout-col--order">
+              <div class="order-layout-item" v-if="formThead.orderType"><span>类型：</span><span class="order-layout-value" v-overflow-title>{{ orderTypeText(scope.row.orderType) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.orderCode"><span>业务单号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.orderCode) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.payCode"><span>支付单号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.payCode) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.channel"><span>渠道：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userLabel) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.createTime"><span>订单创建：</span><span class="order-layout-value" v-overflow-title>{{ scope.row.createTime | formatDate }}</span></div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="avgPower" label="平均功率" v-if="formThead.avgPower" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="maxPower" label="最大功率" v-if="formThead.maxPower" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="totalPower" label="总用电量" v-if="formThead.totalPower" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="electricityPrice" label="电费" v-if="formThead.electricityPrice" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="servicePrice" label="服务费" v-if="formThead.servicePrice" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="totalPrice" label="订单总价" v-if="formThead.totalPrice" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="actualPrice" label="消费金额" v-if="formThead.actualPrice" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="orderType" label="充电类型" v-if="formThead.orderType" align="center"
-          :show-overflow-tooltip="isPc">
+
+        <el-table-column label="电站信息" min-width="230">
           <template slot-scope="scope">
-            <el-tag type="success" v-if="scope.row.orderType == 0">刷卡充电</el-tag>
-            <el-tag type="success" v-if="scope.row.orderType == 1">扫码充电</el-tag>
-            <el-tag type="success" v-if="scope.row.orderType == 2">免费充电</el-tag>
-            <el-tag type="success" v-if="scope.row.orderType == 3">包月充电</el-tag>
+            <div class="order-layout-col order-layout-col--station">
+              <div class="order-layout-item" v-if="formThead.networkName"><span>电站名称：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.networkName) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.deviceCode"><span>桩编号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.deviceCode) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.devicePort"><span>端口/枪号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.devicePort) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.electricOut"><span>设备类型：</span><span class="order-layout-value" v-overflow-title>{{ electricOutText(scope.row.electricOut) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.networkAddress"><span>设备地址：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.networkAddress) }}</span></div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="priceType" label="计费类型" v-if="formThead.priceType" align="center"
-          :show-overflow-tooltip="isPc">
+
+        <el-table-column label="用户信息" min-width="260">
           <template slot-scope="scope">
-            <el-tag type="danger" v-if="scope.row.priceType == 0">计时</el-tag>
-            <el-tag type="danger" v-if="scope.row.priceType == 1">电量</el-tag>
-            <el-tag type="danger" v-if="scope.row.priceType == 2">功率</el-tag>
+            <div class="order-layout-col order-layout-col--user">
+              <div class="order-layout-item" v-if="formThead.userCode"><span>用户编号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userCode) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.userName"><span>用户帐号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userAccount) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.companyName"><span>企业名称：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.companyName) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.plateNumber"><span>车牌号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.plateNumber) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.phoneNumber"><span>手机号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.phoneNumber) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.vinCode"><span>VIN码：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.vinCode) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.startType"><span>启动方式：</span><span class="order-layout-value" v-overflow-title>{{ startTypeText(scope.row.startType) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.startCash"><span>开始前余额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userStartCash) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.endCash"><span>扣费后余额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userEndCash) }}</span></div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="payStatus" label="支付状态" v-if="formThead.payStatus" align="center"
-          :show-overflow-tooltip="isPc">
+
+        <el-table-column label="充电信息" min-width="260">
           <template slot-scope="scope">
-            <el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
-            <el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
-            <el-tag type="warning" v-if="scope.row.payStatus == 2">已退款</el-tag>
-            <el-tag type="warning" v-if="scope.row.payStatus == 3">部分退款</el-tag>
+            <div class="order-layout-col order-layout-col--charge">
+              <div class="order-layout-item" v-if="formThead.orderStatus"><span>充电状态：</span><span class="order-layout-value" v-overflow-title>{{ orderStatusText(scope.row.orderStatus) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.startTime"><span>充电开始时间：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.startTimeAll) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.endTime"><span>充电结束时间：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.endTimeAll) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.actualDuration"><span>实际充电时长：</span><span class="order-layout-value" v-overflow-title>{{ durationWithMinute(scope.row.actualDuration) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.hours"><span>工作时长/电量：</span><span class="order-layout-value" v-overflow-title>{{ hoursWithUnit(scope.row.hours, scope.row.chargeMod) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.priceType"><span>计费类型：</span><span class="order-layout-value" v-overflow-title>{{ priceTypeText(scope.row.priceType) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.stopReason"><span>停止原因：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.stopReason) }}</span></div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="orderStatus" label="订单状态" v-if="formThead.orderStatus" align="center" min-width="120"
-          :show-overflow-tooltip="isPc">
+
+        <el-table-column label="付款详情" min-width="280">
           <template slot-scope="scope">
-            <el-tag type="danger" v-if="scope.row.orderStatus == 0">故障</el-tag>
-            <el-tag type="warning" v-if="scope.row.orderStatus == 1">进行中</el-tag>
-            <el-tag type="success" v-if="scope.row.orderStatus == 2">已完成</el-tag>
-            <el-tag type="warning" v-if="scope.row.orderStatus == 3">待结算</el-tag>
+            <div class="order-layout-col order-layout-col--pay">
+              <div class="order-layout-item" v-if="formThead.totalPower"><span>订单电量：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.totalPower) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.totalPrice"><span>订单原价金额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.totalPrice) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.electricityPrice"><span>基础电费：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.electricityPrice) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.servicePrice"><span>服务费：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.servicePrice) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.actualPrice"><span>订单支付金额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.actualPrice) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.realityPayMoney"><span>订单实付金额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.realityPayMoney) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.payStatus"><span>支付状态：</span><span class="order-layout-value" v-overflow-title>{{ payStatusText(scope.row.payStatus) }}</span></div>
+              <div class="order-layout-item" v-if="formThead.payType"><span>支付方式：</span><span class="order-layout-value" v-overflow-title>{{ payTypeText(scope.row.payType) }}</span></div>
+            </div>
           </template>
         </el-table-column>
-        <el-table-column prop="stopReason" label="停止原因" v-if="formThead.stopReason" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="networkName" label="所属站点" v-if="formThead.networkName" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="networkAddress" label="设备地址" v-if="formThead.networkAddress" align="center"
-          :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column prop="hours" label="工作时长/电量" v-if="formThead.hours" align="center"
-          :show-overflow-tooltip="isPc">
+
+        <el-table-column label="操作" width="190" fixed="right" align="center">
           <template slot-scope="scope">
-            <span v-if="scope.row.chargeMod == 0">{{ scope.row.hours}}分钟</span>
-            <span v-if="scope.row.chargeMod == 1">{{ scope.row.hours}}KW/h</span>
-            <span v-if="scope.row.chargeMod == 2">{{ scope.row.hours}}元</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="userdTime" label="实际时长" v-if="formThead.userdTime" align="center"
-          :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-            <span v-if="scope.row.orderStatus != 0">{{ scope.row.userdTime}}</span>
-            <span v-if="scope.row.orderStatus == 0">0分钟</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="hasTime" label="剩余时间" v-if="formThead.hasTime" align="center"
-          :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-            <span v-if="scope.row.orderStatus != 0">{{ scope.row.hasTime}}</span>
-            <span v-if="scope.row.orderStatus == 0">{{ scope.row.hour}}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="startTimeAll" label="开始时间" v-if="formThead.startTime" align="center"
-          :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-            <span>{{ scope.row.startTimeAll}}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="endTimeAll" label="结束时间" v-if="formThead.endTime" align="center"
-          :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-            <span>{{ scope.row.endTimeAll}}</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="订单创建" v-if="formThead.createTime" align="center"
-          :show-overflow-tooltip="isPc">
-          <template slot-scope="scope">
-            <span>{{ scope.row.createTime | formatDate }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" align="center" width="200" fixed="right">
-          <template slot-scope="scope">
-            <el-button
-              size="mini"
-              type="primary"
-              icon="el-icon-view"
-              @click="goOrderDetail(scope.row)"
-              v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
-            >详情</el-button>
-            <el-dropdown size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
-              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-left: 8px;">更多</el-button>
-              <el-dropdown-menu slot="dropdown">
-                <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
-                  v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1">结束订单</el-dropdown-item>
-                <el-dropdown-item command="handleAbnormalOrderSettlement" icon="el-icon-warning-outline"
-                  v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement') && scope.row.orderStatus == 1">异常结算</el-dropdown-item>
-                <el-dropdown-item command="handleOrderRefund" icon="el-icon-money"
-                  v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">订单退款</el-dropdown-item>
-                <el-dropdown-item command="handleOrderSplitRecord" icon="el-icon-s-operation">分账明细</el-dropdown-item>
-                <el-dropdown-item command="handleDeleteOrder" icon="el-icon-delete" divided
-                  v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">删除</el-dropdown-item>
-              </el-dropdown-menu>
-            </el-dropdown>
+            <div class="order-layout-actions">
+              <el-button
+                size="mini"
+                type="primary"
+                icon="el-icon-view"
+                @click="goOrderDetail(scope.row)"
+                v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
+              >详情</el-button>
+              <el-dropdown size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
+                <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-top: 8px;">更多</el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1">结束订单</el-dropdown-item>
+                  <el-dropdown-item command="handleAbnormalOrderSettlement" icon="el-icon-warning-outline"
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement') && scope.row.orderStatus == 1">异常结算</el-dropdown-item>
+                  <el-dropdown-item command="handleOrderRefund" icon="el-icon-money"
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">订单退款</el-dropdown-item>
+                  <el-dropdown-item command="handleOrderSplitRecord" icon="el-icon-s-operation">分账明细</el-dropdown-item>
+                  <el-dropdown-item command="handleDeleteOrder" icon="el-icon-delete" divided
+                    v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -361,6 +244,7 @@
         list: [],
         total: 10,
         tableKey: 0,
+        tableMaxHeight: 620,
         chargingStationList: [],
         listQuery: {
           page: 1,
@@ -385,7 +269,6 @@
           payCode: true,
           deviceCode: true,
           userName: false,
-          headImg: false,
           totalPrice: false,
           orderType: false,
           devicePort: true,
@@ -393,24 +276,27 @@
           servicePrice: true,
           networkName: true,
           networkAddress: false,
+          electricOut: true,
           payStatus: true,
           orderStatus: true,
           stopReason: true,
           hours: true,
-          userdTime: true,
-          hasTime: false,
+          priceType: true,
+          actualDuration: true,
           startTime: true,
           endTime: true,
           createTime: false,
           actualPrice: true,
           realityPayMoney: true,
-          avgPower: false,
-          maxPower: false,
           totalPower: true,
-          power: true,
           userCode: true,
           phoneNumber: true,
-          priceType: false,
+          companyName: true,
+          plateNumber: true,
+          vinCode: true,
+          startType: true,
+          payType: true,
+          channel: true,
           startCash: true,
           endCash: true
         },
@@ -454,6 +340,9 @@
     computed: {
       ruleIdList() {
         return getRuleIdTabs()
+      },
+      exportKeys() {
+        return Object.keys(this.formThead).filter((k) => this.formThead[k] === true)
       }
     },
     filters: {
@@ -477,6 +366,79 @@
       this.getChargingStationList(this.activeName)
     },
     methods: {
+      disp(v) {
+        if (v === null || v === undefined || v === '') {
+          return '-'
+        }
+        return v
+      },
+      orderTypeText(type) {
+        if (type === 0) return '刷卡'
+        if (type === 1) return '扫码'
+        if (type === 2) return '免费'
+        if (type === 3) return '包月'
+        return this.disp(type)
+      },
+      electricOutText(type) {
+        if (type === 0) return '交流'
+        if (type === 1) return '直流'
+        return this.disp(type)
+      },
+      hoursWithUnit(hours, chargeMod) {
+        const value = this.disp(hours)
+        if (value === '-') return value
+        if (chargeMod === 0 || String(chargeMod) === '0') return `${value} 分钟`
+        if (chargeMod === 1 || String(chargeMod) === '1') return `${value} kw/h`
+        if (chargeMod === 2 || String(chargeMod) === '2') return `${value} 元`
+        return value
+      },
+      durationWithMinute(duration) {
+        const value = this.disp(duration)
+        if (value === '-') return value
+        return `${value} 分钟`
+      },
+      startTypeText(startType) {
+        const value = String(startType || '')
+        if (value === '1') return '扫码启动'
+        if (value === '2') return '电卡启动'
+        if (value === '3') return 'VIN启动'
+        if (value === '4') return '互联互通'
+        if (value === '5') return '命令启动'
+        return this.disp(startType)
+      },
+      priceTypeText(type) {
+        if (type === 0) return '时间'
+        if (type === 1) return '电量'
+        if (type === 2) return '功率'
+        return this.disp(type)
+      },
+      orderStatusText(status) {
+        if (status === 0) return '故障'
+        if (status === 1) return '进行中'
+        if (status === 2) return '充电完成'
+        if (status === 3) return '充电中'
+        return this.disp(status)
+      },
+      payStatusText(status) {
+        if (status === 0) return '未支付'
+        if (status === 1) return '已支付'
+        if (status === 2) return '已退款'
+        if (status === 3) return '部分退款'
+        return this.disp(status)
+      },
+      payTypeText(payType) {
+        if (!payType) return '-'
+        const text = String(payType).toUpperCase()
+        if (text === 'BALANCE_PAY' || text === 'BALANCE') return '个人钱包'
+        if (text === 'WECHAT_PAY' || text === 'WECHAT') return '微信支付'
+        if (text === 'ALI_PAY' || text === 'ALIPAY') return '支付宝支付'
+        if (text === 'WECHAT_SCORE_PAY') return '微信支付分'
+        if (text === 'COMPANY_BALANC' || text === 'COMPANY_BALANCE' || text === 'COMPANY_BALANCE_PAY') return '企业钱包'
+        if (text === 'SWIPE_CARD') return '刷卡支付'
+        if (text === 'MONTH_CARD') return '月卡支付'
+        if (text === 'FREE') return '免费'
+        return payType
+      },
       goOrderDetail(row) {
         if (!row || row.id == null) {
           this.$message.warning('缺少订单 ID')
@@ -571,27 +533,7 @@
           if (res.code == 200) {
             console.log(res)
             let list = res.data || []
-            if (list.length != 0) {
-              list.forEach((item, index) => {
-                item.eleNum = item.hours
-                let userdTime = ''
-                if (item.orderStatus != 1) {
-                  userdTime = numTime(item.endTimeAll, item.startTimeAll, 1) || '00:00:00'
-                  item.userdTime = numTime(item.endTimeAll, item.startTimeAll, 0)
-                } else {
-                  let nowDate = this.getTime()
-                  userdTime = numTime(nowDate, item.startTimeAll, 1) || '00:00:00'
-                  item.userdTime = numTime(nowDate, item.startTimeAll, 0)
-                }
-                if (item.chargeMod == 0){ //时间
-                  userdTime = userdTime.split(':')
-                  let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(userdTime[1]) * 60 + parseFloat(userdTime[2])
-                  let num2 = parseFloat(item.hours) * 60
-                  let num3 = num2 - num1
-                  item.hasTime = formatSeconds(num3); item.hour = formatSeconds(num2) //剩余时长
-                }
-              })
-            }
+            
             this.list = list
             this.total = res.count
             this.listLoading = false
@@ -730,53 +672,84 @@
 </script>
 
 <style>
-  .boerdno {
-    border-top: none;
+  .order-layout-table .el-table__cell {
+    padding: 0 !important;
   }
 
-  .itemdivs {
+  .order-layout-table .el-table__header-wrapper th .cell {
+    text-align: center;
+  }
+
+  .order-layout-table .el-table__body tr:hover > td.el-table__cell {
+    background-color: #fff !important;
+  }
+
+  .order-layout-table.el-table--enable-row-hover .el-table__body tr:hover > td,
+  .order-layout-table .el-table__body tr.hover-row > td,
+  .order-layout-table .el-table__body tr.current-row > td,
+  .order-layout-table .el-table__body tr.current-row:hover > td {
+    background-color: #fff !important;
+  }
+
+  .order-layout-col {
+    padding: 10px 0;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .order-layout-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 10px;
+  }
+
+  .order-layout-item {
+    font-size: 14px;
+    color: #000;
+    line-height: 20px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: left;
     display: flex;
     align-items: center;
-    width: 205px;
-    height: 50px;
-    text-indent: 10px;
   }
 
-  .itemdiv {
-    width: 100px;
-    height: 50px;
+  .order-layout-item > span:first-child {
+    color: #909399;
+    width: auto;
+    flex-shrink: 0;
+    margin-right: 6px;
+    text-align: left;
+  }
+
+  /* 同一分组内标签按最长字段对齐，分组间独立宽度（仅标签） */
+  .order-layout-col--order .order-layout-item > span:first-child { width: 70px; }
+  .order-layout-col--station .order-layout-item > span:first-child { width: 70px; }
+  .order-layout-col--user .order-layout-item > span:first-child { width: 84px; }
+  .order-layout-col--charge .order-layout-item > span:first-child { width: 98px; }
+  .order-layout-col--pay .order-layout-item > span:first-child { width: 98px; }
+
+  .order-layout-value {
+    color: #000 !important;
+    flex: 1;
+    text-align: left;
+    display: block;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .order-layout-actions {
     display: flex;
-    padding: 12px;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    background-color: #EEEEEE;
-    color: #666666;
-  }
-
-  .borsa {
-    /* border: 1px solid #EEEEEE; */
-    border-bottom: 1px solid #EEEEEE;
-    border-right: 1px solid #EEEEEE;
-  }
-
-  .borenone {
-    border-top: 1px solid #EEEEEE;
-    ;
-    /* border-bottom: none; */
-  }
-
-  .borderItem {
-    /* overflow: ; */
-    /* width: 100%; */
-    display: flex;
-  }
-
-  .borderFather {
-    display: flex;
-    /* justify-content: center; */
-    flex-wrap: wrap;
-    width: 101%;
-    /* background-color: pink; */
+    gap: 8px;
   }
 
 </style>

@@ -1,6 +1,6 @@
 <template>
-	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='onShowConfig'
+	<div style="display: inline-flex; align-items: center;">
+		<el-button type="primary" size="medium" class="filter-item" @click='onShowConfig'
 			icon="el-icon-download" v-if="btnAuthen.permsVerifAuthention(':device:deviceList:generate')">
       		生成设备
 		</el-button>

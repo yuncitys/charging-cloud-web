@@ -1,6 +1,6 @@
 <template>
-	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="downloadDevice"
+	<div style="display: inline-flex; align-items: center;">
+		<el-button type="primary" size="medium" class="filter-item" @click="downloadDevice"
 			:loading="downloadLoading" icon="el-icon-download"
 			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:download')">导出Excel
 		</el-button>

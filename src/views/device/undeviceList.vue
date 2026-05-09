@@ -20,7 +20,7 @@
 				查询
 			</el-button>
 
-			<div style="margin: 15px 0;">
+			<div class="toolbar-actions">
 				<addPage @getLists="getLists" :list-rule-id="listRuleIdForChild" :sync-rule-id-from-list="true" />
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item"
 					@click="onbatchDevicePutState"
@@ -64,7 +64,6 @@
 				<el-checkbox v-model="formThead.deviceVersion" label="设备版本">设备版本</el-checkbox>
 				<el-checkbox v-model="formThead.deviceImei" label="imei号">imei号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSim" label="sim号">sim号</el-checkbox>
-				<el-checkbox v-model="formThead.adminId" label="代理商">代理商</el-checkbox>
 				<el-checkbox v-model="formThead.deviceStatus" label="设备状态">设备状态</el-checkbox>
 				<el-checkbox v-model="formThead.priceType" label="计费类型">计费类型</el-checkbox>
 				<el-checkbox v-model="formThead.feeName" label="计费标准">计费标准</el-checkbox>
@@ -209,7 +208,7 @@
 			<!-- 单个设置收费方案 -->
 			<el-dialog :visible.sync="showPriceType" title="设置收费方案" @close="showPriceType = false"
 				:append-to-body="true">
-				<el-form ref="PriceType" :model="PriceType" :rules="chooseRules" label-position="left"
+				<el-form ref="PriceType" :model="PriceType" label-position="left"
 					label-width="100px" style="width: 600px; margin-left:50px;">
 					<el-form-item :label="'设备号'" prop="deviceCode">
 						<el-input v-model="PriceType.deviceCode" clearable disabled />
@@ -244,7 +243,7 @@
 			<!-- 批量设置收费方案 -->
 			<el-dialog :visible.sync="showPriceTypes" title="批量设置收费方案" @close="showPriceTypes = false"
 				:append-to-body="true">
-				<el-form ref="PriceTypes" :model="PriceType" :rules="chooseRules" label-position="left"
+				<el-form ref="PriceTypes" :model="PriceType" label-position="left"
 					label-width="100px" style="width: 600px; margin-left:50px;">
 					<el-form-item :label="'设备号'" prop="deviceCodes">
 						<el-input v-model="PriceTypes.deviceCodes" clearable disabled />
@@ -744,6 +743,40 @@
 </script>
 
 <style scoped="scoped">
+	.toolbar-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		align-content: flex-start;
+		flex-wrap: wrap;
+		column-gap: 20px;
+		row-gap: 12px;
+		margin: 15px 0;
+	}
+
+	.toolbar-actions > * {
+		margin: 0 !important;
+		display: inline-flex;
+		align-items: center;
+		height: 36px;
+	}
+
+	.filter-container .toolbar-actions .el-button.filter-item,
+	.toolbar-actions ::v-deep .el-button {
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		vertical-align: middle !important;
+		margin: 0 !important;
+		margin-bottom: 0 !important;
+		height: 36px !important;
+		min-height: 36px !important;
+		max-height: 36px !important;
+		padding: 0 20px !important;
+		line-height: 1 !important;
+		box-sizing: border-box !important;
+	}
+
 	.portText {
 		font-weight: bold;
 		color: #000000;

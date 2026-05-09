@@ -234,7 +234,7 @@
 
 			<!-- 单个设置收费方案 -->
 			<el-dialog :visible.sync="showPriceType" title="设置收费方案" @close="showPriceType = false">
-				<el-form ref="PriceType" :model="PriceType" :rules="chooseRules" label-position="left"
+				<el-form ref="PriceType" :model="PriceType" label-position="left"
 					label-width="100px" style="width: 600px; margin-left:50px;">
 					<el-form-item :label="'设备号'" prop="deviceCode">
 						<el-input v-model="PriceType.deviceCode" clearable disabled />
@@ -268,7 +268,7 @@
 
 			<!-- 批量设置收费方案 -->
 			<el-dialog :visible.sync="showPriceTypes" title="批量设置收费方案" @close="showPriceTypes = false">
-				<el-form ref="PriceTypes" :model="PriceType" :rules="chooseRules" label-position="left"
+				<el-form ref="PriceTypes" :model="PriceType" label-position="left"
 					label-width="100px" style="width: 600px; margin-left:50px;">
 					<el-form-item :label="'设备号'" prop="deviceCodes">
 						<el-input v-model="PriceTypes.deviceCodes" clearable disabled />

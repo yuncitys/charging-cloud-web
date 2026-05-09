@@ -6,33 +6,29 @@
 
     <div v-loading="detailLoading" class="detail-body">
       <template v-if="orderInfo && orderInfo.id != null">
-        <!-- 概要 -->
+        <!-- 订单信息 -->
         <el-card class="block-card" shadow="never">
-          <div class="block-title">订单概要</div>
+          <div class="block-title">订单信息</div>
           <el-row :gutter="16" class="kv-grid">
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">订单号</span>
+              <span class="kv-label">类型</span>
+              <span class="kv-value">{{ orderTypeText(orderInfo.orderType) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">业务单号</span>
               <span class="kv-value">{{ disp(orderInfo.orderCode) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">订单类型</span>
-              <span class="kv-value">{{ ruleLabel(orderInfo.ruleId) }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">订单状态</span>
-              <span class="kv-value">{{ $dict.getOrderStatus(orderInfo.orderStatus) }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">支付状态</span>
-              <span class="kv-value">{{ payStatusText(orderInfo.payStatus) }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">启动方式</span>
-              <span class="kv-value">{{ orderTypeText(orderInfo.orderType) }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item" v-if="orderInfo.payCode">
               <span class="kv-label">支付单号</span>
               <span class="kv-value">{{ disp(orderInfo.payCode) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">渠道</span>
+              <span class="kv-value">{{ disp(orderInfo.userLabel) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">订单创建</span>
+              <span class="kv-value">{{ formatDt(orderInfo.createTime) }}</span>
             </el-col>
           </el-row>
         </el-card>
@@ -46,20 +42,20 @@
               <span class="kv-value">{{ disp(orderInfo.networkName) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">设备号</span>
+              <span class="kv-label">桩编号</span>
               <span class="kv-value">{{ disp(orderInfo.deviceCode) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">枪 / 端口</span>
-              <span class="kv-value">{{ disp(orderInfo.devicePort) }} 号</span>
+              <span class="kv-label">端口/枪号</span>
+              <span class="kv-value">{{ disp(orderInfo.devicePort) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
               <span class="kv-label">设备地址</span>
               <span class="kv-value">{{ disp(orderInfo.networkAddress) }}</span>
             </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item" v-if="orderInfo.electricOut != null">
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
               <span class="kv-label">设备类型</span>
-              <span class="kv-value">{{ orderInfo.electricOut === 1 ? '直流' : '交流' }}</span>
+              <span class="kv-value">{{ electricOutText(orderInfo.electricOut) }}</span>
             </el-col>
           </el-row>
         </el-card>
@@ -69,47 +65,67 @@
           <div class="block-title">用户信息</div>
           <el-row :gutter="16" class="kv-grid">
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">用户编号</span>
+              <span class="kv-value">{{ disp(orderInfo.userCode) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">用户帐号</span>
+              <span class="kv-value">{{ disp(orderInfo.userAccount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">企业名称</span>
+              <span class="kv-value">{{ disp(orderInfo.companyName) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">车牌号</span>
+              <span class="kv-value">{{ disp(orderInfo.plateNumber) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
               <span class="kv-label">手机号</span>
               <span class="kv-value">{{ disp(orderInfo.phoneNumber) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">用户昵称</span>
-              <span class="kv-value">{{ disp(orderInfo.userName) }}</span>
+              <span class="kv-label">VIN码</span>
+              <span class="kv-value">{{ disp(orderInfo.vinCode) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">用户编码</span>
-              <span class="kv-value">{{ disp(orderInfo.userCode) }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item" v-if="isCarOrder">
-              <span class="kv-label">车牌号</span>
-              <span class="kv-value">{{ disp(orderInfo.carNo || orderInfo.plateNo || orderInfo.licensePlate) }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item" v-if="isCarOrder">
-              <span class="kv-label">Vin 码</span>
-              <span class="kv-value">{{ disp(orderInfo.vinCode || orderInfo.vin) }}</span>
+              <span class="kv-label">启动方式</span>
+              <span class="kv-value">{{ startTypeText(orderInfo.startType) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">卡号</span>
-              <span class="kv-value">{{ disp(orderInfo.cardNo) }}</span>
+              <span class="kv-label">开始前余额</span>
+              <span class="kv-value">{{ moneyText(orderInfo.userStartCash) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">扣费后余额</span>
+              <span class="kv-value">{{ moneyText(orderInfo.userEndCash) }}</span>
             </el-col>
           </el-row>
         </el-card>
 
-        <!-- 充电过程 -->
+        <!-- 充电信息 -->
         <el-card class="block-card" shadow="never">
           <div class="block-title">充电信息</div>
           <el-row :gutter="16" class="kv-grid">
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">创建时间</span>
-              <span class="kv-value">{{ formatDt(orderInfo.createTime) }}</span>
+              <span class="kv-label">充电状态</span>
+              <span class="kv-value">{{ orderStatusText(orderInfo.orderStatus) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">开始时间</span>
-              <span class="kv-value">{{ formatDt(orderInfo.startTime) }}</span>
+              <span class="kv-label">充电开始时间</span>
+              <span class="kv-value">{{ formatDt(orderInfo.startTimeAll || orderInfo.startTime) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">结束时间</span>
-              <span class="kv-value">{{ formatDt(orderInfo.endTime) }}</span>
+              <span class="kv-label">充电结束时间</span>
+              <span class="kv-value">{{ formatDt(orderInfo.endTimeAll || orderInfo.endTime) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">实际充电时长</span>
+              <span class="kv-value">{{ durationText(orderInfo.actualDuration) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">工作时长/电量</span>
+              <span class="kv-value">{{ hoursWithUnit(orderInfo.hours, orderInfo.chargeMod) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
               <span class="kv-label">停止原因</span>
@@ -119,48 +135,44 @@
               <span class="kv-label">计费类型</span>
               <span class="kv-value">{{ priceTypeText(orderInfo.priceType) }}</span>
             </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">充电电量</span>
-              <span class="kv-value">{{ disp(orderInfo.totalPower) }} {{ orderInfo.totalPower != null ? '度' : '' }}</span>
-            </el-col>
-            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">充电时长</span>
-              <span class="kv-value">{{ disp(orderInfo.actualDuration) }} {{ orderInfo.actualDuration != null ? '分钟' : '' }}</span>
-            </el-col>
           </el-row>
         </el-card>
 
-        <!-- 费用 -->
+        <!-- 付款详情 -->
         <el-card class="block-card" shadow="never">
-          <div class="block-title">费用信息</div>
+          <div class="block-title">付款详情</div>
           <el-row :gutter="16" class="kv-grid">
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">预付金额</span>
-              <span class="kv-value">{{ disp(orderInfo.totalPrice) }} 元</span>
+              <span class="kv-label">订单电量</span>
+              <span class="kv-value">{{ powerText(orderInfo.totalPower) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">结算金额</span>
-              <span class="kv-value">{{ disp(orderInfo.actualPrice) }} 元</span>
+              <span class="kv-label">订单原价金额</span>
+              <span class="kv-value">{{ moneyText(orderInfo.totalPrice) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">用户实付</span>
-              <span class="kv-value">{{ disp(orderInfo.realityPayMoney) }} 元</span>
+              <span class="kv-label">基础电费</span>
+              <span class="kv-value">{{ moneyText(orderInfo.electricityPrice) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">电费</span>
-              <span class="kv-value">{{ disp(orderInfo.electricityPrice) }} 元</span>
+              <span class="kv-label">基础服务费</span>
+              <span class="kv-value">{{ moneyText(orderInfo.servicePrice) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">服务费</span>
-              <span class="kv-value">{{ disp(orderInfo.servicePrice) }} 元</span>
+              <span class="kv-label">订单支付金额</span>
+              <span class="kv-value">{{ moneyText(orderInfo.actualPrice) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">充电前余额</span>
-              <span class="kv-value">{{ disp(orderInfo.startCash) }} 元</span>
+              <span class="kv-label">订单实付金额</span>
+              <span class="kv-value">{{ moneyText(orderInfo.realityPayMoney) }}</span>
             </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
-              <span class="kv-label">支付后余额</span>
-              <span class="kv-value">{{ disp(orderInfo.endCash) }} 元</span>
+              <span class="kv-label">支付状态</span>
+              <span class="kv-value">{{ payStatusText(orderInfo.payStatus) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">支付方式</span>
+              <span class="kv-value">{{ payTypeText(orderInfo.payType) }}</span>
             </el-col>
           </el-row>
         </el-card>
@@ -199,13 +211,15 @@
               :series-list="seriesPower"
             />
             <template v-if="isCarOrder">
-              <order-trend-chart
-                title="电压折线图"
-                unit="伏"
-                :times="chartTimes"
-                :series-list="seriesVoltage"
-              />
               <el-row :gutter="16">
+                <el-col :xs="24" :lg="12">
+                  <order-trend-chart
+                    title="电压折线图"
+                    unit="伏"
+                    :times="chartTimes"
+                    :series-list="seriesVoltage"
+                  />
+                </el-col>
                 <el-col :xs="24" :lg="12">
                   <order-trend-chart
                     title="电流折线图"
@@ -214,15 +228,13 @@
                     :series-list="seriesCurrent"
                   />
                 </el-col>
-                <el-col :xs="24" :lg="12">
-                  <order-trend-chart
-                    title="SOC 折线图"
-                    unit="%"
-                    :times="chartTimes"
-                    :series-list="seriesSoc"
-                  />
-                </el-col>
               </el-row>
+              <order-trend-chart
+                title="SOC 折线图"
+                unit="%"
+                :times="chartTimes"
+                :series-list="seriesSoc"
+              />
               <order-trend-chart
                 title="温度折线图"
                 unit="度"
@@ -357,22 +369,77 @@ export default {
       return '—'
     },
     orderTypeText(t) {
-      if (t === 0) return '刷卡启动'
-      if (t === 1) return '扫码启动'
+      if (t === 0) return '扫码充电'
+      if (t === 1) return '电卡充电'
       if (t === 2) return '免费充电'
+      if (t === 3) return '包月充电'
       return this.disp(t)
     },
     payStatusText(s) {
       if (s === 0) return '未支付'
       if (s === 1) return '已支付'
       if (s === 2) return '已退款'
+      if (s === 3) return '部分退款'
       return this.disp(s)
     },
+    orderStatusText(status) {
+      if (status === 0) return '故障'
+      if (status === 1) return '进行中'
+      if (status === 2) return '充电完成'
+      if (status === 3) return '待结算'
+      return this.disp(status)
+    },
+    payTypeText(payType) {
+      if (!payType) return '—'
+      const text = String(payType).toUpperCase()
+      if (text === 'BALANCE_PAY' || text === 'BALANCE') return '个人支付-个人钱包'
+      if (text === 'WECHAT_PAY' || text === 'WECHAT') return '个人支付-微信支付'
+      if (text === 'ALI_PAY' || text === 'ALIPAY') return '个人支付-支付宝支付'
+      if (text === 'WECHAT_SCORE_PAY') return '个人支付-微信支付分'
+      if (text === 'COMPANY_BALANC' || text === 'COMPANY_BALANCE' || text === 'COMPANY_BALANCE_PAY') return '企业钱包'
+      if (text === 'SWIPE_CARD') return '刷卡支付'
+      if (text === 'MONTH_CARD') return '月卡支付'
+      if (text === 'FREE') return '免费'
+      return payType
+    },
+    startTypeText(startType) {
+      const value = String(startType || '')
+      if (value === '1') return '扫码启动'
+      if (value === '2') return '电卡启动'
+      if (value === '3') return 'VIN启动'
+      if (value === '4') return '互联互通'
+      if (value === '5') return '命令启动'
+      return this.disp(startType)
+    },
     priceTypeText(p) {
-      if (p === 0) return '计时'
+      if (p === 0) return '时间'
       if (p === 1) return '电量'
       if (p === 2) return '功率'
       return this.disp(p)
+    },
+    electricOutText(type) {
+      if (type === 0) return '交流'
+      if (type === 1) return '直流'
+      return this.disp(type)
+    },
+    durationText(v) {
+      if (v == null || v === '') return '—'
+      return `${v} 分钟`
+    },
+    powerText(v) {
+      if (v == null || v === '') return '—'
+      return `${v} 度`
+    },
+    moneyText(v) {
+      if (v == null || v === '') return '—'
+      return `${v} 元`
+    },
+    hoursWithUnit(hours, chargeMod) {
+      if (hours == null || hours === '') return '—'
+      if (chargeMod === 0 || String(chargeMod) === '0') return `${hours} 分钟`
+      if (chargeMod === 1 || String(chargeMod) === '1') return `${hours} kw/h`
+      if (chargeMod === 2 || String(chargeMod) === '2') return `${hours} 元`
+      return String(hours)
     },
     goBack() {
       if (window.history.length > 1) {
@@ -453,34 +520,53 @@ export default {
 }
 .detail-body {
   min-height: 240px;
+  background: transparent;
+  border: 0;
+  padding: 0;
 }
 .block-card {
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none !important;
 }
 .block-title {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   color: #303133;
+  line-height: 1;
 }
 .charts-block-title {
   margin-top: 8px;
   margin-bottom: 12px;
 }
 .kv-grid .kv-item {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   display: flex;
   align-items: flex-start;
-  line-height: 1.6;
+  line-height: 20px;
+  font-size: 14px;
 }
 .kv-label {
   color: #909399;
-  min-width: 96px;
+  min-width: 90px;
   flex-shrink: 0;
+  font-size: 14px;
 }
 .kv-value {
-  color: #303133;
-  word-break: break-all;
+  color: #000;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.order-detail-page .el-card__body {
+  padding: 10px 12px 4px;
+}
+
+.order-detail-page .block-card + .block-card {
+  border-top: 1px solid #ebeef5;
+  padding-top: 2px;
 }
 .charge-details {
   margin-top: 8px;

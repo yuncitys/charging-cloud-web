@@ -1,6 +1,6 @@
 <template>
-	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onShowDevice"
+	<div style="display: inline-flex; align-items: center;">
+		<el-button type="primary" size="medium" class="filter-item" @click="onShowDevice"
 			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneAdd')">新增设备
 		</el-button>
 		<el-dialog :visible.sync="showDevice" title="新增设备" @close="showDevice = false" :append-to-body="true">
