@@ -1,6 +1,6 @@
 <template>
-	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" 
+	<div style="display: inline-flex; align-items: center;">
+		<el-button type="primary" size="medium" class="filter-item"
 			icon="el-icon-upload2" @click="onShowDevice" v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allAdd')">
 			批量导入设备
 		</el-button>

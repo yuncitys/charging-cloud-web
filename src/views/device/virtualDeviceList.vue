@@ -34,7 +34,7 @@
 				查询
 			</el-button>
 
-			<div style="margin: 15px 0;">
+			<div class="toolbar-actions">
 				<!-- <addPage @getLists="getLists" /> -->
 				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="batchUpdate"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:batchAllocation')">
@@ -74,7 +74,6 @@
 				<el-checkbox v-model="formThead.deviceVersion" label="设备版本">设备版本</el-checkbox>
 				<el-checkbox v-model="formThead.deviceImei" label="imei号">imei号</el-checkbox>
 				<el-checkbox v-model="formThead.deviceSim" label="sim号">sim号</el-checkbox>
-				<el-checkbox v-model="formThead.adminId" label="代理商">代理商</el-checkbox>
 				<el-checkbox v-model="formThead.networkName" label="所属站点">所属站点</el-checkbox>
 				<el-checkbox v-model="formThead.networkAddress" label="设备地址">设备地址</el-checkbox>
 				<el-checkbox v-model="formThead.deviceStatus" label="设备状态">设备状态</el-checkbox>
@@ -924,6 +923,40 @@
 </script>
 
 <style scoped="scoped">
+	.toolbar-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		align-content: flex-start;
+		flex-wrap: wrap;
+		column-gap: 20px;
+		row-gap: 12px;
+		margin: 15px 0;
+	}
+
+	.toolbar-actions > * {
+		margin: 0 !important;
+		display: inline-flex;
+		align-items: center;
+		height: 36px;
+	}
+
+	.filter-container .toolbar-actions .el-button.filter-item,
+	.toolbar-actions ::v-deep .el-button {
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		vertical-align: middle !important;
+		margin: 0 !important;
+		margin-bottom: 0 !important;
+		height: 36px !important;
+		min-height: 36px !important;
+		max-height: 36px !important;
+		padding: 0 20px !important;
+		line-height: 1 !important;
+		box-sizing: border-box !important;
+	}
+
 	.portText {
 		font-weight: bold;
 		color: #000000;
