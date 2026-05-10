@@ -391,14 +391,6 @@ export default {
       {
         id: 1,
         title: '已支付'
-      },
-      {
-        id: 2,
-        title: '已退款'
-      },
-      {
-        id: 3,
-        title: '部分退款'
       }
       ],
       tags: [{
@@ -516,8 +508,6 @@ export default {
     payStatusText(status) {
       if (status === 0) return '未支付'
       if (status === 1) return '已支付'
-      if (status === 2) return '已退款'
-      if (status === 3) return '部分退款'
       return this.disp(status)
     },
     payTypeText(payType) {
