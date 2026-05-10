@@ -34,14 +34,14 @@
 				查询
 			</el-button>
 
-			<div style="margin: 15px 0;">
+			<div class="toolbar-actions">
 				<!--导出Excel  -->
 				<downExcel :queryData="listQuery" :exportKeys="exportKeys"/>
-				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click='batchAddDevicePrice'
+				<el-button type="primary" class="filter-item" @click='batchAddDevicePrice'
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allCharge')">
 					批量设置收费标准
 				</el-button>
-				<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="onupdateDeviceStatus"
+				<el-button type="primary" class="filter-item" @click="onupdateDeviceStatus"
 					v-if="btnAuthen.permsVerifAuthention(':device:deviceList:syncStatus')">
           			同步设备状态
 				</el-button>
@@ -855,6 +855,45 @@
 </script>
 
 <style scoped="scoped">
+	.toolbar-actions {
+		display: flex;
+		align-items: center;
+		justify-content: flex-start;
+		align-content: flex-start;
+		flex-wrap: wrap;
+		column-gap: 20px;
+		row-gap: 12px;
+		margin: 15px 0;
+	}
+
+	/* 组件根节点：与按钮同高，避免多占一行高度 */
+	.toolbar-actions > * {
+		margin: 0 !important;
+		display: inline-flex;
+		align-items: center;
+		height: 36px;
+	}
+
+	/*
+	 * 根因：全局 .filter-container .filter-item（index.scss）为 inline-block，优先级高于 .toolbar-actions > *，
+	 * 直接子级 el-button 未按 flex 子项对齐；height:100% 在父级无固定高度时无效，导致与组件内按钮不一致。
+	 */
+	.filter-container .toolbar-actions .el-button.filter-item,
+	.toolbar-actions ::v-deep .el-button {
+		display: inline-flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		vertical-align: middle !important;
+		margin: 0 !important;
+		margin-bottom: 0 !important;
+		height: 36px !important;
+		min-height: 36px !important;
+		max-height: 36px !important;
+		padding: 0 20px !important;
+		line-height: 1 !important;
+		box-sizing: border-box !important;
+	}
+
 	.portText {
 		font-weight: bold;
 		color: #000000;
