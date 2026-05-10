@@ -3,81 +3,94 @@
     <!-- <el-button style="margin: 15px 0;" type="primary" @click="openDialog">
       {{ isEdit? '编辑':'新增' }} 
     </el-button> -->
-    <el-dialog :title="title" :visible.sync="dialogVisible" @close="dialogVisible = false" :append-to-body="true" :destroy-on-close="true" width="50%">
-      <el-steps :active="currentStep - 1" align-center style="margin: 0 80px 20px;">
-        <el-step title="商户属性" />
-        <el-step title="经营属性" />
-      </el-steps>
-      <el-form ref="form" v-show="currentStep === 1" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
-        <el-form-item label="商户名称" prop="name">
-          <el-input v-model="form.name" placeholder="中文,英文,数字(长度1-30字数),不可重复" :disabled="isDetail" maxlength="30"></el-input>
-        </el-form-item>
-        <el-form-item label="公司名称" prop="companyName">
-          <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled="isDetail"></el-input>
-        </el-form-item>
-        <el-form-item label="归属地区" prop="areaPath">
-          <el-cascader
-            :key="cascaderKey"
-            v-model="form.areaPath"
-            :options="areaOptions"
-            :props="areaCascaderProps"
-            :disabled="isDetail"
-            clearable
-            filterable
-            style="width: 100%"
-            @change="handleAreaPathChange"
-          />
-        </el-form-item>
-        <el-form-item label="统一社会信用码" prop="socialCreditCode">
-          <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled="isDetail"></el-input>
-          <!-- <div style="color:#409EFF;margin-top:6px;">温馨提示：请认真核对营业执照上的18位编码</div> -->
-        </el-form-item>
-        <el-form-item label="商户管理员" prop="manageName">
-          <el-input v-model="form.manageName" placeholder="请输入租户管理员" :disabled="isDetail"></el-input>
-        </el-form-item>
-        <el-form-item label="联系方式" prop="contactInfo">
-          <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :disabled="isDetail"></el-input>
-        </el-form-item>
-        <el-form-item label="角色类型" prop="roleType">
-          <el-select v-model="form.roleType" multiple filterable clearable placeholder="请选择角色类型" style="width: 100%;" :disabled="isDetail">
-            <el-option v-for="item in roleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <el-form v-show="currentStep === 2" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
-        <el-form-item label="开票种类" prop="invoiceType">
-          <el-radio-group v-model="form.invoiceType" :disabled="isDetail">
-            <el-radio :label="0">不开票</el-radio>
-            <el-radio :label="1">普票</el-radio>
-            <el-radio :label="2">专票</el-radio>
-            <el-radio :label="3">普票和专票</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="营业执照" prop="businessLicence">
-          <div style="display:flex;align-items:center;gap:20px;">
-            <el-upload
-              action=""
-              :show-file-list="false"
-              :http-request="handleBusinessUpload"
-              accept=".jpg,.jpeg,.png">
-              <el-button size="small" type="primary" :disabled="isDetail">上传图片</el-button>
-            </el-upload>
-            <el-image v-if="form.businessLicence" :src="form.businessLicence" style="width:80px;height:80px;" fit="contain">
-              <div slot="error" style="width:80px;height:80px;background:#f5f7fa;display:flex;align-items:center;justify-content:center;">无</div>
-            </el-image>
-          </div>
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" placeholder="请输入备注" type="textarea" :disabled="isDetail"></el-input>
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button v-if="!isDetail && currentStep === 1" type="primary" @click="nextStep">下一步</el-button>
-        <el-button v-if="!isDetail && currentStep === 2" @click="prevStep">上一步</el-button>
-        <el-button v-if="!isDetail && currentStep === 2" type="primary" @click="saveOrUpdate">保存</el-button>
-      </span>
-    </el-dialog>
+    <el-drawer
+      custom-class="merchant-form-drawer"
+      :title="title"
+      :visible.sync="dialogVisible"
+      direction="rtl"
+      size="50%"
+      append-to-body
+      :destroy-on-close="true"
+      @close="dialogVisible = false"
+    >
+      <div class="merchant-drawer-inner">
+        <div class="merchant-drawer-main">
+          <el-steps :active="currentStep - 1" align-center style="margin: 0 80px 20px;">
+            <el-step title="商户属性" />
+            <el-step title="经营属性" />
+          </el-steps>
+          <el-form ref="form" v-show="currentStep === 1" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
+            <el-form-item label="商户名称" prop="name">
+              <el-input v-model="form.name" placeholder="中文,英文,数字(长度1-30字数),不可重复" :disabled="isDetail" maxlength="30"></el-input>
+            </el-form-item>
+            <el-form-item label="公司名称" prop="companyName">
+              <el-input v-model="form.companyName" placeholder="请输入公司名称" :disabled="isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="归属地区" prop="areaPath">
+              <el-cascader
+                :key="cascaderKey"
+                v-model="form.areaPath"
+                :options="areaOptions"
+                :props="areaCascaderProps"
+                :disabled="isDetail"
+                clearable
+                filterable
+                style="width: 100%"
+                @change="handleAreaPathChange"
+              />
+            </el-form-item>
+            <el-form-item label="统一社会信用码" prop="socialCreditCode">
+              <el-input v-model="form.socialCreditCode" placeholder="请输入统一社会信用代码" :disabled="isDetail"></el-input>
+              <!-- <div style="color:#409EFF;margin-top:6px;">温馨提示：请认真核对营业执照上的18位编码</div> -->
+            </el-form-item>
+            <el-form-item label="商户管理员" prop="manageName">
+              <el-input v-model="form.manageName" placeholder="请输入租户管理员" :disabled="isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="联系方式" prop="contactInfo">
+              <el-input v-model="form.contactInfo" placeholder="请输入联系方式" :disabled="isDetail"></el-input>
+            </el-form-item>
+            <el-form-item label="角色类型" prop="roleType">
+              <el-select v-model="form.roleType" multiple filterable clearable placeholder="请选择角色类型" style="width: 100%;" :disabled="isDetail">
+                <el-option v-for="item in roleTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+              </el-select>
+            </el-form-item>
+          </el-form>
+          <el-form v-show="currentStep === 2" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
+            <el-form-item label="开票种类" prop="invoiceType">
+              <el-radio-group v-model="form.invoiceType" :disabled="isDetail">
+                <el-radio :label="0">不开票</el-radio>
+                <el-radio :label="1">普票</el-radio>
+                <el-radio :label="2">专票</el-radio>
+                <el-radio :label="3">普票和专票</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="营业执照" prop="businessLicence">
+              <div style="display:flex;align-items:center;gap:20px;">
+                <el-upload
+                  action=""
+                  :show-file-list="false"
+                  :http-request="handleBusinessUpload"
+                  accept=".jpg,.jpeg,.png">
+                  <el-button size="small" type="primary" :disabled="isDetail">上传图片</el-button>
+                </el-upload>
+                <el-image v-if="form.businessLicence" :src="form.businessLicence" style="width:80px;height:80px;" fit="contain">
+                  <div slot="error" style="width:80px;height:80px;background:#f5f7fa;display:flex;align-items:center;justify-content:center;">无</div>
+                </el-image>
+              </div>
+            </el-form-item>
+            <el-form-item label="备注" prop="remark">
+              <el-input v-model="form.remark" placeholder="请输入备注" type="textarea" :disabled="isDetail"></el-input>
+            </el-form-item>
+          </el-form>
+        </div>
+        <div class="merchant-drawer-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button v-if="!isDetail && currentStep === 1" type="primary" @click="nextStep">下一步</el-button>
+          <el-button v-if="!isDetail && currentStep === 2" @click="prevStep">上一步</el-button>
+          <el-button v-if="!isDetail && currentStep === 2" type="primary" @click="saveOrUpdate">保存</el-button>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
   
@@ -463,6 +476,44 @@
 </script>
 
 <style lang="scss" scoped>
+::v-deep .merchant-form-drawer.el-drawer .el-drawer__body {
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.merchant-drawer-inner {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.merchant-drawer-main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 8px;
+}
+
+.merchant-drawer-footer {
+  box-sizing: border-box;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 100%;
+  margin-top: 0;
+  padding: 16px 12px 8px;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
 >>> .el-form {
   .el-form-item {
     display: flex;
