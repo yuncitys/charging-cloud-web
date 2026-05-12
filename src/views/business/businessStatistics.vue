@@ -84,7 +84,10 @@
 					</el-table-column>
 					<el-table-column prop="orderCount" label="订单总数" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-count" label-class-name="col-header-count">
 					</el-table-column>
-					<el-table-column prop="totalDuration" label="充电时长" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-duration" label-class-name="col-header-duration">
+					<el-table-column prop="totalDuration" label="充电时长（小时）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-duration" label-class-name="col-header-duration">
+						<template slot-scope="scope">
+							<span>{{ formatChargeDurationHours(scope.row.totalDuration) }}</span>
+						</template>
 					</el-table-column>
 					<el-table-column prop="totalPower" label="使用电量" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-energy" label-class-name="col-header-energy">
 					</el-table-column>
@@ -92,9 +95,9 @@
 					</el-table-column>
 					<el-table-column prop="totalServicePrice" label="服务费" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
-					<el-table-column prop="countCashByCard" label="刷卡收入" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
+					<el-table-column prop="totalActualMoney" label="应收金额（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
-					<el-table-column prop="countCashByScan" label="扫码收入" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
+					<el-table-column prop="totalRealityPayMoney" label="实收金额（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
 				</el-table>
 				<div class="pagination-container">
@@ -120,9 +123,6 @@
 		parseTime,
 		trim
 	} from '@/utils/index'
-	import {
-		getRouter
-	} from '@/api/user'
 	import businessDevList from './businessDevList.vue'
 	import businessBusList from './businessBusList.vue'
 	import deviceAdmin from '../device/components/deviceAdmin.vue'
@@ -161,22 +161,6 @@
         		time: '',
 				statisticsList: [
 					{
-						title: '交易总金额（元）',
-						data: ''
-					},
-					{
-						title: '扫码充值金额（元）',
-						data: ''
-					},
-					{
-						title: '套餐充值金额（元）',
-						data: ''
-					},
-					{
-						title: '月卡充值金额（元）',
-						data: ''
-					},
-					{
 						title: '充电总费用（元）',
 						data: ''
 					},
@@ -189,27 +173,22 @@
 						data: ''
 					},
 					{
-						title: '总充电时长（分）',
+						title: '总充电时长（小时）',
 						data: ''
 					},
 					{
 						title: '总充电电费（元）',
 						data: ''
 					},
-					{
-						title: '运营设备数（台）',
-						data: ''
-					},
-					{
-						title: '可提现金额（元）',
-						data: ''
-					},
           			{
 						title: '总充电服务费（元）',
 						data: ''
 					},
+					{
+						title: '运营设备数（台）',
+						data: ''
+					},
 				],
-				currentUser: {"totalAmount":0,"balanceAmount":0},
 				merchantList: [],
 				chargingStationList: [],
 			}
@@ -242,10 +221,6 @@
 			 */
 			getCardClass(item, index) {
 				const title = item && item.title ? item.title : ''
-				if (title.indexOf('交易总金额') !== -1) return 'cardItem--total-money'
-				if (title.indexOf('扫码充值金额') !== -1) return 'cardItem--scan-money'
-				if (title.indexOf('套餐充值金额') !== -1) return 'cardItem--package-money'
-				if (title.indexOf('月卡充值金额') !== -1) return 'cardItem--month-money'
 				if (title.indexOf('充电总费用') !== -1) return 'cardItem--charge-fee'
 				if (title.indexOf('总使用电量') !== -1) return 'cardItem--power'
 				if (title.indexOf('总充电次数') !== -1) return 'cardItem--order-count'
@@ -253,7 +228,6 @@
 				if (title.indexOf('总充电电费') !== -1) return 'cardItem--electricity'
 				if (title.indexOf('总充电服务费') !== -1) return 'cardItem--service-fee'
 				if (title.indexOf('运营设备数') !== -1) return 'cardItem--device-count'
-				if (title.indexOf('可提现金额') !== -1) return 'cardItem--withdraw'
 				return ''
 			},
 			/**
@@ -265,20 +239,29 @@
 				const title = item && item.title ? item.title : ''
 				const value = item ? item.data : ''
 				if (
+				  title.indexOf('充电总费用') !== -1 ||
+				  title.indexOf('总使用电量') !== -1 ||
+				  title.indexOf('总充电电费') !== -1 ||
+				  title.indexOf('总充电服务费') !== -1
+				) {
+					return this.formatNumber(value, 4)
+				}
+				if (
 				  title.indexOf('金额') !== -1 ||
 				  title.indexOf('费用') !== -1 ||
 				  title.indexOf('电费') !== -1 ||
-				  title.indexOf('服务费') !== -1 ||
-				  title.indexOf('可提现金额') !== -1
+				  title.indexOf('服务费') !== -1
 				) {
 					return this.formatMoney(value)
 				}
 				if (title.indexOf('电量') !== -1) {
 					return this.formatNumber(value, 2)
 				}
+				if (title.indexOf('时长') !== -1) {
+					return this.formatNumber(value, 2)
+				}
 				if (
 				  title.indexOf('次数') !== -1 ||
-				  title.indexOf('时长') !== -1 ||
 				  title.indexOf('订单') !== -1 ||
 				  title.indexOf('设备数') !== -1
 				) {
@@ -293,6 +276,17 @@
 			 */
 			formatMoney(value) {
 				return this.formatNumber(value, 2)
+			},
+			/**
+			 * 将接口返回的充电时长（分钟）格式化为小时，保留两位小数
+			 * @param {number|string} minutes 分钟
+			 * @returns {string}
+			 */
+			formatChargeDurationHours(minutes) {
+				if (minutes === null || minutes === undefined || minutes === '') return '-'
+				const num = Number(minutes)
+				if (Number.isNaN(num)) return '-'
+				return this.formatNumber(num / 60, 2)
 			},
 			/**
 			 * 通用数字格式化，可控制小数位并添加千分位分隔
@@ -349,13 +343,6 @@
 			// 		this.getLists()
 			// 	})
 			// },
-			getCurrentUser() {
-				getRouter().then(res => {
-					if(res.code === 200){
-						this.currentUser = res.data
-					}
-				})
-			},
 			getReportsStatistics() {
 				this.loading = true
 				let listQuery = this.listQuery
@@ -364,20 +351,12 @@
 					if (res.code == 200) {
 						let reportCount = res.data
 						statisticsList.forEach((item, index) => {
-							if (item.title == '交易总金额（元）') {
-								item.data = reportCount.totalMoney || 0
-							} else if (item.title == '扫码充值金额（元）') {
-								item.data = reportCount.scanQRMoney || 0
-							} else if (item.title == '月卡充值金额（元）') {
-								item.data = reportCount.monthCardMoney || 0
-							} else if (item.title == '套餐充值金额（元）') {
-								item.data = reportCount.packageMoney || 0
-							} else if (item.title == '总使用电量（度）') {
+							if (item.title == '总使用电量（度）') {
 								item.data = reportCount.totalPower || 0
 							} else if (item.title == '总充电次数（笔）') {
 								item.data = reportCount.totalOrder || 0
-							} else if (item.title == '总充电时长（分）') {
-								item.data = reportCount.totalDuration || 0
+							} else if (item.title == '总充电时长（小时）') {
+								item.data = ((reportCount.totalDuration || 0) / 60)
 							} else if (item.title == '总充电电费（元）') {
 								item.data = reportCount.totalElectricityPrice || 0
 							} else if (item.title == '总充电服务费（元）') {
@@ -386,8 +365,6 @@
 								item.data = reportCount.totalRealityPayMoney || 0
 							} else if (item.title == '运营设备数（台）') {
 								item.data = reportCount.totalDevice || 0
-							} else if (item.title == '可提现金额（元）') {
-								item.data = this.currentUser.balanceAmount || 0
 							}
 						})
 						this.statisticsList = statisticsList
@@ -492,7 +469,6 @@
 		},
 		created() {
 			// this.getRouters()
-			this.getCurrentUser()
 			this.getMerchantList()
 			this.getChargingStationList()
 			this.getReportsStatistics()
@@ -611,22 +587,6 @@
 		background-repeat: no-repeat;
 	}
 
-	.cardItem--total-money {
-		background: linear-gradient(135deg, #409EFF, #2d8cf0);
-	}
-
-	.cardItem--scan-money {
-		background: linear-gradient(135deg, #13c2c2, #36cfc9);
-	}
-
-	.cardItem--package-money {
-		background: linear-gradient(135deg, #facc15, #f97316);
-	}
-
-	.cardItem--month-money {
-		background: linear-gradient(135deg, #a855f7, #6366f1);
-	}
-
 	.cardItem--charge-fee {
 		background: linear-gradient(135deg, #10b981, #22c55e);
 	}
@@ -655,14 +615,8 @@
 		background: linear-gradient(135deg, #22c55e, #4ade80);
 	}
 
-	.cardItem--withdraw {
-		background: linear-gradient(135deg, #ec4899, #f97373);
-	}
-
-	.cardItem--total-money .cardIcon,
 	.cardItem--charge-fee .cardIcon,
-	.cardItem--electricity .cardIcon,
-	.cardItem--withdraw .cardIcon {
+	.cardItem--electricity .cardIcon {
 		background-image: url(../../assets/home-panel/trade-panel.png);
 	}
 
@@ -678,12 +632,6 @@
 
 	.cardItem--duration .cardIcon {
 		background-image: url(../../assets/home-panel/order-panel.png);
-	}
-
-	.cardItem--scan-money .cardIcon,
-	.cardItem--package-money .cardIcon,
-	.cardItem--month-money .cardIcon {
-		background-image: url(../../assets/home-panel/user-panel.png);
 	}
 </style>
 
