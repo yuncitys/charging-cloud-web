@@ -66,12 +66,38 @@
         this.chart = echarts.init(this.$el, 'macarons')
         this.setOptions(this.chartData)
       },
-      setOptions({
-        totalPower,
-        orderCount,
-        orderPrice,
-        datetime
-      } = {}) {
+      lineSeries(name, data, color) {
+        return {
+          name,
+          smooth: true,
+          type: 'line',
+          data: data || [],
+          animationDuration: 2800,
+          animationEasing: 'quadraticOut',
+          itemStyle: {
+            normal: {
+              color,
+              lineStyle: {
+                color,
+                width: 2
+              }
+            }
+          }
+        }
+      },
+      setOptions(raw = {}) {
+        if (!this.chart) {
+          return
+        }
+        const {
+          totalPower = [],
+          orderCount = [],
+          datetime = [],
+          actualPrice = [],
+          realityPayMoney = [],
+          electricityPrice = [],
+          servicePrice = []
+        } = raw || {}
         this.chart.setOption({
           xAxis: {
             data: datetime,
@@ -89,8 +115,8 @@
           grid: {
             left: 10,
             right: 10,
-            bottom: 20,
-            top: 30,
+            bottom: 56,
+            top: 36,
             containLabel: true
           },
           tooltip: {
@@ -112,110 +138,28 @@
             },
           },
           legend: {
-            data: ['订单数（笔）','总电量（度）', '总金额（元）']
+            type: 'scroll',
+            bottom: 0,
+            data: ['订单数（笔）', '总电量（度）', '应收金额（元）', '实收金额（元）', '电费（元）', '服务费（元）']
           },
           series: [
-            {
-              name: '订单数（笔）',
-              smooth: true,
-              type: 'line',
-              itemStyle: {
-                normal: {
-                  color: '#f73e42',
-                  lineStyle: {
-                    color: '#f73e42',
-                    width: 2
-                  },
-                  areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                      offset: 0,
-                      color: 'rgba(247, 62, 66, 0.3)'
-                    }, {
-                      offset: 0.8,
-                      color: 'rgba(247, 62, 66, 0)'
-                    }], false),
-                    shadowColor: 'rgba(0, 0, 0, 0.1)',
-                    shadowBlur: 10
-                  }
-                }
-              },
-              data: orderCount,
-              animationDuration: 2800,
-              animationEasing: 'quadraticOut'
-            },
-            {
-              name: '总电量（度）',
-              itemStyle: {
-                normal: {
-                  color: '#da8f0d',
-                  lineStyle: {
-                    color: '#da8f0d',
-                    width: 2
-                  },
-                  areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                      offset: 0,
-                      color: 'rgba(218, 143, 13, 0.3)'
-                    }, {
-                      offset: 0.8,
-                      color: 'rgba(218, 143, 13, 0)'
-                    }], false),
-                    shadowColor: 'rgba(0, 0, 0, 0.1)',
-                    shadowBlur: 10
-                  }
-                }
-              },
-              smooth: true,
-              type: 'line',
-              data: totalPower,
-              animationDuration: 2800,
-              animationEasing: 'cubicInOut'
-            },
-            {
-              name: '总金额（元）',
-              smooth: true,
-              type: 'line',
-              itemStyle: {
-                normal: {
-                  color: '#07b161',
-                  lineStyle: {
-                    color: '#07b161',
-                    width: 2
-                  },
-                  areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                      offset: 0,
-                      color: 'rgba(7, 177, 97, 0.3)'
-                    }, {
-                      offset: 0.8,
-                      color: 'rgba(7, 177, 97, 0)'
-                    }], false),
-                    shadowColor: 'rgba(0, 0, 0, 0.1)',
-                    shadowBlur: 10
-                  }
-                }
-              },
-              data: orderPrice,
-              animationDuration: 2800,
-              animationEasing: 'quadraticOut'
-            }
+            this.lineSeries('订单数（笔）', orderCount, '#f73e42'),
+            this.lineSeries('总电量（度）', totalPower, '#da8f0d'),
+            this.lineSeries('应收金额（元）', actualPrice, '#07b161'),
+            this.lineSeries('实收金额（元）', realityPayMoney, '#409EFF'),
+            this.lineSeries('电费（元）', electricityPrice, '#f97316'),
+            this.lineSeries('服务费（元）', servicePrice, '#14b8a6')
           ],
           dataZoom: [
             {
-                type: 'slider', // 滑动条型缩放控件
-                show: true, // 是否显示控件
-                xAxisIndex: 0, // 控制 X 轴的缩放
-                start: 0, // 数据窗口的起始位置（百分比）
-                end: 70, // 数据窗口的结束位置（百分比）
-                height: 20,      // 水平滑块的高度
-                bottom: 20,      // 水平滑块距离图表底部的距离
+                type: 'slider',
+                show: true,
+                xAxisIndex: 0,
+                start: 0,
+                end: 70,
+                height: 20,
+                bottom: 28,
             },
-            // {
-            //     type: 'inside', // 支持鼠标滚轮缩放的方式
-            //     xAxisIndex: 0,
-            //     height: 20,      // 水平滑块的高度
-            //     bottom: 20,      // 水平滑块距离图表底部的距离
-            // },
           ],
         })
       }

@@ -29,7 +29,7 @@
             :value="item.id">
           </el-option>
       </el-select>
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
+      <!-- <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
         placeholder="请选择充电站">
           <el-option
             v-for="item in chargingStationList"
@@ -37,7 +37,7 @@
             :label="item.networkName"
             :value="item.id">
           </el-option>
-      </el-select>
+      </el-select> -->
       <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
         查询
       </el-button>
@@ -81,6 +81,16 @@
           <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
+        <div class="summary-card summary-card--electric">
+          <div class="summary-label">总电费(元)</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.electricityFee, 4) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--servicefee">
+          <div class="summary-label">总服务费(元)</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.serviceFee, 4) }}</div>
+          <div class="summary-card-icon" />
+        </div>
       </div>
       <el-row class="borRadduis10" style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
         <charging-trend-line-chart :chart-data="lineChartData"></charging-trend-line-chart>
@@ -113,7 +123,6 @@
       	<el-table-column label="服务费(元)" prop="serviceFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
       	<el-table-column label="订单总金额(元)" prop="orderTotalAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
       	<el-table-column label="用户实付合计(元)" prop="userActualPayTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="平台抽成费用(元)" prop="drainageCommission" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
       	<el-table-column label="商户实收合计(元)" prop="merchantReceiptTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
       </el-table>
       <div class="pagination-container">
@@ -137,12 +146,6 @@
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
 
-  const lineChartData = {
-    totalPower: [],
-    orderCount: [],
-    orderPrice: [],
-    datetime: []
-  }
   export default {
     name: 'chargingTrendStatistics',
     components: {
@@ -152,10 +155,13 @@
     data() {
       return {
         lineChartData: {
-          userCount: [],
+          totalPower: [],
           orderCount: [],
-          orderPrice: [],
-          datetime: []
+          datetime: [],
+          actualPrice: [],
+          realityPayMoney: [],
+          electricityPrice: [],
+          servicePrice: []
         },
         summaryTotal: {
           totalChargeNumber: 0,
@@ -163,7 +169,9 @@
           orderTotalAmount: 0,
           userActualPayTotal: 0,
           merchantReceiptTotal: 0,
-          totalPower: 0
+          totalPower: 0,
+          electricityFee: 0,
+          serviceFee: 0
         },
         page: 1,
         limit: 10,
@@ -219,7 +227,9 @@
           orderTotalAmount: 0,
           userActualPayTotal: 0,
           merchantReceiptTotal: 0,
-          totalPower: 0
+          totalPower: 0,
+          electricityFee: 0,
+          serviceFee: 0
         }
         if (Array.isArray(list) && list.length) {
           list.forEach(item => {
@@ -229,6 +239,8 @@
             total.userActualPayTotal += Number(item.userActualPayTotal) || 0
             total.merchantReceiptTotal += Number(item.merchantReceiptTotal) || 0
             total.totalPower += Number(item.totalPower) || 0
+            total.electricityFee += Number(item.electricityFee) || 0
+            total.serviceFee += Number(item.serviceFee) || 0
           })
         }
         this.summaryTotal = total
@@ -318,16 +330,25 @@
             let lineChartData = {
               totalPower: [],
               orderCount: [],
-              orderPrice: [],
-              datetime: []
+              datetime: [],
+              actualPrice: [],
+              realityPayMoney: [],
+              electricityPrice: [],
+              servicePrice: []
             }
             if (chargingTrendStatistics.length != 0) {
               chargingTrendStatistics.forEach((item, index) => {
                 lineChartData.totalPower.push(item.totalPower)
                 lineChartData.orderCount.push(item.totalChargeNumber)
-                const amount = item.orderTotalAmount != null ? item.orderTotalAmount : item.actualPrice
-                lineChartData.orderPrice.push(amount)
                 lineChartData.datetime.push(item.datetime)
+                const receivable = item.orderTotalAmount != null ? item.orderTotalAmount : 0
+                const received = item.userActualPayTotal != null ? item.userActualPayTotal : 0
+                const elec = item.electricityFee != null ? item.electricityFee : (item.electricityPrice != null ? item.electricityPrice : 0)
+                const svc = item.serviceFee != null ? item.serviceFee : (item.servicePrice != null ? item.servicePrice : 0)
+                lineChartData.actualPrice.push(receivable)
+                lineChartData.realityPayMoney.push(received)
+                lineChartData.electricityPrice.push(elec)
+                lineChartData.servicePrice.push(svc)
               })
             }
             this.lineChartData = lineChartData
@@ -352,9 +373,6 @@
         }).catch(() => {
           this.listLoading = false
         })
-      },
-      handleSetLineChartData(type) {
-        this.lineChartData = lineChartData[type]
       },
       dateChange(e) {
       	if (e) {
