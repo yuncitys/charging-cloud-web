@@ -45,7 +45,7 @@
       <div class="report-header">
         <div class="title-section">
           <!-- 标题 -->
-          <span class="title">充电趋势</span>
+          <span class="title">电站趋势</span>
           <!-- 带有统计说明的图标提示 -->
           <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
             <el-icon><i class="el-icon-question"></i></el-icon>
@@ -59,34 +59,41 @@
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--duration">
-          <div class="summary-label">总充电时长(分)</div>
-          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.totalChargeDurations, 0) }}</div>
+          <div class="summary-label">总充电时长(小时)</div>
+          <div class="summary-value summary-duration">{{ formatChargeDurationHours(summaryTotal.totalChargeDurations) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--device-total">
+          <div class="summary-label">设备总数(台)</div>
+          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.totalDevice, 0) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--amount">
-          <div class="summary-label">扫码收入(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.scanActualPrice) }}</div>
-          <div class="summary-card-icon" />
-        </div>
-        <div class="summary-card summary-card--electric">
-          <div class="summary-label">刷卡收入(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.swipeActualPrice) }}</div>
+          <div class="summary-label">应收金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.actualPrice) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--servicefee">
-          <div class="summary-label">实际收益(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.actualPrice) }}</div>
+          <div class="summary-label">实收金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.realityPayMoney) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--electric">
+          <div class="summary-label">电费(元)</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.electricityPrice, 4) }}</div>
+          <div class="summary-card-icon" />
+        </div>
+        <div class="summary-card summary-card--service-price">
+          <div class="summary-label">服务费(元)</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.servicePrice, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--power">
           <div class="summary-label">总使用电量(度)</div>
-          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 2) }}</div>
+          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
       </div>
-      <el-row class="borRadduis10" style="background:#fff;padding:16px 16px 0;margin-bottom:32px;">
-        <charging-trend-line-chart :chart-data="lineChartData"></charging-trend-line-chart>
-      </el-row>
 
       <div class="report-header">
         <div class="title-section">
@@ -116,13 +123,18 @@
         </el-table-column>
       	<el-table-column label="充电次数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-      	<el-table-column label="充电时长(分)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
+      	<el-table-column label="充电时长(小时)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
+      		<template slot-scope="scope">
+      			<span>{{ formatChargeDurationHours(scope.row.totalChargeDurations) }}</span>
+      		</template>
       	</el-table-column>
-      	<el-table-column label="扫码收入(元)" prop="scanActualPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="应收金额(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-      	<el-table-column label="刷卡收入(元)" prop="swipeActualPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="实收金额(元)" prop="realityPayMoney" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-      	<el-table-column label="实际收益(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
       	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
@@ -218,13 +230,18 @@
         </el-table-column>
       	<el-table-column label="充电次数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-      	<el-table-column label="充电时长(分)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
+      	<el-table-column label="充电时长(小时)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
+      		<template slot-scope="scope">
+      			<span>{{ formatChargeDurationHours(scope.row.totalChargeDurations) }}</span>
+      		</template>
       	</el-table-column>
-      	<el-table-column label="扫码收入(元)" prop="scanActualPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="应收金额(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-      	<el-table-column label="刷卡收入(元)" prop="swipeActualPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="实收金额(元)" prop="realityPayMoney" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
-      	<el-table-column label="实际收益(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	<el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc">
+      	</el-table-column>
+      	<el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
       	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
       	</el-table-column>
@@ -239,13 +256,10 @@
 </template>
 
 <script>
-  import ChargingTrendLineChart from './components/ChargingTrendLineChart'
   import DownChargingStationStatistics from './components/DownChargingStationStatistics'
   import DownChargingStationFundStatistics from './components/DownChargingStationFundStatistics'
   import DownChargingStationSingleStatistics from './components/DownChargingStationSingleStatistics'
   import {
-    chargingTrend,
-    chargingTrendList,
     chargingStationSection,
     chargingStationSingle,
     chargingStationFund
@@ -255,34 +269,23 @@
     getChargingStationList
   } from '@/api/netWorkDot/netWorkDotList.js'
 
-  const lineChartData = {
-    totalPower: [],
-    orderCount: [],
-    orderPrice: [],
-    datetime: []
-  }
   export default {
     name: 'chargingStationStatistics',
     components: {
-      ChargingTrendLineChart,
       DownChargingStationStatistics,
       DownChargingStationFundStatistics,
       DownChargingStationSingleStatistics
     },
     data() {
       return {
-        lineChartData: {
-          userCount: [],
-          orderCount: [],
-          orderPrice: [],
-          datetime: []
-        },
         summaryTotal: {
           totalChargeNumber: 0,
           totalChargeDurations: 0,
-          scanActualPrice: 0,
-          swipeActualPrice: 0,
+          totalDevice: 0,
           actualPrice: 0,
+          realityPayMoney: 0,
+          electricityPrice: 0,
+          servicePrice: 0,
           totalPower: 0
         },
         page: 1,
@@ -333,6 +336,7 @@
         },
         merchantList: [],
         chargingStationList: [],
+        isPc: true,
       }
     },
     methods: {
@@ -344,18 +348,22 @@
         const total = {
           totalChargeNumber: 0,
           totalChargeDurations: 0,
-          scanActualPrice: 0,
-          swipeActualPrice: 0,
+          totalDevice: 0,
           actualPrice: 0,
+          realityPayMoney: 0,
+          electricityPrice: 0,
+          servicePrice: 0,
           totalPower: 0
         }
         if (Array.isArray(list) && list.length) {
           list.forEach(item => {
             total.totalChargeNumber += Number(item.totalChargeNumber) || 0
             total.totalChargeDurations += Number(item.totalChargeDurations) || 0
-            total.scanActualPrice += Number(item.scanActualPrice) || 0
-            total.swipeActualPrice += Number(item.swipeActualPrice) || 0
+            total.totalDevice += Number(item.totalDevice) || 0
             total.actualPrice += Number(item.actualPrice) || 0
+            total.realityPayMoney += Number(item.realityPayMoney) || 0
+            total.electricityPrice += Number(item.electricityPrice) || 0
+            total.servicePrice += Number(item.servicePrice) || 0
             total.totalPower += Number(item.totalPower) || 0
           })
         }
@@ -368,6 +376,15 @@
        */
       formatMoney(value) {
         return this.formatNumber(value, 2)
+      },
+      /**
+       * 接口充电时长为分钟时，展示为小时（两位小数）
+       */
+      formatChargeDurationHours(minutes) {
+        if (minutes === null || minutes === undefined || minutes === '') return '-'
+        const num = Number(minutes)
+        if (Number.isNaN(num)) return '-'
+        return this.formatNumber(num / 60, 2)
       },
       /**
        * 通用数字格式化，可控制小数位并添加千分位分隔
@@ -436,34 +453,6 @@
       		}
       	})
       },
-      getChargingTrend() {
-        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
-        chargingTrend(listQuery).then(res => {
-          if (res.code == 200) {
-            //曲线
-            let chargingTrendStatistics = res.data;
-            console.log("chargingTrendStatistics：",chargingTrendStatistics)
-            let lineChartData = {
-              totalPower: [],
-              orderCount: [],
-              orderPrice: [],
-              datetime: []
-            }
-            if (chargingTrendStatistics.length != 0) {
-              chargingTrendStatistics.forEach((item, index) => {
-                lineChartData.totalPower.push(item.totalPower)
-                lineChartData.orderCount.push(item.totalChargeNumber)
-                const amount = item.orderTotalAmount != null ? item.orderTotalAmount : item.actualPrice
-                lineChartData.orderPrice.push(amount)
-                lineChartData.datetime.push(item.datetime)
-              })
-            }
-            this.lineChartData = lineChartData
-
-            this.$forceUpdate()
-          }
-        })
-      },
       getChargingStationSingleList() {
         this.listLoading = true
         let listQuery = JSON.parse(JSON.stringify(this.listQuery))
@@ -523,7 +512,6 @@
       handleFilter() {
       	this.listQuery.page = 1
         this.listQuery.limit = 10
-      	this.getChargingTrend()
         this.getChargingStationSingleList()
         this.getChargingStationFundList()
         this.getChargingStationSectionList()
@@ -567,7 +555,6 @@
     created() {
       this.getMerchantList()
       this.getChargingStationList()
-      this.getChargingTrend()
       this.getChargingStationSingleList()
       this.getChargingStationFundList()
       this.getChargingStationSectionList()
@@ -661,6 +648,10 @@
   background: linear-gradient(135deg, #a855f7, #6366f1);
 }
 
+.summary-card--device-total {
+  background: linear-gradient(135deg, #22c55e, #4ade80);
+}
+
 .summary-card--electric {
   background: linear-gradient(135deg, #f97316, #fb923c);
 }
@@ -671,6 +662,14 @@
 
 .summary-card--placeholder {
   background: linear-gradient(135deg, #f97373, #fb7185);
+}
+
+.summary-card--service-price {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.summary-card--service-price .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
 }
 
 .summary-card--service-count .summary-card-icon {
@@ -687,6 +686,10 @@
 
 .summary-card--duration .summary-card-icon {
   background-image: url(../../assets/home-panel/order-panel.png);
+}
+
+.summary-card--device-total .summary-card-icon {
+  background-image: url(../../assets/home-panel/device-panel.png);
 }
 
 .summary-card--electric .summary-card-icon {
