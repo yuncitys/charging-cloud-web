@@ -18,7 +18,7 @@
 
 			<!-- 添加运营商户 -->
 			<div style="margin: 15px 0;">
-				<el-button type="primary" @click="addOrUpdateHandle()" v-if="btnAuthen.permsVerifAuthention(':operator:merchant:add')">添加</el-button>
+				<el-button type="primary" @click="addOrUpdateHandle()" v-if="btnAuthen.permsVerifAuthention(':operator:tenant:add')">添加</el-button>
 			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -54,10 +54,10 @@
 					<template slot-scope="scope">
 						<div style="display: flex;justify-content: center;align-items: center;">
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,false)"
-								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:edit')">编辑</el-button>
+								v-if="btnAuthen.permsVerifAuthention(':operator:tenant:edit')">编辑</el-button>
 							<el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button>
 							<el-button type="danger" size = "mini" @click="handleDelete(scope.row.operatorId)"
-								v-if="btnAuthen.permsVerifAuthention(':operator:merchant:delete')">删除</el-button>
+								v-if="btnAuthen.permsVerifAuthention(':operator:tenant:delete')">删除</el-button>
 						</div>
 					</template>
 				</el-table-column>
