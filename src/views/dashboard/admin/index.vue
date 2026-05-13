@@ -43,14 +43,14 @@
     findHomeDataByNetWork
   } from '@/api/index/index.js'
   const lineChartData = {
-    userCount: [],
     orderCount: [],
     orderPrice: [],
+    electricityPrice: [],
+    servicePrice: [],
     DAY: []
   }
   const raddarData = {
-    expectedData: '',
-    actualData: ''
+    items: []
   }
   const pieData = {
     expectedData: [],
@@ -59,7 +59,8 @@
   const barData = {
     deviceCount: [],
     orderPrice: [],
-    userCount: [],
+    electricityPrice: [],
+    servicePrice: [],
     DAY: []
   }
   export default {
@@ -78,20 +79,21 @@
     data() {
       return {
         lineChartData: {
-          userCount: [],
           orderCount: [],
           orderPrice: [],
+          electricityPrice: [],
+          servicePrice: [],
           DAY: []
         },
         panelData: {
-          totalUser: 0,
           totalDevice: 0,
           totalMoney: 0,
-          totalOrder: 0
+          totalOrder: 0,
+          totalElectricityMoney: 0,
+          totalServicePrice: 0
         },
         raddarData: {
-          expectedData: '',
-          actualData: ''
+          items: []
         },
         pieData: {
           expectedData: [],
@@ -100,7 +102,8 @@
         barData: {
           deviceCount: [],
           orderPrice: [],
-          userCount: [],
+          electricityPrice: [],
+          servicePrice: [],
           DAY: []
         },
         totalDevice: '',
@@ -144,25 +147,54 @@
             this.panelData = res.data.homeData
 
             //订单类型
-            raddarData.expectedData = res.data.orderType.skOrder
-            raddarData.actualData = res.data.orderType.smOrder
-            raddarData.freeOrderData = res.data.orderType.freeOrder
-            raddarData.monthOrderData = res.data.orderType.monthOrder
+            const orderType = res.data.orderType || {}
+            raddarData.items = [
+              {
+                key: 'smOrder',
+                name: '扫码订单',
+                count: Number(orderType.smOrderCount) || 0,
+                rate: Number(orderType.smOrderRate) || 0,
+                color: '#4CD263'
+              },
+              {
+                key: 'skOrder',
+                name: '刷卡订单',
+                count: Number(orderType.skOrderCount) || 0,
+                rate: Number(orderType.skOrderRate) || 0,
+                color: '#F4A261'
+              },
+              {
+                key: 'freeOrder',
+                name: '免费订单',
+                count: Number(orderType.freeOrderCount) || 0,
+                rate: Number(orderType.freeOrderRate) || 0,
+                color: '#E76F51'
+              },
+              {
+                key: 'monthOrder',
+                name: '包月订单',
+                count: Number(orderType.monthOrderCount) || 0,
+                rate: Number(orderType.monthOrderRate) || 0,
+                color: '#2A9D8F'
+              }
+            ]
             this.raddarData = raddarData
 
             //曲线
             let orderUser = res.data.orderUser || []
             let lineChartData = {
-              userCount: [],
               orderCount: [],
               orderPrice: [],
+              electricityPrice: [],
+              servicePrice: [],
               DAY: []
             }
             if (orderUser.length != 0) {
               orderUser.forEach((item, index) => {
-                lineChartData.userCount.push(item.userCount)
                 lineChartData.orderCount.push(item.orderCount)
                 lineChartData.orderPrice.push(item.orderPrice)
+                lineChartData.electricityPrice.push(item.electricityPrice)
+                lineChartData.servicePrice.push(item.servicePrice)
                 lineChartData.DAY.push(item.DAY)
               })
             }
@@ -173,14 +205,16 @@
             let barData = {
               deviceCount: [],
               orderPrice: [],
-              userCount: [],
+              electricityPrice: [],
+              servicePrice: [],
               DAY: []
             }
             if (yearMonthCount.length != 0) {
               yearMonthCount.forEach((item, index) => {
                 barData.deviceCount.push(item.deviceCount)
                 barData.orderPrice.push(item.orderPrice)
-                barData.userCount.push(item.userCount)
+                barData.electricityPrice.push(item.electricityPrice)
+                barData.servicePrice.push(item.servicePrice)
                 let day = item.DAY + '月'
                 barData.DAY.push(day)
               })

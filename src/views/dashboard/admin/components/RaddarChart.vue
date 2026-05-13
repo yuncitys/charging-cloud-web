@@ -63,21 +63,41 @@
         this.chart = echarts.init(this.$el, 'macarons')
         this.setOptions(this.chartData)
       },
+      formatPercent(rate) {
+        const num = Number(rate) || 0
+        return `${(num * 100).toFixed(2)}%`
+      },
       setOptions({
-        expectedData,
-        actualData,
-        freeOrderData,
-        monthOrderData,
+        items = []
       } = {}) {
+        const legendData = items.map(item => item.name)
+        const dataMap = items.reduce((acc, item) => {
+          acc[item.name] = item
+          return acc
+        }, {})
+        const pieData = items.map(item => ({
+          value: item.count,
+          name: item.name,
+          itemStyle: {
+            color: item.color
+          }
+        }))
         this.chart.setOption({
           tooltip: {
             trigger: 'item',
-            formatter: '{b}: {c} ({d}%)'
+            formatter: params => {
+              const item = dataMap[params.name] || {}
+              return `${params.name}<br/>订单总数：${item.count || 0}<br/>占比：${this.formatPercent(item.rate)}`
+            }
           },
           legend: {
             orient: 'vertical',
             left: 'left',
-            data: ['扫码订单', '刷卡订单', '免费订单', '包月订单']
+            data: legendData,
+            formatter: name => {
+              const item = dataMap[name] || {}
+              return `${name}  ${item.count || 0}单  ${this.formatPercent(item.rate)}`
+            }
           },
           series: [{
             name: '订单占比',
@@ -98,35 +118,7 @@
             labelLine: {
               show: false
             },
-            data: [{
-                value: actualData,
-                name: '扫码订单',
-                itemStyle: {
-                    color: '#4CD263'
-                }
-              },
-              {
-                value: expectedData,
-                name: '刷卡订单',
-                itemStyle: {
-                    color: '#F4A261'
-                }
-              },
-              {
-                value: freeOrderData,
-                name: '免费订单',
-                itemStyle: {
-                    color: '#E76F51'
-                }
-              },
-              {
-                value: monthOrderData,
-                name: '包月订单',
-                itemStyle: {
-                    color: '#2A9D8F'
-                }
-              },
-            ],
+            data: pieData,
             animationDuration: 2600
           }]
         })

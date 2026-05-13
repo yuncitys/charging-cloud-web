@@ -66,7 +66,8 @@
       setOptions({
         deviceCount,
         orderPrice,
-        userCount,
+        electricityPrice,
+        servicePrice,
         DAY
       } = {}) {
         this.chart.setOption({
@@ -109,11 +110,11 @@
             }
           }],
           series: [{
-            name: '用户量',
+            name: '设备数',
             type: 'bar',
             stack: 'vistors',
             barWidth: '60%',
-            data: userCount,
+            data: deviceCount,
             animationDuration,
             itemStyle: {
                 normal: {
@@ -130,11 +131,11 @@
                 }
             }
           }, {
-            name: '设备数',
+            name: '交易额',
             type: 'bar',
             stack: 'vistors',
             barWidth: '60%',
-            data: deviceCount,
+            data: orderPrice,
             animationDuration,
             itemStyle: {
                 normal: {
@@ -151,7 +152,7 @@
                 }
             }
           }, {
-            name: '交易额',
+            name: '电费',
             type: 'bar',
             stack: 'vistors',
             barWidth: '60%',
@@ -159,18 +160,40 @@
               normal: {
                 color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
                     offset: 0,
-                    color: '#4ade80'
+                    color: '#fcd34d'
                 }, {
                     offset: 0.5,
-                    color: '#22c55e'
+                    color: '#f59e0b'
                 }, {
                     offset: 1,
-                    color: '#22c55e'
+                    color: '#f59e0b'
                 }]),
                 barBorderRadius: [5, 5, 0, 0]
               }
             },
-            data: orderPrice,
+            data: electricityPrice,
+            animationDuration
+          }, {
+            name: '服务费',
+            type: 'bar',
+            stack: 'vistors',
+            barWidth: '60%',
+            itemStyle: {
+              normal: {
+                color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                    offset: 0,
+                    color: '#99f6e4'
+                }, {
+                    offset: 0.5,
+                    color: '#14b8a6'
+                }, {
+                    offset: 1,
+                    color: '#14b8a6'
+                }]),
+                barBorderRadius: [5, 5, 0, 0]
+              }
+            },
+            data: servicePrice,
             animationDuration
           }]
         })

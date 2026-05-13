@@ -1,18 +1,6 @@
 <template>
-	<el-row :gutter="40" class="panel-group">
-		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col " v-if="roleId <= 3">
-			<div class="card-panel borRadduis15 user-panel-color" @click="handleSetLineChartData('newVisitis')">
-				<div class="panel-img user-panel-img"></div>
-				<div class="card-panel-description">
-					<div class="card-panel-text">
-						用户数量
-					</div>
-					<count-to :start-val="0" :end-val="chartData.totalUser ? chartData.totalUser : 0" :duration="2600"
-						class="card-panel-num" :decimals="0" />
-				</div>
-			</div>
-		</el-col>
-		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+	<el-row :gutter="24" class="panel-group">
+		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
 			<div class="card-panel borRadduis15 device-panel-color" @click="handleSetLineChartData('messages')">
         <div class="device-panel-img panel-img"></div>
         <div class="card-panel-description">
@@ -24,7 +12,7 @@
 				</div>
 			</div>
 		</el-col>
-		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
 			<div class="card-panel borRadduis15 trade-panel-color" @click="handleSetLineChartData('purchases')">
         <div class="trade-panel-img panel-img"></div>
         <div class="card-panel-description">
@@ -36,7 +24,7 @@
 				</div>
 			</div>
 		</el-col>
-		<el-col :xs="12" :sm="12" :lg="6" class="card-panel-col">
+		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
 			<div class="card-panel borRadduis15 order-panel-color" @click="handleSetLineChartData('shoppings')">
         <div class="order-panel-img panel-img"></div>
         <div class="card-panel-description">
@@ -44,6 +32,30 @@
 						总订单
 					</div>
 					<count-to :start-val="0" :end-val="chartData.totalOrder ? chartData.totalOrder : 0" :duration="3600"
+						class="card-panel-num" :decimals="2" />
+				</div>
+			</div>
+		</el-col>
+		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
+			<div class="card-panel borRadduis15 electricity-panel-color" @click="handleSetLineChartData('electricity')">
+        <div class="trade-panel-img panel-img"></div>
+        <div class="card-panel-description">
+					<div class="card-panel-text">
+						总电费
+					</div>
+					<count-to :start-val="0" :end-val="chartData.totalElectricityMoney ? chartData.totalElectricityMoney : 0" :duration="3400"
+						class="card-panel-num" :decimals="2" />
+				</div>
+			</div>
+		</el-col>
+		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
+			<div class="card-panel borRadduis15 service-panel-color" @click="handleSetLineChartData('service')">
+        <div class="order-panel-img panel-img"></div>
+        <div class="card-panel-description">
+					<div class="card-panel-text">
+						总服务费
+					</div>
+					<count-to :start-val="0" :end-val="chartData.totalServicePrice ? chartData.totalServicePrice : 0" :duration="3500"
 						class="card-panel-num" :decimals="2" />
 				</div>
 			</div>
@@ -69,12 +81,6 @@
 				chart: null
 			}
 		},
-		computed:{
-			roleId(){
-				console.log(this.$store.getters.adminUser.roleId,"角色id")
-				return this.$store.getters.adminUser.roleId
-			}
-		},
 		methods: {
 			handleSetLineChartData(type) {
 				this.$emit('handleSetLineChartData', type)
@@ -90,19 +96,12 @@
 		.card-panel-col {
 			margin-bottom: 32px;
 		}
-    .user-panel-color{
-      background-color: #15c350;
-    }
     .panel-img{
       width: 80px;
       height: 80px;
       position: absolute;
       right: 0;
       bottom: 0;
-    }
-    .user-panel-img{
-      background: url(../../../../assets/home-panel/user-panel.png) no-repeat;
-      background-size: 100% 100%;
     }
     .device-panel-color{
       background-color: rgb(7, 120, 246);
@@ -120,6 +119,12 @@
     }
     .order-panel-color{
       background-color: rgb(124, 126, 255);
+    }
+    .electricity-panel-color{
+      background-color: rgb(245, 158, 11);
+    }
+    .service-panel-color{
+      background-color: rgb(20, 184, 166);
     }
     .order-panel-img{
       background: url(../../../../assets/home-panel/order-panel.png) no-repeat;
@@ -189,19 +194,19 @@
 			.card-panel-description {
 				float: left;
 				font-weight: bold;
-				margin: 26px;
-				margin-left: 59px;
+				margin: 22px;
+				margin-left: 36px;
 
 				.card-panel-text {
 					line-height: 18px;
 					color: white;
-					font-size: 16px;
+					font-size: 15px;
           font-weight: bolder;
-					margin-bottom: 12px;
+					margin-bottom: 10px;
 				}
 
 				.card-panel-num {
-					font-size: 30px;
+					font-size: 24px;
 				}
 			}
 		}

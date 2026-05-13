@@ -68,9 +68,10 @@
         this.setOptions(this.chartData)
       },
       setOptions({
-        userCount,
         orderCount,
         orderPrice,
+        electricityPrice,
+        servicePrice,
         DAY
       } = {}) {
         this.chart.setOption({
@@ -113,37 +114,9 @@
             },
           },
           legend: {
-            data: ['用户数量', '订单总数', '订单总额']
+            data: ['订单总数', '订单总额', '电费', '服务费']
           },
           series: [{
-              name: '用户数量',
-              itemStyle: {
-                normal: {
-                  color: '#da8f0d',
-                  lineStyle: {
-                    color: '#da8f0d',
-                    width: 2
-                  },
-                  areaStyle: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                      offset: 0,
-                      color: 'rgba(218, 143, 13, 0.3)'
-                    }, {
-                      offset: 0.8,
-                      color: 'rgba(218, 143, 13, 0)'
-                    }], false),
-                    shadowColor: 'rgba(0, 0, 0, 0.1)',
-                    shadowBlur: 10
-                  }
-                }
-              },
-              smooth: true,
-              type: 'line',
-              data: userCount,
-              animationDuration: 2800,
-              animationEasing: 'cubicInOut'
-            },
-            {
               name: '订单总数',
               smooth: true,
               type: 'line',
@@ -195,6 +168,60 @@
                 }
               },
               data: orderPrice,
+              animationDuration: 2800,
+              animationEasing: 'quadraticOut'
+            }, {
+              name: '电费',
+              smooth: true,
+              type: 'line',
+              itemStyle: {
+                normal: {
+                  color: '#da8f0d',
+                  lineStyle: {
+                    color: '#da8f0d',
+                    width: 2
+                  },
+                  areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                      offset: 0,
+                      color: 'rgba(218, 143, 13, 0.3)'
+                    }, {
+                      offset: 0.8,
+                      color: 'rgba(218, 143, 13, 0)'
+                    }], false),
+                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                    shadowBlur: 10
+                  }
+                }
+              },
+              data: electricityPrice,
+              animationDuration: 2800,
+              animationEasing: 'cubicInOut'
+            }, {
+              name: '服务费',
+              smooth: true,
+              type: 'line',
+              itemStyle: {
+                normal: {
+                  color: '#14b8a6',
+                  lineStyle: {
+                    color: '#14b8a6',
+                    width: 2
+                  },
+                  areaStyle: {
+                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
+                      offset: 0,
+                      color: 'rgba(20, 184, 166, 0.3)'
+                    }, {
+                      offset: 0.8,
+                      color: 'rgba(20, 184, 166, 0)'
+                    }], false),
+                    shadowColor: 'rgba(0, 0, 0, 0.1)',
+                    shadowBlur: 10
+                  }
+                }
+              },
+              data: servicePrice,
               animationDuration: 2800,
               animationEasing: 'quadraticOut'
             }
