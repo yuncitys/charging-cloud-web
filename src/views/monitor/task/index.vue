@@ -42,7 +42,7 @@
 					<span>{{ scope.row.endTime | formatDate }}</span>
 				</template>
 				</el-table-column>
-				<el-table-column prop="adminName" label="创建人" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 
 				<el-table-column label="操作" align="center" width="200">
