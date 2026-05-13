@@ -161,7 +161,11 @@
         		time: '',
 				statisticsList: [
 					{
-						title: '充电总费用（元）',
+						title: '实收总金额（元）',
+						data: ''
+					},
+					{
+						title: '应收总金额（元）',
 						data: ''
 					},
 					{
@@ -221,7 +225,8 @@
 			 */
 			getCardClass(item, index) {
 				const title = item && item.title ? item.title : ''
-				if (title.indexOf('充电总费用') !== -1) return 'cardItem--charge-fee'
+				if (title.indexOf('实收总金额') !== -1) return 'cardItem--charge-fee'
+				if (title.indexOf('应收总金额') !== -1) return 'cardItem--receivable-total'
 				if (title.indexOf('总使用电量') !== -1) return 'cardItem--power'
 				if (title.indexOf('总充电次数') !== -1) return 'cardItem--order-count'
 				if (title.indexOf('总充电时长') !== -1) return 'cardItem--duration'
@@ -239,7 +244,8 @@
 				const title = item && item.title ? item.title : ''
 				const value = item ? item.data : ''
 				if (
-				  title.indexOf('充电总费用') !== -1 ||
+				  title.indexOf('实收总金额') !== -1 ||
+				  title.indexOf('应收总金额') !== -1 ||
 				  title.indexOf('总使用电量') !== -1 ||
 				  title.indexOf('总充电电费') !== -1 ||
 				  title.indexOf('总充电服务费') !== -1
@@ -361,8 +367,10 @@
 								item.data = reportCount.totalElectricityPrice || 0
 							} else if (item.title == '总充电服务费（元）') {
 								item.data = reportCount.totalServicePrice || 0
-							} else if (item.title == '充电总费用（元）') {
+							} else if (item.title == '实收总金额（元）') {
 								item.data = reportCount.totalRealityPayMoney || 0
+							} else if (item.title == '应收总金额（元）') {
+								item.data = reportCount.totalActualMoney || 0
 							} else if (item.title == '运营设备数（台）') {
 								item.data = reportCount.totalDevice || 0
 							}
@@ -591,6 +599,10 @@
 		background: linear-gradient(135deg, #10b981, #22c55e);
 	}
 
+	.cardItem--receivable-total {
+		background: linear-gradient(135deg, #3b82f6, #2563eb);
+	}
+
 	.cardItem--power {
 		background: linear-gradient(135deg, #00c9ff, #92fe9d);
 	}
@@ -616,6 +628,7 @@
 	}
 
 	.cardItem--charge-fee .cardIcon,
+	.cardItem--receivable-total .cardIcon,
 	.cardItem--electricity .cardIcon {
 		background-image: url(../../assets/home-panel/trade-panel.png);
 	}
