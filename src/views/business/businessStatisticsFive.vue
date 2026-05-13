@@ -51,7 +51,7 @@
         </div>
         <div class="summary-card summary-card--power">
           <div class="summary-label">总使用电量(次)</div>
-          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.chargingPowerCount, 2) }}</div>
+          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.chargingPowerCount, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--duration">
@@ -61,12 +61,12 @@
         </div>
         <div class="summary-card summary-card--electric">
           <div class="summary-label">总电费(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.electricityPrice) }}</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.electricityPrice, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--servicefee">
           <div class="summary-label">总服务费(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.servicePrice) }}</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.servicePrice, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--placeholder">
@@ -127,7 +127,7 @@
 	    	</el-table-column>
 	    	<el-table-column label="使用电量(次)" prop="chargingPowerCount" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-energy" class-name="col-energy">
 	    	  <template slot-scope="scope">
-	    	    <span>{{ formatNumber(scope.row.chargingPowerCount, 2) }}</span>
+	    	    <span>{{ formatNumber(scope.row.chargingPowerCount, 4) }}</span>
 	    	  </template>
 	    	</el-table-column>
         <el-table-column label="充电时长(分)" prop="actualDuration" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-duration" class-name="col-duration">
@@ -137,12 +137,12 @@
         </el-table-column>
         <el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-money" class-name="col-money">
           <template slot-scope="scope">
-            <span>{{ formatMoney(scope.row.electricityPrice) }}</span>
+            <span>{{ formatNumber(scope.row.electricityPrice, 4) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-money" class-name="col-money">
           <template slot-scope="scope">
-            <span>{{ formatMoney(scope.row.servicePrice) }}</span>
+            <span>{{ formatNumber(scope.row.servicePrice, 4) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="占桩费(元)" prop="placeholderPrice" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-money" class-name="col-money">
@@ -205,7 +205,7 @@
 	    	</el-table-column>
 	    	<el-table-column label="使用电量(次)" prop="chargingPowerCount" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-energy" class-name="col-energy">
 	    	  <template slot-scope="scope">
-	    	    <span>{{ formatNumber(scope.row.chargingPowerCount, 2) }}</span>
+	    	    <span>{{ formatNumber(scope.row.chargingPowerCount, 4) }}</span>
 	    	  </template>
 	    	</el-table-column>
         <el-table-column label="充电时长(分)" prop="actualDuration" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-duration" class-name="col-duration">
@@ -215,12 +215,12 @@
         </el-table-column>
         <el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-money" class-name="col-money">
           <template slot-scope="scope">
-            <span>{{ formatMoney(scope.row.electricityPrice) }}</span>
+            <span>{{ formatNumber(scope.row.electricityPrice, 4) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-money" class-name="col-money">
           <template slot-scope="scope">
-            <span>{{ formatMoney(scope.row.servicePrice) }}</span>
+            <span>{{ formatNumber(scope.row.servicePrice, 4) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="占桩费(元)" prop="placeholderPrice" align="center" sortable :show-overflow-tooltip="isPc" label-class-name="col-header-money" class-name="col-money">
