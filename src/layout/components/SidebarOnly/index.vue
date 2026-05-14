@@ -4,7 +4,7 @@
     <div class="sidebar-only-logo">
       <div class="logo-inner" v-if="!isCollapse">
         <img :src="logoData.LOGO_IMG" class="logo-img" v-if="logoData.LOGO_IMG" />
-        <span class="logo-text">{{ logoData.TITLE || '智慧充电运营平台' }}</span>
+        <span class="logo-text" :title="logoData.TITLE || '智慧充电运营平台'">{{ logoData.TITLE || '智慧充电运营平台' }}</span>
       </div>
       <div class="logo-inner logo-inner--collapse" v-else>
         <img :src="logoData.LOGO_IMG" class="logo-img" v-if="logoData.LOGO_IMG" />
@@ -106,26 +106,35 @@ export default {
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid #f0f0f0;
+  overflow: hidden;
 
   .logo-inner {
+    width: 100%;
     height: 60px;
     display: flex;
     align-items: center;
     padding: 0 12px;
+    box-sizing: border-box;
+    min-width: 0;
+    overflow: hidden;
 
     .logo-img {
       width: 30px;
       height: 30px;
       flex-shrink: 0;
+      display: block;
     }
 
     .logo-text {
+      flex: 1;
+      min-width: 0;
       font-size: 16px;
       color: rgb(49, 48, 48);
       font-weight: bold;
       margin-left: 10px;
       white-space: nowrap;
       overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 

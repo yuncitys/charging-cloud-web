@@ -5,12 +5,12 @@
       <!-- logo -->
       <div>
         <div class="logoBox" v-if="!isCollapse">
-          <div class="logoItem flex" style="width: 170px;">
-            <div style="padding: 0 10px;">
+          <div class="logoItem flex">
+            <div class="logoImgBox">
               <img :src="logoData.LOGO_IMG" class="logoImg" v-if="logoData.LOGO_IMG" />
               <!-- <img src="../../../assets/logo.png" class="logoImg" v-else/> -->
             </div>
-            <div class="logoText">
+            <div class="logoText" :title="logoData.TITLE ? logoData.TITLE : '智慧充电运营平台'">
               {{logoData.TITLE ? logoData.TITLE : '智慧充电运营平台'}}
             </div>
           </div>
@@ -175,23 +175,38 @@
     align-items: center;
     justify-content: center;
     width: 100%;
+    box-sizing: border-box;
+    padding: 0 12px;
+    overflow: hidden;
 
     .logoItem {
+      width: 100%;
       height: 60px;
       display: flex;
       align-items: center;
+      min-width: 0;
+
+      .logoImgBox {
+        flex-shrink: 0;
+        padding: 0 10px;
+      }
 
       .logoImg {
         width: 30px;
         height: 30px;
-        // border-radius: 50%;
+        display: block;
       }
 
       .logoText {
+        flex: 1;
+        min-width: 0;
         font-size: 16px;
         color: rgb(49, 48, 48);
         font-weight: bold;
         margin-left: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
   }
