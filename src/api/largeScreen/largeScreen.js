@@ -15,6 +15,11 @@ export function getLargeScreenDataMode() {
 	try {
 		fromStorage = window.sessionStorage.getItem('largeScreenDataMode') || ''
 	} catch (e) {}
+	if (!fromStorage) {
+		try {
+			fromStorage = window.localStorage.getItem('largeScreenDataMode') || ''
+		} catch (e) {}
+	}
 	const storageMode = String(fromStorage || '').trim().toLowerCase()
 	if (storageMode === 'mock' || storageMode === 'real') {
 		return storageMode
@@ -40,17 +45,15 @@ function useMock() {
 	return getLargeScreenDataMode() === 'mock'
 }
 
-const mockState = {
-	tick: 0,
-	timer: null,
-}
-
-function ensureMockTicking() {
-	if (mockState.timer) return
-	mockState.timer = setInterval(() => {
-		mockState.tick += 1
-	}, 3000)
-}
+const MOCK_GROWTH_STORAGE_KEY = 'largeScreen_mock_growth_state_v2'
+const MOCK_GROWTH_STORAGE_VERSION = 2
+const MOCK_DEVICE_COUNT_STORAGE_KEY = 'largeScreen_mock_device_count_state_v1'
+const MOCK_DEVICE_COUNT_STORAGE_VERSION = 1
+const MOCK_VISUAL_TICK_INTERVAL_MS = 5000
+const MOCK_USER_GROWTH_INTERVAL_MS = 2 * 60 * 1000
+const MOCK_WX_ORDER_GROWTH_INTERVAL_MS = 60 * 1000
+const MOCK_CARD_ORDER_GROWTH_INTERVAL_MS = 2 * 60 * 1000
+const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 function pad2(n) {
 	return String(n).padStart(2, '0')
@@ -66,80 +69,244 @@ function formatDay(d) {
 	return `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
 }
 
+function formatDateKey(d) {
+	const date = d instanceof Date ? d : new Date(d)
+	return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+}
+
 function seeded(seed) {
 	const x = Math.sin(seed) * 10000
 	return x - Math.floor(x)
 }
 
+function getMockStorage() {
+	if (typeof window === 'undefined') return null
+	try {
+		if (window.localStorage) return window.localStorage
+	} catch (e) {}
+	try {
+		if (window.sessionStorage) return window.sessionStorage
+	} catch (e) {}
+	return null
+}
+
+function getDayStartTs(time) {
+	const date = time instanceof Date ? new Date(time.getTime()) : new Date(time)
+	date.setHours(0, 0, 0, 0)
+	return date.getTime()
+}
+
+function toFiniteNumber(value, fallback) {
+	return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function createMockGrowthState(previousState, now = Date.now()) {
+	const dayStartTs = getDayStartTs(now)
+	const totalUserBase = toFiniteNumber(previousState && previousState.totalUserNow, 320000)
+	const baseMoney = toFiniteNumber(previousState && previousState.moneyNow, 130000000)
+	const baseWxTotalOrder = toFiniteNumber(previousState && previousState.wxTotalNow, 1200000)
+	const baseCardTotalOrder = toFiniteNumber(previousState && previousState.cardTotalNow, 82000)
+	const newUserBase = 18 + Math.floor(seeded(dayStartTs + 101) * 15)
+	return {
+		version: MOCK_GROWTH_STORAGE_VERSION,
+		dayKey: formatDateKey(now),
+		dayStartTs,
+		baseMoney,
+		moneyNow: baseMoney,
+		lastMoneyMinute: -1,
+		totalUserBase,
+		totalUserNow: totalUserBase,
+		newUserBase,
+		newUserNow: newUserBase,
+		lastUserSlot: -1,
+		baseWxTotalOrder,
+		wxTotalNow: baseWxTotalOrder,
+		lastWxOrderSlot: -1,
+		baseCardTotalOrder,
+		cardTotalNow: baseCardTotalOrder,
+		lastCardOrderSlot: -1,
+	}
+}
+
+function getMockUserDelta(dayStartTs, slot) {
+	const ratio = seeded(dayStartTs + slot * 29 + 5)
+	if (ratio > 0.98) return 2
+	if (ratio > 0.72) return 1
+	return 0
+}
+
+function getMockOrderDelta(dayStartTs, slot, base, size) {
+	return base + Math.floor(seeded(dayStartTs + slot * 31 + 9) * size)
+}
+
+function advanceMockGrowthState(state, now = Date.now()) {
+	const nextState = {
+		...state,
+		baseMoney: toFiniteNumber(state.baseMoney, 130000000),
+		moneyNow: toFiniteNumber(state.moneyNow, toFiniteNumber(state.baseMoney, 130000000)),
+		lastMoneyMinute: Math.max(-1, Math.floor(toFiniteNumber(state.lastMoneyMinute, -1))),
+		totalUserBase: toFiniteNumber(state.totalUserBase, 320000),
+		totalUserNow: toFiniteNumber(state.totalUserNow, toFiniteNumber(state.totalUserBase, 320000)),
+		newUserBase: toFiniteNumber(state.newUserBase, 18),
+		newUserNow: toFiniteNumber(state.newUserNow, toFiniteNumber(state.newUserBase, 18)),
+		lastUserSlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastUserSlot, -1))),
+		baseWxTotalOrder: toFiniteNumber(state.baseWxTotalOrder, 1200000),
+		wxTotalNow: toFiniteNumber(state.wxTotalNow, toFiniteNumber(state.baseWxTotalOrder, 1200000)),
+		lastWxOrderSlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastWxOrderSlot, -1))),
+		baseCardTotalOrder: toFiniteNumber(state.baseCardTotalOrder, 82000),
+		cardTotalNow: toFiniteNumber(state.cardTotalNow, toFiniteNumber(state.baseCardTotalOrder, 82000)),
+		lastCardOrderSlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastCardOrderSlot, -1))),
+	}
+
+	const elapsedMinutes = Math.max(0, Math.floor((now - nextState.dayStartTs) / 60000))
+	if (elapsedMinutes > nextState.lastMoneyMinute) {
+		for (let m = nextState.lastMoneyMinute + 1; m <= elapsedMinutes; m++) {
+			const delta = 8 + Math.floor(seeded(nextState.dayStartTs + m * 17 + 1) * 5800) / 100
+			nextState.moneyNow += delta
+		}
+		nextState.lastMoneyMinute = elapsedMinutes
+	}
+
+	const userSlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_USER_GROWTH_INTERVAL_MS))
+	if (userSlot > nextState.lastUserSlot) {
+		for (let slot = nextState.lastUserSlot + 1; slot <= userSlot; slot++) {
+			const delta = getMockUserDelta(nextState.dayStartTs, slot)
+			nextState.newUserNow += delta
+			nextState.totalUserNow += delta
+		}
+		nextState.lastUserSlot = userSlot
+	}
+
+	const wxOrderSlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_WX_ORDER_GROWTH_INTERVAL_MS))
+	if (wxOrderSlot > nextState.lastWxOrderSlot) {
+		for (let slot = nextState.lastWxOrderSlot + 1; slot <= wxOrderSlot; slot++) {
+			nextState.wxTotalNow += getMockOrderDelta(nextState.dayStartTs, slot, 9, 10)
+		}
+		nextState.lastWxOrderSlot = wxOrderSlot
+	}
+
+	const cardOrderSlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_CARD_ORDER_GROWTH_INTERVAL_MS))
+	if (cardOrderSlot > nextState.lastCardOrderSlot) {
+		for (let slot = nextState.lastCardOrderSlot + 1; slot <= cardOrderSlot; slot++) {
+			nextState.cardTotalNow += getMockOrderDelta(nextState.dayStartTs, slot, 2, 4)
+		}
+		nextState.lastCardOrderSlot = cardOrderSlot
+	}
+
+	return nextState
+}
+
+function getMockGrowthState(now = Date.now()) {
+	const storage = getMockStorage()
+	let parsed = null
+	if (storage) {
+		try {
+			const raw = storage.getItem(MOCK_GROWTH_STORAGE_KEY)
+			if (raw) {
+				parsed = JSON.parse(raw)
+			}
+		} catch (e) {}
+	}
+
+	let state = parsed && typeof parsed === 'object' ? parsed : null
+	if (!state || state.version !== MOCK_GROWTH_STORAGE_VERSION || state.dayKey !== formatDateKey(now)) {
+		state = createMockGrowthState(state, now)
+	}
+	state = advanceMockGrowthState(state, now)
+
+	if (storage) {
+		try {
+			storage.setItem(MOCK_GROWTH_STORAGE_KEY, JSON.stringify(state))
+		} catch (e) {}
+	}
+
+	return state
+}
+
+function createMockDeviceCountState(previousState) {
+	return {
+		version: MOCK_DEVICE_COUNT_STORAGE_VERSION,
+		dayKey: '',
+		dayStartTs: 0,
+		chargingStationCount: Math.max(0, Math.floor(toFiniteNumber(previousState && previousState.chargingStationCount, 86))),
+		onLineCount: Math.max(0, Math.floor(toFiniteNumber(previousState && previousState.onLineCount, 1260))),
+		unLineCount: Math.max(0, Math.floor(toFiniteNumber(previousState && previousState.unLineCount, 60))),
+	}
+}
+
+function applyMockDeviceCountDailyGrowth(state, dayStartTs) {
+	state.chargingStationCount += Math.floor(seeded(dayStartTs + 61) * 2)
+	state.onLineCount += 6 + Math.floor(seeded(dayStartTs + 62) * 18)
+	state.unLineCount += Math.floor(seeded(dayStartTs + 63) * 4)
+}
+
+function advanceMockDeviceCountState(state, now = Date.now()) {
+	const nextState = createMockDeviceCountState(state)
+	const currentDayStartTs = getDayStartTs(now)
+	let cursorDayStartTs = Math.floor(toFiniteNumber(state && state.dayStartTs, currentDayStartTs))
+
+	if (cursorDayStartTs <= 0 || cursorDayStartTs > currentDayStartTs) {
+		cursorDayStartTs = currentDayStartTs
+	}
+
+	while (cursorDayStartTs < currentDayStartTs) {
+		cursorDayStartTs += ONE_DAY_MS
+		applyMockDeviceCountDailyGrowth(nextState, cursorDayStartTs)
+	}
+
+	nextState.dayStartTs = currentDayStartTs
+	nextState.dayKey = formatDateKey(now)
+	return nextState
+}
+
+function getMockDeviceCountState(now = Date.now()) {
+	const storage = getMockStorage()
+	let parsed = null
+	if (storage) {
+		try {
+			const raw = storage.getItem(MOCK_DEVICE_COUNT_STORAGE_KEY)
+			if (raw) {
+				parsed = JSON.parse(raw)
+			}
+		} catch (e) {}
+	}
+
+	let state = parsed && typeof parsed === 'object' ? parsed : createMockDeviceCountState()
+	state = advanceMockDeviceCountState(state, now)
+
+	if (storage) {
+		try {
+			storage.setItem(MOCK_DEVICE_COUNT_STORAGE_KEY, JSON.stringify(state))
+		} catch (e) {}
+	}
+
+	return state
+}
+
+function getMockVisualTick(now = Date.now(), state) {
+	const currentState = state || getMockGrowthState(now)
+	return Math.max(0, Math.floor((now - currentState.dayStartTs) / MOCK_VISUAL_TICK_INTERVAL_MS))
+}
+
 function mockResolve(data) {
-	ensureMockTicking()
 	return new Promise((resolve) => {
 		setTimeout(() => resolve({ code: 200, data }), 120)
 	})
 }
 
 function mockGetCount() {
-	const t = mockState.tick
-	let baseMoney = 130000000
-	let baseTs = Date.now()
-	let baseTotalUser = 320000
-	let baseWxTotalOrder = 1200000
-	let lastMinute = 0
-	let moneyNow = baseMoney
-	try {
-		const raw = window.sessionStorage.getItem('largeScreen_mock_growth_state')
-		if (raw) {
-			const parsed = JSON.parse(raw)
-			if (parsed && typeof parsed.baseMoney === 'number' && typeof parsed.baseTs === 'number') {
-				baseMoney = parsed.baseMoney
-				baseTs = parsed.baseTs
-			}
-			if (parsed && typeof parsed.baseTotalUser === 'number') {
-				baseTotalUser = parsed.baseTotalUser
-			}
-			if (parsed && typeof parsed.baseWxTotalOrder === 'number') {
-				baseWxTotalOrder = parsed.baseWxTotalOrder
-			}
-			if (parsed && typeof parsed.lastMinute === 'number') {
-				lastMinute = parsed.lastMinute
-			}
-			if (parsed && typeof parsed.moneyNow === 'number') {
-				moneyNow = parsed.moneyNow
-			} else {
-				moneyNow = baseMoney
-			}
-		} else {
-			window.sessionStorage.setItem(
-				'largeScreen_mock_growth_state',
-				JSON.stringify({ baseMoney, baseTs, baseTotalUser, baseWxTotalOrder, lastMinute, moneyNow })
-			)
-		}
-	} catch (e) {}
-	const elapsedMinutes = Math.max(0, Math.floor((Date.now() - baseTs) / 60000))
-	if (elapsedMinutes > lastMinute) {
-		for (let m = lastMinute + 1; m <= elapsedMinutes; m++) {
-			let delta = Math.floor(seeded(baseTs + m) * 10000) / 100
-			if (delta < 0.01) delta = 0.01
-			if (delta > 99.99) delta = 99.99
-			moneyNow += delta
-		}
-		lastMinute = elapsedMinutes
-		try {
-			window.sessionStorage.setItem(
-				'largeScreen_mock_growth_state',
-				JSON.stringify({ baseMoney, baseTs, baseTotalUser, baseWxTotalOrder, lastMinute, moneyNow })
-			)
-		} catch (e) {}
-	}
-	const totalMoney = moneyNow.toFixed(2)
-	const currentMonth = 186000 + t * 67 + Math.floor(seeded(t + 2) * 200)
-	const currentDay = 5200 + t * 11 + Math.floor(seeded(t + 3) * 50)
+	const now = Date.now()
+	const growthState = getMockGrowthState(now)
+	const t = getMockVisualTick(now, growthState)
+	const totalMoney = growthState.moneyNow.toFixed(2)
+	const currentMonth = 186000 + t * 67 + Math.floor(seeded(growthState.dayStartTs + t + 2) * 200)
+	const currentDay = 5200 + t * 11 + Math.floor(seeded(growthState.dayStartTs + t + 3) * 50)
 
-	const totalUser = baseTotalUser + elapsedMinutes * 3 + (t % 2)
-	const newUser = 18 + (t % 12)
+	const totalUser = growthState.totalUserNow
+	const newUser = growthState.newUserNow
 
-	const cardTotal = 82000 + t * 23 + Math.floor(seeded(t + 5) * 50)
-	const wxTotal = baseWxTotalOrder + elapsedMinutes * 15 + (t % 10)
+	const cardTotal = growthState.cardTotalNow
+	const wxTotal = growthState.wxTotalNow
 
 	const cardDay = 180 + (t % 30)
 	const wxDay = 260 + (t % 40)
@@ -180,13 +347,13 @@ function mockGetCount() {
 }
 
 function mockGetCurve() {
-	const t = mockState.tick
-	const now = new Date()
+	const t = getMockVisualTick()
+	const currentDate = new Date()
 	const days = 7
 	const out = []
 	for (let i = days - 1; i >= 0; i--) {
-		const d = new Date(now)
-		d.setDate(now.getDate() - i)
+		const d = new Date(currentDate)
+		d.setDate(currentDate.getDate() - i)
 		const seed = t * 13 + i * 7
 		out.push({
 			DAY: formatDay(d),
@@ -199,13 +366,13 @@ function mockGetCurve() {
 }
 
 function mockGetSevenDayTrendByOrder() {
-	const t = mockState.tick
-	const now = new Date()
+	const t = getMockVisualTick()
+	const currentDate = new Date()
 	const days = 7
 	const out = []
 	for (let i = days - 1; i >= 0; i--) {
-		const d = new Date(now)
-		d.setDate(now.getDate() - i)
+		const d = new Date(currentDate)
+		d.setDate(currentDate.getDate() - i)
 		const seed = t * 17 + i * 11
 		const chargingOrder = 260 + Math.floor(seeded(seed + 1) * 240) + (t % 10)
 		out.push({
@@ -270,7 +437,7 @@ function mockGetProvinceByDevice(data = {}) {
 		if (!geoJson || !geoJson.features) {
 			return []
 		}
-		const t = mockState.tick
+		const t = getMockVisualTick()
 		const cityNames = Array.from(
 			new Set(
 				geoJson.features
@@ -288,7 +455,7 @@ function mockGetProvinceByDevice(data = {}) {
 			}
 		})
 	}
-	const t = mockState.tick
+	const t = getMockVisualTick()
 	return provinceNames.map((p, idx) => {
 		const seed = t * 19 + idx * 3
 		const base = idx % 7 === 0 ? 0 : 30
@@ -313,7 +480,7 @@ const stationNames = [
 ]
 
 function mockGetOrderList() {
-	const t = mockState.tick
+	const t = getMockVisualTick()
 	const now = Date.now()
 	const size = 18
 	const out = []
@@ -340,28 +507,30 @@ function mockGetOrderList() {
 }
 
 function mockGetListByNetWorkDot(data) {
-	const t = mockState.tick
+	const t = getMockVisualTick()
 	const type = data && data.type != null ? Number(data.type) : 1
 	const size = 12
 	const out = []
 	for (let i = 0; i < size; i++) {
 		const seed = t * 29 + i * 7 + type * 101
+		const orderMoeny = Number((28600 + seeded(seed + 2) * 32000 + t * 31 + seeded(seed + 20)).toFixed(2))
+		const chargingDegree = Number((8600 + seeded(seed + 3) * 12000 + t * 19 + seeded(seed + 21)).toFixed(2))
 		out.push({
 			num: i + 1,
 			networkName: stationNames[i % stationNames.length],
 			orderCount: 680 + Math.floor(seeded(seed + 1) * 420) + (t % 30),
-			orderMoeny: 28600 + Math.floor(seeded(seed + 2) * 32000) + t * 31,
-			chargingDegree: 8600 + Math.floor(seeded(seed + 3) * 12000) + t * 19,
+			orderMoeny,
+			chargingDegree,
 		})
 	}
 	return out
 }
 
 function mockGetDeviceCount() {
-	const t = mockState.tick
-	const chargingStationCount = 86 + Math.floor(seeded(t + 1) * 6)
-	const onLineCount = 1260 + t * 3 + Math.floor(seeded(t + 2) * 20)
-	const unLineCount = 60 + (t % 25)
+	const state = getMockDeviceCountState()
+	const chargingStationCount = state.chargingStationCount
+	const onLineCount = state.onLineCount
+	const unLineCount = state.unLineCount
 	return {
 		onLineCount,
 		unLineCount,
@@ -370,9 +539,9 @@ function mockGetDeviceCount() {
 }
 
 function mockGetDeviceLogList() {
-	const t = mockState.tick
 	const now = Date.now()
-	const size = 22
+	const dayStartTs = getDayStartTs(now)
+	const size = 1 + Math.floor(seeded(dayStartTs + 41) * 5)
 	const out = []
 	const alarmNames = [
 		'设备上线',
@@ -386,20 +555,24 @@ function mockGetDeviceLogList() {
 		'充电阶段充电机中止',
 	]
 	for (let i = 0; i < size; i++) {
-		const seed = t * 31 + i * 11
-		const ts = new Date(now - (i * 28 + Math.floor(seeded(seed) * 20)) * 1000)
+		const seed = dayStartTs + i * 101
+		const hour = 6 + Math.floor(seeded(seed + 1) * 16)
+		const minute = Math.floor(seeded(seed + 2) * 60)
+		const second = Math.floor(seeded(seed + 3) * 60)
+		const seqSeed = Math.floor(seeded(seed + 4) * 99999999)
+		const ts = new Date(dayStartTs + hour * 3600000 + minute * 60000 + second * 1000)
 		const yy = String(ts.getFullYear()).slice(-2)
 		const mm = pad2(ts.getMonth() + 1)
 		const dd = pad2(ts.getDate())
-		const seq = String(1 + ((t * 17 + i * 3) % 99999999)).padStart(8, '0')
-		const alarmItem = { name: alarmNames[(t + i) % alarmNames.length] }
+		const seq = String(1 + seqSeed).padStart(8, '0')
+		const alarmItem = { name: alarmNames[Math.floor(seeded(seed + 5) * alarmNames.length) % alarmNames.length] }
 		out.push({
 			deviceCode: `${yy}${mm}${dd}${seq}`,
 			createTime: formatDateTime(ts),
 			alarmItem,
 		})
 	}
-	return out
+	return out.sort((a, b) => String(b.createTime).localeCompare(String(a.createTime)))
 }
 
 //统计

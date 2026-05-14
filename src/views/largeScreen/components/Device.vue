@@ -98,6 +98,18 @@
 			isMockMode() {
 				return getLargeScreenDataMode() === 'mock'
 			},
+			scheduleMockDailyRefresh() {
+				if (!this.isMockMode()) return
+				const now = new Date()
+				const nextRefresh = new Date(now)
+				nextRefresh.setHours(24, 0, 5, 0)
+				const delay = Math.max(1000, nextRefresh.getTime() - now.getTime())
+				this.refreshTimer = setTimeout(() => {
+					this.getDeviceCount()
+					this.getDeviceLogList()
+					this.scheduleMockDailyRefresh()
+				}, delay)
+			},
 			alarmText(item) {
 				const ai = item ? item.alarmItem : null
 				if (ai && typeof ai === 'object') {
@@ -144,14 +156,11 @@
 			this.getDeviceCount()
 			this.getDeviceLogList()
 			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
-					this.getDeviceCount()
-					this.getDeviceLogList()
-				}, 20000)
+				this.scheduleMockDailyRefresh()
 			}
 		},
 		destroyed() {
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
+			if (this.refreshTimer) clearTimeout(this.refreshTimer)
 		}
 	}
 </script>

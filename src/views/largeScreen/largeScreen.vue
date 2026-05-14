@@ -9,7 +9,7 @@
 						<div class="mainBox_left">
 							<!-- <Recharge /> -->
 							<Daily />
-              <RealOrder />
+              				<RealOrder />
 						</div>
 						<div class="mainBox_middle">
 							<Map />
@@ -18,7 +18,7 @@
 						<div class="mainBox_right">
 							<SevenDayTrendOrder />
 							<Device />
-              <!-- <UpDownLine /> -->
+              				<!-- <UpDownLine /> -->
 						</div>
 					</div>
 				</div>
@@ -70,6 +70,9 @@
 			this.dataMode = getLargeScreenDataMode()
 			try {
 				window.sessionStorage.setItem('largeScreenDataMode', this.dataMode)
+			} catch (e) {}
+			try {
+				window.localStorage.setItem('largeScreenDataMode', this.dataMode)
 			} catch (e) {}
 		},
 		methods: {}
