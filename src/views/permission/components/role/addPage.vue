@@ -97,10 +97,10 @@
 				ger_role_id:[],
 				Loading:false,
 				dataScopeList:[
-					{
-						id:1,
-						title:'全部数据权限'
-					},
+					// {
+					// 	id:1,
+					// 	title:'全部数据权限'
+					// },
 					{
 						id:2,
 						title:'本人及下级数据权限'
