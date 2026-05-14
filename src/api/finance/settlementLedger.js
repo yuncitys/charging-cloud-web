@@ -23,6 +23,14 @@ export function linePage(data) {
   })
 }
 
+export function exportLinePage(data) {
+  return request({
+    url: '/api/web/settlementLedger/period/lines/export',
+    method: 'post',
+    data
+  })
+}
+
 export function submitPayout(data) {
   return request({
     url: '/api/web/settlementLedger/submitPayout',

@@ -295,11 +295,16 @@
               <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="站点ID">
-            <el-input v-model="lineQuery.stationId" clearable placeholder="站点 id" style="width: 120px" />
+          <el-form-item label="站点">
+            <el-select v-model="lineQuery.stationId" clearable filterable placeholder="全部站点" style="width: 220px">
+              <el-option v-for="station in stationList" :key="station.id" :label="station.networkName" :value="station.id" />
+            </el-select>
           </el-form-item>
           <el-form-item label="业务订单号">
             <el-input v-model="lineQuery.bizOrderCode" clearable placeholder="模糊" style="width: 180px" />
+          </el-form-item>
+          <el-form-item label="支付单号">
+            <el-input v-model="lineQuery.payCode" clearable placeholder="模糊" style="width: 180px" />
           </el-form-item>
           <el-form-item>
             <el-button
@@ -309,6 +314,16 @@
               icon="el-icon-search"
               @click="loadLines"
             >筛选</el-button>
+          </el-form-item>
+          <el-form-item>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:lines:export')"
+              type="primary"
+              size="small"
+              icon="el-icon-download"
+              :loading="lineExportLoading"
+              @click="exportLines"
+            >导出</el-button>
           </el-form-item>
         </el-form>
 
@@ -469,6 +484,7 @@
         />
       </div>
     </el-dialog>
+    <downloadProgress ref="downloadProgress" />
   </div>
 </template>
 
@@ -477,6 +493,7 @@ import {
   periodPage,
   periodDetail,
   linePage,
+  exportLinePage,
   submitPayout,
   ingestTaskStats,
   payoutBatchList,
@@ -485,10 +502,15 @@ import {
   retryPayoutSingleOrder
 } from '@/api/finance/settlementLedger'
 import { getMerchant } from '@/api/merchant/merchant'
+import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { parseTime } from '@/utils/index'
 
 export default {
   name: 'SettlementLedger',
+  components: {
+    downloadProgress
+  },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -502,6 +524,8 @@ export default {
       total: 0,
       dateRange: null,
       merchantList: [],
+      stationList: [],
+      lineExportLoading: false,
       taskMonitorVisible: true,
       taskStatsLoading: false,
       taskStatsError: '',
@@ -539,7 +563,8 @@ export default {
         limit: 10,
         merchantId: '',
         stationId: '',
-        bizOrderCode: ''
+        bizOrderCode: '',
+        payCode: ''
       },
       payoutBatches: [],
       payoutBatchLoading: false,
@@ -566,6 +591,7 @@ export default {
   },
   created() {
     this.initMerchant()
+    this.initStationList()
     if (this.btnAuthen && this.btnAuthen.permsVerifAuthention(':web:settlementLedger:ingestTask:stats')) {
       this.loadTaskStats(true)
       this.startTaskStatsAutoRefresh()
@@ -585,6 +611,19 @@ export default {
           this.merchantList = res.data || []
         }
       })
+    },
+    initStationList() {
+      getChargingStationList({})
+        .then(res => {
+          if (res.code === 200) {
+            this.stationList = res.data || []
+          } else {
+            this.stationList = []
+          }
+        })
+        .catch(() => {
+          this.stationList = []
+        })
     },
     onDateRange(val) {
       if (val && val.length === 2) {
@@ -744,7 +783,8 @@ export default {
         limit: 10,
         merchantId: '',
         stationId: '',
-        bizOrderCode: ''
+        bizOrderCode: '',
+        payCode: ''
       }
       periodDetail(row.id).then(res => {
         if (res.code === 200 && res.data) {
@@ -879,6 +919,19 @@ export default {
       this.drawer.lineTotal = 0
       this.drawer.periodId = null
       this.payoutBatches = []
+      this.lineExportLoading = false
+    },
+    buildLinePayload(exportMode) {
+      const sid = this.lineQuery.stationId
+      return {
+        periodId: this.drawer.periodId,
+        page: exportMode ? 1 : this.lineQuery.page,
+        limit: exportMode ? 2000 : this.lineQuery.limit,
+        merchantId: this.lineQuery.merchantId === '' ? null : this.lineQuery.merchantId,
+        stationId: sid === '' || sid === null ? null : Number(sid),
+        bizOrderCode: this.lineQuery.bizOrderCode || null,
+        payCode: this.lineQuery.payCode || null
+      }
     },
     loadLines() {
       if (!this.drawer.periodId) return
@@ -888,15 +941,7 @@ export default {
         return
       }
       this.drawer.lineLoading = true
-      const sid = this.lineQuery.stationId
-      const payload = {
-        periodId: this.drawer.periodId,
-        page: this.lineQuery.page,
-        limit: this.lineQuery.limit,
-        merchantId: this.lineQuery.merchantId === '' ? null : this.lineQuery.merchantId,
-        stationId: sid === '' || sid === null ? null : Number(sid),
-        bizOrderCode: this.lineQuery.bizOrderCode || null
-      }
+      const payload = this.buildLinePayload(false)
       linePage(payload)
         .then(res => {
           if (res.code === 200) {
@@ -908,6 +953,25 @@ export default {
         })
         .finally(() => {
           this.drawer.lineLoading = false
+        })
+    },
+    exportLines() {
+      if (!this.drawer.periodId) return
+      if (!this.btnAuthen || !this.btnAuthen.permsVerifAuthention(':web:settlementLedger:lines:export')) {
+        this.$message.error('暂无导出权限')
+        return
+      }
+      this.lineExportLoading = true
+      exportLinePage(this.buildLinePayload(true))
+        .then(res => {
+          if (res.code === 200 && res.data && res.data.id) {
+            this.$refs.downloadProgress.open(res.data.id)
+          } else {
+            this.$message.error((res && res.msg) || '导出失败')
+          }
+        })
+        .finally(() => {
+          this.lineExportLoading = false
         })
     },
     onLinePage(p) {
