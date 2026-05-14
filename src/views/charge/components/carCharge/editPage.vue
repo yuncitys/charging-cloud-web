@@ -7,9 +7,15 @@
         		编辑方案
 			</el-button>
 			<!-- 编辑方案 style="margin-right: 20px ;"-->
-			<el-dialog :visible.sync="showEdit" title="编辑方案" @close="showEdit = false" class="scheme-dialog"
+			<el-drawer
+				:visible.sync="showEdit"
+				title="编辑方案"
+				custom-class="car-charge-drawer"
+				direction="rtl"
+				size="760px"
 				:append-to-body="true">
-				<el-form ref="editData" :model="editData" label-position="left" label-width="80px">
+				<div class="car-charge-drawer__body">
+				<el-form ref="editData" :model="editData" label-position="left" label-width="80px" class="car-charge-form">
 					<el-form-item :label="'方案名称'" prop="name">
 						<el-input v-model="editData.name" placeholder="请输入方案名称" clearable/>
 					</el-form-item>
@@ -39,20 +45,6 @@
 								@onSelectedTime="onEditSelectedTime" :enTime="_item.enTime"
 								:disabled-items="editData.disabledItems"></select-time>
 							<el-select class="select-priod-type" v-model="_item.periodTypeId">
-								<el-option v-for="(item,index) in  editData.priceTier" :value="item.periodTypeId"
-									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元】 服务费 【'+item.serviceFee+' 元】' ">
-								</el-option>
-							</el-select>
-						</div>
-					</el-form-item>
-					<el-form-item>
-						<div class="price-period-item">
-							<span class="reduce-svg" />
-							<div class="periodTypeId">
-								<el-input class="other-period" disabled placeholder="其他时段统一价格"></el-input>
-							</div>
-							<el-select class="select-priod-type"
-								v-model="editData.periodTimePrices.defaultPeriodTypeId">
 								<el-option v-for="(item,index) in  editData.priceTier" :value="item.periodTypeId"
 									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元】 服务费 【'+item.serviceFee+' 元】' ">
 								</el-option>
@@ -127,12 +119,13 @@
 						</div>
 					</div>
 
-					<el-form-item>
+				</el-form>
+					<div class="car-charge-drawer__footer">
 						<el-button type="primary" @click="onEditData('editData')">确定</el-button>
 						<el-button @click="showEdit = false">取消</el-button>
-					</el-form-item>
-				</el-form>
-			</el-dialog>
+					</div>
+				</div>
+			</el-drawer>
 
 		</div>
 	</div>
@@ -490,38 +483,33 @@
 				console.log('.....this.editData.disabledItems.....', this.editData.disabledItems)
 			},
 			validePeriodTime(periodTimes) {
-				let timeArray = []
-				let validate = true
+				const timeArray = []
 				console.log('..............periodTimes......', periodTimes)
-				periodTimes.forEach((item, index) => {
+				for (let index = 0; index < periodTimes.length; index++) {
+					const item = periodTimes[index]
 					console.log('.....item....', item, item.stTime, item.enTime)
-					let timeArray1 = item.stTime.split(':')
-					let time1 = parseInt(timeArray1[0]) * 60 + parseInt(timeArray1[1])
-					let timeArray2 = item.enTime.split(':')
-					let time2 = parseInt(timeArray2[0]) * 60 + parseInt(timeArray2[1])
-					if (time2 <= time1) { // 结束时间小于等于开始时间
-						validate = false
-						return
+					if (!item.stTime || !item.enTime) {
+						return '时间区段时间值错误'
 					}
-					timeArray[index] = [time1, time2]
-				})
-				let _timeArray = timeArray
-				_timeArray.forEach((item, index) => {
-					timeArray.forEach((_item, _index) => {
-						if (item[0] >= _item[0] && item[0] < _item[1] && index != _index) {
-							validate = false
-							return
-						}
-						if (item[1] > _item[0] && item[1] < _item[1] && index != _index) {
-							validate = false
-							return
-						}
-					})
-					if (validate == false) {
-						return
+					const timeArray1 = item.stTime.split(':')
+					const time1 = parseInt(timeArray1[0]) * 60 + parseInt(timeArray1[1])
+					const timeArray2 = item.enTime.split(':')
+					const time2 = parseInt(timeArray2[0]) * 60 + parseInt(timeArray2[1])
+					if (Number.isNaN(time1) || Number.isNaN(time2) || time2 <= time1) {
+						return '时间区段时间值错误'
 					}
-				})
-				return validate
+					timeArray.push([time1, time2])
+				}
+				timeArray.sort((a, b) => a[0] - b[0])
+				if (timeArray[0][0] !== 0 || timeArray[timeArray.length - 1][1] !== 24 * 60) {
+					return '所有价格时区必须完整覆盖00:00~24:00'
+				}
+				for (let index = 0; index < timeArray.length - 1; index++) {
+					if (timeArray[index][1] !== timeArray[index + 1][0]) {
+						return '所有价格时区必须完整覆盖00:00~24:00'
+					}
+				}
+				return ''
 			},
 			showDidlaoEditData() {
 				let item = this.row_data
@@ -574,7 +562,9 @@
 					}
 				})
 				this.editData.priceTier = carPriceTierList
-				this.editData.periodTimePrices.defaultPeriodTypeId = String(item.remainFlag)
+				this.editData.periodTimePrices.defaultPeriodTypeId = item.remainFlag != null && item.remainFlag !== ''
+					? String(item.remainFlag)
+					: ''
 				this.editData.periodTimePrices.periodPriceList = []
 				item.priceContents.forEach((item, index) => {
 					let stTime = item.beginTime.substring(0, 2) + ':' + item.beginTime.substring(2, 4)
@@ -624,10 +614,6 @@
 					this.$message.error('请输入方案名称')
 					return false
 				}
-				if (!this.editData.periodTimePrices.defaultPeriodTypeId) {
-					this.$message.error('请选择其他时段统一价格类型')
-					return false
-				}
 				console.log('.....this.addData.periodTimePrices.periodPriceList.length......', this.editData
 					.periodTimePrices.periodPriceList.length)
 				if (this.editData.periodTimePrices.periodPriceList.length < 1) {
@@ -644,8 +630,9 @@
 					this.$message.error('时间区段价格设置有误！')
 					return
 				}
-				if (!this.validePeriodTime(this.editData.periodTimePrices.periodPriceList)) {
-					this.$message.error('时间区段时间值错误')
+				const periodValidateMsg = this.validePeriodTime(this.editData.periodTimePrices.periodPriceList)
+				if (periodValidateMsg) {
+					this.$message.error(periodValidateMsg)
 					return
 				}
 				if (this.unit === 0 && Number(this.preMoney) <= 0){
@@ -754,11 +741,13 @@
 					beginTime,
 					endTime,
 					flag,
-					remainFlag,
           			priceView: priceViewJson,
 					ruleId: 2,
 					priceType: 1,
 					tdpId,
+				}
+				if (remainFlag !== '' && remainFlag !== null && remainFlag !== undefined) {
+					data.remainFlag = remainFlag
 				}
 				this.$refs[formName].validate(valid => {
 					console.log('....valid.....', valid)
@@ -767,7 +756,6 @@
 						updateDevicePrice(data).then(res => {
 							if (res.code == 200) {
 								this.showEdit = false
-								this.resetForm(formName)
 								this.$message.success(res.msg)
 								this.$emit('getLists')
 							} else {
@@ -783,7 +771,9 @@
 				})
 			},
 			resetForm(formName) {
-				this.$refs[formName].resetFields()
+				if (this.$refs[formName]) {
+					this.$refs[formName].resetFields()
+				}
 			}
 		},
 		created() {
@@ -871,5 +861,29 @@
 	.add-period-item {
 		padding-bottom: 15px;
 		padding-top: 15px;
+	}
+
+	::v-deep .car-charge-drawer.el-drawer .el-drawer__body {
+		height: 100%;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	.car-charge-drawer__body {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.car-charge-form {
+		flex: 1;
+		overflow-y: auto;
+		padding: 0 20px;
+	}
+
+	.car-charge-drawer__footer {
+		padding: 16px 20px;
+		border-top: 1px solid #ebeef5;
+		background: #fff;
 	}
 </style>

@@ -1,13 +1,20 @@
 <template>
 	<div style="display: inline-block;">
 		<div>
-			<el-button style="margin-right: 20px ;" type="primary" @click="showAdd=true" class="filter-item"
+			<el-button style="margin-right: 20px ;" type="primary" @click="showAdd = true" class="filter-item"
 				v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:carCharge:add')">新增方案
 			</el-button>
 			<!-- 新增方案-->
-			<el-dialog :visible.sync="showAdd" title="新增方案" @close="showAdd = false" class="scheme-dialog"
-				:append-to-body="true">
-				<el-form ref="addData" :model="addData" label-position="left" label-width="80px">
+			<el-drawer
+				:visible.sync="showAdd"
+				title="新增方案"
+				custom-class="car-charge-drawer"
+				direction="rtl"
+				size="760px"
+				:append-to-body="true"
+				@close="handleAddClose">
+				<div class="car-charge-drawer__body">
+				<el-form ref="addData" :model="addData" label-position="left" label-width="80px" class="car-charge-form">
 					<el-form-item :label="'方案名称'" prop="name">
 						<el-input v-model="addData.name" placeholder="请输入方案名称" clearable />
 					</el-form-item>
@@ -37,20 +44,6 @@
 								@onSelectedTime="onSelectedTime" :enTime="_item.enTime"
 								:disabled-items="addData.disabledItems"></select-time>
 							<el-select class="select-priod-type" v-model="_item.periodTypeId" @change="addselectSelect">
-								<el-option v-for="(item,index) in  addData.priceTier" :value="item.periodTypeId"
-									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元/度】 服务费 【'+item.serviceFee+' 元/度】' "
-									:key="index"></el-option>
-							</el-select>
-						</div>
-					</el-form-item>
-					<el-form-item>
-						<div class="price-period-item">
-							<span class="reduce-svg" />
-							<div class="periodTypeId">
-								<el-input class="other-period" disabled placeholder="其他时段统一价格"></el-input>
-							</div>
-							<el-select class="select-priod-type" v-model="addData.periodTimePrices.defaultPeriodTypeId"
-								@change="addselectSelect">
 								<el-option v-for="(item,index) in  addData.priceTier" :value="item.periodTypeId"
 									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元/度】 服务费 【'+item.serviceFee+' 元/度】' "
 									:key="index"></el-option>
@@ -124,12 +117,13 @@
 						</div>
 					</div>
 
-					<el-form-item>
+				</el-form>
+					<div class="car-charge-drawer__footer">
 						<el-button type="primary" @click="onaddData('addData')">确定</el-button>
 						<el-button @click="showAdd = false">取消</el-button>
-					</el-form-item>
-				</el-form>
-			</el-dialog>
+					</div>
+				</div>
+			</el-drawer>
 		</div>
 	</div>
 </template>
@@ -415,6 +409,9 @@
 			}
 		},
 		methods: {
+			handleAddClose() {
+				this.resetForm('addData')
+			},
 			addselectSelect(value) {
 				console.log('... addselectSelect....', value)
 				console.log('this.adddata', this.addData)
@@ -497,10 +494,6 @@
 					this.$message.error('请输入方案名称')
 					return false
 				}
-				if (!this.addData.periodTimePrices.defaultPeriodTypeId) {
-					this.$message.error('请选择其他时段统一价格类型')
-					return false
-				}
 				console.log('.....this.addData.periodTimePrices.periodPriceList.length......', this.addData.periodTimePrices.periodPriceList.length)
 				if (this.addData.periodTimePrices.periodPriceList.length < 1) {
 					this.$message.error('请至少添加一个时间区段价格')
@@ -518,8 +511,9 @@
 					return
 				}
 				console.log('.....this.addData.periodTimePrices.periodPriceList......', this.addData.periodTimePrices.periodPriceList)
-				if (!this.validePeriodTime(this.addData.periodTimePrices.periodPriceList)) {
-					this.$message.error('时间区段时间值错误')
+				const periodValidateMsg = this.validePeriodTime(this.addData.periodTimePrices.periodPriceList)
+				if (periodValidateMsg) {
+					this.$message.error(periodValidateMsg)
 					return
 				}
 				if (this.unit === 0 && Number(this.preMoney) <= 0){
@@ -626,10 +620,12 @@
 					beginTime,
 					endTime,
 					flag,
-					remainFlag,
           			priceView: priceViewJson,
 					ruleId: 2,
 					priceType: 1
+				}
+				if (remainFlag !== '' && remainFlag !== null && remainFlag !== undefined) {
+					data.remainFlag = remainFlag
 				}
 				this.$refs[formName].validate(valid => {
 					console.log('....valid.....', valid)
@@ -638,7 +634,6 @@
 						batchDevicePrices(data).then(res => {
 							if (res.code == 200) {
 								this.showAdd = false
-								this.resetForm(formName)
 								this.$message.success(res.msg)
 								this.$emit('getLists')
 							} else {
@@ -654,41 +649,40 @@
 				})
 			},
 			validePeriodTime(periodTimes) {
-				let timeArray = []
-				let validate = true
+				const timeArray = []
 				console.log('..............periodTimes......', periodTimes)
-				periodTimes.forEach((item, index) => {
+				for (let index = 0; index < periodTimes.length; index++) {
+					const item = periodTimes[index]
 					console.log('.....item....', item, item.stTime, item.enTime)
-					let timeArray1 = item.stTime.split(':')
-					let time1 = parseInt(timeArray1[0]) * 60 + parseInt(timeArray1[1])
-					let timeArray2 = item.enTime.split(':')
-					let time2 = parseInt(timeArray2[0]) * 60 + parseInt(timeArray2[1])
-					if (time2 <= time1) { // 结束时间小于等于开始时间
-						validate = false
-						return
+					if (!item.stTime || !item.enTime) {
+						return '时间区段时间值错误'
 					}
-					timeArray[index] = [time1, time2]
-				})
-				let _timeArray = timeArray
-				_timeArray.forEach((item, index) => {
-					timeArray.forEach((_item, _index) => {
-						if (item[0] >= _item[0] && item[0] < _item[1] && index != _index) {
-							validate = false
-							return
-						}
-						if (item[1] > _item[0] && item[1] < _item[1] && index != _index) {
-							validate = false
-							return
-						}
-					})
-					if (validate == false) {
-						return
+					const timeArray1 = item.stTime.split(':')
+					const time1 = parseInt(timeArray1[0]) * 60 + parseInt(timeArray1[1])
+					const timeArray2 = item.enTime.split(':')
+					const time2 = parseInt(timeArray2[0]) * 60 + parseInt(timeArray2[1])
+					if (Number.isNaN(time1) || Number.isNaN(time2) || time2 <= time1) {
+						return '时间区段时间值错误'
 					}
-				})
-				return validate
+					timeArray.push([time1, time2])
+				}
+				timeArray.sort((a, b) => a[0] - b[0])
+				if (timeArray[0][0] !== 0 || timeArray[timeArray.length - 1][1] !== 24 * 60) {
+					return '所有价格时区必须完整覆盖00:00~24:00'
+				}
+				for (let index = 0; index < timeArray.length - 1; index++) {
+					if (timeArray[index][1] !== timeArray[index + 1][0]) {
+						return '所有价格时区必须完整覆盖00:00~24:00'
+					}
+				}
+				return ''
 			},
 			resetForm(formName) {
-				this.$refs[formName].resetFields()
+				if (this.$refs[formName]) {
+					this.$refs[formName].resetFields()
+				}
+				this.unit = 2
+				this.preMoney = 50
 				this.addData = {
 					name: '',
 					priceTier: [
@@ -818,5 +812,29 @@
 	.add-period-item {
 		padding-bottom: 15px;
 		padding-top: 15px;
+	}
+
+	::v-deep .car-charge-drawer.el-drawer .el-drawer__body {
+		height: 100%;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	.car-charge-drawer__body {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.car-charge-form {
+		flex: 1;
+		overflow-y: auto;
+		padding: 0 20px;
+	}
+
+	.car-charge-drawer__footer {
+		padding: 16px 20px;
+		border-top: 1px solid #ebeef5;
+		background: #fff;
 	}
 </style>
