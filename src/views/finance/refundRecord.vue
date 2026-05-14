@@ -19,6 +19,15 @@
 			<div style="margin: 15px 0;">
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 					icon="el-icon-search">查询</el-button>
+				<el-button
+					v-if="btnAuthen.permsVerifAuthention(':finance:refundRecord:export')"
+					type="primary"
+					style="margin-right: 20px ;"
+					class="filter-item"
+					:loading="downloadLoading"
+					icon="el-icon-download"
+					@click="handleExport"
+				>导出Excel</el-button>
 			</div>
 
 			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
@@ -35,8 +44,6 @@
 				<el-table-column label="第三方退款编号" prop="thirdRefundCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<!-- <el-table-column label="用户头像" prop="headImg" align="center">
 					<template slot-scope="scope" style="text-align: center;">
@@ -89,25 +96,30 @@
 					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
 			</div>
 		</div>
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
 <script>
 	import {
 		getList,
+		downloadExcel
 	} from '@/api/finance/refundRecord.js'
 	import {
 		parseTime
 	} from '@/utils/index'
 	import imgView from '@/components/Common/imgView.vue'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	export default {
 		name: 'refundRecord',
 		components: {
-			imgView
+			imgView,
+			downloadProgress
 		},
 		data() {
 			return {
 				listLoading: true,
+				downloadLoading: false,
 				page: 1,
 				limit: 10,
 				list: [],
@@ -201,6 +213,27 @@
 			handleFilter() {
 				this.listQuery.page = 1
 				this.getLists()
+			},
+			handleExport() {
+				this.downloadLoading = true
+				const downloadData = {
+					limit: 3000,
+					payCode: this.listQuery.payCode,
+					refundCode: this.listQuery.refundCode,
+					userCode: this.listQuery.userCode,
+					status: this.listQuery.status,
+					createTimeStart: this.listQuery.createTimeStart,
+					createTimeEnd: this.listQuery.createTimeEnd
+				}
+				downloadExcel(downloadData).then(res => {
+					if (res.code === 200 && res.data && res.data.id) {
+						this.$refs.downloadProgress.open(res.data.id)
+					} else {
+						this.$message.error((res && res.msg) || '导出失败')
+					}
+				}).finally(() => {
+					this.downloadLoading = false
+				})
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
