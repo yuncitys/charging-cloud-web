@@ -8,7 +8,7 @@
       title="使用说明"
       description="正向台账由订单结算完成后的实时入账写入；异常单可看下方「实时入账任务监控」或依赖异步队列重试。分账由调度任务按日/周/月发起。账期按商户+结算方式拆分，账期主键 形如 M商户ID|SM结算方式|DAY|日期。"
     />
-    <div class="task-monitor-container">
+    <div v-if="taskMonitorVisible" class="task-monitor-container">
       <div class="task-monitor-header">
         <div class="task-monitor-title">实时入账任务监控</div>
         <div class="task-monitor-actions">
@@ -502,6 +502,7 @@ export default {
       total: 0,
       dateRange: null,
       merchantList: [],
+      taskMonitorVisible: true,
       taskStatsLoading: false,
       taskStatsError: '',
       taskStatsTimer: null,
@@ -664,6 +665,7 @@ export default {
       }
     },
     loadTaskStats(silent) {
+      if (!this.taskMonitorVisible) return
       this.taskStatsLoading = true
       ingestTaskStats()
         .then(res => {
@@ -677,12 +679,22 @@ export default {
             this.taskStats.deadSamples = d.deadSamples || []
             this.taskStats.lastRefreshTime = parseTime(new Date())
             this.taskStatsError = ''
+          } else if (res && Number(res.code) === 401) {
+            this.taskMonitorVisible = false
+            this.taskStatsError = ''
+            this.stopTaskStatsAutoRefresh()
           } else {
             this.taskStatsError = (res && res.msg) || '任务统计加载失败'
             if (!silent) this.$message.error(this.taskStatsError)
           }
         })
-        .catch(() => {
+        .catch(err => {
+          if (err && err.response && Number(err.response.status) === 401) {
+            this.taskMonitorVisible = false
+            this.taskStatsError = ''
+            this.stopTaskStatsAutoRefresh()
+            return
+          }
           this.taskStatsError = '任务统计加载异常'
           if (!silent) this.$message.error(this.taskStatsError)
         })
