@@ -3,8 +3,15 @@
 		<el-button type="primary" @click="" style="margin-left: 10px;" @click="showDidlaoformData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':netWorkDot:charge:powerCharge:edit')">编辑
 		</el-button>
-		<el-dialog :visible.sync="showDialog" title="编辑方案" @close="showDialog = false" :append-to-body="true">
-			<el-form ref="formData" :model="formData" label-position="left" label-width="80px">
+		<el-drawer
+			:visible.sync="showDialog"
+			title="编辑方案"
+			custom-class="charge-scheme-drawer"
+			direction="rtl"
+			size="760px"
+			:append-to-body="true">
+			<div class="charge-scheme-drawer__body">
+			<el-form ref="formData" :model="formData" label-position="left" label-width="80px" class="charge-scheme-form">
 				<el-form-item :label="'方案名称'" prop="feeName">
 					<el-input v-model="formData.feeName" placeholder="请输入方案名称" clearable
 						class="feeName" />
@@ -49,7 +56,7 @@
 					<div style="margin: 30px 0;margin-left: 20px;">
 						<div v-for="(item, index) in formData.duration" :key="index" class="formItem">
 							<div style="display: flex;align-items: center;">
-								<div>
+								<div class="power-charge-form__group">
 									<div class="flex inputBoxx1" style="align-items: center;">
 										<div class="inputCom">
 											<el-input v-model="formData.duration[index].left" clearable type="number"
@@ -124,78 +131,72 @@
 						</div>
 					</div>
 					<div>
-						<h2>更多设置</h2>
-						<div style="margin-left: 20px;">
-							<div style="display: flex;align-items: center;" v-if="pageType === 0">
-								<div style="width: 80px;">
-									<h3>预收金额</h3>
-								</div>
-								<div>
-									<el-input placeholder="请输入金额" v-model="fixedMoney" type="number"
-										style="width: 250px;">
+						<div class="charge-scheme-settings__title">更多设置</div>
+						<div class="charge-scheme-settings__content">
+							<div class="charge-scheme-settings__row" v-if="pageType === 0">
+								<div class="charge-scheme-settings__label">预收金额</div>
+								<div class="charge-scheme-settings__control">
+									<el-input class="charge-scheme-settings__input" placeholder="请输入金额" v-model="fixedMoney" type="number">
 										<template slot="append">元</template>
 									</el-input>
 								</div>
 							</div>
-							<div>
-								<span style="display: inline-block;margin-right:20px">
-									<h3>充满自停档位</h3>
-								</span>
-								<el-switch v-model="isAutostop"></el-switch><span
-									style="display: inline-block;margin-left: 10px;color: #999;"><i
-										class="el-icon-warning"></i>车主可选择该档位进行充电，需支付设置金额，设备根据设定的最大时间给车主开电，尽可能保证充满</span>
+							<div class="charge-scheme-settings__switch">
+								<div class="charge-scheme-settings__switch-row">
+									<span class="charge-scheme-settings__switch-label">充满自停档位</span>
+									<el-switch v-model="isAutostop"></el-switch>
+								</div>
+								<div class="charge-scheme-settings__hint charge-scheme-settings__hint--switch">
+									<i class="el-icon-warning"></i>车主可选择该档位进行充电，需支付设置金额，设备根据设定的最大时间给车主开电，尽可能保证充满
+								</div>
 							</div>
 							<div v-if="isAutostop">
-								<div style="display: flex;align-items: center;">
-									<div style="width: 120px;">
-										<h3>收费方式</h3>
-									</div>
-									<div>
-										<el-radio-group v-model="chco">
-											<el-radio :label="0">预收费 <span v-if="chco===0"
-													style="display: inline-block;margin-right: 20px;color: #999;"><i
-														class="el-icon-warning"></i>充满后剩余金额将退回车主</span></el-radio>
-											<el-radio :label="1">固定金额 <span v-if="chco===1"
-													style="display: inline-block;margin-right: 20px;color: #999;"><i
-														class="el-icon-warning"></i>确保车主充满，不退余额</span></el-radio>
+								<div class="charge-scheme-settings__row">
+									<div class="charge-scheme-settings__label">收费方式</div>
+									<div class="charge-scheme-settings__control">
+										<el-radio-group v-model="chco" class="charge-scheme-settings__radio">
+											<el-radio :label="0">预收费</el-radio>
+											<el-radio :label="1">固定金额</el-radio>
 										</el-radio-group>
+										<div v-if="chco===0" class="charge-scheme-settings__hint">
+											<i class="el-icon-warning"></i>充满后剩余金额将退回车主
+										</div>
+										<div v-if="chco===1" class="charge-scheme-settings__hint">
+											<i class="el-icon-warning"></i>确保车主充满，不退余额
+										</div>
 									</div>
 								</div>
-								<div style="display: flex;align-items: center;" v-if="pageType===2">
-									<div style="width: 120px;">
-										<h3 v-if="chco===0">预收金额</h3>
-										<h3 v-if="chco===1">固定金额</h3>
+								<div class="charge-scheme-settings__row" v-if="pageType===2">
+									<div class="charge-scheme-settings__label">
+										<span v-if="chco===0">预收金额</span>
+										<span v-if="chco===1">固定金额</span>
 									</div>
-									<div>
-										<el-input placeholder="请输入金额" v-model="fixedMoney" type="number"
-											style="width: 250px;">
+									<div class="charge-scheme-settings__control">
+										<el-input class="charge-scheme-settings__input" placeholder="请输入金额" v-model="fixedMoney" type="number">
 											<template slot="append">元</template>
 										</el-input>
 									</div>
 								</div>
-								<div style="display: flex;align-items: center;" v-if="pageType===0 && chco===1">
-									<div style="width: 120px;">
-										<h3 v-if="chco===0">预收金额</h3>
-										<h3 v-if="chco===1">固定金额</h3>
+								<div class="charge-scheme-settings__row" v-if="pageType===0 && chco===1">
+									<div class="charge-scheme-settings__label">
+										<span v-if="chco===0">预收金额</span>
+										<span v-if="chco===1">固定金额</span>
 									</div>
-									<div>
-										<el-input placeholder="请输入金额" v-model="fixedMoney" type="number"
-											style="width: 250px;">
+									<div class="charge-scheme-settings__control">
+										<el-input class="charge-scheme-settings__input" placeholder="请输入金额" v-model="fixedMoney" type="number">
 											<template slot="append">元</template>
 										</el-input>
 									</div>
 								</div>
-								<div style="display: flex;align-items: center;">
-									<div style="width: 120px;">
-										<h3>最长充电时长</h3>
-									</div>
-									<div>
-										<el-input placeholder="请输入时间" v-model="maxChargeTime" type="number"
-											style="width: 250px;">
+								<div class="charge-scheme-settings__row">
+									<div class="charge-scheme-settings__label">最长充电时长</div>
+									<div class="charge-scheme-settings__control">
+										<el-input class="charge-scheme-settings__input" placeholder="请输入时间" v-model="maxChargeTime" type="number">
 											<template slot="append">小时</template>
 										</el-input>
-										<span style="display: inline-block;margin-left: 20px;color: #999;"><i
-												class="el-icon-warning"></i>设置该档位针对单个端口车主允许最长可充电</span>
+										<div class="charge-scheme-settings__hint">
+											<i class="el-icon-warning"></i>设置该档位针对单个端口车主允许最长可充电
+										</div>
 									</div>
 								</div>
 							</div>
@@ -203,12 +204,13 @@
 					</div>
 				</div>
 
-				<el-form-item>
+			</el-form>
+				<div class="charge-scheme-drawer__footer">
 					<el-button type="primary" @click="onformData('formData')">确定</el-button>
 					<el-button @click="showDialog = false">取消</el-button>
-				</el-form-item>
-			</el-form>
-		</el-dialog>
+				</div>
+			</div>
+		</el-drawer>
 	</div>
 </template>
 
@@ -631,7 +633,9 @@
 				})
 			},
 			resetForm(formName) {
-				this.$refs[formName].resetFields();
+				if (this.$refs[formName]) {
+					this.$refs[formName].resetFields();
+				}
 			},
 		}
 	}
@@ -655,11 +659,127 @@
 		width: 100%;
 	}
 
+	.inputBoxx1 .inputCom,
+	.inputBoxx2 .inputCom {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.inputBoxx1 .el-input,
+	.inputBoxx2 .el-input {
+		width: 100%;
+	}
+
 	.inputBtnn {
 		margin-top: 10px !important;
 	}
 
 	.formItem {
 		margin-bottom: 25px;
+	}
+
+	.power-charge-form__group {
+		width: 720px;
+		max-width: 100%;
+	}
+
+	.charge-scheme-drawer .el-drawer__body {
+		height: 100%;
+		padding: 0;
+		overflow: hidden;
+	}
+
+	.charge-scheme-drawer__body {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+	}
+
+	.charge-scheme-form {
+		flex: 1;
+		overflow-y: auto;
+		padding: 0 20px;
+	}
+
+	.charge-scheme-drawer__footer {
+		padding: 16px 20px;
+		border-top: 1px solid #ebeef5;
+		background: #fff;
+	}
+
+	.charge-scheme-settings__title {
+		font-size: 18px;
+		font-weight: 600;
+		line-height: 26px;
+		color: #303133;
+	}
+
+	.charge-scheme-settings__content {
+		margin-left: 20px;
+	}
+
+	.charge-scheme-settings__row {
+		display: flex;
+		align-items: flex-start;
+		margin-top: 16px;
+	}
+
+	.charge-scheme-settings__label,
+	.charge-scheme-settings__switch-label {
+		width: 112px;
+		flex-shrink: 0;
+		font-size: 15px;
+		font-weight: 600;
+		line-height: 22px;
+		color: #303133;
+	}
+
+	.charge-scheme-settings__label {
+		padding-top: 5px;
+	}
+
+	.charge-scheme-settings__control {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.charge-scheme-settings__input {
+		width: 250px;
+		max-width: 100%;
+	}
+
+	.charge-scheme-settings__switch {
+		margin-top: 16px;
+	}
+
+	.charge-scheme-settings__switch-row {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+
+	.charge-scheme-settings__radio .el-radio {
+		margin-right: 24px;
+		margin-bottom: 8px;
+	}
+
+	.charge-scheme-settings__radio .el-radio__label {
+		font-size: 14px;
+	}
+
+	.charge-scheme-settings__hint {
+		margin-top: 8px;
+		font-size: 13px;
+		line-height: 20px;
+		color: #909399;
+	}
+
+	.charge-scheme-settings__hint--switch {
+		padding-left: 124px;
+	}
+
+	.charge-scheme-settings__hint .el-icon-warning {
+		margin-right: 4px;
 	}
 </style>
