@@ -26,13 +26,13 @@
 
 			<el-divider content-position="left">收款信息</el-divider>
 			<el-table v-if="payeeList.length" :data="payeeList" border size="mini" style="width: 100%;" :span-method="payeeSpanMethod">
-				<el-table-column v-for="col in payeeColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
+				<el-table-column v-for="col in payeeColumns" :key="col.prop" :prop="col.prop" :label="col.label" :formatter="col.formatter" align="center" :show-overflow-tooltip="true" />
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 
 			<el-divider content-position="left">退款信息</el-divider>
 			<el-table v-if="profitRefundRecords.length" :data="profitRefundRecords" border size="mini" style="width: 100%;" :span-method="refundSpanMethod">
-				<el-table-column v-for="col in refundRecordColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
+				<el-table-column v-for="col in refundRecordColumns" :key="col.prop" :prop="col.prop" :label="col.label" :formatter="col.formatter" align="center" :show-overflow-tooltip="true" />
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 		</div>
@@ -41,6 +41,11 @@
 
 <script>
 import { getDetail } from '@/api/finance/orderSplitRecord.js'
+
+const SETT_BANK_ACC_TYPE_MAP = Object.freeze({
+	'0010': '借记帐户',
+	'0030': '对公账户'
+})
 
 export default {
 	name: 'orderSplitRecordDetail',
@@ -244,7 +249,11 @@ export default {
 			]
 			const keys = this.getDynamicColumns(list).filter(k => !hiddenProps.includes(k))
 			const ordered = preferredProps.filter(k => keys.includes(k)).concat(keys.filter(k => !preferredProps.includes(k)))
-			return ordered.map(prop => ({ prop, label: labelMap[prop] || prop }))
+			return ordered.map(prop => ({
+				prop,
+				label: labelMap[prop] || prop,
+				formatter: this.getSettBankAccTypeFormatter(prop)
+			}))
 		},
 		getDynamicColumns(list) {
 			if (!Array.isArray(list) || list.length === 0) return []
@@ -293,7 +302,19 @@ export default {
 			]
 			const keys = this.getDynamicColumns(list).filter(k => !hiddenProps.includes(k))
 			const ordered = preferredProps.filter(k => keys.includes(k)).concat(keys.filter(k => !preferredProps.includes(k)))
-			return ordered.map(prop => ({ prop, label: labelMap[prop] || prop }))
+			return ordered.map(prop => ({
+				prop,
+				label: labelMap[prop] || prop,
+				formatter: this.getSettBankAccTypeFormatter(prop)
+			}))
+		},
+		getSettBankAccTypeFormatter(prop) {
+			if (prop !== 'settBankAccType') return null
+			return row => this.formatMagicValue(row && row.settBankAccType, SETT_BANK_ACC_TYPE_MAP)
+		},
+		formatMagicValue(val, valueMap) {
+			if (val === null || val === undefined || val === '') return '-'
+			return valueMap[val] || val
 		},
 		formatNullable(val) {
 			if (val === 0 || val === '0') return val

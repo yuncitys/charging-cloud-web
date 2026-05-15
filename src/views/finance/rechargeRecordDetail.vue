@@ -41,13 +41,13 @@
 
 			<el-divider content-position="left">退款明细</el-divider>
 			<el-table v-if="detailRefundDetails.length" :data="detailRefundDetails" border size="mini" style="width: 100%;">
-				<el-table-column v-for="col in refundColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
+				<el-table-column v-for="col in refundColumns" :key="col.prop" :prop="col.prop" :label="col.label" :formatter="col.formatter" align="center" :show-overflow-tooltip="true" />
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 
 			<el-divider content-position="left">分账明细</el-divider>
 			<el-table v-if="detailSplitRecords.length" :data="detailSplitRecords" border size="mini" style="width: 100%;">
-				<el-table-column v-for="col in splitColumns" :key="col.prop" :prop="col.prop" :label="col.label" align="center" :show-overflow-tooltip="true" />
+				<el-table-column v-for="col in splitColumns" :key="col.prop" :prop="col.prop" :label="col.label" :formatter="col.formatter" align="center" :show-overflow-tooltip="true" />
 			</el-table>
 			<div v-else style="text-align: center; padding: 12px 0;">暂无数据</div>
 		</div>
@@ -81,6 +81,40 @@
 <script>
 	import { getDetail } from '@/api/finance/rechargeRecord.js'
 	import { tradingRefund } from '@/api/finance/refundCenter.js'
+
+	const REFUND_STATUS_MAP = Object.freeze({
+		UNTREATED: '未处理',
+		PROCESSING: '处理中',
+		SUCCESS: '退款成功',
+		FAILED: '退款失败',
+		ABNORMAL: '退款失败',
+		CLOSED: '退款关闭'
+	})
+
+	const REFUND_SOURCE_MAP = Object.freeze({
+		CHARGING_ORDER: '订单退款',
+		WALLET_BALANCE: '余额退款'
+	})
+
+	const REFUND_CHANNEL_MAP = Object.freeze({
+		ORIGINAL: '原路退款',
+		BALANCE: '退回到余额',
+		OTHER_BALANCE: '原账户异常退到其他余额账户',
+		OTHER_BANKCARD: '原银行卡异常退到其他银行卡'
+	})
+
+	const SPLIT_STATUS_MAP = Object.freeze({
+		UNTREATED: '未处理',
+		FINISH: '已完成',
+		RPOCESSED: '处理中',
+		FAIL: '分账失败'
+	})
+
+	const SPLIT_PAY_TYPE_MAP = Object.freeze({
+		BALANCE: '余额',
+		CARD: '卡支付'
+	})
+
 	export default {
 		name: 'rechargeRecordDetail',
 		data() {
@@ -284,7 +318,11 @@
 				]
 				const keys = this.getDynamicColumns(list).filter(k => !hiddenProps.includes(k))
 				const ordered = preferredProps.filter(k => keys.includes(k)).concat(keys.filter(k => !preferredProps.includes(k)))
-				return ordered.map(prop => ({ prop, label: labelMap[prop] || prop }))
+				return ordered.map(prop => ({
+					prop,
+					label: labelMap[prop] || prop,
+					formatter: this.getRefundColumnFormatter(prop)
+				}))
 			},
 			getSplitColumns(list) {
 				const hiddenProps = ['splitType', 'userId', 'adminId', 'tenantId', 'amount', 'transactionAmount', 'billingDetails', 'failReason', 'remark']
@@ -332,7 +370,36 @@
 				]
 				const keys = this.getDynamicColumns(list).filter(k => !hiddenProps.includes(k))
 				const ordered = preferredProps.filter(k => keys.includes(k)).concat(keys.filter(k => !preferredProps.includes(k)))
-				return ordered.map(prop => ({ prop, label: labelMap[prop] || prop }))
+				return ordered.map(prop => ({
+					prop,
+					label: labelMap[prop] || prop,
+					formatter: this.getSplitColumnFormatter(prop)
+				}))
+			},
+			getRefundColumnFormatter(prop) {
+				if (prop === 'status') {
+					return row => this.formatMagicValue(row && row.status, REFUND_STATUS_MAP)
+				}
+				if (prop === 'refundSource') {
+					return row => this.formatMagicValue(row && row.refundSource, REFUND_SOURCE_MAP)
+				}
+				if (prop === 'channel') {
+					return row => this.formatMagicValue(row && row.channel, REFUND_CHANNEL_MAP)
+				}
+				return null
+			},
+			getSplitColumnFormatter(prop) {
+				if (prop === 'status') {
+					return row => this.formatMagicValue(row && row.status, SPLIT_STATUS_MAP)
+				}
+				if (prop === 'payType') {
+					return row => this.formatMagicValue(row && row.payType, SPLIT_PAY_TYPE_MAP)
+				}
+				return null
+			},
+			formatMagicValue(val, valueMap) {
+				if (val === null || val === undefined || val === '') return '-'
+				return valueMap[val] || val
 			},
 			formatProfitSharing(val) {
 				if (val === true || val === 1) return '是'
