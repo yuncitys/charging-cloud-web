@@ -6,7 +6,7 @@
       <el-input v-model="query.administratorName" class="filter-item" style="width: 180px;" placeholder="管理员" clearable />
       <el-input v-model="query.administratorPhone" class="filter-item" style="width: 180px;" placeholder="联系方式" clearable />
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search">查询</el-button>
-      <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增客户</el-button>
+      <el-button v-if="hasPerm(':charging:customer:add')" class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增客户</el-button>
     </div>
 
     <el-table v-loading="loading" :data="list" fit highlight-current-row>
@@ -23,9 +23,9 @@
       </el-table-column>
       <el-table-column label="操作" width="300" align="center">
         <template slot-scope="scope">
-          <el-button size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
-          <el-button size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
-          <el-button size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
+          <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
+          <el-button v-if="hasPerm(':charging:customer:edit')" size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
+          <el-button v-if="hasPerm(':charging:customer:finance')" size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -100,7 +100,7 @@
       </div>
       <div class="drawer-footer">
         <el-button @click="drawerVisible = false">取消</el-button>
-        <el-button v-if="!isDetail" type="primary" @click="submit">保存</el-button>
+        <el-button v-if="!isDetail && canSaveCustomer" type="primary" @click="submit">保存</el-button>
       </div>
     </el-drawer>
 
@@ -130,9 +130,9 @@
                 <div class="finance-card-money">¥ {{ walletBalance }}</div>
               </div>
             </div>
-            <div class="finance-card-actions-side">
-              <el-button size="small" type="primary" @click="openWalletAdjust">钱包充扣</el-button>
-              <el-button size="small" type="warning" @click="openAllocationAdjust">分配扣回</el-button>
+            <div v-if="hasPerm(':charging:customer:finance:walletAdjust') || hasPerm(':charging:customer:finance:allocationAdjust')" class="finance-card-actions-side">
+              <el-button v-if="hasPerm(':charging:customer:finance:walletAdjust')" size="small" type="primary" @click="openWalletAdjust">钱包充扣</el-button>
+              <el-button v-if="hasPerm(':charging:customer:finance:allocationAdjust')" size="small" type="warning" @click="openAllocationAdjust">分配扣回</el-button>
             </div>
           </div>
         </div>
@@ -140,7 +140,7 @@
         <div class="finance-section">
           <div class="finance-section-title">
             <span>资金流水</span>
-            <el-button size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
+            <el-button v-if="hasPerm(':charging:customer:finance:export')" size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
           </div>
 
           <div class="finance-filter">
@@ -437,6 +437,11 @@ export default {
       if (!this.filteredAllocationUsers.length) return false
       const selectedSet = new Set(this.allocationAdjustForm.targetIds || [])
       return this.filteredAllocationUsers.every(item => selectedSet.has(item.id))
+    },
+    canSaveCustomer() {
+      if (this.drawerMode === 'edit') return this.hasPerm(':charging:customer:edit')
+      if (this.drawerMode === 'create') return this.hasPerm(':charging:customer:add')
+      return false
     }
   },
   watch: {
@@ -454,6 +459,9 @@ export default {
     this.loadStationTree()
   },
   methods: {
+    hasPerm(permission) {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
+    },
     filterTreeNode(value, data) {
       if (!value) return true
       return String(data.label || '').indexOf(value) > -1
@@ -526,6 +534,9 @@ export default {
       })
     },
     openDrawer(mode, row) {
+      if (mode === 'create' && !this.hasPerm(':charging:customer:add')) return
+      if (mode === 'edit' && !this.hasPerm(':charging:customer:edit')) return
+      if (mode === 'detail' && !this.hasPerm(':charging:customer:detail')) return
       this.drawerMode = mode
       this.drawerVisible = true
       this.resetForm()
@@ -559,6 +570,7 @@ export default {
       })
     },
     openFinance(row) {
+      if (!this.hasPerm(':charging:customer:finance')) return
       this.financeCustomer = Object.assign({}, row || {})
       this.financeDrawerVisible = true
       this.flowQuery.page = 1
@@ -631,6 +643,7 @@ export default {
       this.loadFlow()
     },
     openWalletAdjust() {
+      if (!this.hasPerm(':charging:customer:finance:walletAdjust')) return
       this.walletAdjustForm = { action: 'RECHARGE', amount: '', remark: '' }
       this.walletAdjustDrawerVisible = true
     },
@@ -661,6 +674,7 @@ export default {
       })
     },
     openAllocationAdjust() {
+      if (!this.hasPerm(':charging:customer:finance:allocationAdjust')) return
       this.allocationAdjustForm = { operationObject: 'CHARGING_USER', operationMode: 'EQUAL', amount: '', targetIds: [], remark: '' }
       this.allocationUserKeyword = ''
       this.allocationUsers = []
@@ -725,6 +739,7 @@ export default {
       })
     },
     exportFlow() {
+      if (!this.hasPerm(':charging:customer:finance:export')) return
       if (!this.financeCustomer || !this.financeCustomer.id) {
         this.$message.error('客户信息缺失，无法导出')
         return

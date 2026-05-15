@@ -12,16 +12,16 @@
       </div>
 
       <div class="action-row">
-        <el-dropdown class="filter-item" trigger="click" @command="handleBatchCommand">
+        <el-dropdown v-if="hasPerm(':charging:customer:driver:import')" class="filter-item" trigger="click" @command="handleBatchCommand">
           <el-button type="primary">
             批量处理<i class="el-icon-arrow-down el-icon--right" />
           </el-button>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="batchImport">批量导入</el-dropdown-item>
+            <el-dropdown-item v-if="hasPerm(':charging:customer:driver:import')" command="batchImport">批量导入</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
 
-        <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增</el-button>
+        <el-button v-if="hasPerm(':charging:customer:driver:add')" class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增</el-button>
       </div>
     </div>
 
@@ -55,13 +55,14 @@
       <el-table-column label="操作" width="320" align="center">
         <template slot-scope="scope">
           <el-button
+            v-if="hasPerm(':charging:customer:driver:status')"
             size="mini"
             :type="scope.row.status === 0 ? 'warning' : 'success'"
             @click="handleStatusChange(scope.row)"
           >{{ scope.row.status === 0 ? '停用' : '启用' }}</el-button>
-          <el-button size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
-          <el-button size="mini" type="primary" @click="openDrawer('edit', scope.row)">编辑</el-button>
-          <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+          <el-button v-if="hasPerm(':charging:customer:driver:finance')" size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
+          <el-button v-if="hasPerm(':charging:customer:driver:edit')" size="mini" type="primary" @click="openDrawer('edit', scope.row)">编辑</el-button>
+          <el-button v-if="hasPerm(':charging:customer:driver:delete')" size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -132,7 +133,7 @@
       </div>
       <div class="drawer-footer">
         <el-button @click="drawerVisible = false">取消</el-button>
-        <el-button type="primary" :loading="saving" @click="submit">保存</el-button>
+        <el-button v-if="canSaveDriver" type="primary" :loading="saving" @click="submit">保存</el-button>
       </div>
     </el-drawer>
 
@@ -232,7 +233,7 @@
         <div class="finance-section">
           <div class="finance-section-title">
             <span>资金流水</span>
-            <el-button size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
+            <el-button v-if="hasPerm(':charging:customer:driver:finance:export')" size="mini" type="primary" icon="el-icon-download" :loading="exportLoading" @click="exportFlow">导出</el-button>
           </div>
 
           <div class="finance-filter">
@@ -403,6 +404,11 @@ export default {
       const start = (this.importQuery.page - 1) * this.importQuery.limit
       const end = start + this.importQuery.limit
       return this.previewData.slice(start, end)
+    },
+    canSaveDriver() {
+      if (this.drawerMode === 'edit') return this.hasPerm(':charging:customer:driver:edit')
+      if (this.drawerMode === 'create') return this.hasPerm(':charging:customer:driver:add')
+      return false
     }
   },
   created() {
@@ -411,6 +417,9 @@ export default {
     this.loadProvinces()
   },
   methods: {
+    hasPerm(permission) {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
+    },
     loadOrgOptions() {
       getOrganizationOptions({}).then(res => {
         if (res.code === 200) {
@@ -508,6 +517,8 @@ export default {
       }
     },
     openDrawer(mode, row) {
+      if (mode === 'create' && !this.hasPerm(':charging:customer:driver:add')) return
+      if (mode === 'edit' && !this.hasPerm(':charging:customer:driver:edit')) return
       this.drawerMode = mode
       this.drawerVisible = true
       this.orgCars = []
@@ -589,6 +600,7 @@ export default {
       callback()
     },
     handleStatusChange(row) {
+      if (!this.hasPerm(':charging:customer:driver:status')) return
       const targetStatus = row.status === 0 ? 1 : 0
       const actionText = targetStatus === 0 ? '启用' : '停用'
       this.$confirm(`确认${actionText}司机 ${row.userName} 吗？`, '提示', { type: 'warning' }).then(() => {
@@ -603,6 +615,7 @@ export default {
       }).catch(() => {})
     },
     handleDelete(row) {
+      if (!this.hasPerm(':charging:customer:driver:delete')) return
       this.$confirm(`确认删除司机 ${row.userName} 吗？`, '提示', { type: 'warning' }).then(() => {
         deleteDriver(row.id).then(res => {
           if (res.code === 200) {
@@ -616,6 +629,7 @@ export default {
     },
     handleBatchCommand(command) {
       if (command === 'batchImport') {
+        if (!this.hasPerm(':charging:customer:driver:import')) return
         this.importDrawerVisible = true
         this.resetImport()
       }
@@ -692,6 +706,7 @@ export default {
       })
     },
     openFinance(row) {
+      if (!this.hasPerm(':charging:customer:driver:finance')) return
       this.financeDriver = Object.assign({}, row || {})
       this.financeDrawerVisible = true
       this.flowQuery.page = 1
@@ -764,6 +779,7 @@ export default {
       this.loadDriverFlow()
     },
     exportFlow() {
+      if (!this.hasPerm(':charging:customer:driver:finance:export')) return
       if (!this.financeDriver || !this.financeDriver.id) {
         this.$message.error('司机信息缺失，无法导出')
         return

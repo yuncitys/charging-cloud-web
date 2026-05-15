@@ -18,18 +18,18 @@
       </div>
 
       <div class="action-row">
-        <el-dropdown class="filter-item" trigger="click" @command="handleBatchCommand">
+        <el-dropdown v-if="hasPerm(':charging:customer:car:import') || hasPerm(':charging:customer:car:delete')" class="filter-item" trigger="click" @command="handleBatchCommand">
           <el-button type="primary">
             批量处理<i class="el-icon-arrow-down el-icon--right" />
           </el-button>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item command="batchImport">批量导入</el-dropdown-item>
-            <el-dropdown-item command="batchDelete">批量删除</el-dropdown-item>
+            <el-dropdown-item v-if="hasPerm(':charging:customer:car:import')" command="batchImport">批量导入</el-dropdown-item>
+            <el-dropdown-item v-if="hasPerm(':charging:customer:car:delete')" command="batchDelete">批量删除</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
 
-        <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增</el-button>
-        <el-button class="filter-item" type="primary" icon="el-icon-download" :loading="exportLoading" @click="download">导出</el-button>
+        <el-button v-if="hasPerm(':charging:customer:car:add')" class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer('create')">新增</el-button>
+        <el-button v-if="hasPerm(':charging:customer:car:export')" class="filter-item" type="primary" icon="el-icon-download" :loading="exportLoading" @click="download">导出</el-button>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
       </el-table-column>
       <el-table-column label="操作" width="120" align="center">
         <template slot-scope="scope">
-          <el-button size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
+          <el-button v-if="hasPerm(':charging:customer:car:edit')" size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -109,7 +109,7 @@
       </div>
       <div class="drawer-footer">
         <el-button @click="drawerVisible = false">取消</el-button>
-        <el-button v-if="!isDetail" type="primary" @click="submit">保存</el-button>
+        <el-button v-if="!isDetail && canSaveCar" type="primary" @click="submit">保存</el-button>
       </div>
     </el-drawer>
 
@@ -282,6 +282,11 @@ export default {
       const start = (this.importQuery.page - 1) * this.importQuery.limit
       const end = start + this.importQuery.limit
       return this.previewData.slice(start, end)
+    },
+    canSaveCar() {
+      if (this.drawerMode === 'edit') return this.hasPerm(':charging:customer:car:edit')
+      if (this.drawerMode === 'create') return this.hasPerm(':charging:customer:car:add')
+      return false
     }
   },
   filters: {
@@ -294,6 +299,9 @@ export default {
     this.loadOrgOptions()
   },
   methods: {
+    hasPerm(permission) {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
+    },
     carTypeLabel(v) {
       const opt = this.carTypeOptions.find(o => o.value === String(v))
       return opt ? opt.label : '-'
@@ -379,6 +387,8 @@ export default {
       })
     },
     openDrawer(mode, row) {
+      if (mode === 'create' && !this.hasPerm(':charging:customer:car:add')) return
+      if (mode === 'edit' && !this.hasPerm(':charging:customer:car:edit')) return
       this.drawerMode = mode
       this.drawerVisible = true
       this.resetForm()
@@ -408,6 +418,7 @@ export default {
     },
     handleBatchCommand(command) {
       if (command === 'batchImport') {
+        if (!this.hasPerm(':charging:customer:car:import')) return
         this.importDrawerVisible = true
         this.resetImport()
       }
@@ -486,6 +497,7 @@ export default {
       })
     },
     batchDelete() {
+      if (!this.hasPerm(':charging:customer:car:delete')) return
       if (!this.selectedIds.length) {
         this.$message.warning('请选择要删除的数据')
         return
@@ -502,6 +514,7 @@ export default {
       }).catch(() => {})
     },
     download() {
+      if (!this.hasPerm(':charging:customer:car:export')) return
       this.exportLoading = true
       const req = Object.assign({}, this.query, { page: 1, limit: 5000 })
       downloadChargingCustomerCar(req).then(res => {
