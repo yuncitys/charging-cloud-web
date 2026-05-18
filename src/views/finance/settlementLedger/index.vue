@@ -406,11 +406,10 @@
                     </el-table-column>
                   </el-table-column>
                 </el-table>
-                <el-empty
+                <div
                   v-if="!scope.row.splitItems || !scope.row.splitItems.length"
-                  :image-size="64"
-                  description="暂无预分账明细"
-                />
+                  class="ledger-empty-tip"
+                >暂无预分账明细</div>
               </div>
             </template>
           </el-table-column>
@@ -450,6 +449,20 @@
           </el-table-column>
           <el-table-column label="充电结束" width="160" align="center">
             <template slot-scope="scope">{{ scope.row.chargeEndTime | formatDate }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="108" align="center" fixed="right">
+            <template slot-scope="scope">
+              <el-button
+                v-if="canRecalcLineSplit(scope.row)"
+                type="text"
+                size="mini"
+                :loading="recalcLineSplitLoadingId === scope.row.id"
+                @click="onRecalcLineSplit(scope.row)"
+              >
+                重算预分账
+              </el-button>
+              <span v-else>—</span>
+            </template>
           </el-table-column>
         </el-table>
         <div class="pagination-container">
@@ -587,11 +600,10 @@
           </el-table-column>
         </el-table>
       </div>
-      <el-empty
+      <div
         v-if="!channelFeeDetailDialog.payDetails.length && !channelFeeDetailDialog.merchantAlloc.length"
-        :image-size="80"
-        description="暂无通道费明细"
-      />
+        class="ledger-empty-tip"
+      >暂无通道费明细</div>
     </el-dialog>
     <downloadProgress ref="downloadProgress" />
   </div>
@@ -608,7 +620,8 @@ import {
   payoutBatchList,
   payoutBatchDetail,
   payoutBatchItems,
-  retryPayoutSingleOrder
+  retryPayoutSingleOrder,
+  recalcLineSplitPlan
 } from '@/api/finance/settlementLedger'
 import { getMerchant } from '@/api/merchant/merchant'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
@@ -695,7 +708,8 @@ export default {
         ledgerRow: null,
         payDetails: [],
         merchantAlloc: []
-      }
+      },
+      recalcLineSplitLoadingId: null
     }
   },
   computed: {
@@ -1142,6 +1156,48 @@ export default {
         payCode: this.lineQuery.payCode || null
       }
     },
+    canRecalcLineSplit(row) {
+      if (!row || !row.id) return false
+      if (!this.btnAuthen || !this.btnAuthen.permsVerifAuthention(':web:settlementLedger:line:recalcSplit')) {
+        return false
+      }
+      const status = this.drawer.summary && this.drawer.summary.status
+      return status !== 2
+    },
+    onRecalcLineSplit(row) {
+      if (!row || !row.id) return
+      this.$confirm(
+        `确认对业务订单「${row.bizOrderCode || row.id}」重算预分账明细？台账行金额不变，仅覆盖预分账结果。`,
+        '预分账重算',
+        { type: 'warning' }
+      )
+        .then(() => {
+          this.recalcLineSplitLoadingId = row.id
+          return recalcLineSplitPlan(row.id)
+        })
+        .then(res => {
+          if (res && res.code === 200) {
+            this.$message.success(res.msg || '预分账重算成功')
+            const updated = res.data && res.data.line
+            if (updated && updated.id) {
+              const idx = this.drawer.lines.findIndex(l => l.id === updated.id)
+              if (idx >= 0) {
+                this.$set(this.drawer.lines, idx, updated)
+              } else {
+                this.loadLines()
+              }
+            } else {
+              this.loadLines()
+            }
+          } else {
+            this.$message.error((res && res.msg) || '预分账重算失败')
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          this.recalcLineSplitLoadingId = null
+        })
+    },
     loadLines() {
       if (!this.drawer.periodId) return
       if (!this.btnAuthen || !this.btnAuthen.permsVerifAuthention(':web:settlementLedger:lines')) {
@@ -1374,6 +1430,12 @@ export default {
   font-size: 13px;
   font-weight: 600;
   color: #303133;
+}
+.ledger-empty-tip {
+  text-align: center;
+  padding: 16px 0;
+  font-size: 13px;
+  color: #909399;
 }
 .payout-batch-toolbar {
   margin-bottom: 8px;

@@ -23,6 +23,14 @@ export function linePage(data) {
   })
 }
 
+/** 单条台账行预分账重算（不改正向台账金额） */
+export function recalcLineSplitPlan(ledgerLineId) {
+  return request({
+    url: `/api/web/settlementLedger/line/${ledgerLineId}/recalcSplit`,
+    method: 'post'
+  })
+}
+
 export function exportLinePage(data) {
   return request({
     url: '/api/web/settlementLedger/period/lines/export',
