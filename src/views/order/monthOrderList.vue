@@ -501,8 +501,8 @@ export default {
     orderStatusText(status) {
       if (status === 0) return '故障'
       if (status === 1) return '进行中'
-      if (status === 2) return '充电完成'
-      if (status === 3) return '充电中'
+      if (status === 2) return '已完成'
+      if (status === 3) return '待结算'
       return this.disp(status)
     },
     payStatusText(status) {
