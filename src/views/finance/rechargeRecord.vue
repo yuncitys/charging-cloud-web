@@ -49,8 +49,8 @@
 				</el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
+				<!-- <el-table-column label="用户昵称" prop="userName" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column label="用户电话" prop="phoneNumber" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<!-- <el-table-column prop="headImg" label="用户头像" align="center">
