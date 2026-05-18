@@ -209,7 +209,7 @@ export default {
 			return { rowspan: 1, colspan: 1 }
 		},
 		getPayeeColumns(list) {
-			const hiddenProps = ['id', 'orderProfitSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo']
+			const hiddenProps = ['id', 'orderProfitSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo', 'channelFeeDeductAmount']
 			const labelMap = {
 				merchantName: '收款商户',
 				merchantNo: '商户号',
@@ -225,7 +225,8 @@ export default {
 				reserveRate: '预约费分账比例(%)',
 				reserveAmount: '预约费分账金额(元)',
 				occupyRate: '占用费分账比例(%)',
-				occupyAmount: '占用费分账金额(元)',	
+				occupyAmount: '占用费分账金额(元)',
+				channelFeeAmount: '通道费(元)',
 				createTime: '创建时间',
 				updateTime: '更新时间',
 				remark: '备注',
@@ -246,6 +247,7 @@ export default {
 				'reserveAmount',
 				'occupyRate',
 				'occupyAmount',
+				'channelFeeAmount',
 				'remark',
 				'createTime',
 				'updateTime',
@@ -255,8 +257,37 @@ export default {
 			return ordered.map(prop => ({
 				prop,
 				label: labelMap[prop] || prop,
-				formatter: this.getSettBankAccTypeFormatter(prop)
+				formatter: this.getPayeeColumnFormatter(prop)
 			}))
+		},
+		getPayeeColumnFormatter(prop) {
+			const bankFormatter = this.getSettBankAccTypeFormatter(prop)
+			if (bankFormatter) return bankFormatter
+			if (prop === 'channelFeeAmount') {
+				return row => this.formatSignedChannelFee(row)
+			}
+			return null
+		},
+		formatSignedChannelFee(row) {
+			if (!row) return '-'
+			let n = Number(row.channelFeeAmount)
+			if (Number.isNaN(n) || n === 0) {
+				if (this.isPlatformPayee(row)) {
+					const total = Number(this.splitRecord && this.splitRecord.channelFeeAmount)
+					if (!Number.isNaN(total) && total > 0) {
+						return `+${total.toFixed(2)}`
+					}
+					return '-'
+				}
+				const deduct = Number(row.channelFeeDeductAmount)
+				if (!Number.isNaN(deduct) && deduct > 0) {
+					n = -deduct
+				} else {
+					return '-'
+				}
+			}
+			if (n > 0) return `+${n.toFixed(2)}`
+			return n.toFixed(2)
 		},
 		getDynamicColumns(list) {
 			if (!Array.isArray(list) || list.length === 0) return []
