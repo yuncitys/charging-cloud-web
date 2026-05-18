@@ -337,61 +337,80 @@
                   :data="scope.row.splitItems"
                   border
                   size="mini"
+                  class="split-items-table"
                   style="width: 100%"
                 >
-                  <el-table-column label="分账接收方" min-width="190" show-overflow-tooltip>
+                  <el-table-column label="收款方" min-width="190" header-align="center" show-overflow-tooltip>
                     <template slot-scope="itemScope">
                       <el-tag v-if="itemScope.row.isPlatformMerchant" type="warning" size="mini">平台</el-tag>
                       <el-tag v-else type="success" size="mini">商户</el-tag>
                       <span style="margin-left: 6px">{{ splitMerchantLabel(itemScope.row) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="费率(电/服)" width="130" align="center">
-                    <template slot-scope="itemScope">
-                      {{ percent(itemScope.row.electricRate) }} / {{ percent(itemScope.row.serviceRate) }}
-                    </template>
+                  <el-table-column label="收款信息" align="center" header-align="center">
+                    <el-table-column label="电费费率" width="88" align="center" header-align="center">
+                      <template slot-scope="itemScope">{{ percent(itemScope.row.electricRate) }}</template>
+                    </el-table-column>
+                    <el-table-column label="服务费费率" width="88" align="center" header-align="center">
+                      <template slot-scope="itemScope">{{ percent(itemScope.row.serviceRate) }}</template>
+                    </el-table-column>
+                    <el-table-column label="预约费率" width="88" align="center" header-align="center">
+                      <template slot-scope="itemScope">{{ percent(itemScope.row.reserveRate) }}</template>
+                    </el-table-column>
+                    <el-table-column label="占位费率" width="88" align="center" header-align="center">
+                      <template slot-scope="itemScope">{{ percent(itemScope.row.occupyRate) }}</template>
+                    </el-table-column>
+                    <el-table-column label="电费" width="92" align="right" header-align="center">
+                      <template slot-scope="itemScope">{{ money(itemScope.row.electricAmount) }}</template>
+                    </el-table-column>
+                    <el-table-column label="服务费" width="92" align="right" header-align="center">
+                      <template slot-scope="itemScope">{{ money(itemScope.row.serviceAmount) }}</template>
+                    </el-table-column>
+                    <el-table-column label="预约费" width="92" align="right" header-align="center">
+                      <template slot-scope="itemScope">{{ money(itemScope.row.reserveAmount) }}</template>
+                    </el-table-column>
+                    <el-table-column label="占位费" width="92" align="right" header-align="center">
+                      <template slot-scope="itemScope">{{ money(itemScope.row.occupyAmount) }}</template>
+                    </el-table-column>
+                    <el-table-column label="合计" width="92" align="right" header-align="center">
+                      <template slot-scope="itemScope">
+                        <strong>{{ money(itemScope.row.totalAmount) }}</strong>
+                      </template>
+                    </el-table-column>
                   </el-table-column>
-                  <el-table-column label="电费分账" width="110" align="right">
-                    <template slot-scope="itemScope">{{ money(itemScope.row.electricAmount) }}</template>
-                  </el-table-column>
-                  <el-table-column label="服务费分账" width="110" align="right">
-                    <template slot-scope="itemScope">{{ money(itemScope.row.serviceAmount) }}</template>
-                  </el-table-column>
-                  <el-table-column label="预约费分账" width="110" align="right">
-                    <template slot-scope="itemScope">{{ money(itemScope.row.reserveAmount) }}</template>
-                  </el-table-column>
-                  <el-table-column label="占位费分账" width="110" align="right">
-                    <template slot-scope="itemScope">{{ money(itemScope.row.occupyAmount) }}</template>
-                  </el-table-column>
-                  <el-table-column label="合计" width="110" align="right">
-                    <template slot-scope="itemScope">
-                      <strong>{{ money(itemScope.row.totalAmount) }}</strong>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="通道费" width="100" align="right">
-                    <template slot-scope="itemScope">
-                      <span v-if="itemScope.row.isPlatformMerchant && itemScope.row.channelFeeAmount != null && itemScope.row.channelFeeAmount !== ''">
-                        {{ money(itemScope.row.channelFeeAmount) }}
-                      </span>
-                      <span v-else>—</span>
-                    </template>
-                  </el-table-column>
-                  <el-table-column label="通道费明细" min-width="160" show-overflow-tooltip>
-                    <template slot-scope="itemScope">
-                      <el-popover
-                        v-if="itemScope.row.isPlatformMerchant && itemScope.row.channelFeeDetail"
-                        placement="top"
-                        width="360"
-                        trigger="hover"
-                      >
-                        <pre class="channel-fee-detail-pre">{{ formatChannelFeeDetail(itemScope.row.channelFeeDetail) }}</pre>
-                        <span slot="reference" class="channel-fee-detail-link">查看明细</span>
-                      </el-popover>
-                      <span v-else>—</span>
-                    </template>
+                  <el-table-column label="通道费" align="center" header-align="center">
+                    <el-table-column label="金额" width="108" align="right" header-align="center">
+                      <template slot-scope="itemScope">
+                        <span v-if="itemScope.row.isPlatformMerchant && hasChannelFeeAmount(itemScope.row)" class="channel-fee-platform">
+                          +{{ money(itemScope.row.channelFeeAmount) }}
+                        </span>
+                        <span v-else-if="hasChannelFeeDeduct(itemScope.row)" class="channel-fee-deduct">
+                          −{{ money(itemScope.row.channelFeeDeductAmount) }}
+                        </span>
+                        <span v-else>—</span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="详情" width="88" align="center" header-align="center">
+                      <template slot-scope="itemScope">
+                        <el-button
+                          v-if="itemScope.row.isPlatformMerchant && hasChannelFeeDetail(scope.row)"
+                          type="text"
+                          size="mini"
+                          class="channel-fee-detail-link"
+                          @click="openChannelFeeDetailDialog(scope.row)"
+                        >
+                          查看
+                        </el-button>
+                        <span v-else>—</span>
+                      </template>
+                    </el-table-column>
                   </el-table-column>
                 </el-table>
-                <el-empty v-else :image-size="64" description="暂无预分账明细" />
+                <el-empty
+                  v-if="!scope.row.splitItems || !scope.row.splitItems.length"
+                  :image-size="64"
+                  description="暂无预分账明细"
+                />
               </div>
             </template>
           </el-table-column>
@@ -450,6 +469,7 @@
       title="分账批次 — 逐单结果"
       :visible.sync="payoutItemDialog.visible"
       width="900px"
+      custom-class="settlement-ledger-dialog"
       append-to-body
       @close="onPayoutItemDialogClose"
     >
@@ -508,6 +528,70 @@
           @current-change="onPayoutItemPageChange"
         />
       </div>
+    </el-dialog>
+
+    <el-dialog
+      title="通道费详情"
+      :visible.sync="channelFeeDetailDialog.visible"
+      width="720px"
+      custom-class="settlement-ledger-dialog"
+      append-to-body
+      @close="onChannelFeeDetailDialogClose"
+    >
+      <div v-if="channelFeeDetailDialog.ledgerRow" class="channel-fee-dialog-meta">
+        <span>业务订单：{{ channelFeeDetailDialog.ledgerRow.bizOrderCode || '—' }}</span>
+        <span class="sep">|</span>
+        <span>通道费合计：<span class="channel-fee-platform">{{ money(splitChannelFeeTotal(channelFeeDetailDialog.ledgerRow)) }}</span> 元</span>
+      </div>
+      <div v-if="channelFeeDetailDialog.payDetails.length" class="channel-fee-section">
+        <div class="split-expand-subtitle">支付单通道费（计费基数）</div>
+        <el-table
+          :data="channelFeeDetailDialog.payDetails"
+          border
+          size="small"
+          style="width: 100%"
+        >
+          <el-table-column type="index" width="48" label="序号" align="center" />
+          <el-table-column prop="payCode" label="支付单号" min-width="160" show-overflow-tooltip />
+          <el-table-column label="计费基数(元)" width="120" align="right">
+            <template slot-scope="ps">{{ money(ps.row.payMoney) }}</template>
+          </el-table-column>
+          <el-table-column label="费率(%)" width="90" align="right">
+            <template slot-scope="ps">{{ formatChannelFeeRate(ps.row.rate) }}</template>
+          </el-table-column>
+          <el-table-column label="通道费(元)" width="100" align="right">
+            <template slot-scope="ps">
+              <span class="channel-fee-platform">{{ money(ps.row.fee) }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <div v-if="channelFeeDetailDialog.merchantAlloc.length" class="channel-fee-section">
+        <div class="split-expand-subtitle">商户通道费分摊扣减</div>
+        <el-table
+          :data="channelFeeDetailDialog.merchantAlloc"
+          border
+          size="small"
+          style="width: 100%"
+        >
+          <el-table-column label="商户" min-width="180" show-overflow-tooltip>
+            <template slot-scope="ma">
+              {{ ma.row.merchantName || ('商户ID:' + ma.row.merchantId) }}
+              <span v-if="ma.row.merchantNo" class="sub-text">({{ ma.row.merchantNo }})</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="扣减通道费(元)" width="130" align="right">
+            <template slot-scope="ma">
+              <span class="channel-fee-deduct">−{{ money(ma.row.deductAmount) }}</span>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      <el-empty
+        v-if="!channelFeeDetailDialog.payDetails.length && !channelFeeDetailDialog.merchantAlloc.length"
+        :image-size="80"
+        description="暂无通道费明细"
+      />
     </el-dialog>
     <downloadProgress ref="downloadProgress" />
   </div>
@@ -605,6 +689,12 @@ export default {
         itemStatus: '',
         loading: false,
         retryingOrderCode: null
+      },
+      channelFeeDetailDialog: {
+        visible: false,
+        ledgerRow: null,
+        payDetails: [],
+        merchantAlloc: []
       }
     }
   },
@@ -688,21 +778,91 @@ export default {
         return sum + (Number(item.channelFeeAmount) || 0)
       }, 0)
     },
-    formatChannelFeeDetail(raw) {
-      if (!raw) return '—'
+    parseChannelFeeDetailRoot(ledgerRow) {
+      const items = ledgerRow && ledgerRow.splitItems
+      if (!Array.isArray(items)) return null
+      const platform = items.find(i => i && i.isPlatformMerchant && i.channelFeeDetail)
+      if (!platform || !platform.channelFeeDetail) return null
       try {
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-        if (!Array.isArray(parsed)) return String(raw)
-        return parsed.map((row, idx) => {
-          const payCode = row.payCode || row.pay_code || '—'
-          const payMoney = row.payMoney != null ? row.payMoney : row.pay_money
-          const rate = row.rate != null ? row.rate : row.channelFeeRate
-          const fee = row.fee != null ? row.fee : row.channelFeeAmount
-          return `${idx + 1}. ${payCode} 基数=${payMoney} 费率=${rate}% 费=${fee}`
-        }).join('\n')
+        return typeof platform.channelFeeDetail === 'string'
+          ? JSON.parse(platform.channelFeeDetail)
+          : platform.channelFeeDetail
       } catch (e) {
-        return String(raw)
+        return null
       }
+    },
+    /** 支付单维度通道费（兼容旧版 JSON 数组与新结构 { paySources: [] }） */
+    splitChannelFeePayDetails(ledgerRow) {
+      const root = this.parseChannelFeeDetailRoot(ledgerRow)
+      if (!root) return []
+      if (Array.isArray(root)) {
+        return root.map(row => ({
+          payCode: row.payCode || row.pay_code || '—',
+          payMoney: row.payMoney != null ? row.payMoney : row.pay_money,
+          rate: row.rate != null ? row.rate : row.channelFeeRate,
+          fee: row.fee != null ? row.fee : row.channelFeeAmount
+        }))
+      }
+      const list = root.paySources || root.pay_sources
+      if (!Array.isArray(list)) return []
+      return list.map(row => ({
+        payCode: row.payCode || row.pay_code || '—',
+        payMoney: row.payMoney != null ? row.payMoney : row.pay_money,
+        rate: row.rate != null ? row.rate : row.channelFeeRate,
+        fee: row.fee != null ? row.fee : row.channelFeeAmount
+      }))
+    },
+    /** 商户分摊扣减（新结构 merchantAlloc；否则从各行 channelFeeDeductAmount 汇总） */
+    splitChannelFeeMerchantAlloc(ledgerRow) {
+      const root = this.parseChannelFeeDetailRoot(ledgerRow)
+      if (root && !Array.isArray(root)) {
+        const list = root.merchantAlloc || root.merchant_alloc
+        if (Array.isArray(list) && list.length) return list
+      }
+      const items = ledgerRow && ledgerRow.splitItems
+      if (!Array.isArray(items)) return []
+      return items
+        .filter(i => i && !i.isPlatformMerchant && this.hasChannelFeeDeduct(i))
+        .map(i => ({
+          merchantId: i.merchantId,
+          merchantName: i.merchantName,
+          merchantNo: i.merchantNo,
+          deductAmount: i.channelFeeDeductAmount
+        }))
+    },
+    hasChannelFeeAmount(item) {
+      if (!item) return false
+      const n = Number(item.channelFeeAmount)
+      return !Number.isNaN(n) && n !== 0
+    },
+    hasChannelFeeDeduct(item) {
+      if (!item || item.isPlatformMerchant) return false
+      const n = Number(item.channelFeeDeductAmount)
+      return !Number.isNaN(n) && n > 0
+    },
+    formatChannelFeeRate(val) {
+      if (val === null || val === undefined || val === '') return '—'
+      const n = Number(val)
+      if (Number.isNaN(n)) return '—'
+      return `${n.toFixed(4)}%`
+    },
+    hasChannelFeeDetail(ledgerRow) {
+      if (!ledgerRow) return false
+      return this.splitChannelFeeTotal(ledgerRow) > 0
+        || this.splitChannelFeePayDetails(ledgerRow).length > 0
+        || this.splitChannelFeeMerchantAlloc(ledgerRow).length > 0
+    },
+    openChannelFeeDetailDialog(ledgerRow) {
+      if (!ledgerRow) return
+      this.channelFeeDetailDialog.ledgerRow = ledgerRow
+      this.channelFeeDetailDialog.payDetails = this.splitChannelFeePayDetails(ledgerRow)
+      this.channelFeeDetailDialog.merchantAlloc = this.splitChannelFeeMerchantAlloc(ledgerRow)
+      this.channelFeeDetailDialog.visible = true
+    },
+    onChannelFeeDetailDialogClose() {
+      this.channelFeeDetailDialog.ledgerRow = null
+      this.channelFeeDetailDialog.payDetails = []
+      this.channelFeeDetailDialog.merchantAlloc = []
     },
     splitMerchantLabel(item) {
       if (!item) return '—'
@@ -1206,6 +1366,9 @@ export default {
   padding: 10px 16px;
   background: #fafafa;
 }
+.split-expand-wrap ::v-deep .el-table th > .cell {
+  text-align: center;
+}
 .split-expand-title {
   margin-bottom: 8px;
   font-size: 13px;
@@ -1229,27 +1392,56 @@ export default {
   font-size: 12px;
   font-weight: normal;
 }
+.split-expand-subtitle {
+  font-size: 12px;
+  color: #606266;
+  margin: 12px 0 8px;
+  font-weight: 600;
+}
+.channel-fee-section {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+.channel-fee-platform {
+  color: #e6a23c;
+  font-weight: 600;
+}
+.channel-fee-deduct {
+  color: #f56c6c;
+  font-weight: 500;
+}
 .channel-fee-detail-link {
   color: #409eff;
-  cursor: pointer;
-  font-size: 12px;
+  padding: 0;
 }
-.channel-fee-detail-pre {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-all;
+.channel-fee-dialog-meta {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: #606266;
+}
+.channel-fee-dialog-meta .sep {
+  margin: 0 8px;
+  color: #dcdfe6;
+}
+.sub-text {
+  color: #909399;
   font-size: 12px;
-  line-height: 1.5;
+  margin-left: 4px;
 }
 </style>
 
 <style>
-/* append-to-body 时抽屉挂到 body，scoped 无法命中，单独写避免台账明细无法纵向滚动 */
+/* append-to-body 时抽屉/弹窗挂到 body，scoped 无法命中 */
 .settlement-ledger-drawer .el-drawer__body {
   overflow-x: hidden;
   overflow-y: auto;
   max-height: calc(100vh - 64px);
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
+}
+.settlement-ledger-page .el-table th > .cell,
+.settlement-ledger-drawer .el-table th > .cell,
+.settlement-ledger-dialog .el-table th > .cell {
+  text-align: center;
 }
 </style>
