@@ -52,6 +52,21 @@
 				</el-table-column>
 				<el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
+				<el-table-column label="通道费(元)" prop="channelFeeAmount" align="center" width="100" :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<span>{{ formatMoney(scope.row.channelFeeAmount) }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="通道费基数(元)" prop="channelFeeBaseAmount" align="center" width="110" :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<span>{{ formatMoney(scope.row.channelFeeBaseAmount) }}</span>
+					</template>
+				</el-table-column>
+				<el-table-column label="通道费率(%)" prop="channelFeeRate" align="center" width="100" :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<span>{{ formatChannelFeeRate(scope.row.channelFeeRate) }}</span>
+					</template>
+				</el-table-column>
 				<el-table-column label="分账比例(%)" prop="splitRate" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
@@ -235,6 +250,18 @@
 						id
 					}
 				})
+			},
+			formatMoney(val) {
+				if (val === null || val === undefined || val === '') return '—'
+				const n = Number(val)
+				if (Number.isNaN(n)) return '—'
+				return n.toFixed(2)
+			},
+			formatChannelFeeRate(val) {
+				if (val === null || val === undefined || val === '') return '—'
+				const n = Number(val)
+				if (Number.isNaN(n)) return '—'
+				return `${n.toFixed(4)}%`
 			},
 		},
 		created() {

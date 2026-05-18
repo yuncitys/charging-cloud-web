@@ -368,6 +368,28 @@
                       <strong>{{ money(itemScope.row.totalAmount) }}</strong>
                     </template>
                   </el-table-column>
+                  <el-table-column label="通道费" width="100" align="right">
+                    <template slot-scope="itemScope">
+                      <span v-if="itemScope.row.isPlatformMerchant && itemScope.row.channelFeeAmount != null && itemScope.row.channelFeeAmount !== ''">
+                        {{ money(itemScope.row.channelFeeAmount) }}
+                      </span>
+                      <span v-else>—</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="通道费明细" min-width="160" show-overflow-tooltip>
+                    <template slot-scope="itemScope">
+                      <el-popover
+                        v-if="itemScope.row.isPlatformMerchant && itemScope.row.channelFeeDetail"
+                        placement="top"
+                        width="360"
+                        trigger="hover"
+                      >
+                        <pre class="channel-fee-detail-pre">{{ formatChannelFeeDetail(itemScope.row.channelFeeDetail) }}</pre>
+                        <span slot="reference" class="channel-fee-detail-link">查看明细</span>
+                      </el-popover>
+                      <span v-else>—</span>
+                    </template>
+                  </el-table-column>
                 </el-table>
                 <el-empty v-else :image-size="64" description="暂无预分账明细" />
               </div>
@@ -392,10 +414,13 @@
               {{ scope.row.stationName || '—' }}
             </template>
           </el-table-column>
-          <el-table-column label="预分账概览" min-width="180" align="center">
+          <el-table-column label="预分账概览" min-width="220" align="center">
             <template slot-scope="scope">
               <el-tag size="mini" type="info">明细 {{ splitItemCount(scope.row) }} 条</el-tag>
               <span style="margin-left: 6px">合计 {{ money(splitItemTotal(scope.row)) }}</span>
+              <span v-if="splitChannelFeeTotal(scope.row) > 0" style="margin-left: 6px; color: #e6a23c">
+                通道费 {{ money(splitChannelFeeTotal(scope.row)) }}
+              </span>
             </template>
           </el-table-column>
           <el-table-column label="结算合计" width="110" align="right">
@@ -654,6 +679,30 @@ export default {
       const items = row && row.splitItems
       if (!Array.isArray(items) || items.length === 0) return 0
       return items.reduce((sum, item) => sum + (Number(item.totalAmount) || 0), 0)
+    },
+    splitChannelFeeTotal(row) {
+      const items = row && row.splitItems
+      if (!Array.isArray(items) || items.length === 0) return 0
+      return items.reduce((sum, item) => {
+        if (!item || !item.isPlatformMerchant) return sum
+        return sum + (Number(item.channelFeeAmount) || 0)
+      }, 0)
+    },
+    formatChannelFeeDetail(raw) {
+      if (!raw) return '—'
+      try {
+        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+        if (!Array.isArray(parsed)) return String(raw)
+        return parsed.map((row, idx) => {
+          const payCode = row.payCode || row.pay_code || '—'
+          const payMoney = row.payMoney != null ? row.payMoney : row.pay_money
+          const rate = row.rate != null ? row.rate : row.channelFeeRate
+          const fee = row.fee != null ? row.fee : row.channelFeeAmount
+          return `${idx + 1}. ${payCode} 基数=${payMoney} 费率=${rate}% 费=${fee}`
+        }).join('\n')
+      } catch (e) {
+        return String(raw)
+      }
     },
     splitMerchantLabel(item) {
       if (!item) return '—'
@@ -1179,6 +1228,18 @@ export default {
   color: #909399;
   font-size: 12px;
   font-weight: normal;
+}
+.channel-fee-detail-link {
+  color: #409eff;
+  cursor: pointer;
+  font-size: 12px;
+}
+.channel-fee-detail-pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 12px;
+  line-height: 1.5;
 }
 </style>
 

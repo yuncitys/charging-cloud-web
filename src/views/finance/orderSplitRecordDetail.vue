@@ -14,6 +14,9 @@
 					<!-- <el-col :span="12"><el-form-item label="到账金额(元)"><span>{{ formatNullable(splitRecord.amount) }}</span></el-form-item></el-col> -->
 					<el-col :span="12"><el-form-item label="追回金额(元)"><span>{{ formatNullable(splitRecord.refundedAmount) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="手续费(元)"><span>{{ formatNullable(splitRecord.serviceCharge) }}</span></el-form-item></el-col>
+					<el-col :span="12"><el-form-item label="通道费(元)"><span>{{ formatMoney(splitRecord.channelFeeAmount) }}</span></el-form-item></el-col>
+					<el-col :span="12"><el-form-item label="通道费基数(元)"><span>{{ formatMoney(splitRecord.channelFeeBaseAmount) }}</span></el-form-item></el-col>
+					<el-col :span="12"><el-form-item label="通道费率(%)"><span>{{ formatChannelFeeRate(splitRecord.channelFeeRate) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="分账比例(%)"><span>{{ formatNullable(splitRecord.splitRate) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="状态"><span>{{ formatNullable(splitRecord.status) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="分账时间"><span>{{ formatNullable(splitRecord.createTime) }}</span></el-form-item></el-col>
@@ -320,6 +323,18 @@ export default {
 			if (val === 0 || val === '0') return val
 			if (val === null || val === undefined || val === '') return '-'
 			return val
+		},
+		formatMoney(val) {
+			if (val === null || val === undefined || val === '') return '-'
+			const n = Number(val)
+			if (Number.isNaN(n)) return '-'
+			return n.toFixed(2)
+		},
+		formatChannelFeeRate(val) {
+			if (val === null || val === undefined || val === '') return '-'
+			const n = Number(val)
+			if (Number.isNaN(n)) return '-'
+			return `${n.toFixed(4)}%`
 		}
 	}
 }
