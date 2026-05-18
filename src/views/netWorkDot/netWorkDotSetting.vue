@@ -14,6 +14,7 @@
       <el-tabs v-model="activeTab" type="card" @tab-click="handleTabClick">
         <el-tab-pane label="基本信息" name="detail" />
         <el-tab-pane label="抽成规则" name="commission" />
+        <el-tab-pane label="通道费规则" name="channelFee" />
         <el-tab-pane label="分账设置" name="split" />
       </el-tabs>
 
@@ -433,6 +434,55 @@
         </el-card>
       </div>
 
+      <div v-show="activeTab === 'channelFee'" v-loading="loadingChannelFee" element-loading-text="拼命加载中......">
+        <el-card shadow="never">
+          <div slot="header" class="clearfix">
+            <span>通道费规则</span>
+            <div style="float: right;">
+              <el-tag :type="channelFeeExists ? 'success' : 'info'" style="margin-right: 10px;">
+                {{ channelFeeExists ? (channelFee.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}
+              </el-tag>
+              <el-button
+                v-if="btnAuthen.permsVerifAuthention(':web:channelFeeRule:save')"
+                size="mini"
+                type="primary"
+                @click="openChannelFeeEdit"
+              >{{ channelFeeExists ? '修改' : '配置规则' }}</el-button>
+            </div>
+          </div>
+          <div class="detail-view">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">通道费率</div>
+                  <div class="kv__value">
+                    {{ channelFeeExists && channelFee.collectFlag == '1' ? formatChannelFeeRate(channelFee.channelFeeRate) : '-' }}
+                  </div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">说明</div>
+                  <div class="kv__value">首次分账时，按支付单总额 × 费率计入平台商户</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">修改用户</div>
+                  <div class="kv__value">{{ channelFee.updateUser || '-' }}</div>
+                </div>
+              </el-col>
+              <el-col :span="12">
+                <div class="kv">
+                  <div class="kv__label">修改时间</div>
+                  <div class="kv__value">{{ channelFee.updateTime || '-' }}</div>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
+        </el-card>
+      </div>
+
       <div v-show="activeTab === 'split'" v-loading="splitLoading" element-loading-text="拼命加载中......">
         <el-card shadow="never">
           <div slot="header" class="clearfix">
@@ -575,6 +625,31 @@
       </div>
     </el-dialog>
 
+    <el-dialog :visible.sync="editChannelFeeVisible" :title="channelFeeExists ? '修改通道费规则' : '配置通道费规则'" @close="editChannelFeeVisible = false" :append-to-body="true" width="520px">
+      <el-form ref="channelFeeForm" :model="channelFeeForm" :rules="channelFeeRules" label-position="left" label-width="130px">
+        <el-form-item label="是否收取通道费" prop="collectFlag">
+          <el-radio-group v-model="channelFeeForm.collectFlag">
+            <el-radio :label="'0'">不收取</el-radio>
+            <el-radio :label="'1'">收取</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="channelFeeForm.collectFlag == '1'" label="通道费率" prop="channelFeeRate">
+          <el-input v-model="channelFeeForm.channelFeeRate" placeholder="默认0.25" type="number">
+            <template slot="append">%（支付总额）</template>
+          </el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="editChannelFeeVisible = false">取消</el-button>
+        <el-button
+          v-if="btnAuthen.permsVerifAuthention(':web:channelFeeRule:save')"
+          type="primary"
+          :loading="channelFeeSaving"
+          @click="saveChannelFeeRule"
+        >确定</el-button>
+      </div>
+    </el-dialog>
+
   </div>
 </template>
 
@@ -582,6 +657,7 @@
 import { getChargeStationById, getNetworkDotPictures, updateNetworkDot } from '@/api/netWorkDot/netWorkDotList'
 import { getAreaSelector } from '@/api/area/index.js'
 import { getByStationId as getStationCommissionInfo, saveOrUpdate as saveCommissionRuleApi } from '@/api/finance/commissionStrategy'
+import { getByStationId as getStationChannelFeeInfo, saveOrUpdate as saveChannelFeeRuleApi } from '@/api/finance/channelFeeRule'
 import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
 import loadMap from '@/utils/loadMap.js'
@@ -726,6 +802,28 @@ export default {
         powerRate: '',
         serviceRateType: '1',
         serviceRate: ''
+      },
+
+      loadingChannelFee: false,
+      channelFeeExists: false,
+      channelFee: {
+        stationName: '',
+        collectFlag: '1',
+        channelFeeRate: '0.25',
+        updateUser: '',
+        updateTime: ''
+      },
+      editChannelFeeVisible: false,
+      channelFeeSaving: false,
+      channelFeeRules: {
+        collectFlag: [{ required: true, message: '请选择是否收取通道费', trigger: 'blur' }],
+        channelFeeRate: [{ required: true, message: '请输入通道费率', trigger: 'blur' }]
+      },
+      channelFeeForm: {
+        id: '',
+        stationId: '',
+        collectFlag: '1',
+        channelFeeRate: '0.25'
       },
 
       splitLoading: false,
@@ -1120,9 +1218,16 @@ export default {
       if (tab.name === 'commission') {
         this.loadCommissionRule()
       }
+      if (tab.name === 'channelFee') {
+        this.loadChannelFeeRule()
+      }
       if (tab.name === 'split') {
         this.loadSplitConfig()
       }
+    },
+    formatChannelFeeRate(rate) {
+      if (rate === null || rate === undefined || rate === '') return '-'
+      return `${rate}%`
     },
     formatCommission(type, value) {
       if (value === null || value === undefined || value === '') return '-'
@@ -1324,6 +1429,70 @@ export default {
           this.$message.error('保存失败')
         }).finally(() => {
           this.commissionSaving = false
+        })
+      })
+    },
+    loadChannelFeeRule() {
+      if (!this.stationId) return
+      this.loadingChannelFee = true
+      this.channelFeeExists = false
+      const stationName = this.station.networkName || ''
+      this.channelFee = {
+        stationName,
+        collectFlag: '1',
+        channelFeeRate: '0.25',
+        updateUser: '',
+        updateTime: ''
+      }
+      getStationChannelFeeInfo(this.stationId).then(res => {
+        if (res.code === 200) {
+          const data = res.data || null
+          this.channelFeeExists = !!data
+          if (data) {
+            this.channelFee = {
+              stationName,
+              id: data.id,
+              collectFlag: String(data.collectFlag ?? '1'),
+              channelFeeRate: data.channelFeeRate ?? '0.25',
+              updateUser: data.updateUser || '',
+              updateTime: data.updateTime || ''
+            }
+          }
+        } else {
+          this.$message.error(res.msg || '查询通道费规则失败')
+        }
+      }).catch(() => {
+        this.$message.error('查询通道费规则失败')
+      }).finally(() => {
+        this.loadingChannelFee = false
+      })
+    },
+    openChannelFeeEdit() {
+      this.editChannelFeeVisible = true
+      this.channelFeeForm = {
+        id: this.channelFeeExists ? (this.channelFee.id || '') : '',
+        stationId: this.stationId,
+        collectFlag: this.channelFeeExists ? String(this.channelFee.collectFlag ?? '1') : '1',
+        channelFeeRate: this.channelFeeExists ? (this.channelFee.channelFeeRate ?? '0.25') : '0.25'
+      }
+    },
+    saveChannelFeeRule() {
+      this.$refs.channelFeeForm.validate(valid => {
+        if (!valid) return
+        this.channelFeeSaving = true
+        const payload = { ...this.channelFeeForm, stationId: this.stationId }
+        saveChannelFeeRuleApi(payload).then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg || '保存成功')
+            this.editChannelFeeVisible = false
+            this.loadChannelFeeRule()
+          } else {
+            this.$message.error(res.msg || '保存失败')
+          }
+        }).catch(() => {
+          this.$message.error('保存失败')
+        }).finally(() => {
+          this.channelFeeSaving = false
         })
       })
     },

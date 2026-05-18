@@ -797,6 +797,14 @@ export const constantRoutes = [{
         icon: 'el-icon-document',
       }
     }, {
+      path: 'channelFeeRule',
+      component: () => import('@/views/finance/channelFeeRule/index'),
+      name: 'channelFeeRule',
+      meta: {
+        title: '通道费收费规则',
+        icon: 'el-icon-document',
+      }
+    }, {
       path: 'stationSettlementRule',
       component: () => import('@/views/finance/stationSettlementRule/index'),
       name: 'stationSettlementRule',
