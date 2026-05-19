@@ -175,6 +175,7 @@
               type="text"
               size="small"
               :disabled="scope.row.settlementMode !== 2"
+              :loading="payoutSubmittingId === scope.row.id"
               @click="onPayout(scope.row)"
             >
               提交分账
@@ -648,6 +649,7 @@ export default {
       merchantList: [],
       stationList: [],
       lineExportLoading: false,
+      payoutSubmittingId: null,
       taskMonitorVisible: true,
       taskStatsLoading: false,
       taskStatsError: '',
@@ -1254,72 +1256,31 @@ export default {
         return
       }
       this.$confirm(
-        `确认对账期「${row.periodKey}」发起支付分账？仅手动结算方式允许手动提交。`,
+        `确认对账期「${row.periodKey}」提交分账任务？任务将在后台执行，提交后可在「台账明细」-「分账执行记录」查看进度与结果。`,
         '提交分账',
         { type: 'warning' }
       ).then(() => {
-        submitPayout({ periodId: row.id }).then(res => {
-          const data = res && res.data
-          const payload = data && data.batchId != null ? data : null
-          const hasFails = payload && Number(payload.failCount) > 0
-          const allOk = res.code === 200 && (!payload || !hasFails)
-          const partialOk = res.code !== 200 && hasFails
-
-          if (allOk || partialOk) {
-            if (allOk) {
-              this.$message.success(res.msg || '分账完成')
-            } else {
-              this.$message.warning(res.msg || '分账已结束，存在失败订单，账期未标记为已支付')
-            }
-            if (hasFails && payload.batchId) {
-              this.$confirm(
-                `本账期存在 ${payload.failCount} 笔订单分账失败，可在「台账明细」内「分账执行记录」追溯，或立即查看失败明细。`,
-                '分账部分失败',
-                {
-                  confirmButtonText: '查看失败明细',
-                  cancelButtonText: '关闭',
-                  type: 'warning'
-                }
+        this.payoutSubmittingId = row.id
+        submitPayout({ periodId: row.id })
+          .then(res => {
+            if (res.code === 200) {
+              this.$message.success(
+                res.msg || '分账任务已提交，请在「台账明细」-「分账执行记录」查看进度'
               )
-                .then(() => {
-                  this.openDrawer(row)
-                  this.$nextTick(() => {
-                    this.openPayoutBatchItemDialog({ id: payload.batchId })
-                    this.payoutItemDialog.itemStatus = 'FAILED'
-                    this.loadPayoutItemPage(1)
-                  })
-                })
-                .catch(() => {})
+              this.getList()
+              if (this.drawer.visible && this.drawer.periodId === row.id) {
+                this.loadPayoutBatches()
+              }
+            } else {
+              this.$message.error(res.msg || '提交失败')
             }
-            this.getList()
-            if (this.drawer.visible && this.drawer.periodId === row.id) {
-              periodDetail(row.id).then(r => {
-                if (r.code === 200 && r.data) {
-                  this.drawer.summary = r.data.summary
-                }
-              })
-              this.loadPayoutBatches()
-            }
-          } else {
-            this.$message.error(res.msg || '分账失败')
-            if (hasFails && payload.batchId) {
-              this.$confirm('存在失败订单，是否打开失败明细？', '分账失败', {
-                confirmButtonText: '查看',
-                cancelButtonText: '关闭',
-                type: 'warning'
-              })
-                .then(() => {
-                  this.openDrawer(row)
-                  this.$nextTick(() => {
-                    this.openPayoutBatchItemDialog({ id: payload.batchId })
-                    this.payoutItemDialog.itemStatus = 'FAILED'
-                    this.loadPayoutItemPage(1)
-                  })
-                })
-                .catch(() => {})
-            }
-          }
-        })
+          })
+          .catch(() => {
+            this.$message.error('提交失败，请稍后重试')
+          })
+          .finally(() => {
+            this.payoutSubmittingId = null
+          })
       }).catch(() => {})
     }
   }
