@@ -452,7 +452,7 @@
           </div>
           <div class="detail-view">
             <el-row :gutter="20">
-              <el-col :span="12">
+              <el-col :span="24">
                 <div class="kv">
                   <div class="kv__label">通道费率</div>
                   <div class="kv__value">
@@ -460,12 +460,12 @@
                   </div>
                 </div>
               </el-col>
-              <el-col :span="12">
+              <!-- <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">说明</div>
                   <div class="kv__value">首次分账时，按支付单总额 × 费率计入平台商户</div>
                 </div>
-              </el-col>
+              </el-col> -->
               <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">修改用户</div>
