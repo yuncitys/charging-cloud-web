@@ -209,7 +209,7 @@ export default {
 			return { rowspan: 1, colspan: 1 }
 		},
 		getPayeeColumns(list) {
-			const hiddenProps = ['id', 'orderProfitSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo', 'channelFeeDeductAmount']
+			const hiddenProps = ['id', 'orderProfitSplitRecordId', 'merchantId', 'userId', 'adminId', 'tenantId', 'stationId', 'isPlatformMerchant', 'busTradeMerNo']
 			const labelMap = {
 				merchantName: '收款商户',
 				merchantNo: '商户号',
@@ -277,14 +277,8 @@ export default {
 					if (!Number.isNaN(total) && total > 0) {
 						return `+${total.toFixed(2)}`
 					}
-					return '-'
 				}
-				const deduct = Number(row.channelFeeDeductAmount)
-				if (!Number.isNaN(deduct) && deduct > 0) {
-					n = -deduct
-				} else {
-					return '-'
-				}
+				return '-'
 			}
 			if (n > 0) return `+${n.toFixed(2)}`
 			return n.toFixed(2)

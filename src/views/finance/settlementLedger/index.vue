@@ -381,11 +381,11 @@
                   <el-table-column label="通道费" align="center" header-align="center">
                     <el-table-column label="金额" width="108" align="right" header-align="center">
                       <template slot-scope="itemScope">
-                        <span v-if="itemScope.row.isPlatformMerchant && hasChannelFeeAmount(itemScope.row)" class="channel-fee-platform">
-                          +{{ money(itemScope.row.channelFeeAmount) }}
-                        </span>
-                        <span v-else-if="hasChannelFeeDeduct(itemScope.row)" class="channel-fee-deduct">
-                          −{{ money(itemScope.row.channelFeeDeductAmount) }}
+                        <span
+                          v-if="formatSignedChannelFee(itemScope.row) !== '—'"
+                          :class="itemScope.row.isPlatformMerchant ? 'channel-fee-platform' : 'channel-fee-deduct'"
+                        >
+                          {{ formatSignedChannelFee(itemScope.row) }}
                         </span>
                         <span v-else>—</span>
                       </template>
@@ -593,9 +593,9 @@
               <span v-if="ma.row.merchantNo" class="sub-text">({{ ma.row.merchantNo }})</span>
             </template>
           </el-table-column>
-          <el-table-column label="扣减通道费(元)" width="130" align="right">
+          <el-table-column label="通道费(元)" width="130" align="right">
             <template slot-scope="ma">
-              <span class="channel-fee-deduct">−{{ money(ma.row.deductAmount) }}</span>
+              <span class="channel-fee-deduct">{{ formatSignedChannelFee(ma.row) }}</span>
             </template>
           </el-table-column>
         </el-table>
@@ -826,7 +826,7 @@ export default {
         fee: row.fee != null ? row.fee : row.channelFeeAmount
       }))
     },
-    /** 商户分摊扣减（新结构 merchantAlloc；否则从各行 channelFeeDeductAmount 汇总） */
+    /** 商户分摊扣减（新结构 merchantAlloc；否则从各行有符号 channelFeeAmount 汇总） */
     splitChannelFeeMerchantAlloc(ledgerRow) {
       const root = this.parseChannelFeeDetailRoot(ledgerRow)
       if (root && !Array.isArray(root)) {
@@ -836,23 +836,28 @@ export default {
       const items = ledgerRow && ledgerRow.splitItems
       if (!Array.isArray(items)) return []
       return items
-        .filter(i => i && !i.isPlatformMerchant && this.hasChannelFeeDeduct(i))
+        .filter(i => i && !i.isPlatformMerchant && this.resolveSignedChannelFee(i) < 0)
         .map(i => ({
           merchantId: i.merchantId,
           merchantName: i.merchantName,
           merchantNo: i.merchantNo,
-          deductAmount: i.channelFeeDeductAmount
+          channelFeeAmount: Number(i.channelFeeAmount)
         }))
     },
-    hasChannelFeeAmount(item) {
-      if (!item) return false
+    resolveSignedChannelFee(item) {
+      if (!item) return 0
       const n = Number(item.channelFeeAmount)
-      return !Number.isNaN(n) && n !== 0
+      return Number.isNaN(n) ? 0 : n
     },
-    hasChannelFeeDeduct(item) {
-      if (!item || item.isPlatformMerchant) return false
-      const n = Number(item.channelFeeDeductAmount)
-      return !Number.isNaN(n) && n > 0
+    formatSignedChannelFee(item) {
+      if (!item) return '—'
+      const n = this.resolveSignedChannelFee(item)
+      if (n === 0) return '—'
+      if (n > 0) return `+${this.money(n)}`
+      return `−${this.money(Math.abs(n))}`
+    },
+    hasChannelFeeAmount(item) {
+      return this.resolveSignedChannelFee(item) !== 0
     },
     formatChannelFeeRate(val) {
       if (val === null || val === undefined || val === '') return '—'
