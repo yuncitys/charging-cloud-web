@@ -94,11 +94,21 @@
       </div>
     </div>
 
-    <el-dialog :visible.sync="editDialog.visible" title="抽成费用策略" @close="editDialog.visible = false" :append-to-body="true">
-      <el-form ref="editForm" :model="editDialog.form" :rules="editRules" label-position="left" label-width="120px">
-        <el-form-item label="电站名称">
-          <el-input v-model="editDialog.form.stationName" disabled />
-        </el-form-item>
+    <el-drawer
+      title="抽成费用策略"
+      :visible.sync="editDialog.visible"
+      custom-class="commission-strategy-drawer"
+      direction="rtl"
+      size="480px"
+      append-to-body
+      @close="editDialog.visible = false"
+    >
+      <div class="commission-strategy-drawer-body">
+        <el-form ref="editForm" :model="editDialog.form" :rules="editRules" label-position="left" label-width="120px">
+          <div class="drawer-station-block">
+            <div class="drawer-station-label">电站名称</div>
+            <div class="drawer-station-name">{{ editDialog.form.stationName || '—' }}</div>
+          </div>
         <el-form-item label="是否收取抽成" prop="collectFlag">
           <el-radio-group v-model="editDialog.form.collectFlag">
             <el-radio :label="'0'">否</el-radio>
@@ -133,21 +143,31 @@
             </el-input>
           </div>
         </el-form-item>
-        <el-form-item>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
-            type="primary"
-            @click="onEditSubmit"
-          >
-            确定
-          </el-button>
-          <el-button @click="editDialog.visible=false">取消</el-button>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
+          <el-form-item class="drawer-form-actions" label-width="0">
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
+              type="primary"
+              @click="onEditSubmit"
+            >
+              确定
+            </el-button>
+            <el-button @click="editDialog.visible = false">取消</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-drawer>
 
-    <el-dialog :visible.sync="batchDialog.visible" title="批量设置抽成策略" @close="batchDialog.visible = false" :append-to-body="true">
-      <div style="margin-bottom: 10px;">已选择站点：{{ selectedIds.length }} 个</div>
+    <el-drawer
+      title="批量设置抽成策略"
+      :visible.sync="batchDialog.visible"
+      custom-class="commission-strategy-drawer"
+      direction="rtl"
+      size="480px"
+      append-to-body
+      @close="batchDialog.visible = false"
+    >
+      <div class="commission-strategy-drawer-body">
+        <div class="batch-selected-hint">已选择站点：{{ selectedIds.length }} 个</div>
       <el-form ref="batchForm" :model="batchDialog.form" :rules="editRules" label-position="left" label-width="120px">
         <el-form-item label="是否收取抽成" prop="collectFlag">
           <el-radio-group v-model="batchDialog.form.collectFlag">
@@ -183,18 +203,19 @@
             </el-input>
           </div>
         </el-form-item>
-        <el-form-item>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:batchSave')"
-            type="primary"
-            @click="onBatchSubmit"
-          >
-            确定
-          </el-button>
-          <el-button @click="batchDialog.visible=false">取消</el-button>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
+          <el-form-item class="drawer-form-actions" label-width="0">
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:batchSave')"
+              type="primary"
+              @click="onBatchSubmit"
+            >
+              确定
+            </el-button>
+            <el-button @click="batchDialog.visible = false">取消</el-button>
+          </el-form-item>
+        </el-form>
+      </div>
+    </el-drawer>
   </div>
   </template>
 
@@ -385,4 +406,44 @@ export default {
 </script>
 
 <style>
+.commission-strategy-drawer .el-drawer__body {
+  padding: 12px 20px 24px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+  -webkit-overflow-scrolling: touch;
+}
+</style>
+
+<style scoped>
+.commission-strategy-drawer-body {
+  max-width: 100%;
+}
+.drawer-station-block {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+.drawer-station-label {
+  font-size: 12px;
+  color: #909399;
+  margin-bottom: 6px;
+}
+.drawer-station-name {
+  font-size: 15px;
+  color: #303133;
+  font-weight: 500;
+  word-break: break-all;
+}
+.batch-selected-hint {
+  margin: 0 0 12px;
+  color: #606266;
+  font-size: 14px;
+}
+.drawer-form-actions {
+  margin-top: 24px;
+  margin-bottom: 0;
+}
 </style>
