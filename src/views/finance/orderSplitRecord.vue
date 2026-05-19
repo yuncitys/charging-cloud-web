@@ -50,9 +50,9 @@
 				</el-table-column> -->
 				<el-table-column label="追回金额(元)" prop="refundedAmount" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="手续费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="实收通道费(元)" prop="serviceCharge" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column label="通道费(元)" prop="channelFeeAmount" align="center" width="100" :show-overflow-tooltip='isPc'>
+				<el-table-column label="应收通道费(元)" prop="channelFeeAmount" align="center" width="100" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ formatMoney(scope.row.channelFeeAmount) }}</span>
 					</template>
@@ -67,8 +67,8 @@
 						<span>{{ formatChannelFeeRate(scope.row.channelFeeRate) }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="分账比例(%)" prop="splitRate" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
+				<!-- <el-table-column label="分账比例(%)" prop="splitRate" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column> -->
 				<el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
 				<template slot-scope="scope">
 					<span v-if="scope.row.splitType === 0">充电</span>
