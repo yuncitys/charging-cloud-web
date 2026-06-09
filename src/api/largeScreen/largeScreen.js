@@ -46,13 +46,26 @@ function useMock() {
 }
 
 const MOCK_GROWTH_STORAGE_KEY = 'largeScreen_mock_growth_state_v2'
-const MOCK_GROWTH_STORAGE_VERSION = 2
+const MOCK_GROWTH_STORAGE_VERSION = 9
+const MOCK_BASE_TOTAL_USER = 320000
+const MOCK_BASE_MONEY = 130000000
+const MOCK_TODAY_MONEY_MIN_DELTA = 0.15
+const MOCK_TODAY_MONEY_MAX_DELTA = 32.75
+const MOCK_BASE_WX_TOTAL_ORDER = 1200000
+const MOCK_BASE_CARD_TOTAL_ORDER = 82000
+const MOCK_TODAY_WX_ORDER_MIN_DELTA = 1
+const MOCK_TODAY_WX_ORDER_MAX_DELTA = 8
+const MOCK_TODAY_CARD_ORDER_MIN_DELTA = 1
+const MOCK_TODAY_CARD_ORDER_MAX_DELTA = 4
+/** 今日交易金额/今日订单：每日起步基数 1 开头千位数（1000～1999） */
+const MOCK_TODAY_DAY_BASE_MIN = 1000
+const MOCK_TODAY_DAY_BASE_MAX = 1999
+/** 进行中订单：5 开头的百位数（500～599），随 tick 波动可升可降 */
+const MOCK_IN_PROGRESS_ORDER_MIN = 500
+const MOCK_IN_PROGRESS_ORDER_SPAN = 100
 const MOCK_DEVICE_COUNT_STORAGE_KEY = 'largeScreen_mock_device_count_state_v1'
 const MOCK_DEVICE_COUNT_STORAGE_VERSION = 1
 const MOCK_VISUAL_TICK_INTERVAL_MS = 5000
-const MOCK_USER_GROWTH_INTERVAL_MS = 2 * 60 * 1000
-const MOCK_WX_ORDER_GROWTH_INTERVAL_MS = 60 * 1000
-const MOCK_CARD_ORDER_GROWTH_INTERVAL_MS = 2 * 60 * 1000
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
 
 function pad2(n) {
@@ -72,6 +85,32 @@ function formatDay(d) {
 function formatDateKey(d) {
 	const date = d instanceof Date ? d : new Date(d)
 	return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`
+}
+
+function formatMonthKey(d) {
+	const date = d instanceof Date ? d : new Date(d)
+	return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}`
+}
+
+function getWeekStartTs(time) {
+	const date = time instanceof Date ? new Date(time.getTime()) : new Date(time)
+	const day = date.getDay()
+	const daysSinceMonday = day === 0 ? 6 : day - 1
+	const monday = new Date(date)
+	monday.setDate(date.getDate() - daysSinceMonday)
+	monday.setHours(0, 0, 0, 0)
+	return monday.getTime()
+}
+
+/** 以周一为一周起点，用当周周一日期作为 weekKey */
+function formatWeekKey(d) {
+	return formatDateKey(getWeekStartTs(d))
+}
+
+function roundMoney(value) {
+	const num = Number(value)
+	if (!Number.isFinite(num)) return 0
+	return Math.round(num * 100) / 100
 }
 
 function seeded(seed) {
@@ -100,97 +139,215 @@ function toFiniteNumber(value, fallback) {
 	return typeof value === 'number' && Number.isFinite(value) ? value : fallback
 }
 
+function migrateTotalDailyAccumFromPrevious(previousState) {
+	if (!previousState || previousState.version !== MOCK_GROWTH_STORAGE_VERSION) return 0
+	return roundMoney(toFiniteNumber(previousState.totalDailyAccum, 0))
+}
+
+function migrateMonthDailyAccumFromPrevious(previousState, now) {
+	if (!previousState || previousState.version !== MOCK_GROWTH_STORAGE_VERSION) return 0
+	if (previousState.monthKey !== formatMonthKey(now)) return 0
+	return roundMoney(toFiniteNumber(previousState.monthDailyAccum, 0))
+}
+
+function migrateOrderTotalDailyAccumFromPrevious(previousState, fieldName) {
+	if (!previousState || previousState.version !== MOCK_GROWTH_STORAGE_VERSION) return 0
+	return Math.max(0, Math.floor(toFiniteNumber(previousState[fieldName], 0)))
+}
+
+function migrateWeekOrderAccumFromPrevious(previousState, fieldName, now) {
+	if (!previousState || previousState.version !== MOCK_GROWTH_STORAGE_VERSION) return 0
+	if (previousState.weekKey !== formatWeekKey(now)) return 0
+	return Math.max(0, Math.floor(toFiniteNumber(previousState[fieldName], 0)))
+}
+
+function migrateTotalUserDailyAccumFromPrevious(previousState) {
+	if (!previousState || previousState.version !== MOCK_GROWTH_STORAGE_VERSION) return 0
+	return Math.max(0, Math.floor(toFiniteNumber(previousState.totalUserDailyAccum, 0)))
+}
+
 function createMockGrowthState(previousState, now = Date.now()) {
 	const dayStartTs = getDayStartTs(now)
-	const totalUserBase = toFiniteNumber(previousState && previousState.totalUserNow, 320000)
-	const baseMoney = toFiniteNumber(previousState && previousState.moneyNow, 130000000)
-	const baseWxTotalOrder = toFiniteNumber(previousState && previousState.wxTotalNow, 1200000)
-	const baseCardTotalOrder = toFiniteNumber(previousState && previousState.cardTotalNow, 82000)
-	const newUserBase = 18 + Math.floor(seeded(dayStartTs + 101) * 15)
+	const dayKey = formatDateKey(now)
+	const monthKey = formatMonthKey(now)
+	const weekKey = formatWeekKey(now)
+	const isSameDay = previousState
+		&& previousState.version === MOCK_GROWTH_STORAGE_VERSION
+		&& previousState.dayKey === dayKey
+	const isSameWeek = previousState
+		&& previousState.version === MOCK_GROWTH_STORAGE_VERSION
+		&& previousState.weekKey === weekKey
 	return {
 		version: MOCK_GROWTH_STORAGE_VERSION,
-		dayKey: formatDateKey(now),
+		dayKey,
+		monthKey,
+		weekKey,
 		dayStartTs,
-		baseMoney,
-		moneyNow: baseMoney,
-		lastMoneyMinute: -1,
-		totalUserBase,
-		totalUserNow: totalUserBase,
-		newUserBase,
-		newUserNow: newUserBase,
-		lastUserSlot: -1,
-		baseWxTotalOrder,
-		wxTotalNow: baseWxTotalOrder,
-		lastWxOrderSlot: -1,
-		baseCardTotalOrder,
-		cardTotalNow: baseCardTotalOrder,
-		lastCardOrderSlot: -1,
+		baseMoney: MOCK_BASE_MONEY,
+		totalDailyAccum: migrateTotalDailyAccumFromPrevious(previousState),
+		monthDailyAccum: isSameDay ? migrateMonthDailyAccumFromPrevious(previousState, now) : 0,
+		todayMoneyNow: isSameDay
+			? initTodayMoneyForNewDay(dayStartTs, previousState.todayMoneyNow)
+			: roundMoney(getMockTodayDayBase(dayStartTs, 31)),
+		lastTodayMoneySlot: isSameDay
+			? Math.max(-1, Math.floor(toFiniteNumber(previousState.lastTodayMoneySlot, -1)))
+			: -1,
+		baseWxOrder: MOCK_BASE_WX_TOTAL_ORDER,
+		wxOrderTotalDailyAccum: migrateOrderTotalDailyAccumFromPrevious(previousState, 'wxOrderTotalDailyAccum'),
+		wxTodayOrderNow: isSameDay
+			? initTodayOrderCountForNewDay(dayStartTs, 23, previousState.wxTodayOrderNow)
+			: getMockTodayDayBase(dayStartTs, 23),
+		baseCardOrder: MOCK_BASE_CARD_TOTAL_ORDER,
+		cardOrderTotalDailyAccum: migrateOrderTotalDailyAccumFromPrevious(previousState, 'cardOrderTotalDailyAccum'),
+		cardTodayOrderNow: isSameDay
+			? initTodayOrderCountForNewDay(dayStartTs, 27, previousState.cardTodayOrderNow)
+			: getMockTodayDayBase(dayStartTs, 27),
+		wxWeekOrderAccum: isSameWeek ? migrateWeekOrderAccumFromPrevious(previousState, 'wxWeekOrderAccum', now) : 0,
+		cardWeekOrderAccum: isSameWeek ? migrateWeekOrderAccumFromPrevious(previousState, 'cardWeekOrderAccum', now) : 0,
+		baseTotalUser: MOCK_BASE_TOTAL_USER,
+		totalUserDailyAccum: migrateTotalUserDailyAccumFromPrevious(previousState),
+		newUserNow: isSameDay ? Math.max(0, Math.floor(toFiniteNumber(previousState.newUserNow, 0))) : 0,
 	}
 }
 
-function getMockUserDelta(dayStartTs, slot) {
-	const ratio = seeded(dayStartTs + slot * 29 + 5)
-	if (ratio > 0.98) return 2
-	if (ratio > 0.72) return 1
-	return 0
+function getMockTodayMoneyDelta(dayStartTs, slot) {
+	const ratio = seeded(dayStartTs + slot * 41 + 7)
+	const span = MOCK_TODAY_MONEY_MAX_DELTA - MOCK_TODAY_MONEY_MIN_DELTA
+	return roundMoney(MOCK_TODAY_MONEY_MIN_DELTA + ratio * span)
 }
 
-function getMockOrderDelta(dayStartTs, slot, base, size) {
-	return base + Math.floor(seeded(dayStartTs + slot * 31 + 9) * size)
+function getMockTodayDayBase(dayStartTs, salt) {
+	const ratio = seeded(dayStartTs + salt)
+	const span = MOCK_TODAY_DAY_BASE_MAX - MOCK_TODAY_DAY_BASE_MIN + 1
+	return MOCK_TODAY_DAY_BASE_MIN + Math.floor(ratio * span)
+}
+
+function getMockTodayOrderDayBase(dayStartTs, salt) {
+	return getMockTodayDayBase(dayStartTs, salt)
+}
+
+function initTodayMoneyForNewDay(dayStartTs, previousValue) {
+	const preserved = roundMoney(toFiniteNumber(previousValue, 0))
+	if (preserved >= MOCK_TODAY_DAY_BASE_MIN) {
+		return preserved
+	}
+	return roundMoney(getMockTodayDayBase(dayStartTs, 31) + preserved)
+}
+
+function getMockTodayOrderDelta(dayStartTs, slot, minDelta, maxDelta, salt) {
+	const ratio = seeded(dayStartTs + slot * 43 + salt)
+	const span = maxDelta - minDelta + 1
+	return minDelta + Math.floor(ratio * span)
+}
+
+function getMockInProgressOrderCount(dayStartTs, tick) {
+	return MOCK_IN_PROGRESS_ORDER_MIN + Math.floor(seeded(dayStartTs + tick * 37 + 19) * MOCK_IN_PROGRESS_ORDER_SPAN)
+}
+
+function initTodayOrderCountForNewDay(dayStartTs, salt, previousValue) {
+	const preserved = Math.max(0, Math.floor(toFiniteNumber(previousValue, 0)))
+	if (preserved >= MOCK_TODAY_DAY_BASE_MIN) {
+		return preserved
+	}
+	return getMockTodayDayBase(dayStartTs, salt) + preserved
+}
+
+function finalizeDayBeforeRollover(state, now = Date.now()) {
+	const nextState = {
+		...state,
+		baseMoney: MOCK_BASE_MONEY,
+		totalDailyAccum: roundMoney(toFiniteNumber(state.totalDailyAccum, 0)),
+		monthDailyAccum: roundMoney(toFiniteNumber(state.monthDailyAccum, 0)),
+		todayMoneyNow: roundMoney(toFiniteNumber(state.todayMoneyNow, 0)),
+	}
+	const todayAmount = nextState.todayMoneyNow
+	const wxTodayOrders = Math.max(0, Math.floor(toFiniteNumber(nextState.wxTodayOrderNow, 0)))
+	const cardTodayOrders = Math.max(0, Math.floor(toFiniteNumber(nextState.cardTodayOrderNow, 0)))
+	const todayNewUsers = Math.max(0, Math.floor(toFiniteNumber(nextState.newUserNow, 0)))
+	nextState.totalUserDailyAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.totalUserDailyAccum, 0))) + todayNewUsers
+	nextState.totalDailyAccum = roundMoney(nextState.totalDailyAccum + todayAmount)
+	nextState.wxOrderTotalDailyAccum += wxTodayOrders
+	nextState.cardOrderTotalDailyAccum += cardTodayOrders
+	const newMonthKey = formatMonthKey(now)
+	if (nextState.monthKey === newMonthKey) {
+		nextState.monthDailyAccum = roundMoney(nextState.monthDailyAccum + todayAmount)
+	} else {
+		nextState.monthDailyAccum = 0
+	}
+	const newWeekKey = formatWeekKey(now)
+	nextState.wxWeekOrderAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.wxWeekOrderAccum, 0)))
+	nextState.cardWeekOrderAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.cardWeekOrderAccum, 0)))
+	if (nextState.weekKey === newWeekKey) {
+		nextState.wxWeekOrderAccum += wxTodayOrders
+		nextState.cardWeekOrderAccum += cardTodayOrders
+	} else {
+		nextState.wxWeekOrderAccum = 0
+		nextState.cardWeekOrderAccum = 0
+	}
+	nextState.dayStartTs = getDayStartTs(now)
+	nextState.todayMoneyNow = roundMoney(getMockTodayDayBase(nextState.dayStartTs, 31))
+	nextState.wxTodayOrderNow = getMockTodayDayBase(nextState.dayStartTs, 23)
+	nextState.cardTodayOrderNow = getMockTodayDayBase(nextState.dayStartTs, 27)
+	nextState.newUserNow = 0
+	nextState.lastTodayMoneySlot = -1
+	nextState.dayKey = formatDateKey(now)
+	nextState.monthKey = newMonthKey
+	nextState.weekKey = newWeekKey
+	return nextState
+}
+
+/** 今日新增用户：与金额/订单同频，每 5 秒有概率 +1 */
+function getMockTodayUserDelta(dayStartTs, slot) {
+	const ratio = seeded(dayStartTs + slot * 29 + 5)
+	return ratio > 0.55 ? 1 : 0
 }
 
 function advanceMockGrowthState(state, now = Date.now()) {
 	const nextState = {
 		...state,
-		baseMoney: toFiniteNumber(state.baseMoney, 130000000),
-		moneyNow: toFiniteNumber(state.moneyNow, toFiniteNumber(state.baseMoney, 130000000)),
-		lastMoneyMinute: Math.max(-1, Math.floor(toFiniteNumber(state.lastMoneyMinute, -1))),
-		totalUserBase: toFiniteNumber(state.totalUserBase, 320000),
-		totalUserNow: toFiniteNumber(state.totalUserNow, toFiniteNumber(state.totalUserBase, 320000)),
-		newUserBase: toFiniteNumber(state.newUserBase, 18),
-		newUserNow: toFiniteNumber(state.newUserNow, toFiniteNumber(state.newUserBase, 18)),
-		lastUserSlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastUserSlot, -1))),
-		baseWxTotalOrder: toFiniteNumber(state.baseWxTotalOrder, 1200000),
-		wxTotalNow: toFiniteNumber(state.wxTotalNow, toFiniteNumber(state.baseWxTotalOrder, 1200000)),
-		lastWxOrderSlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastWxOrderSlot, -1))),
-		baseCardTotalOrder: toFiniteNumber(state.baseCardTotalOrder, 82000),
-		cardTotalNow: toFiniteNumber(state.cardTotalNow, toFiniteNumber(state.baseCardTotalOrder, 82000)),
-		lastCardOrderSlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastCardOrderSlot, -1))),
+		baseMoney: MOCK_BASE_MONEY,
+		totalDailyAccum: roundMoney(toFiniteNumber(state.totalDailyAccum, 0)),
+		monthDailyAccum: roundMoney(toFiniteNumber(state.monthDailyAccum, 0)),
+		todayMoneyNow: roundMoney(toFiniteNumber(state.todayMoneyNow, 0)),
+		lastTodayMoneySlot: Math.max(-1, Math.floor(toFiniteNumber(state.lastTodayMoneySlot, -1))),
+		monthKey: state.monthKey || formatMonthKey(now),
+		weekKey: state.weekKey || formatWeekKey(now),
+		baseWxOrder: MOCK_BASE_WX_TOTAL_ORDER,
+		wxOrderTotalDailyAccum: Math.max(0, Math.floor(toFiniteNumber(state.wxOrderTotalDailyAccum, 0))),
+		wxTodayOrderNow: Math.max(0, Math.floor(toFiniteNumber(state.wxTodayOrderNow, 0))),
+		wxWeekOrderAccum: Math.max(0, Math.floor(toFiniteNumber(state.wxWeekOrderAccum, 0))),
+		baseCardOrder: MOCK_BASE_CARD_TOTAL_ORDER,
+		cardOrderTotalDailyAccum: Math.max(0, Math.floor(toFiniteNumber(state.cardOrderTotalDailyAccum, 0))),
+		cardTodayOrderNow: Math.max(0, Math.floor(toFiniteNumber(state.cardTodayOrderNow, 0))),
+		cardWeekOrderAccum: Math.max(0, Math.floor(toFiniteNumber(state.cardWeekOrderAccum, 0))),
+		baseTotalUser: MOCK_BASE_TOTAL_USER,
+		totalUserDailyAccum: Math.max(0, Math.floor(toFiniteNumber(state.totalUserDailyAccum, 0))),
+		newUserNow: Math.max(0, Math.floor(toFiniteNumber(state.newUserNow, 0))),
 	}
 
-	const elapsedMinutes = Math.max(0, Math.floor((now - nextState.dayStartTs) / 60000))
-	if (elapsedMinutes > nextState.lastMoneyMinute) {
-		for (let m = nextState.lastMoneyMinute + 1; m <= elapsedMinutes; m++) {
-			const delta = 8 + Math.floor(seeded(nextState.dayStartTs + m * 17 + 1) * 5800) / 100
-			nextState.moneyNow += delta
+	const todayMoneySlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_VISUAL_TICK_INTERVAL_MS))
+	if (todayMoneySlot > nextState.lastTodayMoneySlot) {
+		for (let slot = nextState.lastTodayMoneySlot + 1; slot <= todayMoneySlot; slot++) {
+			nextState.todayMoneyNow = roundMoney(
+				nextState.todayMoneyNow + getMockTodayMoneyDelta(nextState.dayStartTs, slot)
+			)
+			nextState.wxTodayOrderNow += getMockTodayOrderDelta(
+				nextState.dayStartTs,
+				slot,
+				MOCK_TODAY_WX_ORDER_MIN_DELTA,
+				MOCK_TODAY_WX_ORDER_MAX_DELTA,
+				13
+			)
+			nextState.cardTodayOrderNow += getMockTodayOrderDelta(
+				nextState.dayStartTs,
+				slot,
+				MOCK_TODAY_CARD_ORDER_MIN_DELTA,
+				MOCK_TODAY_CARD_ORDER_MAX_DELTA,
+				17
+			)
+			nextState.newUserNow += getMockTodayUserDelta(nextState.dayStartTs, slot)
 		}
-		nextState.lastMoneyMinute = elapsedMinutes
-	}
-
-	const userSlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_USER_GROWTH_INTERVAL_MS))
-	if (userSlot > nextState.lastUserSlot) {
-		for (let slot = nextState.lastUserSlot + 1; slot <= userSlot; slot++) {
-			const delta = getMockUserDelta(nextState.dayStartTs, slot)
-			nextState.newUserNow += delta
-			nextState.totalUserNow += delta
-		}
-		nextState.lastUserSlot = userSlot
-	}
-
-	const wxOrderSlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_WX_ORDER_GROWTH_INTERVAL_MS))
-	if (wxOrderSlot > nextState.lastWxOrderSlot) {
-		for (let slot = nextState.lastWxOrderSlot + 1; slot <= wxOrderSlot; slot++) {
-			nextState.wxTotalNow += getMockOrderDelta(nextState.dayStartTs, slot, 9, 10)
-		}
-		nextState.lastWxOrderSlot = wxOrderSlot
-	}
-
-	const cardOrderSlot = Math.max(0, Math.floor((now - nextState.dayStartTs) / MOCK_CARD_ORDER_GROWTH_INTERVAL_MS))
-	if (cardOrderSlot > nextState.lastCardOrderSlot) {
-		for (let slot = nextState.lastCardOrderSlot + 1; slot <= cardOrderSlot; slot++) {
-			nextState.cardTotalNow += getMockOrderDelta(nextState.dayStartTs, slot, 2, 4)
-		}
-		nextState.lastCardOrderSlot = cardOrderSlot
+		nextState.lastTodayMoneySlot = todayMoneySlot
 	}
 
 	return nextState
@@ -209,8 +366,11 @@ function getMockGrowthState(now = Date.now()) {
 	}
 
 	let state = parsed && typeof parsed === 'object' ? parsed : null
-	if (!state || state.version !== MOCK_GROWTH_STORAGE_VERSION || state.dayKey !== formatDateKey(now)) {
+	const dayKey = formatDateKey(now)
+	if (!state || state.version !== MOCK_GROWTH_STORAGE_VERSION) {
 		state = createMockGrowthState(state, now)
+	} else if (state.dayKey !== dayKey) {
+		state = finalizeDayBeforeRollover(state, now)
 	}
 	state = advanceMockGrowthState(state, now)
 
@@ -298,21 +458,23 @@ function mockGetCount() {
 	const now = Date.now()
 	const growthState = getMockGrowthState(now)
 	const t = getMockVisualTick(now, growthState)
-	const totalMoney = growthState.moneyNow.toFixed(2)
-	const currentMonth = 186000 + t * 67 + Math.floor(seeded(growthState.dayStartTs + t + 2) * 200)
-	const currentDay = 5200 + t * 11 + Math.floor(seeded(growthState.dayStartTs + t + 3) * 50)
+	const todayAmount = roundMoney(growthState.todayMoneyNow)
+	const monthAmount = roundMoney(growthState.monthDailyAccum + todayAmount)
+	const totalMoney = roundMoney(growthState.baseMoney + growthState.totalDailyAccum + todayAmount).toFixed(2)
+	const currentMonth = monthAmount.toFixed(2)
+	const currentDay = todayAmount.toFixed(2)
 
-	const totalUser = growthState.totalUserNow
-	const newUser = growthState.newUserNow
+	const newUser = Math.max(0, Math.floor(growthState.newUserNow))
+	const totalUser = growthState.baseTotalUser + growthState.totalUserDailyAccum + newUser
 
-	const cardTotal = growthState.cardTotalNow
-	const wxTotal = growthState.wxTotalNow
-
-	const cardDay = 180 + (t % 30)
-	const wxDay = 260 + (t % 40)
-
-	const cardWeek = 980 + (t % 120)
-	const wxWeek = 1420 + (t % 180)
+	const wxTodayOrders = Math.max(0, Math.floor(growthState.wxTodayOrderNow))
+	const cardTodayOrders = Math.max(0, Math.floor(growthState.cardTodayOrderNow))
+	const wxTotal = growthState.baseWxOrder + growthState.wxOrderTotalDailyAccum + wxTodayOrders
+	const cardTotal = growthState.baseCardOrder + growthState.cardOrderTotalDailyAccum + cardTodayOrders
+	const wxDay = wxTodayOrders
+	const cardDay = cardTodayOrders
+	const wxWeek = Math.max(0, Math.floor(growthState.wxWeekOrderAccum)) + wxTodayOrders
+	const cardWeek = Math.max(0, Math.floor(growthState.cardWeekOrderAccum)) + cardTodayOrders
 
 	return {
 		countOrderMoney: {
@@ -324,7 +486,7 @@ function mockGetCount() {
 			totalUser,
 			currentDay: newUser,
 		},
-		orderCountByOrderStatus1: 120 + (t % 35),
+		orderCountByOrderStatus1: getMockInProgressOrderCount(growthState.dayStartTs, t),
 		countOrder: [
 			{
 				orderType: 0,
