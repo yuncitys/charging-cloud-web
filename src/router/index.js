@@ -820,6 +820,14 @@ export const constantRoutes = [{
         title: '台账与分账',
         icon: 'el-icon-s-order',
       }
+    }, {
+      path: 'stationFinanceDayBill',
+      component: () => import('@/views/finance/stationFinanceDayBill/index'),
+      name: 'stationFinanceDayBill',
+      meta: {
+        title: '站点财务日账单',
+        icon: 'el-icon-s-data',
+      }
     }]
   },
   {
