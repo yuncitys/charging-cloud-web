@@ -114,12 +114,14 @@
       <el-table
         v-loading="listLoading"
         :data="list"
-        border
+        element-loading-text="拼命加载中......"
         fit
         highlight-current-row
-        style="width: 100%"
+        style="width: 100%;"
+        align="center"
+        id="tableBox"
       >
-        <el-table-column type="index" width="50" label="序号" align="center" :index="indexMethod" />
+        <el-table-column type="index" width="55" label="序号" align="center" :index="indexMethod" />
         <el-table-column label="商户" min-width="140" align="center" show-overflow-tooltip>
           <template slot-scope="scope">
             <span>{{ scope.row.merchantName || '—' }}</span>
@@ -162,24 +164,28 @@
         <el-table-column label="更新时间" width="160" align="center">
           <template slot-scope="scope">{{ scope.row.updateTime | formatDate }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="200" align="center" fixed="right">
+        <el-table-column label="操作" width="280" align="center" fixed="right" class-name="table-action-cell">
           <template slot-scope="scope">
-            <el-button
-              v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:detail')"
-              type="text"
-              size="small"
-              @click="openDrawer(scope.row)"
-            >台账明细</el-button>
-            <el-button
-              v-if="scope.row.status !== 2 && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
-              type="text"
-              size="small"
-              :disabled="scope.row.settlementMode !== 2"
-              :loading="payoutSubmittingId === scope.row.id"
-              @click="onPayout(scope.row)"
-            >
-              提交分账
-            </el-button>
+            <div class="table-action-btns">
+              <el-button
+                v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:detail')"
+                size="mini"
+                type="primary"
+                icon="el-icon-document"
+                @click="openDrawer(scope.row)"
+              >台账明细</el-button>
+              <el-button
+                v-if="scope.row.status !== 2 && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
+                size="mini"
+                type="primary"
+                icon="el-icon-s-finance"
+                :disabled="scope.row.settlementMode !== 2"
+                :loading="payoutSubmittingId === scope.row.id"
+                @click="onPayout(scope.row)"
+              >
+                提交分账
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -278,12 +284,13 @@
           </el-table-column>
           <el-table-column prop="operatorUserName" label="操作人" width="100" show-overflow-tooltip />
           <el-table-column prop="failSummary" label="失败摘要" min-width="200" show-overflow-tooltip />
-          <el-table-column label="操作" width="88" align="center">
+          <el-table-column label="操作" width="100" align="center">
             <template slot-scope="scope">
               <el-button
                 v-if="btnAuthen.permsVerifAuthention(':web:settlementLedger:payoutBatch:items')"
-                type="text"
-                size="small"
+                size="mini"
+                type="primary"
+                icon="el-icon-view"
                 @click="openPayoutBatchItemDialog(scope.row)"
               >明细</el-button>
             </template>
@@ -395,9 +402,9 @@
                       <template slot-scope="itemScope">
                         <el-button
                           v-if="itemScope.row.isPlatformMerchant && hasChannelFeeDetail(scope.row)"
-                          type="text"
                           size="mini"
-                          class="channel-fee-detail-link"
+                          type="primary"
+                          icon="el-icon-view"
                           @click="openChannelFeeDetailDialog(scope.row)"
                         >
                           查看
@@ -455,12 +462,13 @@
             <template slot-scope="scope">
               <el-button
                 v-if="canRecalcLineSplit(scope.row)"
-                type="text"
                 size="mini"
+                type="primary"
+                icon="el-icon-refresh"
                 :loading="recalcLineSplitLoadingId === scope.row.id"
                 @click="onRecalcLineSplit(scope.row)"
               >
-                重算预分账
+                重算
               </el-button>
               <span v-else>—</span>
             </template>
@@ -521,12 +529,13 @@
           <template slot-scope="scope">
             <el-button
               v-if="scope.row.itemStatus === 'FAILED' && payoutItemDialog.periodId && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:retry')"
-              type="text"
-              size="small"
+              size="mini"
+              type="primary"
+              icon="el-icon-refresh"
               :loading="payoutItemDialog.retryingOrderCode === scope.row.orderCode"
               @click="onRetryPayoutSingleOrder(scope.row)"
             >
-              重试分账
+              重试
             </el-button>
             <span v-else>—</span>
           </template>
@@ -1438,10 +1447,6 @@ export default {
   color: #f56c6c;
   font-weight: 500;
 }
-.channel-fee-detail-link {
-  color: #409eff;
-  padding: 0;
-}
 .channel-fee-dialog-meta {
   margin-bottom: 12px;
   font-size: 13px;
@@ -1467,9 +1472,25 @@ export default {
   box-sizing: border-box;
   -webkit-overflow-scrolling: touch;
 }
-.settlement-ledger-page .el-table th > .cell,
 .settlement-ledger-drawer .el-table th > .cell,
 .settlement-ledger-dialog .el-table th > .cell {
   text-align: center;
+}
+.settlement-ledger-page #tableBox td.table-action-cell {
+  height: auto !important;
+  line-height: normal !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.settlement-ledger-page .table-action-btns {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 8px;
+  vertical-align: middle;
+}
+.settlement-ledger-page .table-action-btns .el-button + .el-button {
+  margin-left: 0;
 }
 </style>

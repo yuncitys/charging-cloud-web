@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container">
+  <div class="app-container trade-entry-page">
     <div class="filter-container">
       <el-input v-model="listQuery.merName" placeholder="商户名称" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.busTradeMerNo" placeholder="业务方商户编号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
@@ -41,11 +41,14 @@
 
     <el-table
       v-loading="listLoading"
+      :key="tableKey"
       :data="list"
-      border
+      element-loading-text="拼命加载中......"
       fit
       highlight-current-row
       style="width: 100%;"
+      align="center"
+      id="tableBox"
     >
       <el-table-column label="ID" prop="id" align="center" width="80">
         <template slot-scope="{row}">
@@ -57,7 +60,7 @@
           <span>{{ row.busTradeMerNo }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="商户名称" prop="merName" min-width="150">
+      <el-table-column label="商户名称" prop="merName" min-width="150" align="center" show-overflow-tooltip>
         <template slot-scope="{row}">
           <span>{{ row.merName }}</span>
         </template>
@@ -87,40 +90,46 @@
           <el-tag :type="row.auditStatus | auditStatusTypeFilter">{{ row.auditStatus | auditStatusFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="320" class-name="operation-col small-padding fixed-width">
+      <el-table-column label="操作" align="center" width="380" fixed="right" class-name="table-action-cell">
         <template slot-scope="{row}">
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:info')"
-            type="info"
-            size="mini"
-            @click="handleDetail(row)"
-          >
-            详情
-          </el-button>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
-            type="primary"
-            size="mini"
-            @click="handleUpdate(row)"
-          >
-            修改
-          </el-button>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
-            size="mini"
-            type="warning"
-            @click="handleCancel(row)"
-          >
-            注销
-          </el-button>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:delete')"
-            size="mini"
-            type="danger"
-            @click="handleRemove(row)"
-          >
-            删除
-          </el-button>
+          <div class="table-action-btns">
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:info')"
+              size="mini"
+              type="primary"
+              icon="el-icon-view"
+              @click="handleDetail(row)"
+            >
+              详情
+            </el-button>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
+              size="mini"
+              type="primary"
+              icon="el-icon-edit"
+              @click="handleUpdate(row)"
+            >
+              修改
+            </el-button>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
+              size="mini"
+              type="primary"
+              icon="el-icon-circle-close"
+              @click="handleCancel(row)"
+            >
+              注销
+            </el-button>
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:delete')"
+              size="mini"
+              type="danger"
+              icon="el-icon-delete"
+              @click="handleRemove(row)"
+            >
+              删除
+            </el-button>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -193,6 +202,7 @@ export default {
   },
   data() {
     return {
+      tableKey: 0,
       list: null,
       total: 0,
       listLoading: true,
@@ -250,6 +260,7 @@ export default {
         this.total = response.count
         this.listLoading = false
       }).catch(() => {
+        this.listLoading = false
         this.$message({
           type: 'error',
           message: '获取失败'
@@ -314,11 +325,24 @@ export default {
   margin: 0 12px 12px 0 !important;
 }
 
-.operation-col >>> .cell {
-  white-space: nowrap;
-}
+</style>
 
-.operation-col >>> .el-button + .el-button {
-  margin-left: 6px;
+<style>
+.trade-entry-page #tableBox td.table-action-cell {
+  height: auto !important;
+  line-height: normal !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+.trade-entry-page .table-action-btns {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  vertical-align: middle;
+}
+.trade-entry-page .table-action-btns .el-button + .el-button {
+  margin-left: 0;
 }
 </style>
