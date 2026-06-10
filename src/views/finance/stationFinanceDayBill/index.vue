@@ -34,6 +34,12 @@
             @change="onDateRange"
           />
         </el-form-item>
+        <el-form-item label="业态">
+          <el-select v-model="searchForm.ruleId" clearable placeholder="全部" style="width: 130px">
+            <el-option :value="1" label="电单车" />
+            <el-option :value="2" label="新能源汽车" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="商户">
           <el-select
             v-model="searchForm.merchantId"
@@ -64,12 +70,6 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="业态">
-          <el-select v-model="searchForm.ruleId" clearable placeholder="全部" style="width: 130px">
-            <el-option :value="1" label="单车桩" />
-            <el-option :value="2" label="汽车桩" />
-          </el-select>
-        </el-form-item>
         <el-form-item class="filter-actions">
           <el-button
             type="primary"
@@ -90,22 +90,26 @@
       <div v-if="summary.statHint" class="stat-hint">{{ summary.statHint }}</div>
     </div>
 
-    <div v-loading="summaryLoading" class="kpi-row">
-      <div class="kpi-card kpi-card--settle">
-        <div class="kpi-card__label">结算金额（元）</div>
-        <div class="kpi-card__value">{{ money(summary.settledTotalAmount) }}</div>
+    <div v-loading="summaryLoading" class="summary-cards">
+      <div class="summary-card summary-card--settle">
+        <div class="summary-label">结算金额（元）</div>
+        <div class="summary-value">{{ money(summary.settledTotalAmount) }}</div>
+        <div class="summary-card-icon" />
       </div>
-      <div class="kpi-card kpi-card--order">
-        <div class="kpi-card__label">出账合计（元）</div>
-        <div class="kpi-card__value">{{ money(summary.orderTotalAmount) }}</div>
+      <div class="summary-card summary-card--order">
+        <div class="summary-label">出账合计（元）</div>
+        <div class="summary-value">{{ money(summary.orderTotalAmount) }}</div>
+        <div class="summary-card-icon" />
       </div>
-      <div class="kpi-card kpi-card--count">
-        <div class="kpi-card__label">出账笔数</div>
-        <div class="kpi-card__value">{{ summary.billedOrderCount != null ? summary.billedOrderCount : 0 }}</div>
+      <div class="summary-card summary-card--count">
+        <div class="summary-label">出账笔数</div>
+        <div class="summary-value">{{ summary.billedOrderCount != null ? summary.billedOrderCount : 0 }}</div>
+        <div class="summary-card-icon" />
       </div>
-      <div class="kpi-card kpi-card--degree">
-        <div class="kpi-card__label">出账电量（度）</div>
-        <div class="kpi-card__value">{{ degree(summary.billedTotalDegree) }}</div>
+      <div class="summary-card summary-card--degree">
+        <div class="summary-label">出账电量（度）</div>
+        <div class="summary-value">{{ degree(summary.billedTotalDegree) }}</div>
+        <div class="summary-card-icon" />
       </div>
     </div>
 
@@ -120,13 +124,14 @@
     <el-table
       v-loading="listLoading"
       :data="list"
-      border
+      element-loading-text="拼命加载中......"
       fit
       highlight-current-row
-      style="width: 100%"
-      @row-click="openDetail"
+      style="width: 100%;"
+      align="center"
+      id="tableBox"
     >
-      <el-table-column type="index" width="50" label="序号" align="center" :index="indexMethod" />
+      <el-table-column type="index" width="55" label="序号" align="center" :index="indexMethod" />
       <el-table-column prop="summaryDate" label="统计日" min-width="110" align="center" />
       <el-table-column prop="merchantName" label="商户" min-width="140" align="center" show-overflow-tooltip />
       <el-table-column prop="stationName" label="站点" min-width="160" align="center" show-overflow-tooltip />
@@ -149,9 +154,9 @@
       <el-table-column label="结算金额" width="110" align="center">
         <template slot-scope="scope">{{ money(scope.row.settledTotalAmount) }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="80" align="center" fixed="right">
+      <el-table-column label="操作" width="100" align="center" fixed="right">
         <template slot-scope="scope">
-          <el-button type="text" size="small" @click.stop="openDetail(scope.row)">详情</el-button>
+          <el-button size="mini" type="primary" icon="el-icon-view" @click="openDetail(scope.row)">详情</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -172,17 +177,31 @@
     <el-drawer
       title="账单详情"
       :visible.sync="detailVisible"
+      custom-class="finance-bill-detail-drawer"
       size="60%"
       direction="rtl"
       :wrapper-closable="true"
       append-to-body
     >
+      <div class="detail-drawer-shell">
       <div v-if="detailRow" class="detail-drawer-body">
-        <div class="detail-head">
-          <div class="detail-head__item"><span class="k">统计日</span><span class="v">{{ detailRow.summaryDate || '—' }}</span></div>
-          <div class="detail-head__item"><span class="k">商户</span><span class="v">{{ detailRow.merchantName || '—' }}</span></div>
-          <div class="detail-head__item"><span class="k">站点</span><span class="v">{{ detailRow.stationName || '—' }}</span></div>
-          <div class="detail-head__item"><span class="k">业态</span><span class="v">{{ ruleLabel(detailRow.ruleId) }}</span></div>
+        <div class="detail-meta-cards">
+          <div class="detail-meta-card">
+            <div class="detail-meta-card__label">统计日</div>
+            <div class="detail-meta-card__value">{{ detailRow.summaryDate || '—' }}</div>
+          </div>
+          <div class="detail-meta-card">
+            <div class="detail-meta-card__label">商户</div>
+            <div class="detail-meta-card__value" :title="detailRow.merchantName">{{ detailRow.merchantName || '—' }}</div>
+          </div>
+          <div class="detail-meta-card">
+            <div class="detail-meta-card__label">站点</div>
+            <div class="detail-meta-card__value" :title="detailRow.stationName">{{ detailRow.stationName || '—' }}</div>
+          </div>
+          <div class="detail-meta-card">
+            <div class="detail-meta-card__label">结算金额</div>
+            <div class="detail-meta-card__value detail-meta-card__value--amount">{{ money(detailRow.settledTotalAmount) }}</div>
+          </div>
         </div>
 
         <div class="detail-block">
@@ -210,7 +229,8 @@
         </div>
       </div>
       <div class="detail-drawer-footer">
-        <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button type="primary" @click="detailVisible = false">关闭</el-button>
+      </div>
       </div>
     </el-drawer>
 
@@ -601,38 +621,72 @@ export default {
 .filter-actions .el-button + .el-button {
   margin-left: 8px;
 }
-.kpi-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
+.summary-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 24px;
+  margin: 0 0 16px;
+}
+.summary-card {
+  position: relative;
+  flex: 0 0 260px;
+  height: 94px;
+  border-radius: 15px;
+  padding: 14px 18px;
+  box-shadow: 4px 4px 40px rgba(0, 0, 0, 0.05);
+  color: #fff;
+  overflow: hidden;
+}
+.summary-card-icon {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 80px;
+  height: 80px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+.summary-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-bottom: 6px;
+}
+.summary-value {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.summary-card--settle {
+  background: linear-gradient(135deg, #409EFF, #2d8cf0);
+}
+.summary-card--order {
+  background: linear-gradient(135deg, #2ecc71, #1abc9c);
+}
+.summary-card--count {
+  background: linear-gradient(135deg, #f97316, #fb923c);
+}
+.summary-card--degree {
+  background: linear-gradient(135deg, #00c9ff, #92fe9d);
+}
+.summary-card--settle .summary-card-icon {
+  background-image: url(../../../assets/home-panel/trade-panel.png);
+}
+.summary-card--order .summary-card-icon {
+  background-image: url(../../../assets/home-panel/trade-panel.png);
+}
+.summary-card--count .summary-card-icon {
+  background-image: url(../../../assets/home-panel/order-panel.png);
+}
+.summary-card--degree .summary-card-icon {
+  background-image: url(../../../assets/home-panel/device-panel.png);
 }
 @media (max-width: 1200px) {
-  .kpi-row {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .summary-card {
+    flex: 1 1 calc(50% - 12px);
+    min-width: 220px;
   }
 }
-.kpi-card {
-  border-radius: 12px;
-  padding: 16px 18px;
-  color: #fff;
-  min-height: 88px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-}
-.kpi-card__label {
-  font-size: 13px;
-  opacity: 0.92;
-}
-.kpi-card__value {
-  margin-top: 8px;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.kpi-card--settle { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-.kpi-card--order { background: linear-gradient(135deg, #10b981, #22c55e); }
-.kpi-card--count { background: linear-gradient(135deg, #f97316, #fb923c); }
-.kpi-card--degree { background: linear-gradient(135deg, #8b5cf6, #4f46e5); }
 .chart-panel {
   background: #fff;
   border: 1px solid #ebeef5;
@@ -654,29 +708,54 @@ export default {
   color: #909399;
   font-size: 14px;
 }
-.detail-drawer-body {
-  padding: 8px 20px 72px;
+.detail-drawer-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
-.detail-head {
+.detail-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+.detail-meta-cards {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px 16px;
+  gap: 12px;
   margin-bottom: 16px;
-  padding: 14px;
-  background: #f5f7fa;
-  border-radius: 8px;
 }
-.detail-head__item .k {
-  display: block;
+.detail-meta-card {
+  padding: 14px 16px;
+  background: #f5f7fa;
+  border: 1px solid #ebeef5;
+  border-radius: 12px;
+  min-height: 72px;
+}
+.detail-meta-card__label {
   font-size: 12px;
   color: #909399;
+  margin-bottom: 8px;
 }
-.detail-head__item .v {
-  display: block;
-  margin-top: 4px;
-  font-size: 14px;
+.detail-meta-card__value--amount {
+  font-size: 18px;
+  color: #409EFF;
+}
+.detail-meta-card__value {
+  font-size: 15px;
   color: #303133;
   font-weight: 600;
+  line-height: 1.4;
+  word-break: break-all;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .detail-block {
   margin-bottom: 16px;
@@ -731,13 +810,27 @@ export default {
   color: #909399;
 }
 .detail-drawer-footer {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex-shrink: 0;
   padding: 12px 20px;
   text-align: right;
   border-top: 1px solid #ebeef5;
   background: #fff;
+  box-sizing: border-box;
+}
+</style>
+
+<style>
+.finance-bill-detail-drawer {
+  display: flex;
+  flex-direction: column;
+}
+.finance-bill-detail-drawer .el-drawer__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0;
+  box-sizing: border-box;
 }
 </style>
