@@ -53,26 +53,18 @@
 				<el-table-column label="退款金额" prop="refundMoney" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
-				<template slot-scope="scope">
-					<el-tag v-if="scope.row.refundSource == 'CHARGING_ORDER'">订单退款</el-tag>
-					<el-tag v-if="scope.row.refundSource == 'WALLET_BALANCE'">余额退款</el-tag>
-				</template>
+					<template slot-scope="scope">
+						<span>{{ refundSourceLabel(scope.row.refundSource) }}</span>
+					</template>
 				</el-table-column>
 				<el-table-column label="退款渠道" prop="channel" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag v-if="scope.row.channel == 'ORIGINAL'">原路退回</el-tag>
-						<el-tag v-if="scope.row.channel == 'BALANCE'">退回余额</el-tag>
-						<el-tag v-if="scope.row.channel == 'OTHER_BALANCE'">原账户异常退到其他余额账户</el-tag>
-						<el-tag v-if="scope.row.channel == 'OTHER_BANKCARD'">原银行卡异常退到其他银行卡</el-tag>
+						<span>{{ refundChannelLabel(scope.row.channel) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column label="退款状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-            			<el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
-						<el-tag v-if="scope.row.status == 'PROCESSING'">处理中</el-tag>
-						<el-tag type="success"v-if="scope.row.status == 'SUCCESS'">退款成功</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 'ABNORMAL'">退款失败</el-tag>
-            			<el-tag v-if="scope.row.status == 'CLOSED'">退款关闭</el-tag>
+						<span>{{ refundStatusLabel(scope.row.status) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="result" label="处理结果" align="center" :show-overflow-tooltip="isPc">
@@ -110,6 +102,25 @@
 	} from '@/utils/index'
 	import imgView from '@/components/Common/imgView.vue'
 	import downloadProgress from '@/components/Common/downloadProgress.vue'
+
+	const REFUND_SOURCE_MAP = {
+		CHARGING_ORDER: '订单退款',
+		WALLET_BALANCE: '余额退款'
+	}
+	const REFUND_CHANNEL_MAP = {
+		ORIGINAL: '原路退回',
+		BALANCE: '退回余额',
+		OTHER_BALANCE: '原账户异常退到其他余额账户',
+		OTHER_BANKCARD: '原银行卡异常退到其他银行卡'
+	}
+	const REFUND_STATUS_MAP = {
+		UNTREATED: '未处理',
+		PROCESSING: '处理中',
+		SUCCESS: '退款成功',
+		ABNORMAL: '退款失败',
+		CLOSED: '退款关闭'
+	}
+
 	export default {
 		name: 'refundRecord',
 		components: {
@@ -172,6 +183,21 @@
 
 		},
 		methods: {
+			labelOrRaw(map, value) {
+				if (value == null || value === '') {
+					return '—'
+				}
+				return map[value] != null ? map[value] : value
+			},
+			refundSourceLabel(value) {
+				return this.labelOrRaw(REFUND_SOURCE_MAP, value)
+			},
+			refundChannelLabel(value) {
+				return this.labelOrRaw(REFUND_CHANNEL_MAP, value)
+			},
+			refundStatusLabel(value) {
+				return this.labelOrRaw(REFUND_STATUS_MAP, value)
+			},
 			getLists() {
 				this.listLoading = true
 				let listQuery = JSON.parse(JSON.stringify(this.listQuery))
