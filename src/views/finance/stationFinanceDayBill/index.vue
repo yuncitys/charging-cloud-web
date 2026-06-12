@@ -80,7 +80,6 @@
           <el-button
             v-if="canExport"
             type="primary"
-            plain
             icon="el-icon-download"
             :loading="exportLoading"
             @click="handleExport"
