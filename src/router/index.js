@@ -614,6 +614,15 @@ export const constantRoutes = [{
           icon: 'el-icon-s-finance',
         }
       },
+      {
+        path: 'stationSplitConfig',
+        component: () => import('@/views/operations/stationSplitConfig/index'),
+        name: 'stationSplitConfig',
+        meta: {
+          title: '分账设置',
+          icon: 'el-icon-s-finance',
+        }
+      },
     ]
   },
   {
