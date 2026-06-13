@@ -899,8 +899,24 @@ export const constantRoutes = [{
       component: () => import('@/views/report/reportList'),
       name: 'reportList',
       meta: {
-        title: '报障反馈',
+        title: '历史故障申诉',
         icon: 'el-icon-set-up',
+      }
+    }, {
+      path: 'feedbackList',
+      component: () => import('@/views/feedback/feedbackList'),
+      name: 'feedbackList',
+      meta: {
+        title: '意见反馈',
+        icon: 'el-icon-chat-line-square',
+      }
+    }, {
+      path: 'feedbackConfig',
+      component: () => import('@/views/feedback/feedbackConfig'),
+      name: 'feedbackConfig',
+      meta: {
+        title: '反馈类型配置',
+        icon: 'el-icon-setting',
       }
     }]
   },
