@@ -21,129 +21,169 @@
 
         <div class="detail-section">
           <div class="detail-section__title">基本信息</div>
-          <div class="detail-grid detail-grid--2">
-            <div class="detail-grid__item">
-              <span class="detail-grid__label">活动编号</span>
-              <span class="detail-grid__value">{{ activity.activityId }}</span>
+          <div class="detail-grid">
+            <div class="detail-grid__row">
+              <div class="detail-grid__item">
+                <span class="detail-grid__label">活动编号</span>
+                <span class="detail-grid__value">{{ activity.activityId }}</span>
+              </div>
+              <div class="detail-grid__item">
+                <span class="detail-grid__label">活动类型</span>
+                <span class="detail-grid__value">{{ typeLabel }}</span>
+              </div>
             </div>
-            <div class="detail-grid__item">
-              <span class="detail-grid__label">活动类型</span>
-              <span class="detail-grid__value">{{ typeLabel }}</span>
+            <div v-if="showInitiator || showActivityTime" class="detail-grid__row">
+              <div
+                v-if="showInitiator"
+                class="detail-grid__item"
+                :class="{ 'detail-grid__item--full': !showActivityTime }"
+              >
+                <span class="detail-grid__label">发起方</span>
+                <span class="detail-grid__value">{{ initiatorLabel }}</span>
+              </div>
+              <div
+                v-if="showActivityTime"
+                class="detail-grid__item"
+                :class="{ 'detail-grid__item--full': !showInitiator }"
+              >
+                <span class="detail-grid__label">活动时间</span>
+                <span class="detail-grid__value">
+                  {{ activity.activityBeginTime | formatDate }} ~ {{ activity.activityEndTime | formatDate }}
+                </span>
+              </div>
             </div>
-            <div v-if="showInitiator" class="detail-grid__item">
-              <span class="detail-grid__label">发起方</span>
-              <span class="detail-grid__value">{{ initiatorLabel }}</span>
-            </div>
-            <div v-if="showActivityTime" class="detail-grid__item">
-              <span class="detail-grid__label">活动时间</span>
-              <span class="detail-grid__value">
-                {{ activity.activityBeginTime | formatDate }} ~ {{ activity.activityEndTime | formatDate }}
-              </span>
-            </div>
-            <div class="detail-grid__item">
-              <span class="detail-grid__label">创建时间</span>
-              <span class="detail-grid__value">{{ activity.createTime | formatDate }}</span>
-            </div>
-            <div class="detail-grid__item">
-              <span class="detail-grid__label">创建人</span>
-              <span class="detail-grid__value">{{ activity.createUser || '—' }}</span>
+            <div class="detail-grid__row">
+              <div class="detail-grid__item">
+                <span class="detail-grid__label">创建人</span>
+                <span class="detail-grid__value">{{ activity.createUser || '—' }}</span>
+              </div>
+              <div class="detail-grid__item">
+                <span class="detail-grid__label">创建时间</span>
+                <span class="detail-grid__value">{{ activity.createTime | formatDate }}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div v-if="activity.activityRemark || activity.activityRule || ruleImageUrl" class="detail-section">
           <div class="detail-section__title">活动说明</div>
-          <div class="detail-grid detail-grid--1">
-            <div v-if="activity.activityRemark" class="detail-grid__item">
-              <span class="detail-grid__label">活动说明</span>
-              <span class="detail-grid__value">{{ activity.activityRemark }}</span>
+          <div class="detail-grid">
+            <div v-if="activity.activityRemark" class="detail-grid__row">
+              <div class="detail-grid__item detail-grid__item--full">
+                <span class="detail-grid__label">活动说明</span>
+                <span class="detail-grid__value">{{ activity.activityRemark }}</span>
+              </div>
             </div>
-            <div v-if="activityType === '2' && ruleImageUrl" class="detail-grid__item">
-              <span class="detail-grid__label">规则图片</span>
-              <span class="detail-grid__value">
-                <el-image :src="ruleImageUrl" fit="contain" class="detail-image" :preview-src-list="[ruleImageUrl]" />
-              </span>
+            <div v-if="activityType === '2' && ruleImageUrl" class="detail-grid__row">
+              <div class="detail-grid__item detail-grid__item--full">
+                <span class="detail-grid__label">规则图片</span>
+                <span class="detail-grid__value">
+                  <el-image :src="ruleImageUrl" fit="contain" class="detail-image" :preview-src-list="[ruleImageUrl]" />
+                </span>
+              </div>
             </div>
-            <div v-else-if="activity.activityRule" class="detail-grid__item">
-              <span class="detail-grid__label">活动规则</span>
-              <span class="detail-grid__value">{{ activity.activityRule }}</span>
+            <div v-else-if="activity.activityRule" class="detail-grid__row">
+              <div class="detail-grid__item detail-grid__item--full">
+                <span class="detail-grid__label">活动规则</span>
+                <span class="detail-grid__value">{{ activity.activityRule }}</span>
+              </div>
             </div>
           </div>
         </div>
 
         <div v-if="hasTypeConfig" class="detail-section">
           <div class="detail-section__title">活动配置</div>
-          <div class="detail-grid detail-grid--2">
+          <div class="detail-grid">
             <template v-if="activityType === '2'">
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">限制次数</span>
-                <span class="detail-grid__value">{{ subConfig.limitCount }} {{ limitTypeLabel }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item detail-grid__item--full">
+                  <span class="detail-grid__label">限制次数</span>
+                  <span class="detail-grid__value">{{ subConfig.limitCount }} {{ limitTypeLabel }}</span>
+                </div>
               </div>
             </template>
             <template v-if="activityType === '3'">
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">发放方式</span>
-                <span class="detail-grid__value">{{ sendTypeLabel }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">发放方式</span>
+                  <span class="detail-grid__value">{{ sendTypeLabel }}</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">发放状态</span>
+                  <span class="detail-grid__value">{{ sendStatusLabel }}</span>
+                </div>
               </div>
-              <div v-if="subConfig.sendType === '2'" class="detail-grid__item">
-                <span class="detail-grid__label">定时时间</span>
-                <span class="detail-grid__value">{{ subConfig.sendTime | formatDate }}</span>
+              <div v-if="subConfig.sendType === '2'" class="detail-grid__row">
+                <div class="detail-grid__item detail-grid__item--full">
+                  <span class="detail-grid__label">定时时间</span>
+                  <span class="detail-grid__value">{{ subConfig.sendTime | formatDate }}</span>
+                </div>
               </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">发放状态</span>
-                <span class="detail-grid__value">{{ sendStatusLabel }}</span>
-              </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">用户维度</span>
-                <span class="detail-grid__value">{{ userScopeLabel }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item detail-grid__item--full">
+                  <span class="detail-grid__label">用户维度</span>
+                  <span class="detail-grid__value">{{ userScopeLabel }}</span>
+                </div>
               </div>
             </template>
             <template v-if="activityType === '4'">
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">发放条件</span>
-                <span class="detail-grid__value">充电满 {{ subConfig.limitPower }} 度发放</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">发放条件</span>
+                  <span class="detail-grid__value">充电满 {{ subConfig.limitPower }} 度发放</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">限制次数</span>
+                  <span class="detail-grid__value">{{ subConfig.limitCount }} {{ limitTypeLabel }}</span>
+                </div>
               </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">限制次数</span>
-                <span class="detail-grid__value">{{ subConfig.limitCount }} {{ limitTypeLabel }}</span>
-              </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">电站维度</span>
-                <span class="detail-grid__value">{{ stationScopeLabel }}</span>
-              </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">用户维度</span>
-                <span class="detail-grid__value">{{ userScopeLabel }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">电站维度</span>
+                  <span class="detail-grid__value">{{ stationScopeLabel }}</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">用户维度</span>
+                  <span class="detail-grid__value">{{ userScopeLabel }}</span>
+                </div>
               </div>
             </template>
             <template v-if="activityType === '5'">
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">活动标题</span>
-                <span class="detail-grid__value">{{ subConfig.activityTitle || '—' }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">活动标题</span>
+                  <span class="detail-grid__value">{{ subConfig.activityTitle || '—' }}</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">限制次数</span>
+                  <span class="detail-grid__value">{{ subConfig.limitCount }} {{ limitTypeLabel }}</span>
+                </div>
               </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">限制次数</span>
-                <span class="detail-grid__value">{{ subConfig.limitCount }} {{ limitTypeLabel }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item detail-grid__item--full">
+                  <span class="detail-grid__label">用户维度</span>
+                  <span class="detail-grid__value">{{ userScopeLabel }}</span>
+                </div>
               </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">用户维度</span>
-                <span class="detail-grid__value">{{ userScopeLabel }}</span>
-              </div>
-              <div v-if="subConfig.activityImage" class="detail-grid__item detail-grid__item--full">
-                <span class="detail-grid__label">活动图片</span>
-                <span class="detail-grid__value">
-                  <el-image :src="subConfig.activityImage" fit="contain" class="detail-image" :preview-src-list="[subConfig.activityImage]" />
-                </span>
+              <div v-if="subConfig.activityImage" class="detail-grid__row">
+                <div class="detail-grid__item detail-grid__item--full">
+                  <span class="detail-grid__label">活动图片</span>
+                  <span class="detail-grid__value">
+                    <el-image :src="subConfig.activityImage" fit="contain" class="detail-image" :preview-src-list="[subConfig.activityImage]" />
+                  </span>
+                </div>
               </div>
             </template>
             <template v-if="activityType === '6'">
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">发放总数量</span>
-                <span class="detail-grid__value">{{ subConfig.sendTotalCount }} 个</span>
-              </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">用户维度</span>
-                <span class="detail-grid__value">{{ userScopeLabel }}</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">发放总数量</span>
+                  <span class="detail-grid__value">{{ subConfig.sendTotalCount }} 个</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">用户维度</span>
+                  <span class="detail-grid__value">{{ userScopeLabel }}</span>
+                </div>
               </div>
             </template>
           </div>
@@ -155,7 +195,7 @@
             <div v-for="(tier, idx) in rechargeTiers" :key="idx" class="reward-tier">
               <div class="reward-tier__title">充值满 {{ tier.threshold }} 元</div>
               <el-table :data="tier.rewards" border size="small">
-                <el-table-column type="index" width="50" label="#" align="center" />
+                <el-table-column type="index" width="50" label="序号" align="center" />
                 <el-table-column label="卡券名称" align="center" min-width="180" show-overflow-tooltip>
                   <template slot-scope="scope">{{ couponName(scope.row.rewardId) }}</template>
                 </el-table-column>
@@ -168,7 +208,7 @@
           </template>
           <template v-else>
             <el-table :data="rewards" border size="small">
-              <el-table-column type="index" width="50" label="#" align="center" />
+              <el-table-column type="index" width="50" label="序号" align="center" />
               <el-table-column label="卡券名称" align="center" min-width="180" show-overflow-tooltip>
                 <template slot-scope="scope">{{ couponName(scope.row.rewardId) }}</template>
               </el-table-column>
@@ -184,7 +224,7 @@
           <div class="detail-section__title">用户范围</div>
           <div v-if="isAllUsers" class="detail-scope-hint">全部用户，无需单独配置。</div>
           <el-table v-else :data="userScopes" border size="small" max-height="280">
-            <el-table-column type="index" width="50" label="#" align="center" />
+            <el-table-column type="index" width="50" label="序号" align="center" />
             <el-table-column prop="dataName" label="名称" align="center" min-width="200" show-overflow-tooltip />
           </el-table>
           <div v-if="!isAllUsers && !userScopes.length" class="detail-scope-hint">暂无配置</div>
@@ -194,7 +234,7 @@
           <div class="detail-section__title">电站范围</div>
           <div v-if="isAllStations" class="detail-scope-hint">全部电站，无需单独配置。</div>
           <el-table v-else :data="stationScopes" border size="small" max-height="280">
-            <el-table-column type="index" width="50" label="#" align="center" />
+            <el-table-column type="index" width="50" label="序号" align="center" />
             <el-table-column prop="dataName" label="名称" align="center" min-width="200" show-overflow-tooltip />
           </el-table>
           <div v-if="!isAllStations && !stationScopes.length" class="detail-scope-hint">暂无配置</div>
@@ -391,15 +431,21 @@ export default {
 
 <style scoped>
 .detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 20px;
 }
 .detail-header__name {
+  flex: 1;
+  min-width: 0;
   font-size: 18px;
   font-weight: 600;
   color: #303133;
-  margin-bottom: 8px;
 }
 .detail-header__tags {
+  flex-shrink: 0;
   display: flex;
   gap: 8px;
 }
@@ -426,25 +472,24 @@ export default {
   border-radius: 4px;
   overflow: hidden;
 }
-.detail-grid--2 {
+.detail-grid__row {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  border-bottom: 1px solid #ebeef5;
 }
-.detail-grid--1 {
-  display: grid;
-  grid-template-columns: 1fr;
+.detail-grid__row:last-child {
+  border-bottom: none;
 }
 .detail-grid__item {
   display: flex;
   min-height: 40px;
-  border-bottom: 1px solid #ebeef5;
   font-size: 13px;
+}
+.detail-grid__row .detail-grid__item:first-child:not(:only-child) {
+  border-right: 1px solid #ebeef5;
 }
 .detail-grid__item--full {
   grid-column: 1 / -1;
-}
-.detail-grid--2 .detail-grid__item:nth-child(odd) {
-  border-right: 1px solid #ebeef5;
 }
 .detail-grid__label {
   flex-shrink: 0;
