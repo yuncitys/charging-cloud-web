@@ -104,7 +104,7 @@ export function getActivityTypeMeta(type) {
 export const ACTIVITY_STATUS = [
   { value: '1', label: '进行中', tagType: 'success' },
   { value: '2', label: '未开始', tagType: 'warning' },
-  { value: '3', label: '已停用', tagType: 'info' },
+  { value: '3', label: '已停用', tagType: 'danger' },
   { value: '4', label: '已到期', tagType: 'info' },
   { value: '5', label: '卡券不足', tagType: 'danger' },
   { value: '6', label: '卡券失效', tagType: 'danger' }
