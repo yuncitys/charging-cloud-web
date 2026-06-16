@@ -33,7 +33,7 @@
         <el-form-item label="活动规则">
           <el-input v-model="form.activityRule" type="textarea" :rows="3" placeholder="请输入活动规则" />
         </el-form-item>
-        <el-form-item label="卡券设置" required>
+        <el-form-item label="卡券设置" prop="rewards">
           <reward-editor ref="rewardEditor" v-model="form.rewards" />
         </el-form-item>
       </el-form>
@@ -61,10 +61,10 @@
         <el-form-item label="活动说明">
           <el-input v-model="form.activityRemark" type="textarea" :rows="3" placeholder="请输入活动说明" />
         </el-form-item>
-        <el-form-item label="卡券设置" required>
+        <el-form-item label="卡券设置" prop="tiers">
           <recharge-tier-editor ref="tierEditor" v-model="form.tiers" />
         </el-form-item>
-        <el-form-item label="限制次数" required>
+        <el-form-item label="限制次数" prop="limitCount">
           <div class="limit-row limit-row--full">
             <el-input v-model.number="form.limitCount" placeholder="请输入次数" class="limit-row__count" />
             <el-select v-model="form.limitType" class="limit-row__type">
@@ -94,7 +94,7 @@
         <el-form-item label="活动说明">
           <el-input v-model="form.activityRemark" type="textarea" :rows="3" placeholder="请输入活动说明" />
         </el-form-item>
-        <el-form-item label="卡券设置" required>
+        <el-form-item label="卡券设置" prop="rewards">
           <reward-editor ref="rewardEditor" v-model="form.rewards" />
         </el-form-item>
         <el-form-item label="发放时间" prop="sendType">
@@ -113,7 +113,7 @@
             <el-radio label="4">指定用户</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="发放用户" required>
+        <el-form-item label="发放用户" prop="userScopes">
           <user-scope-picker ref="scopePicker" :user-scope="form.userScope" v-model="form.userScopes" />
         </el-form-item>
       </el-form>
@@ -151,17 +151,17 @@
         <el-form-item label="活动规则">
           <el-input v-model="form.activityRule" type="textarea" :rows="3" placeholder="请输入活动规则" />
         </el-form-item>
-        <el-form-item label="发放条件" prop="limitPower" required>
+        <el-form-item label="发放条件" prop="limitPower">
           <div class="condition-row condition-row--full">
             <span>充电满</span>
             <el-input v-model.number="form.limitPower" placeholder="请输入度数" class="condition-row__input" />
             <span>度发放</span>
           </div>
         </el-form-item>
-        <el-form-item label="卡券设置" required>
+        <el-form-item label="卡券设置" prop="rewards">
           <reward-editor ref="rewardEditor" v-model="form.rewards" />
         </el-form-item>
-        <el-form-item label="限制次数" required>
+        <el-form-item label="限制次数" prop="limitCount">
           <div class="limit-row limit-row--full">
             <el-input v-model.number="form.limitCount" placeholder="请输入次数" class="limit-row__count" />
             <el-select v-model="form.limitType" class="limit-row__type">
@@ -177,7 +177,7 @@
             <el-radio label="3">全部电站</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="form.stationScope !== '3'" label="选择电站" required>
+        <el-form-item v-if="form.stationScope !== '3'" label="选择电站" prop="stationScopes">
           <p v-if="form.activityInitiator === '2' && !form.activityInitiatorId" class="field-hint">请先选择归属商户</p>
           <station-scope-picker
             v-else
@@ -194,7 +194,7 @@
             <el-radio label="3">全部用户</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="form.userScope !== '3'" label="发放用户" required>
+        <el-form-item v-if="form.userScope !== '3'" label="发放用户" prop="userScopes">
           <user-scope-picker ref="scopePicker" :user-scope="form.userScope" v-model="form.userScopes" />
         </el-form-item>
       </el-form>
@@ -239,10 +239,10 @@
         <el-form-item label="活动规则">
           <el-input v-model="form.activityRule" type="textarea" :rows="3" placeholder="请输入活动规则" />
         </el-form-item>
-        <el-form-item label="卡券设置" required>
+        <el-form-item label="卡券设置" prop="rewards">
           <reward-editor ref="rewardEditor" v-model="form.rewards" />
         </el-form-item>
-        <el-form-item label="限制次数" required>
+        <el-form-item label="限制次数" prop="limitCount">
           <div class="limit-row limit-row--full">
             <el-input v-model.number="form.limitCount" placeholder="请输入次数" class="limit-row__count" />
             <el-select v-model="form.limitType" class="limit-row__type">
@@ -258,7 +258,7 @@
             <el-radio label="3">全部用户</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="form.userScope !== '3'" label="适用用户范围设置" required>
+        <el-form-item v-if="form.userScope !== '3'" label="适用用户范围设置" prop="userScopes">
           <user-scope-picker ref="scopePicker" :user-scope="form.userScope" v-model="form.userScopes" />
         </el-form-item>
       </el-form>
@@ -285,7 +285,7 @@
         <el-form-item label="发放总数量" prop="sendTotalCount">
           <el-input v-model.number="form.sendTotalCount" placeholder="请输入发放总数量" style="width: 100%;" />
         </el-form-item>
-        <el-form-item label="卡券设置" required>
+        <el-form-item label="卡券设置" prop="rewards">
           <reward-editor ref="rewardEditor" v-model="form.rewards" />
         </el-form-item>
         <el-form-item label="用户维度" prop="userScope">
@@ -295,7 +295,7 @@
             <el-radio label="3">全部用户</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item v-if="form.userScope !== '3'" label="适用用户范围设置" required>
+        <el-form-item v-if="form.userScope !== '3'" label="适用用户范围设置" prop="userScopes">
           <user-scope-picker ref="scopePicker" :user-scope="form.userScope" v-model="form.userScopes" />
         </el-form-item>
       </el-form>
@@ -336,6 +336,100 @@ export default {
       }
       callback()
     }
+    const validateLimitCount = (rule, value, callback) => {
+      if (value === '' || value == null || Number(value) < 1) {
+        callback(new Error('请输入有效的限制次数'))
+        return
+      }
+      callback()
+    }
+    const validateLimitPower = (rule, value, callback) => {
+      if (value === '' || value == null || Number(value) <= 0) {
+        callback(new Error('请输入有效的发放条件（充电度数）'))
+        return
+      }
+      callback()
+    }
+    const validateSendTime = (rule, value, callback) => {
+      if (this.activityType === '3' && this.form.sendType === '2' && !value) {
+        callback(new Error('请选择定时发放时间'))
+        return
+      }
+      callback()
+    }
+    const validateRewards = (rule, value, callback) => {
+      const editor = this.$refs.rewardEditor
+      if (!editor) {
+        callback()
+        return
+      }
+      const msg = editor.validate()
+      if (msg) {
+        callback(new Error(msg))
+        return
+      }
+      callback()
+    }
+    const validateTiers = (rule, value, callback) => {
+      const editor = this.$refs.tierEditor
+      if (!editor) {
+        callback()
+        return
+      }
+      const msg = editor.validate()
+      if (msg) {
+        callback(new Error(msg))
+        return
+      }
+      callback()
+    }
+    const validateUserScopes = (rule, value, callback) => {
+      if (['4', '5', '6'].includes(this.activityType) && this.form.userScope === '3') {
+        callback()
+        return
+      }
+      const picker = this.$refs.scopePicker
+      if (!picker) {
+        callback()
+        return
+      }
+      const msg = picker.validate()
+      if (msg) {
+        callback(new Error(msg))
+        return
+      }
+      callback()
+    }
+    const validateStationScopes = (rule, value, callback) => {
+      if (this.activityType !== '4' || this.form.stationScope === '3') {
+        callback()
+        return
+      }
+      if (this.form.activityInitiator === '2' && !this.form.activityInitiatorId) {
+        callback(new Error('请先选择归属商户'))
+        return
+      }
+      const picker = this.$refs.stationPicker
+      if (!picker) {
+        callback()
+        return
+      }
+      const msg = picker.validate()
+      if (msg) {
+        callback(new Error(msg))
+        return
+      }
+      callback()
+    }
+    const validateSendTotalCount = (rule, value, callback) => {
+      if (value === '' || value == null || Number(value) < 1) {
+        callback(new Error('请输入有效的发放总数量'))
+        return
+      }
+      callback()
+    }
+    const rewardFieldRule = { required: true, validator: validateRewards, trigger: 'change' }
+    const userScopeFieldRule = { required: true, validator: validateUserScopes, trigger: 'change' }
     return {
       loading: false,
       submitting: false,
@@ -343,44 +437,59 @@ export default {
       merchantOptions: [],
       registerRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
-        timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }]
+        timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
+        rewards: [rewardFieldRule]
       },
       rechargeRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
-        ruleImage: [{ required: true, message: '请上传活动规则图片', trigger: 'change' }]
+        ruleImage: [{ required: true, message: '请上传活动规则图片', trigger: 'change' }],
+        tiers: [{ required: true, validator: validateTiers, trigger: 'change' }],
+        limitCount: [{ required: true, validator: validateLimitCount, trigger: 'blur' }]
       },
       directionalRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         activityInitiator: [{ required: true, message: '请选择发起方', trigger: 'change' }],
-        activityInitiatorId: [{ validator: validateMerchantInitiatorId, trigger: 'change' }],
+        activityInitiatorId: [{ required: true, validator: validateMerchantInitiatorId, trigger: 'change' }],
+        rewards: [rewardFieldRule],
         sendType: [{ required: true, message: '请选择发放时间', trigger: 'change' }],
-        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }]
+        sendTime: [{ required: true, validator: validateSendTime, trigger: 'change' }],
+        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }],
+        userScopes: [userScopeFieldRule]
       },
       chargeRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
         activityInitiator: [{ required: true, message: '请选择发起方', trigger: 'change' }],
-        activityInitiatorId: [{ validator: validateMerchantInitiatorId, trigger: 'change' }],
-        limitPower: [{ required: true, message: '请输入发放条件', trigger: 'blur' }],
+        activityInitiatorId: [{ required: true, validator: validateMerchantInitiatorId, trigger: 'change' }],
+        limitPower: [{ required: true, validator: validateLimitPower, trigger: 'blur' }],
+        rewards: [rewardFieldRule],
+        limitCount: [{ required: true, validator: validateLimitCount, trigger: 'blur' }],
         stationScope: [{ required: true, message: '请选择电站维度', trigger: 'change' }],
-        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }]
+        stationScopes: [{ required: true, validator: validateStationScopes, trigger: 'change' }],
+        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }],
+        userScopes: [userScopeFieldRule]
       },
       scanRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
         activityInitiator: [{ required: true, message: '请选择发起方', trigger: 'change' }],
-        activityInitiatorId: [{ validator: validateMerchantInitiatorId, trigger: 'change' }],
+        activityInitiatorId: [{ required: true, validator: validateMerchantInitiatorId, trigger: 'change' }],
         activityTitle: [{ required: true, message: '请输入活动标题', trigger: 'blur' }],
         activityImage: [{ required: true, message: '请上传活动图片', trigger: 'change' }],
-        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }]
+        rewards: [rewardFieldRule],
+        limitCount: [{ required: true, validator: validateLimitCount, trigger: 'blur' }],
+        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }],
+        userScopes: [userScopeFieldRule]
       },
       exchangeRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         activityInitiator: [{ required: true, message: '请选择发起方', trigger: 'change' }],
-        activityInitiatorId: [{ validator: validateMerchantInitiatorId, trigger: 'change' }],
-        sendTotalCount: [{ required: true, message: '请输入发放总数量', trigger: 'blur' }],
-        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }]
+        activityInitiatorId: [{ required: true, validator: validateMerchantInitiatorId, trigger: 'change' }],
+        sendTotalCount: [{ required: true, validator: validateSendTotalCount, trigger: 'blur' }],
+        rewards: [rewardFieldRule],
+        userScope: [{ required: true, message: '请选择用户维度', trigger: 'change' }],
+        userScopes: [userScopeFieldRule]
       }
     }
   },
@@ -436,6 +545,19 @@ export default {
     },
     onStationScopeChange() {
       this.form.stationScopes = []
+      this.$nextTick(() => {
+        if (this.$refs.formRef) {
+          this.$refs.formRef.clearValidate('stationScopes')
+        }
+      })
+    },
+    onUserScopeChange() {
+      this.form.userScopes = []
+      this.$nextTick(() => {
+        if (this.$refs.formRef) {
+          this.$refs.formRef.clearValidate('userScopes')
+        }
+      })
     },
     onOpen() {
       if (this.isEdit) {
@@ -557,7 +679,7 @@ export default {
             activityRemark: activity.activityRemark || '',
             tiers: this.parseRechargeTiers(rewards),
             limitType: (subConfig && subConfig.limitType) || '1',
-            limitCount: (subConfig && subConfig.limitCount) || 1
+            limitCount: Number((subConfig && subConfig.limitCount) || 1)
           }
         } else if (type === '3') {
           this.form = {
@@ -584,10 +706,10 @@ export default {
               ? [activity.activityBeginTime, activity.activityEndTime] : [],
             activityRemark: activity.activityRemark || '',
             activityRule: activity.activityRule || '',
-            limitPower: (subConfig && subConfig.limitPower) != null ? subConfig.limitPower : '',
+            limitPower: (subConfig && subConfig.limitPower) != null ? Number(subConfig.limitPower) : '',
             rewards: rewards && rewards.length ? rewards : [{ rewardType: '2', rewardId: '', rewardCount: 1 }],
             limitType: (subConfig && subConfig.limitType) || '1',
-            limitCount: (subConfig && subConfig.limitCount) || 1,
+            limitCount: Number((subConfig && subConfig.limitCount) || 1),
             stationScope: (subConfig && subConfig.stationScope) || '1',
             stationScopes: stationScopes || [],
             userScope: (subConfig && subConfig.userScope) || '1',
@@ -607,7 +729,7 @@ export default {
             activityRule: activity.activityRule || '',
             rewards: rewards && rewards.length ? rewards : [{ rewardType: '2', rewardId: '', rewardCount: 1 }],
             limitType: (subConfig && subConfig.limitType) || '1',
-            limitCount: (subConfig && subConfig.limitCount) || 1,
+            limitCount: Number((subConfig && subConfig.limitCount) || 1),
             userScope: (subConfig && subConfig.userScope) || '1',
             userScopes: userScopes || []
           }
@@ -618,16 +740,13 @@ export default {
             activityInitiatorId: activity.activityInitiatorId || '0',
             activityName: activity.activityName,
             activityRemark: activity.activityRemark || '',
-            sendTotalCount: (subConfig && subConfig.sendTotalCount) || 100,
+            sendTotalCount: Number((subConfig && subConfig.sendTotalCount) || 100),
             rewards: rewards && rewards.length ? rewards : [{ rewardType: '2', rewardId: '', rewardCount: 1 }],
             userScope: (subConfig && subConfig.userScope) || '1',
             userScopes: userScopes || []
           }
         }
       }).catch(() => { this.loading = false })
-    },
-    onUserScopeChange() {
-      this.form.userScopes = []
     },
     parseRechargeTiers(rewards) {
       if (!rewards || !rewards.length) {
@@ -640,64 +759,6 @@ export default {
         map[key].rewards.push({ rewardType: r.rewardType, rewardId: r.rewardId, rewardCount: r.rewardCount })
       })
       return Object.values(map)
-    },
-    validateCustom() {
-      const type = this.activityType
-      const initiatorErr = this.validateInitiator()
-      if (initiatorErr) return initiatorErr
-      if (type === '1' || type === '3' || type === '4' || type === '5' || type === '6') {
-        const msg = this.$refs.rewardEditor && this.$refs.rewardEditor.validate()
-        if (msg) return msg
-      }
-      if (type === '2') {
-        if (!this.form.ruleImage) return '请上传活动规则图片'
-        const msg = this.$refs.tierEditor && this.$refs.tierEditor.validate()
-        if (msg) return msg
-        if (!this.form.limitCount || this.form.limitCount < 1) return '请输入有效的限制次数'
-      }
-      if (type === '3') {
-        if (this.form.sendType === '2' && !this.form.sendTime) return '请选择定时发放时间'
-        const msg = this.$refs.scopePicker && this.$refs.scopePicker.validate()
-        if (msg) return msg
-      }
-      if (type === '4') {
-        if (this.form.limitPower === '' || this.form.limitPower == null || Number(this.form.limitPower) <= 0) {
-          return '请输入有效的发放条件（充电度数）'
-        }
-        if (!this.form.limitCount || this.form.limitCount < 1) return '请输入有效的限制次数'
-        if (this.form.stationScope !== '3') {
-          const msg = this.$refs.stationPicker && this.$refs.stationPicker.validate()
-          if (msg) return msg
-        }
-        if (this.form.userScope !== '3') {
-          const msg = this.$refs.scopePicker && this.$refs.scopePicker.validate()
-          if (msg) return msg
-        }
-      }
-      if (type === '5') {
-        if (!this.form.activityImage) return '请上传活动图片'
-        if (!this.form.limitCount || this.form.limitCount < 1) return '请输入有效的限制次数'
-        if (this.form.userScope !== '3') {
-          const msg = this.$refs.scopePicker && this.$refs.scopePicker.validate()
-          if (msg) return msg
-        }
-      }
-      if (type === '6') {
-        if (!this.form.sendTotalCount || this.form.sendTotalCount < 1) return '请输入有效的发放总数量'
-        if (this.form.userScope !== '3') {
-          const msg = this.$refs.scopePicker && this.$refs.scopePicker.validate()
-          if (msg) return msg
-        }
-      }
-      return ''
-    },
-    validateInitiator() {
-      const type = this.activityType
-      if (!['3', '4', '5', '6'].includes(type)) return ''
-      if (this.form.activityInitiator === '2' && (!this.form.activityInitiatorId || this.form.activityInitiatorId === '0')) {
-        return '请选择归属商户'
-      }
-      return ''
     },
     formatPickerDateTime(time) {
       if (!time) return ''
@@ -782,11 +843,6 @@ export default {
     handleSubmit() {
       this.$refs.formRef.validate(valid => {
         if (!valid) return
-        const customErr = this.validateCustom()
-        if (customErr) {
-          this.$message.warning(customErr)
-          return
-        }
         const payload = this.buildPayload()
         this.submitting = true
         const api = this.isEdit ? updateActivity : saveActivity
