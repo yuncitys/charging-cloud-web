@@ -31,7 +31,7 @@
         <el-button type="text" icon="el-icon-circle-plus-outline" @click="addReward(tIndex)">添加卡券</el-button>
       </div>
     </div>
-    <el-button type="primary" plain icon="el-icon-plus" class="recharge-tier-editor__add-tier" @click="addTier">添加充值梯度</el-button>
+    <el-button type="primary" icon="el-icon-plus" class="recharge-tier-editor__add-tier" @click="addTier">添加充值梯度</el-button>
   </div>
 </template>
 
