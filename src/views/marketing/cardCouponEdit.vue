@@ -11,7 +11,9 @@
           <el-form-item label="卡券类型" prop="cardCouponType">
             <el-radio-group v-model="form.cardCouponType" :disabled="isEdit">
               <el-radio label="1">抵用卡</el-radio>
-              <el-radio label="2">优惠券</el-radio>
+              <el-radio label="2">满减券</el-radio>
+              <el-radio label="3">电量卡</el-radio>
+              <el-radio label="4">折扣券</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="成本承担" prop="undertakerType">
@@ -36,20 +38,44 @@
               <el-option label="总费用" value="3" />
             </el-select>
           </el-form-item>
-          <el-form-item label="面额(元)" prop="faceValue">
-            <el-input-number v-model="form.faceValue" :min="0" :precision="2" :step="1" />
+          <el-form-item :label="faceValueFieldLabel" prop="faceValue">
+            <el-input-number v-model="form.faceValue" :min="0" :max="form.cardCouponType === '4' ? 100 : undefined" :precision="2" :step="1" />
           </el-form-item>
-          <el-form-item label="满减门槛(元)">
+          <el-form-item v-if="form.cardCouponType === '4'" label="折扣上限(元)" prop="amountLimit">
+            <el-input-number v-model="form.amountLimit" :min="0.01" :precision="2" :step="1" />
+          </el-form-item>
+          <template v-if="isThresholdLimitCardType(form.cardCouponType)">
+            <el-form-item label="使用门槛" prop="useThresholdType">
+              <el-radio-group v-model="form.useThresholdType" @change="form.useThresholdValue = null">
+                <el-radio label="0">无门槛</el-radio>
+                <el-radio label="1">满元</el-radio>
+                <el-radio label="2">满度</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="form.useThresholdType === '1'" label="满元门槛">
+              <el-input-number v-model="form.useThresholdValue" :min="0" :precision="2" :step="1" />
+            </el-form-item>
+            <el-form-item v-if="form.useThresholdType === '2'" label="满度门槛">
+              <el-input-number v-model="form.useThresholdValue" :min="0" :precision="2" :step="0.01" />
+            </el-form-item>
+            <template v-if="form.cardCouponType !== '4'">
+              <el-form-item label="使用限额" prop="useLimitType">
+              <el-radio-group v-model="form.useLimitType" @change="onUseLimitTypeChange">
+                <el-radio label="1">每日限额</el-radio>
+                <el-radio label="2">每笔限额</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item v-if="form.useLimitType === '1'" :label="'每日限额(' + dailyLimitUnit + ')'">
+              <el-input-number v-model="form.dailyLimitValue" :min="0.01" :precision="2" :step="1" />
+            </el-form-item>
+            <el-form-item v-if="form.useLimitType === '2'" :label="'每笔限额(' + orderLimitUnit + ')'">
+              <el-input-number v-model="form.orderLimitValue" :min="0.01" :max="orderLimitMax" :precision="2" :step="1" />
+            </el-form-item>
+            </template>
+          </template>
+          <el-form-item v-if="form.cardCouponType === '2'" label="满减门槛(元)">
             <el-input-number v-model="form.amountLimit" :min="0" :precision="2" :step="1" />
           </el-form-item>
-          <template v-if="form.cardCouponType === '2'">
-            <el-form-item label="电费折扣(%)">
-              <el-input-number v-model="form.powerPercentage" :min="0" :max="100" :precision="2" />
-            </el-form-item>
-            <el-form-item label="服务费折扣(%)">
-              <el-input-number v-model="form.servicePercentage" :min="0" :max="100" :precision="2" />
-            </el-form-item>
-          </template>
         </el-tab-pane>
 
         <el-tab-pane label="有效期" name="validity">
@@ -96,6 +122,7 @@
 <script>
 import { cardCouponDetail, createCardCoupon, updateCardCoupon } from '@/api/marketing/marketing'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
+import { isThresholdLimitCardType, getFaceValueUnit } from './constants/cardCoupon'
 
 export default {
   name: 'cardCouponEdit',
@@ -113,11 +140,14 @@ export default {
         cardCouponType: '1',
         undertakerType: '1',
         undertakerId: '0',
-        deductionType: '3',
+        deductionType: '1',
         faceValue: 0,
         amountLimit: 0,
-        powerPercentage: 100,
-        servicePercentage: 100,
+        useThresholdType: '0',
+        useThresholdValue: null,
+        useLimitType: '1',
+        dailyLimitValue: null,
+        orderLimitValue: null,
         effectiveTimeType: '1',
         afterReceiveDay: 30,
         effectiveStartDate: '',
@@ -137,6 +167,20 @@ export default {
   computed: {
     isEdit() {
       return !!this.$route.query.id
+    },
+    faceValueFieldLabel() {
+      if (this.form.cardCouponType === '4') return '折扣值(%)'
+      const unit = getFaceValueUnit(this.form.cardCouponType)
+      return `面额(${unit})`
+    },
+    dailyLimitUnit() {
+      return this.form.cardCouponType === '3' ? '度' : '元'
+    },
+    orderLimitUnit() {
+      return this.form.cardCouponType === '3' ? '度' : '%'
+    },
+    orderLimitMax() {
+      return ['1', '4'].includes(this.form.cardCouponType) ? 100 : undefined
     }
   },
   created() {
@@ -146,6 +190,7 @@ export default {
     }
   },
   methods: {
+    isThresholdLimitCardType,
     loadStations() {
       getChargingStationList({ page: 1, limit: 9999 }).then(res => {
         this.stationOptions = res.data || []
@@ -158,6 +203,9 @@ export default {
         if (res.code !== 200 || !res.data) return
         const coupon = res.data.coupon || {}
         Object.assign(this.form, coupon)
+        if (isThresholdLimitCardType(coupon.cardCouponType) && !this.form.useLimitType) {
+          this.form.useLimitType = (coupon.orderLimitValue != null && coupon.orderLimitValue !== '') ? '2' : '1'
+        }
         this.stationIds = (res.data.stationIds || []).map(String)
         if (coupon.effectiveStartDate && coupon.effectiveEndDate) {
           this.effectiveRange = [coupon.effectiveStartDate, coupon.effectiveEndDate]
@@ -178,6 +226,13 @@ export default {
         this.stationIds = []
       }
     },
+    onUseLimitTypeChange() {
+      if (this.form.useLimitType === '1') {
+        this.form.orderLimitValue = null
+      } else if (this.form.useLimitType === '2') {
+        this.form.dailyLimitValue = null
+      }
+    },
     goBack() {
       this.$router.push({ name: 'cardCouponList' })
     },
@@ -189,8 +244,53 @@ export default {
           this.activeTab = 'scope'
           return
         }
+        if (isThresholdLimitCardType(this.form.cardCouponType)) {
+          if (this.form.cardCouponType === '4') {
+            if (!this.form.faceValue || this.form.faceValue <= 0 || this.form.faceValue > 100) {
+              this.$message.warning('请输入有效的折扣比例（0-100）')
+              this.activeTab = 'discount'
+              return
+            }
+            if (!this.form.amountLimit || this.form.amountLimit <= 0) {
+              this.$message.warning('请输入有效的折扣上限')
+              this.activeTab = 'discount'
+              return
+            }
+          }
+          if (this.form.cardCouponType !== '4') {
+            if (!this.form.useLimitType) {
+              this.$message.warning('请选择使用限额类型')
+              this.activeTab = 'discount'
+              return
+            }
+            if (this.form.useLimitType === '1' && (!this.form.dailyLimitValue || this.form.dailyLimitValue <= 0)) {
+              this.$message.warning('请输入有效的每日限额')
+              this.activeTab = 'discount'
+              return
+            }
+            if (this.form.useLimitType === '2') {
+              const max = this.orderLimitMax || Infinity
+              if (!this.form.orderLimitValue || this.form.orderLimitValue <= 0 || this.form.orderLimitValue > max) {
+                this.$message.warning(this.form.cardCouponType === '1' ? '请输入有效的每笔限额比例' : '请输入有效的每笔限额')
+                this.activeTab = 'discount'
+                return
+              }
+            }
+          }
+        }
         this.submitting = true
         const payload = { ...this.form, stationIds: this.stationIds }
+        if (isThresholdLimitCardType(payload.cardCouponType)) {
+          if (payload.cardCouponType === '4') {
+            payload.useLimitType = null
+            payload.dailyLimitValue = null
+            payload.orderLimitValue = null
+          } else {
+            if (payload.useLimitType === '1') payload.orderLimitValue = null
+            if (payload.useLimitType === '2') payload.dailyLimitValue = null
+            payload.amountLimit = null
+          }
+        }
         const api = this.isEdit ? updateCardCoupon : createCardCoupon
         api(payload).then(res => {
           this.submitting = false

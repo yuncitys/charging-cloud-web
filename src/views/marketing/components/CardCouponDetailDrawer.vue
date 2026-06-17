@@ -60,31 +60,47 @@
 
         <div class="detail-section">
           <div class="detail-section__title">优惠规则</div>
-          <div class="detail-grid detail-grid--2">
-            <template v-if="coupon.cardCouponType === '1'">
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">电费优惠</span>
-                <span class="detail-grid__value">{{ formatPercent(coupon.powerPercentage) }}</span>
+          <div class="detail-grid">
+            <template v-if="isThresholdLimitCard(coupon.cardCouponType)">
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">抵扣类型</span>
+                  <span class="detail-grid__value">{{ deductionLabel }}</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">{{ faceValueLabel }}</span>
+                  <span class="detail-grid__value">{{ faceValueText }}</span>
+                </div>
               </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">服务费优惠</span>
-                <span class="detail-grid__value">{{ formatPercent(coupon.servicePercentage) }}</span>
+              <div v-if="isDiscountCard(coupon.cardCouponType)" class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">折扣上限</span>
+                  <span class="detail-grid__value">{{ discountCapText }}</span>
+                </div>
               </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">抵用卡面额</span>
-                <span class="detail-grid__value">{{ coupon.faceValue }} 元</span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item" :class="{ 'detail-grid__item--full': isDiscountCard(coupon.cardCouponType) }">
+                  <span class="detail-grid__label">使用门槛</span>
+                  <span class="detail-grid__value">{{ useThresholdLabel }}</span>
+                </div>
+                <div v-if="!isDiscountCard(coupon.cardCouponType)" class="detail-grid__item">
+                  <span class="detail-grid__label">使用限额</span>
+                  <span class="detail-grid__value">{{ usageLimitLabel }}</span>
+                </div>
               </div>
             </template>
             <template v-else>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">优惠类型</span>
-                <span class="detail-grid__value">{{ deductionLabel }}</span>
-              </div>
-              <div class="detail-grid__item">
-                <span class="detail-grid__label">满减规则</span>
-                <span class="detail-grid__value">
-                  满 {{ coupon.amountLimit != null ? coupon.amountLimit : '—' }} 元减 {{ coupon.faceValue }} 元
-                </span>
+              <div class="detail-grid__row">
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">抵扣类型</span>
+                  <span class="detail-grid__value">{{ deductionLabel }}</span>
+                </div>
+                <div class="detail-grid__item">
+                  <span class="detail-grid__label">满减规则</span>
+                  <span class="detail-grid__value">
+                    满 {{ coupon.amountLimit != null ? coupon.amountLimit : '—' }} 元减 {{ coupon.faceValue }} 元
+                  </span>
+                </div>
               </div>
             </template>
           </div>
@@ -125,19 +141,37 @@
             按电站分组配置，具体分组信息请至电站分组管理查看。
           </div>
           <template v-else>
-            <el-input
-              v-model="stationKeyword"
-              placeholder="搜索电站名称"
-              clearable
-              size="small"
-              style="width: 240px; margin-bottom: 12px;"
-            />
-            <el-table :data="filteredStations" border size="small" max-height="320">
-              <el-table-column type="index" width="50" label="#" align="center" />
-              <el-table-column prop="stationId" label="电站ID" align="center" width="100" />
-              <el-table-column prop="stationName" label="电站名称" align="center" min-width="200" show-overflow-tooltip />
-            </el-table>
-            <div v-if="!stationList.length" class="detail-scope-hint">暂无关联电站</div>
+            <div class="detail-scope-panel">
+              <div class="detail-scope-panel__toolbar">
+                <span class="detail-scope-panel__summary">
+                  共 <strong>{{ stationList.length }}</strong> 个电站
+                  <template v-if="stationKeyword.trim()">，匹配 <strong>{{ filteredStations.length }}</strong> 个</template>
+                </span>
+                <el-input
+                  v-model="stationKeyword"
+                  placeholder="搜索电站名称"
+                  clearable
+                  size="small"
+                  prefix-icon="el-icon-search"
+                  class="detail-scope-panel__search"
+                  :disabled="!stationList.length"
+                />
+              </div>
+              <div v-if="!stationList.length" class="detail-scope-hint detail-scope-hint--inset">暂无关联电站</div>
+              <el-table
+                v-else-if="filteredStations.length"
+                :data="filteredStations"
+                border
+                size="small"
+                max-height="320"
+                class="detail-scope-panel__table"
+              >
+                <el-table-column type="index" width="50" label="序号" align="center" />
+                <el-table-column prop="stationId" label="电站ID" align="center" width="100" />
+                <el-table-column prop="stationName" label="电站名称" align="center" min-width="200" show-overflow-tooltip />
+              </el-table>
+              <div v-else class="detail-scope-empty">未找到匹配的电站</div>
+            </div>
           </template>
         </div>
       </template>
@@ -154,11 +188,17 @@
 import { cardCouponDetail } from '@/api/marketing/marketing'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import {
-  CARD_COUPON_TYPE,
   USE_TYPE,
   EFFECTIVE_TIME_TYPE,
   getDeductionTypeLabel,
   getScopeTypeLabel,
+  formatUseThreshold,
+  formatUsageLimit,
+  formatFaceValue,
+  formatDiscountCap,
+  getCardCouponTypeLabel,
+  isThresholdLimitCardType,
+  isDiscountCardType,
   UNDERTAKER_TYPE
 } from '../constants/cardCoupon'
 import { parseTime } from '@/utils/index'
@@ -195,21 +235,36 @@ export default {
     },
     typeLabel() {
       if (!this.coupon) return ''
-      return CARD_COUPON_TYPE[this.coupon.cardCouponType] || this.coupon.cardCouponType
+      return getCardCouponTypeLabel(this.coupon.cardCouponType)
     },
     deductionLabel() {
       return getDeductionTypeLabel(this.coupon && this.coupon.deductionType)
     },
     preferentialLabel() {
       if (!this.coupon) return '—'
-      if (this.coupon.cardCouponType === '1') return '折扣比例'
       return this.deductionLabel
+    },
+    useThresholdLabel() {
+      return formatUseThreshold(this.coupon)
+    },
+    usageLimitLabel() {
+      return formatUsageLimit(this.coupon)
     },
     useTypeLabel() {
       if (!this.coupon) return '—'
-      const prefix = this.coupon.cardCouponType === '1' ? '抵用卡' : '券'
+      const typeName = getCardCouponTypeLabel(this.coupon.cardCouponType)
       const t = USE_TYPE[this.coupon.useType] || ''
-      return t ? `${t}${prefix}` : '—'
+      return t ? `${t}${typeName}` : '—'
+    },
+    faceValueLabel() {
+      if (!this.coupon) return '面额'
+      return isDiscountCardType(this.coupon.cardCouponType) ? '折扣值' : getCardCouponTypeLabel(this.coupon.cardCouponType) + '面额'
+    },
+    faceValueText() {
+      return formatFaceValue(this.coupon)
+    },
+    discountCapText() {
+      return formatDiscountCap(this.coupon)
     },
     undertakerLabel() {
       if (!this.coupon) return '—'
@@ -232,6 +287,12 @@ export default {
     }
   },
   methods: {
+    isThresholdLimitCard(type) {
+      return isThresholdLimitCardType(type)
+    },
+    isDiscountCard(type) {
+      return isDiscountCardType(type)
+    },
     onOpen() {
       this.loadDetail()
     },
@@ -239,10 +300,6 @@ export default {
       this.coupon = null
       this.stationList = []
       this.stationKeyword = ''
-    },
-    formatPercent(val) {
-      if (val == null || val === '') return '—'
-      return `${val}%`
     },
     loadStationNames(stationIds) {
       if (!stationIds || !stationIds.length) {
@@ -290,15 +347,21 @@ export default {
 
 <style scoped>
 .detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 20px;
 }
 .detail-header__name {
+  flex: 1;
+  min-width: 0;
   font-size: 18px;
   font-weight: 600;
   color: #303133;
-  margin-bottom: 8px;
 }
 .detail-header__tags {
+  flex-shrink: 0;
   display: flex;
   gap: 8px;
 }
@@ -320,27 +383,97 @@ export default {
   background: #f5f7fa;
   border-radius: 6px;
 }
+.detail-scope-hint--inset {
+  margin: 0;
+  border-radius: 0;
+  border-top: none;
+}
+.detail-scope-panel {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #fff;
+}
+.detail-scope-panel__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #ebeef5;
+}
+.detail-scope-panel__summary {
+  flex-shrink: 0;
+  font-size: 13px;
+  color: #606266;
+}
+.detail-scope-panel__summary strong {
+  color: #303133;
+  font-weight: 600;
+}
+.detail-scope-panel__search {
+  flex: 1;
+  max-width: 280px;
+}
+.detail-scope-panel__search >>> .el-input__inner {
+  border-radius: 4px;
+}
+.detail-scope-panel__table {
+  border: none;
+}
+.detail-scope-panel__table >>> .el-table__header th {
+  background: #fafafa;
+}
+.detail-scope-empty {
+  padding: 24px;
+  text-align: center;
+  font-size: 13px;
+  color: #909399;
+}
 .detail-grid {
   border: 1px solid #ebeef5;
   border-radius: 4px;
   overflow: hidden;
 }
+.detail-grid__row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  border-bottom: 1px solid #ebeef5;
+}
+.detail-grid__row:last-child {
+  border-bottom: none;
+}
+.detail-grid__item {
+  display: flex;
+  min-height: 40px;
+  font-size: 13px;
+}
+.detail-grid__row .detail-grid__item:first-child:not(:only-child) {
+  border-right: 1px solid #ebeef5;
+}
+.detail-grid__row .detail-grid__item:only-child {
+  grid-column: 1 / -1;
+}
 .detail-grid--2 {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+}
+.detail-grid--2 .detail-grid__item {
+  border-bottom: 1px solid #ebeef5;
+}
+.detail-grid--2 .detail-grid__item:nth-child(odd) {
+  border-right: 1px solid #ebeef5;
 }
 .detail-grid--1 {
   display: grid;
   grid-template-columns: 1fr;
 }
-.detail-grid__item {
-  display: flex;
-  min-height: 40px;
+.detail-grid--1 .detail-grid__item {
   border-bottom: 1px solid #ebeef5;
-  font-size: 13px;
 }
-.detail-grid--2 .detail-grid__item:nth-child(odd) {
-  border-right: 1px solid #ebeef5;
+.detail-grid--1 .detail-grid__item:last-child {
+  border-bottom: none;
 }
 .detail-grid__label {
   flex-shrink: 0;

@@ -6,14 +6,16 @@
       :closable="false"
       show-icon
       title="卡券管理"
-      description="创建抵用卡或优惠券模板，配置面额、有效期与可用范围，供各类营销活动发放使用。"
+      description="创建抵用卡、满减券、电量卡或折扣券模板，配置面额、有效期与可用范围，供各类营销活动发放使用。"
     />
 
     <div class="filter-container">
       <el-input v-model="listQuery.cardCouponName" class="filter-item" placeholder="卡券名称" clearable style="width: 200px;margin-right: 20px;" @keyup.enter.native="handleFilter" @clear="handleFilter" />
       <el-select v-model="listQuery.cardCouponType" class="filter-item" placeholder="卡券类型" clearable style="width: 140px;margin-right: 20px;" @change="handleFilter">
         <el-option label="抵用卡" value="1" />
-        <el-option label="优惠券" value="2" />
+        <el-option label="满减券" value="2" />
+        <el-option label="电量卡" value="3" />
+        <el-option label="折扣券" value="4" />
       </el-select>
       <el-select v-model="listQuery.cancelFlag" class="filter-item" placeholder="状态" clearable style="width: 120px;margin-right: 20px;" @change="handleFilter">
         <el-option label="正常" value="0" />
@@ -30,7 +32,7 @@
         <el-table-column prop="cardCouponName" label="名称" align="center" min-width="140" show-overflow-tooltip />
         <el-table-column prop="cardCouponType" label="类型" align="center" width="100">
           <template slot-scope="scope">
-            <span>{{ scope.row.cardCouponType === '1' ? '抵用卡' : '优惠券' }}</span>
+            <span>{{ cardCouponTypeLabel(scope.row.cardCouponType) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="优惠类型" align="center" width="100">
@@ -84,20 +86,34 @@
       </div>
     </div>
 
-    <el-dialog title="选择卡券类型" :visible.sync="typeDialogVisible" width="480px" append-to-body>
+    <el-dialog title="选择卡券类型" :visible.sync="typeDialogVisible" width="560px" append-to-body>
       <div class="card-coupon-type-picker">
         <div class="card-coupon-type-picker__item" @click="openDrawer('1')">
           <i class="el-icon-bank-card card-coupon-type-picker__icon card-coupon-type-picker__icon--voucher" />
           <div>
             <div class="card-coupon-type-picker__title">抵用卡</div>
-            <div class="card-coupon-type-picker__desc">按折扣比例抵扣电费/服务费，适合固定面额类优惠</div>
+            <div class="card-coupon-type-picker__desc">按面额抵扣电费/服务费/总费用，支持使用门槛与限额</div>
           </div>
         </div>
         <div class="card-coupon-type-picker__item" @click="openDrawer('2')">
           <i class="el-icon-tickets card-coupon-type-picker__icon card-coupon-type-picker__icon--coupon" />
           <div>
-            <div class="card-coupon-type-picker__title">优惠券</div>
+            <div class="card-coupon-type-picker__title">满减券</div>
             <div class="card-coupon-type-picker__desc">满减优惠，支持电费/服务费/总费用三选一</div>
+          </div>
+        </div>
+        <div class="card-coupon-type-picker__item" @click="openDrawer('3')">
+          <i class="el-icon-lightning card-coupon-type-picker__icon card-coupon-type-picker__icon--power" />
+          <div>
+            <div class="card-coupon-type-picker__title">电量卡</div>
+            <div class="card-coupon-type-picker__desc">面额按度数计量，使用限额与抵用卡规则一致</div>
+          </div>
+        </div>
+        <div class="card-coupon-type-picker__item" @click="openDrawer('4')">
+          <i class="el-icon-discount card-coupon-type-picker__icon card-coupon-type-picker__icon--discount" />
+          <div>
+            <div class="card-coupon-type-picker__title">折扣券</div>
+            <div class="card-coupon-type-picker__desc">按比例折扣，支持折扣上限及使用门槛</div>
           </div>
         </div>
       </div>
@@ -129,7 +145,7 @@ import { cardCouponPage, cancelCardCoupon } from '@/api/marketing/marketing'
 import CardCouponFormDrawer from './components/CardCouponFormDrawer'
 import CardCouponDetailDrawer from './components/CardCouponDetailDrawer'
 import CardCouponStockDrawer from './components/CardCouponStockDrawer'
-import { getDeductionTypeLabel } from './constants/cardCoupon'
+import { getDeductionTypeLabel, getCardCouponTypeLabel } from './constants/cardCoupon'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
@@ -176,8 +192,10 @@ export default {
   },
   methods: {
     deductionTypeLabel(row) {
-      if (row.cardCouponType === '1') return '—'
       return getDeductionTypeLabel(row.deductionType)
+    },
+    cardCouponTypeLabel(type) {
+      return getCardCouponTypeLabel(type)
     },
     getList() {
       this.listLoading = true
@@ -296,6 +314,12 @@ export default {
   color: #30B08F;
 }
 .card-coupon-type-picker__icon--coupon {
+  color: #22c55e;
+}
+.card-coupon-type-picker__icon--power {
+  color: #059669;
+}
+.card-coupon-type-picker__icon--discount {
   color: #22c55e;
 }
 .card-coupon-type-picker__title {
