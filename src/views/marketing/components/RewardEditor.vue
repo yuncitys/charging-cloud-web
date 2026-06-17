@@ -5,7 +5,7 @@
       <div class="reward-editor__fields">
         <div class="reward-editor__field">
           <span class="reward-editor__label">卡券</span>
-          <el-select v-model="row.rewardId" filterable placeholder="请选择优惠券/抵用卡" style="width: 100%;">
+          <el-select v-model="row.rewardId" filterable placeholder="请选择卡券" style="width: 100%;">
             <el-option v-for="c in cardCouponOptions" :key="c.cardCouponId" :label="c.cardCouponName" :value="c.cardCouponId" />
           </el-select>
         </div>
