@@ -112,6 +112,7 @@ export default {
         children: (merchant.chargingStationInfoVoList || []).map(station => ({
           id: station.id,
           name: station.networkName,
+          ruleId: station.ruleId,
           stationOperatorId: merchant.id
         }))
       })).filter(node => node.children.length > 0)
@@ -164,7 +165,7 @@ export default {
         .map(n => ({
           dataId: n.id,
           dataName: n.name,
-          stationType: '2',
+          stationType: n.ruleId != null ? String(n.ruleId) : '',
           stationOperatorId: n.stationOperatorId
         }))
       if (!this.scopesEqual(scopes, this.value)) {

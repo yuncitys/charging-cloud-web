@@ -439,6 +439,7 @@ export default {
       batchStationText: '',
       stationOptions: [],
       stationNameMap: {},
+      stationMetaMap: {},
       merchantOptions: [],
       selectedWeekDays: this.weekDaysToValues(defaultWeekDays()),
       rules: {
@@ -597,6 +598,7 @@ export default {
       if (this.form.activityInitiator === '2' && !this.merchantStationReady) {
         this.stationOptions = []
         this.stationNameMap = {}
+        this.stationMetaMap = {}
         return
       }
       const params = {}
@@ -607,16 +609,23 @@ export default {
         const rows = (res && res.code === 200) ? (res.data || []) : []
         const list = []
         const map = {}
+        const meta = {}
         rows.forEach(merchant => {
           (merchant.chargingStationInfoVoList || []).forEach(station => {
             const id = String(station.id)
             const name = station.networkName || station.stationName || id
-            list.push({ id, name })
+            list.push({ id, name, ruleId: station.ruleId, merchantId: merchant.id })
             map[id] = name
+            meta[id] = {
+              name,
+              ruleId: station.ruleId,
+              merchantId: merchant.id
+            }
           })
         })
         this.stationOptions = list
         this.stationNameMap = map
+        this.stationMetaMap = meta
         this.pruneInvalidStations()
       })
     },
@@ -697,7 +706,28 @@ export default {
     },
     getStationById(stationId) {
       const id = String(stationId)
-      return this.stationOptions.find(item => item.id === id)
+      const option = this.stationOptions.find(item => item.id === id)
+      if (option) return option
+      const meta = this.stationMetaMap[id]
+      if (!meta) return null
+      return {
+        id,
+        name: meta.name,
+        ruleId: meta.ruleId,
+        merchantId: meta.merchantId
+      }
+    },
+    buildStationScopeMeta(stationId, stationName) {
+      const id = String(stationId)
+      const station = this.getStationById(id)
+      const meta = this.stationMetaMap[id] || {}
+      const ruleId = station && station.ruleId != null ? station.ruleId : meta.ruleId
+      const merchantId = station && station.merchantId != null ? station.merchantId : meta.merchantId
+      return {
+        dataName: stationName || meta.name || this.stationNameMap[id] || id,
+        stationType: ruleId != null ? String(ruleId) : (station && station.stationType != null ? String(station.stationType) : ''),
+        stationOperatorId: merchantId != null ? Number(merchantId) : null
+      }
     },
     buildStationRateFields() {
       return this.showStationRateColumns ? emptyRateValues() : {}
@@ -709,7 +739,7 @@ export default {
       if (exists) return false
       this.form.stationScopes.push({
         dataId: idNum,
-        dataName: stationName || this.stationNameMap[String(stationId)] || String(stationId),
+        ...this.buildStationScopeMeta(stationId, stationName),
         ...this.buildStationRateFields()
       })
       return true
@@ -794,10 +824,13 @@ export default {
       })
       return (scopes || []).map(scope => {
         const id = Number(scope.dataId)
+        const meta = this.buildStationScopeMeta(id, scope.dataName)
         const rate = rateMap[String(id)] || {}
         return {
           dataId: id,
-          dataName: scope.dataName || this.stationNameMap[String(id)] || String(id),
+          dataName: meta.dataName,
+          stationType: scope.stationType != null && scope.stationType !== '' ? String(scope.stationType) : meta.stationType,
+          stationOperatorId: scope.stationOperatorId != null ? scope.stationOperatorId : meta.stationOperatorId,
           ...emptyRateValues(),
           ...rate
         }
@@ -902,10 +935,15 @@ export default {
         activityEndTime: this.form.timeRange[1],
         activityRemark: this.form.activityRemark || ''
       }
-      const stationScopes = (this.form.stationScopes || []).map(item => ({
-        dataId: Number(item.dataId),
-        dataName: item.dataName
-      }))
+      const stationScopes = (this.form.stationScopes || []).map(item => {
+        const meta = this.buildStationScopeMeta(item.dataId, item.dataName)
+        return {
+          dataId: Number(item.dataId),
+          dataName: meta.dataName,
+          stationType: item.stationType != null && item.stationType !== '' ? String(item.stationType) : meta.stationType,
+          stationOperatorId: item.stationOperatorId != null ? item.stationOperatorId : meta.stationOperatorId
+        }
+      })
       const userScopes = []
 
       return {
