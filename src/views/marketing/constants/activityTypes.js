@@ -94,6 +94,38 @@ export const ACTIVITY_TYPES = [
     showUserScope: true,
     userScopeInSub: true,
     subFields: ['sendTotalCount', 'exchangeUserScope']
+  },
+  {
+    value: '7',
+    label: '电站折扣',
+    tag: '电站促销',
+    icon: 'el-icon-office-building',
+    color: '#2563eb',
+    colorLight: '#93c5fd',
+    description: '按电站配置电费/服务费折扣或固定价，支持分电站费率、使用星期与时段控制。',
+    drawerForm: true,
+    isDiscount: true,
+    showRewardThreshold: false,
+    showStationScope: false,
+    showUserScope: false,
+    userScopeInSub: false,
+    subFields: []
+  },
+  {
+    value: '8',
+    label: '用户折扣',
+    tag: '精准优惠',
+    icon: 'el-icon-user',
+    color: '#7c3aed',
+    colorLight: '#c4b5fd',
+    description: '向指定用户分组或用户配置充电折扣/固定价，限定可用电站与生效时段。',
+    drawerForm: true,
+    isDiscount: true,
+    showRewardThreshold: false,
+    showStationScope: false,
+    showUserScope: false,
+    userScopeInSub: false,
+    subFields: []
   }
 ]
 

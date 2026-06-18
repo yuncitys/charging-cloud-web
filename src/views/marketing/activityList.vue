@@ -65,7 +65,7 @@
             <span>{{ scope.row.sendTotalCount != null ? scope.row.sendTotalCount : '—' }}</span>
           </template>
         </el-table-column>
-        <el-table-column v-if="['1', '2', '3', '4', '5', '6'].includes(fixedType)" prop="activityInitiator" label="发起方" align="center" width="90">
+        <el-table-column v-if="['1', '2', '3', '4', '5', '6', '7', '8'].includes(fixedType)" prop="activityInitiator" label="发起方" align="center" width="90">
           <template slot-scope="scope">
             <span>{{ scope.row.activityInitiator === '1' ? '平台' : '商户' }}</span>
           </template>
@@ -105,15 +105,32 @@
       </div>
     </div>
 
-    <activity-form-drawer
-      v-if="drawerSupported"
+    <discount-activity-form-drawer
+      v-if="drawerSupported && useDiscountDrawer"
       :visible.sync="formDrawerVisible"
       :activity-type="fixedType"
       :activity-id="editingActivityId"
       @saved="getList"
     />
 
+    <activity-form-drawer
+      v-else-if="drawerSupported"
+      :visible.sync="formDrawerVisible"
+      :activity-type="fixedType"
+      :activity-id="editingActivityId"
+      @saved="getList"
+    />
+
+    <discount-activity-detail-drawer
+      v-if="useDiscountDrawer"
+      :visible.sync="detailDrawerVisible"
+      :activity-id="detailActivityId"
+      :activity-type="fixedType"
+      @edit="onDetailEdit"
+    />
+
     <activity-detail-drawer
+      v-else
       :visible.sync="detailDrawerVisible"
       :activity-id="detailActivityId"
       :activity-type="fixedType"
@@ -132,14 +149,17 @@
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from './constants/activityTypes'
+import { isDiscountActivityType } from './constants/discountActivity'
 import ActivityFormDrawer from './components/ActivityFormDrawer'
 import ActivityDetailDrawer from './components/ActivityDetailDrawer'
+import DiscountActivityFormDrawer from './components/DiscountActivityFormDrawer'
+import DiscountActivityDetailDrawer from './components/DiscountActivityDetailDrawer'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
 export default {
   name: 'activityList',
-  components: { ActivityFormDrawer, ActivityDetailDrawer },
+  components: { ActivityFormDrawer, ActivityDetailDrawer, DiscountActivityFormDrawer, DiscountActivityDetailDrawer },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -171,7 +191,10 @@ export default {
       return getActivityTypeMeta(this.fixedType)
     },
     drawerSupported() {
-      return ['1', '2', '3', '4', '5', '6'].includes(this.fixedType)
+      return ['1', '2', '3', '4', '5', '6'].includes(this.fixedType) || isDiscountActivityType(this.fixedType)
+    },
+    useDiscountDrawer() {
+      return isDiscountActivityType(this.fixedType)
     }
   },
   watch: {

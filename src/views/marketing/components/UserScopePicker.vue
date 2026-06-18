@@ -43,7 +43,8 @@ export default {
   name: 'UserScopePicker',
   props: {
     userScope: { type: String, default: '1' },
-    value: { type: Array, default: () => [] }
+    value: { type: Array, default: () => [] },
+    emptyHint: { type: String, default: '请选择发放用户' }
   },
   data() {
     return {
@@ -78,6 +79,15 @@ export default {
     })
   },
   methods: {
+    isCustomerLeafId(id) {
+      if (id == null || id === '') return false
+      const key = String(id)
+      return !['platform', 'internal', 'inter', 'customer-root'].includes(key)
+    },
+    normalizeCustomerId(id) {
+      const num = Number(id)
+      return Number.isFinite(num) ? num : null
+    },
     filterCustomerNode(value, data) {
       if (!value) return true
       return (data.name || '').indexOf(value) !== -1
@@ -144,11 +154,18 @@ export default {
     emitCustomerScopes() {
       if (this.syncing || !this.$refs.customerTree) return
       const nodes = this.$refs.customerTree.getCheckedNodes(true)
-      const scopes = nodes.filter(n => n.id && typeof n.id === 'number').map(n => ({
-        dataId: n.id,
-        dataName: n.name,
-        orgType: '1'
-      }))
+      const scopes = nodes
+        .filter(n => this.isCustomerLeafId(n.id))
+        .map(n => {
+          const dataId = this.normalizeCustomerId(n.id)
+          if (dataId == null) return null
+          return {
+            dataId,
+            dataName: n.name,
+            orgType: '1'
+          }
+        })
+        .filter(Boolean)
       if (!this.scopesEqual(scopes, this.value)) {
         this.$emit('input', scopes)
       }
@@ -180,7 +197,20 @@ export default {
         if (!this.phoneText.trim()) return '请输入指定用户手机号'
         return ''
       }
-      if (!this.value || !this.value.length) return '请选择发放用户'
+      if (this.userScope === '1') {
+        if (this.$refs.customerTree) {
+          this.emitCustomerScopes()
+          const nodes = this.$refs.customerTree.getCheckedNodes(true)
+          const hasCustomer = nodes.some(n => this.isCustomerLeafId(n.id) && this.normalizeCustomerId(n.id) != null)
+          if (!hasCustomer) return this.emptyHint
+          return ''
+        }
+      }
+      if (this.userScope === '2') {
+        if (!this.selectedGroupIds.length) return this.emptyHint
+        return ''
+      }
+      if (!this.value || !this.value.length) return this.emptyHint
       return ''
     }
   }
