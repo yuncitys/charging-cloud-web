@@ -47,7 +47,7 @@
         </el-table-column>
         <el-table-column prop="cancelFlag" label="状态" align="center" width="90">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.cancelFlag === '1'" size="mini" type="info">已作废</el-tag>
+            <el-tag v-if="isRowCancelled(scope.row)" size="mini" type="danger">已作废</el-tag>
             <el-tag v-else size="mini" type="success">正常</el-tag>
           </template>
         </el-table-column>
@@ -63,10 +63,10 @@
                   更多<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="edit">编辑卡券</el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.cancelFlag !== '1'" command="stock">增加库存</el-dropdown-item>
+                  <el-dropdown-item v-if="!isRowCancelled(scope.row)" command="edit">编辑卡券</el-dropdown-item>
+                  <el-dropdown-item v-if="!isRowCancelled(scope.row)" command="stock">增加库存</el-dropdown-item>
                   <el-dropdown-item command="detail">卡券详情</el-dropdown-item>
-                  <el-dropdown-item v-if="scope.row.cancelFlag !== '1'" command="cancel" divided>作废卡券</el-dropdown-item>
+                  <el-dropdown-item v-if="!isRowCancelled(scope.row)" command="cancel" divided>作废卡券</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -186,6 +186,9 @@ export default {
     this.getList()
   },
   methods: {
+    isRowCancelled(row) {
+      return row && String(row.cancelFlag) === '1'
+    },
     deductionTypeLabel(row) {
       return getDeductionTypeLabel(row.deductionType)
     },
@@ -225,6 +228,10 @@ export default {
       this.drawerVisible = true
     },
     handleEdit(row) {
+      if (this.isRowCancelled(row)) {
+        this.$message.warning('卡券已作废，不可编辑')
+        return
+      }
       this.drawerCouponType = row.cardCouponType
       this.editingCouponId = row.cardCouponId
       this.drawerVisible = true

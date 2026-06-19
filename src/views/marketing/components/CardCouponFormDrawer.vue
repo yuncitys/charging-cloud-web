@@ -451,6 +451,12 @@ export default {
         this.loading = false
         if (res.code !== 200 || !res.data) return
         const coupon = res.data.coupon || {}
+        if (String(coupon.cancelFlag) === '1') {
+          this.loading = false
+          this.$message.warning('卡券已作废，不可编辑')
+          this.visibleSync = false
+          return
+        }
         this.form = {
           cardCouponId: coupon.cardCouponId,
           cardCouponName: coupon.cardCouponName,

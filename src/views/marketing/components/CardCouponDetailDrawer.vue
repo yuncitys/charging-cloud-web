@@ -15,7 +15,7 @@
           <div class="detail-header__name">{{ coupon.cardCouponName }}</div>
           <div class="detail-header__tags">
             <el-tag size="mini" type="success">{{ typeLabel }}</el-tag>
-            <el-tag v-if="coupon.cancelFlag === '1'" size="mini" type="info">已作废</el-tag>
+            <el-tag v-if="isCouponCancelled" size="mini" type="danger">已作废</el-tag>
             <el-tag v-else size="mini" type="success">正常</el-tag>
           </div>
         </div>
@@ -197,7 +197,7 @@
 
     <div class="marketing-activity-drawer__footer">
       <el-button @click="visibleSync = false">关闭</el-button>
-      <el-button v-if="coupon && coupon.cancelFlag !== '1'" type="primary" @click="handleEdit">编辑</el-button>
+      <el-button v-if="coupon && !isCouponCancelled" type="primary" @click="handleEdit">编辑</el-button>
     </div>
   </el-drawer>
 </template>
@@ -299,6 +299,9 @@ export default {
     },
     isStationGroupScope() {
       return this.coupon && String(this.coupon.scopeType) === '3'
+    },
+    isCouponCancelled() {
+      return this.coupon && String(this.coupon.cancelFlag) === '1'
     },
     filteredStations() {
       const kw = (this.stationKeyword || '').trim()
