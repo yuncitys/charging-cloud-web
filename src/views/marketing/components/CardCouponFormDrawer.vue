@@ -474,8 +474,12 @@ export default {
           effectiveEndDate: coupon.effectiveEndDate || '',
           useInstructions: coupon.useInstructions || '',
           scopeType: coupon.scopeType || '2',
-          stationIds: (res.data.stationIds || []).map(String),
-          scopeGroupIds: [],
+          stationIds: String(coupon.scopeType) === '3'
+            ? []
+            : (res.data.stationIds || []).map(String),
+          scopeGroupIds: String(coupon.scopeType) === '3'
+            ? (res.data.stationIds || []).map(id => Number(id)).filter(id => Number.isFinite(id))
+            : [],
           couponFace: '1'
         }
       }).catch(() => { this.loading = false })
@@ -550,11 +554,11 @@ export default {
         payload.orderLimitValue = null
       }
       delete payload.effectiveRange
-      delete payload.scopeGroupIds
       delete payload.couponFace
       if (payload.scopeType === '3') {
-        payload.stationIds = []
+        payload.stationIds = (this.form.scopeGroupIds || []).map(String)
       }
+      delete payload.scopeGroupIds
       return payload
     },
     handleSubmit() {

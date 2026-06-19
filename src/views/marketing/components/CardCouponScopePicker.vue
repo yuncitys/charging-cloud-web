@@ -28,7 +28,7 @@
         style="width: 100%;"
         @change="emitGroupIds"
       >
-        <el-option v-for="g in stationGroupOptions" :key="g.id" :label="g.groupName" :value="g.id" />
+        <el-option v-for="g in stationGroupOptions" :key="g.id" :label="g.groupName" :value="Number(g.id)" />
       </el-select>
     </template>
   </div>
@@ -63,7 +63,7 @@ export default {
       this.stationTree = []
       this.stationLeafIds = []
       if (val === '3') {
-        this.loadStationGroupOptions()
+        this.loadStationGroupOptions(() => this.syncGroupIds(this.groupIds))
         return
       }
       this.loadStationTree()
@@ -78,11 +78,11 @@ export default {
     groupIds: {
       immediate: true,
       handler(val) {
-        this.syncing = true
-        this.innerGroupIds = (val || []).map(id => Number(id))
-        this.$nextTick(() => {
-          this.syncing = false
-        })
+        if (this.scopeType === '3') {
+          this.loadStationGroupOptions(() => this.syncGroupIds(val))
+        } else {
+          this.syncGroupIds(val)
+        }
       }
     },
     keyword(val) {
@@ -90,15 +90,41 @@ export default {
     }
   },
   created() {
-    this.loadStationTree()
+    if (this.scopeType === '3') {
+      this.loadStationGroupOptions(() => this.syncGroupIds(this.groupIds))
+    } else {
+      this.loadStationTree()
+    }
   },
   methods: {
-    loadStationGroupOptions() {
-      if (this.stationGroupLoading || this.stationGroupLoaded) return
+    syncGroupIds(val) {
+      const source = val != null ? val : this.groupIds
+      this.syncing = true
+      this.innerGroupIds = (source || [])
+        .map(id => Number(id))
+        .filter(id => Number.isFinite(id))
+      this.$nextTick(() => {
+        this.syncing = false
+      })
+    },
+    loadStationGroupOptions(done) {
+      if (this.stationGroupLoaded) {
+        typeof done === 'function' && done()
+        return
+      }
+      if (this.stationGroupLoading) {
+        this._pendingGroupOptionsCallback = done
+        return
+      }
       this.stationGroupLoading = true
       stationGroupOptions().then(res => {
         this.stationGroupOptions = res.data || []
         this.stationGroupLoaded = true
+        typeof done === 'function' && done()
+        if (typeof this._pendingGroupOptionsCallback === 'function') {
+          this._pendingGroupOptionsCallback()
+          this._pendingGroupOptionsCallback = null
+        }
       }).finally(() => {
         this.stationGroupLoading = false
       })
