@@ -137,8 +137,26 @@
           </div>
 
           <div v-if="showAllStations" class="detail-scope-hint">全部电站可用，无需单独配置站点。</div>
-          <div v-else-if="coupon.scopeType === '3' && !stationList.length" class="detail-scope-hint">
-            按电站分组配置，具体分组信息请至电站分组管理查看。
+          <div v-else-if="isStationGroupScope">
+            <div v-if="!stationGroupList.length" class="detail-scope-hint">暂未配置电站分组。</div>
+            <div v-else class="detail-scope-panel">
+              <div class="detail-scope-panel__toolbar">
+                <span class="detail-scope-panel__summary">
+                  共 <strong>{{ stationGroupList.length }}</strong> 个电站分组
+                </span>
+              </div>
+              <el-table
+                :data="stationGroupList"
+                border
+                size="small"
+                max-height="320"
+                class="detail-scope-panel__table"
+              >
+                <el-table-column type="index" width="50" label="序号" align="center" />
+                <el-table-column prop="groupId" label="分组ID" align="center" width="100" />
+                <el-table-column prop="groupName" label="分组名称" align="center" min-width="200" show-overflow-tooltip />
+              </el-table>
+            </div>
           </div>
           <template v-else>
             <div class="detail-scope-panel">
@@ -185,7 +203,7 @@
 </template>
 
 <script>
-import { cardCouponDetail } from '@/api/marketing/marketing'
+import { cardCouponDetail, stationGroupOptions } from '@/api/marketing/marketing'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import {
   USE_TYPE,
@@ -221,7 +239,7 @@ export default {
       loading: false,
       coupon: null,
       stationList: [],
-      stationNameMap: {},
+      stationGroupList: [],
       stationKeyword: ''
     }
   },
@@ -277,7 +295,10 @@ export default {
       return getScopeTypeLabel(this.coupon && this.coupon.scopeType)
     },
     showAllStations() {
-      return this.coupon && this.coupon.scopeType === '4'
+      return this.coupon && String(this.coupon.scopeType) === '4'
+    },
+    isStationGroupScope() {
+      return this.coupon && String(this.coupon.scopeType) === '3'
     },
     filteredStations() {
       const kw = (this.stationKeyword || '').trim()
@@ -298,7 +319,25 @@ export default {
     onClose() {
       this.coupon = null
       this.stationList = []
+      this.stationGroupList = []
       this.stationKeyword = ''
+    },
+    loadStationGroups(groupIds) {
+      if (!groupIds || !groupIds.length) {
+        this.stationGroupList = []
+        return Promise.resolve()
+      }
+      return stationGroupOptions().then(res => {
+        const options = res.data || []
+        const nameMap = {}
+        options.forEach(item => {
+          nameMap[String(item.id)] = item.groupName
+        })
+        this.stationGroupList = groupIds.map(id => ({
+          groupId: String(id),
+          groupName: nameMap[String(id)] || '—'
+        }))
+      })
     },
     loadStationNames(stationIds) {
       if (!stationIds || !stationIds.length) {
@@ -311,12 +350,25 @@ export default {
         list.forEach(s => {
           map[String(s.id)] = s.networkName || s.stationName || String(s.id)
         })
-        this.stationNameMap = map
         this.stationList = stationIds.map(id => ({
           stationId: String(id),
           stationName: map[String(id)] || '—'
         }))
       })
+    },
+    loadScopeDetail(coupon, relationIds) {
+      const scopeType = String(coupon && coupon.scopeType)
+      if (scopeType === '4') {
+        this.stationList = []
+        this.stationGroupList = []
+        return Promise.resolve()
+      }
+      if (scopeType === '3') {
+        this.stationList = []
+        return this.loadStationGroups(relationIds)
+      }
+      this.stationGroupList = []
+      return this.loadStationNames(relationIds)
     },
     loadDetail() {
       if (!this.cardCouponId) return
@@ -328,8 +380,8 @@ export default {
           return
         }
         this.coupon = res.data.coupon || null
-        const stationIds = res.data.stationIds || []
-        this.loadStationNames(stationIds).finally(() => {
+        const relationIds = res.data.stationIds || []
+        this.loadScopeDetail(this.coupon, relationIds).finally(() => {
           this.loading = false
         })
       }).catch(() => {
