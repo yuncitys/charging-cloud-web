@@ -17,6 +17,17 @@ export const USE_TYPE = {
   '2': '会员'
 }
 
+/** 是否优惠共享（1:共享，0:互斥） */
+export const DISCOUNT_SHARE_FLAG = {
+  '1': '该卡券优惠与折扣活动优惠共享',
+  '0': '该卡券优惠与折扣活动优惠不共享（互斥券）'
+}
+
+export function getDiscountShareFlagLabel(flag) {
+  if (flag == null || flag === '') return '—'
+  return DISCOUNT_SHARE_FLAG[String(flag)] || flag
+}
+
 export const EFFECTIVE_TIME_TYPE = {
   '1': '相对时间',
   '2': '绝对时间'
@@ -28,11 +39,6 @@ export const SCOPE_TYPE = {
   '3': '按电站分组',
   '4': '全部电站',
   '5': '按电站'
-}
-
-export const UNDERTAKER_TYPE = {
-  '1': '平台',
-  '2': '商户'
 }
 
 /** 抵用卡/电量卡/折扣券使用门槛 */

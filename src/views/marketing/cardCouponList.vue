@@ -45,11 +45,6 @@
             <span>{{ scope.row.stockNum || 0 }}/{{ scope.row.issuedNum || 0 }}/{{ scope.row.cancelNum || 0 }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="undertakerType" label="承担方" align="center" width="100">
-          <template slot-scope="scope">
-            <span>{{ scope.row.undertakerType === '1' ? '平台' : '商户' }}</span>
-          </template>
-        </el-table-column>
         <el-table-column prop="cancelFlag" label="状态" align="center" width="90">
           <template slot-scope="scope">
             <el-tag v-if="scope.row.cancelFlag === '1'" size="mini" type="info">已作废</el-tag>

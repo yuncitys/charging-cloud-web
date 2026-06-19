@@ -101,6 +101,12 @@
         <el-form-item label="使用说明">
           <el-input v-model="form.useInstructions" type="textarea" :rows="3" :placeholder="'请输入' + quotaTypeLabel + '使用说明'" />
         </el-form-item>
+        <el-form-item label="是否优惠共享" prop="discountShareFlag">
+          <el-radio-group v-model="form.discountShareFlag">
+            <el-radio label="1">该卡券优惠与折扣活动优惠共享</el-radio>
+            <el-radio label="0">该卡券优惠与折扣活动优惠不共享（互斥券）</el-radio>
+          </el-radio-group>
+        </el-form-item>
         <el-form-item label="可用维度" prop="scopeType">
           <el-radio-group v-model="form.scopeType" @change="onScopeTypeChange">
             <el-radio label="1">按城市选择</el-radio>
@@ -137,12 +143,6 @@
             <span class="coupon-face-row__text">元</span>
           </div>
         </el-form-item>
-        <el-form-item label="券种类型" prop="useType">
-          <el-radio-group v-model="form.useType">
-            <el-radio label="1">普通券</el-radio>
-            <el-radio label="2">会员券</el-radio>
-          </el-radio-group>
-        </el-form-item>
         <el-form-item label="满减券数量" prop="stockNum">
           <el-input v-model.number="form.stockNum" placeholder="请输入满减券数量" type="number">
             <template slot="append">张</template>
@@ -175,6 +175,12 @@
         </el-form-item>
         <el-form-item label="使用说明">
           <el-input v-model="form.useInstructions" type="textarea" :rows="3" placeholder="请输入满减券使用说明" />
+        </el-form-item>
+        <el-form-item label="是否优惠共享" prop="discountShareFlag">
+          <el-radio-group v-model="form.discountShareFlag">
+            <el-radio label="1">该卡券优惠与折扣活动优惠共享</el-radio>
+            <el-radio label="0">该卡券优惠与折扣活动优惠不共享（互斥券）</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="可用维度" prop="scopeType">
           <el-radio-group v-model="form.scopeType" @change="onScopeTypeChange">
@@ -321,6 +327,7 @@ export default {
       effectiveTimeType: [{ required: true, message: '请选择有效时间类型', trigger: 'change' }],
       afterReceiveDay: [{ required: true, message: '请输入相对时间', trigger: 'blur' }],
       effectiveRange: [{ required: true, message: '请选择有效时间', trigger: 'change' }],
+      discountShareFlag: [{ required: true, message: '请选择是否优惠共享', trigger: 'change' }],
       scopeType: [{ required: true, message: '请选择可用维度', trigger: 'change' }],
       stationIds: [{ required: true, validator: validateStationIds, trigger: 'change' }]
     }
@@ -332,7 +339,7 @@ export default {
       fullReductionRules: {
         cardCouponName: [{ required: true, message: '请输入满减券名称', trigger: 'blur' }],
         couponFace: [{ required: true, validator: validateCouponFace, trigger: 'change' }],
-        useType: [{ required: true, message: '请选择券种类型', trigger: 'change' }],
+        discountShareFlag: [{ required: true, message: '请选择是否优惠共享', trigger: 'change' }],
         stockNum: [{ required: true, message: '请输入满减券数量', trigger: 'blur' }],
         effectiveTimeType: [{ required: true, message: '请选择有效时间类型', trigger: 'change' }],
         afterReceiveDay: [{ required: true, message: '请输入相对时间', trigger: 'blur' }],
@@ -402,9 +409,8 @@ export default {
         cardCouponId: '',
         cardCouponName: '',
         cardCouponType: this.cardCouponType,
-        undertakerType: '1',
-        undertakerId: '0',
         useType: '1',
+        discountShareFlag: '1',
         effectiveTimeType: '1',
         afterReceiveDay: 30,
         effectiveRange: [],
@@ -449,9 +455,8 @@ export default {
           cardCouponId: coupon.cardCouponId,
           cardCouponName: coupon.cardCouponName,
           cardCouponType: coupon.cardCouponType,
-          undertakerType: coupon.undertakerType || '1',
-          undertakerId: coupon.undertakerId || '0',
           useType: coupon.useType || '1',
+          discountShareFlag: coupon.discountShareFlag != null ? String(coupon.discountShareFlag) : '1',
           deductionType: coupon.deductionType || '1',
           faceValue: coupon.faceValue,
           amountLimit: coupon.amountLimit,

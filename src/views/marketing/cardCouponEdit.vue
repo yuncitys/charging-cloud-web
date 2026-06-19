@@ -16,10 +16,10 @@
               <el-radio label="4">折扣券</el-radio>
             </el-radio-group>
           </el-form-item>
-          <el-form-item label="成本承担" prop="undertakerType">
-            <el-radio-group v-model="form.undertakerType">
-              <el-radio label="1">平台</el-radio>
-              <el-radio label="2">商户</el-radio>
+          <el-form-item label="是否优惠共享" prop="discountShareFlag">
+            <el-radio-group v-model="form.discountShareFlag">
+              <el-radio label="1">该卡券优惠与折扣活动优惠共享</el-radio>
+              <el-radio label="0">该卡券优惠与折扣活动优惠不共享（互斥券）</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="库存数量" prop="stockNum">
@@ -138,8 +138,8 @@ export default {
         cardCouponId: '',
         cardCouponName: '',
         cardCouponType: '1',
-        undertakerType: '1',
-        undertakerId: '0',
+        useType: '1',
+        discountShareFlag: '1',
         deductionType: '1',
         faceValue: 0,
         amountLimit: 0,
@@ -159,6 +159,7 @@ export default {
       rules: {
         cardCouponName: [{ required: true, message: '请输入卡券名称', trigger: 'blur' }],
         cardCouponType: [{ required: true, message: '请选择类型', trigger: 'change' }],
+        discountShareFlag: [{ required: true, message: '请选择是否优惠共享', trigger: 'change' }],
         stockNum: [{ required: true, message: '请输入库存', trigger: 'blur' }],
         scopeType: [{ required: true, message: '请选择范围', trigger: 'change' }]
       }
@@ -203,6 +204,8 @@ export default {
         if (res.code !== 200 || !res.data) return
         const coupon = res.data.coupon || {}
         Object.assign(this.form, coupon)
+        this.form.useType = coupon.useType || '1'
+        this.form.discountShareFlag = coupon.discountShareFlag != null ? String(coupon.discountShareFlag) : '1'
         if (isThresholdLimitCardType(coupon.cardCouponType) && !this.form.useLimitType) {
           this.form.useLimitType = (coupon.orderLimitValue != null && coupon.orderLimitValue !== '') ? '2' : '1'
         }
@@ -279,7 +282,7 @@ export default {
           }
         }
         this.submitting = true
-        const payload = { ...this.form, stationIds: this.stationIds }
+        const payload = { ...this.form, stationIds: this.stationIds, useType: '1' }
         if (isThresholdLimitCardType(payload.cardCouponType)) {
           if (payload.cardCouponType === '4') {
             payload.useLimitType = null

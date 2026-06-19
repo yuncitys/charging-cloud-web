@@ -40,8 +40,8 @@
               <span class="detail-grid__value">{{ preferentialLabel }}</span>
             </div>
             <div class="detail-grid__item">
-              <span class="detail-grid__label">承担方</span>
-              <span class="detail-grid__value">{{ undertakerLabel }}</span>
+              <span class="detail-grid__label">是否优惠共享</span>
+              <span class="detail-grid__value">{{ discountShareLabel }}</span>
             </div>
             <div class="detail-grid__item">
               <span class="detail-grid__label">使用类型</span>
@@ -199,7 +199,7 @@ import {
   getCardCouponTypeLabel,
   isThresholdLimitCardType,
   isDiscountCardType,
-  UNDERTAKER_TYPE
+  getDiscountShareFlagLabel
 } from '../constants/cardCoupon'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
@@ -266,9 +266,8 @@ export default {
     discountCapText() {
       return formatDiscountCap(this.coupon)
     },
-    undertakerLabel() {
-      if (!this.coupon) return '—'
-      return UNDERTAKER_TYPE[this.coupon.undertakerType] || this.coupon.undertakerType
+    discountShareLabel() {
+      return getDiscountShareFlagLabel(this.coupon && this.coupon.discountShareFlag)
     },
     effectiveTimeTypeLabel() {
       if (!this.coupon) return '—'
