@@ -48,7 +48,7 @@
         </div>
       </div>
 
-      <div class="marketing-tip">增加库存后，活动发放将消耗新增库存；已发放数量不受影响。</div>
+      <div class="marketing-tip stock-drawer-tip">增加库存后，活动发放将消耗新增库存；已发放数量不受影响。</div>
     </div>
 
     <div class="marketing-activity-drawer__footer">
@@ -152,10 +152,15 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 16px;
-  margin-top: 8px;
+  margin-top: 16px;
+  margin-bottom: 0;
   background: #f8fafc;
   border: 1px solid #ebeef5;
   border-radius: 8px;
+}
+.stock-drawer-tip {
+  margin-top: 16px;
+  margin-bottom: 0;
 }
 .stock-preview__item {
   flex: 1;
