@@ -23,6 +23,10 @@ export function cardCouponPage(params) {
   return request({ url: `${BASE}/cardCoupon/page`, method: 'get', params })
 }
 
+export function cardCouponRewardOptions(params) {
+  return request({ url: `${BASE}/cardCoupon/rewardOptions`, method: 'get', params })
+}
+
 export function cardCouponDetail(cardCouponId) {
   return request({ url: `${BASE}/cardCoupon/${cardCouponId}`, method: 'get' })
 }
@@ -48,6 +52,10 @@ export function stationGroupPage(params) {
   return request({ url: `${BASE}/stationGroup/page`, method: 'get', params })
 }
 
+export function stationGroupOptions(params) {
+  return request({ url: `${BASE}/stationGroup/options`, method: 'get', params })
+}
+
 export function stationGroupDetail(id) {
   return request({ url: `${BASE}/stationGroup/${id}`, method: 'get' })
 }
@@ -71,6 +79,10 @@ export function updateStationGroupLabelStatus(id, labelStatus) {
 // ---------- 用户分组 ----------
 export function userGroupPage(params) {
   return request({ url: `${BASE}/userGroup/page`, method: 'get', params })
+}
+
+export function userGroupOptions(params) {
+  return request({ url: `${BASE}/userGroup/options`, method: 'get', params })
 }
 
 export function userGroupDetail(id) {

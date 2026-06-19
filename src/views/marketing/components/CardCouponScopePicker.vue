@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { stationGroupPage } from '@/api/marketing/marketing'
+import { stationGroupOptions } from '@/api/marketing/marketing'
 import { getChargeStationTreeByMerchant, getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 
 export default {
@@ -53,14 +53,19 @@ export default {
       stationLeafIds: [],
       stationGroupOptions: [],
       innerGroupIds: [],
-      syncing: false
+      syncing: false,
+      stationGroupLoading: false,
+      stationGroupLoaded: false
     }
   },
   watch: {
-    scopeType() {
+    scopeType(val) {
       this.stationTree = []
       this.stationLeafIds = []
-      if (this.scopeType === '3') return
+      if (val === '3') {
+        this.loadStationGroupOptions()
+        return
+      }
       this.loadStationTree()
     },
     value: {
@@ -86,11 +91,18 @@ export default {
   },
   created() {
     this.loadStationTree()
-    stationGroupPage({ page: 1, limit: 999 }).then(res => {
-      this.stationGroupOptions = res.data || []
-    })
   },
   methods: {
+    loadStationGroupOptions() {
+      if (this.stationGroupLoading || this.stationGroupLoaded) return
+      this.stationGroupLoading = true
+      stationGroupOptions().then(res => {
+        this.stationGroupOptions = res.data || []
+        this.stationGroupLoaded = true
+      }).finally(() => {
+        this.stationGroupLoading = false
+      })
+    },
     filterNode(value, data) {
       if (!value) return true
       return (data.label || '').indexOf(value) !== -1

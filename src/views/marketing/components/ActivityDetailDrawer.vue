@@ -250,7 +250,7 @@
 </template>
 
 <script>
-import { activityDetail, cardCouponPage } from '@/api/marketing/marketing'
+import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
 import { parseTime } from '@/utils/index'
@@ -382,7 +382,7 @@ export default {
       this.subConfig = {}
     },
     loadCouponOptions() {
-      cardCouponPage({ page: 1, limit: 999 }).then(res => {
+      cardCouponRewardOptions().then(res => {
         const map = {}
         ;(res.data || []).forEach(c => {
           map[c.cardCouponId] = c.cardCouponName

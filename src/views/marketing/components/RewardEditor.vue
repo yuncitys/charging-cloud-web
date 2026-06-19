@@ -22,7 +22,7 @@
 </template>
 
 <script>
-import { cardCouponPage } from '@/api/marketing/marketing'
+import { cardCouponRewardOptions } from '@/api/marketing/marketing'
 
 export default {
   name: 'RewardEditor',
@@ -62,7 +62,7 @@ export default {
     }
   },
   created() {
-    cardCouponPage({ page: 1, limit: 999, cancelFlag: '0' }).then(res => {
+    cardCouponRewardOptions().then(res => {
       this.cardCouponOptions = res.data || []
     })
   },

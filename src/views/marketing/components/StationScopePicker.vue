@@ -33,7 +33,7 @@
 </template>
 
 <script>
-import { stationGroupPage } from '@/api/marketing/marketing'
+import { stationGroupOptions } from '@/api/marketing/marketing'
 import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
 
 export default {
@@ -51,7 +51,9 @@ export default {
       stationLeafIds: [],
       stationGroupOptions: [],
       selectedGroupIds: [],
-      syncing: false
+      syncing: false,
+      stationGroupLoading: false,
+      stationGroupLoaded: false
     }
   },
   computed: {
@@ -63,9 +65,12 @@ export default {
     }
   },
   watch: {
-    stationScope() {
+    stationScope(val) {
       this.resetFromValue()
       this.loadScopeData()
+      if (val === '2') {
+        this.loadStationGroupOptions()
+      }
     },
     merchantId() {
       if (this.stationScope !== '1') return
@@ -83,11 +88,18 @@ export default {
   },
   created() {
     this.loadScopeData()
-    stationGroupPage({ page: 1, limit: 999 }).then(res => {
-      this.stationGroupOptions = res.data || []
-    })
   },
   methods: {
+    loadStationGroupOptions() {
+      if (this.stationGroupLoading || this.stationGroupLoaded) return
+      this.stationGroupLoading = true
+      stationGroupOptions().then(res => {
+        this.stationGroupOptions = res.data || []
+        this.stationGroupLoaded = true
+      }).finally(() => {
+        this.stationGroupLoading = false
+      })
+    },
     filterNode(value, data) {
       if (!value) return true
       return (data.name || '').indexOf(value) !== -1

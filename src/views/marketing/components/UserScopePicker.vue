@@ -36,8 +36,15 @@
 </template>
 
 <script>
-import { userGroupPage } from '@/api/marketing/marketing'
-import { getChargingCustomerPage } from '@/api/chargingCustomer/index'
+import { userGroupOptions } from '@/api/marketing/marketing'
+import { getChargingOrganizationTree } from '@/api/chargingCustomer/index'
+
+const ORGANIZATION_TREE_CATEGORIES = [
+  { id: 'platform', name: '平台机构' },
+  { id: 'internal', name: '内部子公司' },
+  { id: 'inter', name: '互联机构' },
+  { id: 'customer-root', name: '客户机构' }
+]
 
 export default {
   name: 'UserScopePicker',
@@ -51,16 +58,21 @@ export default {
       customerKeyword: '',
       selectAllCustomers: false,
       customerTree: [],
-      customerFlat: [],
+      selectableFlat: [],
       userGroupOptions: [],
       selectedGroupIds: [],
       phoneText: '',
-      syncing: false
+      syncing: false,
+      userGroupLoading: false,
+      userGroupLoaded: false
     }
   },
   watch: {
-    userScope() {
+    userScope(val) {
       this.resetFromValue()
+      if (val === '2') {
+        this.loadUserGroupOptions()
+      }
     },
     value: {
       immediate: true,
@@ -74,15 +86,23 @@ export default {
   },
   created() {
     this.loadCustomers()
-    userGroupPage({ page: 1, limit: 999 }).then(res => {
-      this.userGroupOptions = res.data || []
-    })
   },
   methods: {
-    isCustomerLeafId(id) {
+    loadUserGroupOptions() {
+      if (this.userGroupLoading || this.userGroupLoaded) return
+      this.userGroupLoading = true
+      userGroupOptions().then(res => {
+        this.userGroupOptions = res.data || []
+        this.userGroupLoaded = true
+      }).finally(() => {
+        this.userGroupLoading = false
+      })
+    },
+    isSelectableOrgId(id) {
       if (id == null || id === '') return false
-      const key = String(id)
-      return !['platform', 'internal', 'inter', 'customer-root'].includes(key)
+      const num = Number(id)
+      if (!Number.isFinite(num)) return false
+      return this.selectableFlat.some(item => Number(item.id) === num)
     },
     normalizeCustomerId(id) {
       const num = Number(id)
@@ -93,23 +113,25 @@ export default {
       return (data.name || '').indexOf(value) !== -1
     },
     loadCustomers() {
-      getChargingCustomerPage({ page: 1, limit: 9999 }).then(res => {
-        const list = res.data || []
-        this.customerFlat = list
-        this.customerTree = [
-          { id: 'platform', name: '平台机构', disabled: true, children: [] },
-          { id: 'internal', name: '内部子公司', disabled: true, children: [] },
-          { id: 'inter', name: '互联机构', disabled: true, children: [] },
-          {
-            id: 'customer-root',
-            name: '客户机构',
-            children: list.map(item => ({
-              id: item.id,
-              name: item.name || item.companyName,
-              orgType: '1'
-            }))
-          }
-        ]
+      const params = {}
+      if (this.customerKeyword) {
+        params.keyword = this.customerKeyword
+      }
+      getChargingOrganizationTree(params).then(res => {
+        const grouped = res.data || {}
+        this.selectableFlat = ORGANIZATION_TREE_CATEGORIES.flatMap(category => grouped[category.name] || [])
+        this.customerTree = ORGANIZATION_TREE_CATEGORIES.map(category => ({
+          id: category.id,
+          name: category.name,
+          children: (grouped[category.name] || []).map(item => ({
+            id: item.id,
+            name: item.name,
+            orgType: item.orgType,
+            orgMold: item.orgMold,
+            orgTypeName: item.orgTypeName,
+            orgFinalType: item.orgFinalType
+          }))
+        }))
         this.$nextTick(() => this.applyCheckedKeys())
       })
     },
@@ -144,7 +166,7 @@ export default {
     toggleAllCustomers(checked) {
       if (!this.$refs.customerTree) return
       if (checked) {
-        const keys = this.customerFlat.map(c => c.id)
+        const keys = this.selectableFlat.map(c => c.id)
         this.$refs.customerTree.setCheckedKeys(keys)
       } else {
         this.$refs.customerTree.setCheckedKeys([])
@@ -155,14 +177,14 @@ export default {
       if (this.syncing || !this.$refs.customerTree) return
       const nodes = this.$refs.customerTree.getCheckedNodes(true)
       const scopes = nodes
-        .filter(n => this.isCustomerLeafId(n.id))
+        .filter(n => this.isSelectableOrgId(n.id))
         .map(n => {
           const dataId = this.normalizeCustomerId(n.id)
           if (dataId == null) return null
           return {
             dataId,
             dataName: n.name,
-            orgType: '1'
+            orgType: n.orgFinalType || n.orgMold || '1'
           }
         })
         .filter(Boolean)
@@ -201,7 +223,7 @@ export default {
         if (this.$refs.customerTree) {
           this.emitCustomerScopes()
           const nodes = this.$refs.customerTree.getCheckedNodes(true)
-          const hasCustomer = nodes.some(n => this.isCustomerLeafId(n.id) && this.normalizeCustomerId(n.id) != null)
+          const hasCustomer = nodes.some(n => this.isSelectableOrgId(n.id) && this.normalizeCustomerId(n.id) != null)
           if (!hasCustomer) return this.emptyHint
           return ''
         }

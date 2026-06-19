@@ -230,7 +230,7 @@
 <script>
 import {
   activityDetail, saveActivity, updateActivity,
-  cardCouponPage, stationGroupPage, userGroupPage
+  cardCouponRewardOptions, userGroupOptions, stationGroupOptions
 } from '@/api/marketing/marketing'
 import { getActivityTypeMeta } from './constants/activityTypes'
 import './styles/marketing.scss'
@@ -262,6 +262,7 @@ export default {
       cardCouponOptions: [],
       stationGroupOptions: [],
       userGroupOptions: [],
+      stationGroupLoaded: false,
       basicRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }]
       }
@@ -314,6 +315,13 @@ export default {
       return this.rewardStepIndex + 1
     }
   },
+  watch: {
+    showStationGroupSelect(val) {
+      if (val) {
+        this.loadStationGroupOptions()
+      }
+    }
+  },
   created() {
     const type = this.$route.query.activityType
     if (!type && !this.$route.query.id) {
@@ -349,14 +357,18 @@ export default {
       }
     },
     loadOptions() {
-      cardCouponPage({ page: 1, limit: 999, cancelFlag: '0' }).then(res => {
+      cardCouponRewardOptions().then(res => {
         this.cardCouponOptions = res.data || []
       })
-      stationGroupPage({ page: 1, limit: 999 }).then(res => {
-        this.stationGroupOptions = res.data || []
-      })
-      userGroupPage({ page: 1, limit: 999 }).then(res => {
+      userGroupOptions().then(res => {
         this.userGroupOptions = res.data || []
+      })
+    },
+    loadStationGroupOptions() {
+      if (this.stationGroupLoaded) return
+      stationGroupOptions().then(res => {
+        this.stationGroupOptions = res.data || []
+        this.stationGroupLoaded = true
       })
     },
     loadDetail() {
