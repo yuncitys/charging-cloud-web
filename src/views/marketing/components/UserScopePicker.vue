@@ -2,7 +2,7 @@
   <div class="user-scope-picker">
     <template v-if="userScope === '1'">
       <div class="user-scope-picker__toolbar">
-        <el-checkbox v-model="selectAllCustomers" @change="toggleAllCustomers">全选</el-checkbox>
+        <el-checkbox v-model="selectAllCustomers" :disabled="!selectableFlat.length" @change="toggleAllCustomers">全选</el-checkbox>
         <el-input v-model="customerKeyword" placeholder="请输入关键字进行过滤" clearable size="small" style="width: 220px;" />
         <el-button type="primary" size="small" @click="loadCustomers">搜索</el-button>
       </div>
@@ -11,7 +11,7 @@
         :data="customerTree"
         show-checkbox
         node-key="id"
-        :props="{ label: 'name', children: 'children' }"
+        :props="{ label: 'name', children: 'children', disabled: 'disabled' }"
         :filter-node-method="filterCustomerNode"
         default-expand-all
         class="user-scope-picker__tree"
@@ -120,10 +120,8 @@ export default {
       getChargingOrganizationTree(params).then(res => {
         const grouped = res.data || {}
         this.selectableFlat = ORGANIZATION_TREE_CATEGORIES.flatMap(category => grouped[category.name] || [])
-        this.customerTree = ORGANIZATION_TREE_CATEGORIES.map(category => ({
-          id: category.id,
-          name: category.name,
-          children: (grouped[category.name] || []).map(item => ({
+        this.customerTree = ORGANIZATION_TREE_CATEGORIES.map(category => {
+          const children = (grouped[category.name] || []).map(item => ({
             id: item.id,
             name: item.name,
             orgType: item.orgType,
@@ -131,7 +129,13 @@ export default {
             orgTypeName: item.orgTypeName,
             orgFinalType: item.orgFinalType
           }))
-        }))
+          return {
+            id: category.id,
+            name: category.name,
+            disabled: children.length === 0,
+            children
+          }
+        })
         this.$nextTick(() => this.applyCheckedKeys())
       })
     },

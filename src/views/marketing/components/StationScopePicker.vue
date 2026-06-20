@@ -2,7 +2,7 @@
   <div class="station-scope-picker">
     <template v-if="stationScope === '1'">
       <div class="station-scope-picker__toolbar">
-        <el-checkbox v-model="selectAll" @change="toggleAll">全选</el-checkbox>
+        <el-checkbox v-model="selectAll" :disabled="!stationLeafIds.length" @change="toggleAll">全选</el-checkbox>
         <el-input v-model="keyword" placeholder="请输入关键字进行过滤" clearable size="small" class="station-scope-picker__search" />
         <el-button type="primary" size="small" @click="loadScopeData">搜索</el-button>
       </div>
@@ -11,13 +11,14 @@
         :data="merchantTree"
         show-checkbox
         node-key="id"
-        :props="{ label: 'name', children: 'children' }"
+        :props="{ label: 'name', children: 'children', disabled: 'disabled' }"
         :filter-node-method="filterNode"
         default-expand-all
         class="station-scope-picker__tree"
         @check="emitScopes"
       />
       <p v-if="!merchantTree.length" class="station-scope-picker__hint">{{ emptyHint }}</p>
+      <p v-else-if="!stationLeafIds.length" class="station-scope-picker__hint">{{ emptyHint }}</p>
     </template>
 
     <template v-else-if="stationScope === '2'">
@@ -118,16 +119,20 @@ export default {
       })
     },
     buildMerchantStationTree(rows) {
-      return rows.map(merchant => ({
-        id: `merchant-${merchant.id}`,
-        name: merchant.name,
-        children: (merchant.chargingStationInfoVoList || []).map(station => ({
+      return rows.map(merchant => {
+        const children = (merchant.chargingStationInfoVoList || []).map(station => ({
           id: station.id,
           name: station.networkName,
           ruleId: station.ruleId,
           stationOperatorId: merchant.id
         }))
-      })).filter(node => node.children.length > 0)
+        return {
+          id: `merchant-${merchant.id}`,
+          name: merchant.name,
+          disabled: children.length === 0,
+          children
+        }
+      })
     },
     collectStationLeafIds(nodes) {
       const ids = []
