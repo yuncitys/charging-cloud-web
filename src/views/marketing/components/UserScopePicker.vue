@@ -137,7 +137,9 @@ export default {
     },
     applyCheckedKeys() {
       if (this.userScope !== '1' || !this.$refs.customerTree) return
-      const keys = (this.value || []).map(s => s.dataId).filter(Boolean)
+      const keys = (this.value || [])
+        .map(s => this.normalizeCustomerId(s.dataId))
+        .filter(id => id != null)
       this.syncing = true
       this.$refs.customerTree.setCheckedKeys(keys)
       this.$nextTick(() => {
