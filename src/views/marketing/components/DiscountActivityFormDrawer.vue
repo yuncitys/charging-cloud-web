@@ -12,13 +12,8 @@
   >
     <div v-if="visibleSync" v-loading="loading" class="marketing-activity-drawer__body">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" label-position="top">
-        <el-form-item label="发起方" prop="activityInitiator">
-          <el-radio-group v-model="form.activityInitiator" @change="onInitiatorChange">
-            <el-radio label="1">平台</el-radio>
-            <el-radio label="2">商户</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="form.activityInitiator === '2'" label="归属商户" prop="activityInitiatorId">
+        <activity-initiator-fields :form="form" @initiator-change="onInitiatorChange" />
+        <el-form-item v-if="showMerchantField" label="归属商户" prop="activityInitiatorId">
           <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;" @change="onMerchantChange">
             <el-option v-for="m in merchantOptions" :key="m.id" :label="m.name || m.merchantName" :value="String(m.id)" />
           </el-select>
@@ -237,9 +232,12 @@
 
 <script>
 import { activityDetail, saveActivity, updateActivity } from '@/api/marketing/marketing'
-import { getMerchant } from '@/api/merchant/merchant'
 import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
 import UserScopePicker from './UserScopePicker'
+import ActivityInitiatorFields from './ActivityInitiatorFields'
+import marketingMerchantMixin from '../utils/marketingMerchantMixin'
+import { applyInitiatorDefaults, normalizeInitiatorPayload, isMerchantIdSelected } from '../utils/marketingActivityAuth'
+import { mapGetters } from 'vuex'
 import { getActivityTypeMeta } from '../constants/activityTypes'
 import {
   DISCOUNT_TYPE,
@@ -277,7 +275,8 @@ function compareTime(a, b) {
 
 export default {
   name: 'DiscountActivityFormDrawer',
-  components: { UserScopePicker },
+  mixins: [marketingMerchantMixin],
+  components: { UserScopePicker, ActivityInitiatorFields },
   props: {
     visible: { type: Boolean, default: false },
     activityType: { type: String, required: true },
@@ -285,7 +284,7 @@ export default {
   },
   data() {
     const validateInitiatorMerchant = (rule, value, callback) => {
-      if (this.form.activityInitiator === '2' && !value) {
+      if (String(this.form.activityInitiator) === '2' && !isMerchantIdSelected(value)) {
         callback(new Error('请选择归属商户'))
         return
       }
@@ -440,7 +439,6 @@ export default {
       stationOptions: [],
       stationNameMap: {},
       stationMetaMap: {},
-      merchantOptions: [],
       selectedWeekDays: this.weekDaysToValues(defaultWeekDays()),
       rules: {
         activityInitiator: [{ required: true, message: '请选择发起方', trigger: 'change' }],
@@ -466,6 +464,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['adminUser']),
     visibleSync: {
       get() { return this.visible },
       set(val) { this.$emit('update:visible', val) }
@@ -520,7 +519,7 @@ export default {
       return this.isStationType && String(this.form.discountValueMode) === '2'
     },
     merchantStationReady() {
-      return this.form.activityInitiator !== '2' || (this.form.activityInitiatorId && this.form.activityInitiatorId !== '0')
+      return this.form.activityInitiator !== '2' || isMerchantIdSelected(this.form.activityInitiatorId)
     },
     batchStationHint() {
       if (this.form.activityInitiator === '2') {
@@ -547,9 +546,6 @@ export default {
       }
     }
   },
-  created() {
-    this.loadMerchantOptions()
-  },
   methods: {
     createDefaultForm() {
       return {
@@ -574,6 +570,7 @@ export default {
     },
     resetForm() {
       this.form = this.createDefaultForm()
+      applyInitiatorDefaults(this.form, this.adminUser)
       this.selectedStationIds = []
       this.batchStationText = ''
       this.selectedWeekDays = this.weekDaysToValues(this.form.weekDays)
@@ -588,11 +585,6 @@ export default {
     valuesToWeekDays(values) {
       const set = new Set((values || []).map(Number))
       return new Array(7).fill('0').map((_, idx) => (set.has(idx + 1) ? '1' : '0')).join('')
-    },
-    loadMerchantOptions() {
-      getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
-        this.merchantOptions = (res && res.code === 200) ? (res.data || []) : []
-      })
     },
     loadStationOptions() {
       if (this.form.activityInitiator === '2' && !this.merchantStationReady) {
@@ -642,6 +634,7 @@ export default {
       this.batchStationText = ''
     },
     onOpen() {
+      this.loadMerchantOptions()
       if (this.isEdit) {
         this.loadDetail()
       } else {
@@ -658,8 +651,8 @@ export default {
     },
     onInitiatorChange(val) {
       if (val === '1') {
-        this.form.activityInitiatorId = '0'
-      } else if (!this.form.activityInitiatorId || this.form.activityInitiatorId === '0') {
+        this.$set(this.form, 'activityInitiatorId', '0')
+      } else if (!isMerchantIdSelected(this.form.activityInitiatorId)) {
         this.form.activityInitiatorId = ''
       }
       this.clearStationSelection()
@@ -854,7 +847,9 @@ export default {
         this.form = {
           activityId: activity.activityId || '',
           activityInitiator: activity.activityInitiator || '1',
-          activityInitiatorId: activity.activityInitiator === '2' ? String(activity.activityInitiatorId || '') : '0',
+          activityInitiatorId: activity.activityInitiator === '2'
+            ? String(activity.activityInitiatorId || '')
+            : '0',
           activityName: activity.activityName || '',
           timeRange: activity.activityBeginTime && activity.activityEndTime ? [activity.activityBeginTime, activity.activityEndTime] : [],
           activityRemark: activity.activityRemark || '',
@@ -925,12 +920,13 @@ export default {
       return subConfig
     },
     buildPayload() {
+      const initiator = normalizeInitiatorPayload(this.form, this.adminUser)
       const activity = {
         activityId: this.form.activityId || '',
         activityName: this.form.activityName,
         activityType: String(this.activityType),
-        activityInitiator: this.form.activityInitiator || '1',
-        activityInitiatorId: this.form.activityInitiator === '2' ? (this.form.activityInitiatorId || '') : '0',
+        activityInitiator: initiator.activityInitiator,
+        activityInitiatorId: initiator.activityInitiatorId,
         activityBeginTime: this.form.timeRange[0],
         activityEndTime: this.form.timeRange[1],
         activityRemark: this.form.activityRemark || ''

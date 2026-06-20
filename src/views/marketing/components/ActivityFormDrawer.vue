@@ -77,14 +77,9 @@
 
       <!-- 定向发放 -->
       <el-form v-else-if="activityType === '3'" ref="formRef" :model="form" :rules="directionalRules" label-width="100px" label-position="top">
-        <el-form-item label="发起方" prop="activityInitiator">
-          <el-radio-group v-model="form.activityInitiator" @change="onInitiatorChange">
-            <el-radio label="1">平台</el-radio>
-            <el-radio label="2">商户</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="form.activityInitiator === '2'" label="归属商户" prop="activityInitiatorId">
-          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;">
+        <activity-initiator-fields :form="form" @initiator-change="onInitiatorChange" />
+        <el-form-item v-if="showMerchantField" label="归属商户" prop="activityInitiatorId">
+          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;" @change="onMerchantSelectChange">
             <el-option v-for="m in merchantOptions" :key="m.id" :label="m.name || m.merchantName" :value="String(m.id)" />
           </el-select>
         </el-form-item>
@@ -120,14 +115,9 @@
 
       <!-- 充电领取 -->
       <el-form v-else-if="activityType === '4'" ref="formRef" :model="form" :rules="chargeRules" label-width="100px" label-position="top">
-        <el-form-item label="发起方" prop="activityInitiator">
-          <el-radio-group v-model="form.activityInitiator" @change="onInitiatorChange">
-            <el-radio label="1">平台</el-radio>
-            <el-radio label="2">商户</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="form.activityInitiator === '2'" label="归属商户" prop="activityInitiatorId">
-          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;" @change="onChargeMerchantChange">
+        <activity-initiator-fields :form="form" @initiator-change="onInitiatorChange" />
+        <el-form-item v-if="showMerchantField" label="归属商户" prop="activityInitiatorId">
+          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;" @change="onMerchantSelectChange">
             <el-option v-for="m in merchantOptions" :key="m.id" :label="m.name || m.merchantName" :value="String(m.id)" />
           </el-select>
         </el-form-item>
@@ -178,7 +168,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.stationScope !== '3'" label="选择电站" prop="stationScopes">
-          <p v-if="form.activityInitiator === '2' && !form.activityInitiatorId" class="field-hint">请先选择归属商户</p>
+          <p v-if="form.activityInitiator === '2' && !isMerchantIdSelected(form.activityInitiatorId)" class="field-hint">请先选择归属商户</p>
           <station-scope-picker
             v-else
             ref="stationPicker"
@@ -201,14 +191,9 @@
 
       <!-- 扫码领取 -->
       <el-form v-else-if="activityType === '5'" ref="formRef" :model="form" :rules="scanRules" label-width="100px" label-position="top">
-        <el-form-item label="发起方" prop="activityInitiator">
-          <el-radio-group v-model="form.activityInitiator" @change="onInitiatorChange">
-            <el-radio label="1">平台</el-radio>
-            <el-radio label="2">商户</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="form.activityInitiator === '2'" label="归属商户" prop="activityInitiatorId">
-          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;">
+        <activity-initiator-fields :form="form" @initiator-change="onInitiatorChange" />
+        <el-form-item v-if="showMerchantField" label="归属商户" prop="activityInitiatorId">
+          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;" @change="onMerchantSelectChange">
             <el-option v-for="m in merchantOptions" :key="m.id" :label="m.name || m.merchantName" :value="String(m.id)" />
           </el-select>
         </el-form-item>
@@ -265,14 +250,9 @@
 
       <!-- 券码兑换 -->
       <el-form v-else-if="activityType === '6'" ref="formRef" :model="form" :rules="exchangeRules" label-width="100px" label-position="top">
-        <el-form-item label="发起方" prop="activityInitiator">
-          <el-radio-group v-model="form.activityInitiator" @change="onInitiatorChange">
-            <el-radio label="1">平台</el-radio>
-            <el-radio label="2">商户</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item v-if="form.activityInitiator === '2'" label="归属商户" prop="activityInitiatorId">
-          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;">
+        <activity-initiator-fields :form="form" @initiator-change="onInitiatorChange" />
+        <el-form-item v-if="showMerchantField" label="归属商户" prop="activityInitiatorId">
+          <el-select v-model="form.activityInitiatorId" filterable placeholder="请选择商户" style="width: 100%;" @change="onMerchantSelectChange">
             <el-option v-for="m in merchantOptions" :key="m.id" :label="m.name || m.merchantName" :value="String(m.id)" />
           </el-select>
         </el-form-item>
@@ -316,13 +296,17 @@ import RechargeTierEditor from './RechargeTierEditor'
 import UserScopePicker from './UserScopePicker'
 import StationScopePicker from './StationScopePicker'
 import UploadFile from '@/components/Common/uploadFile'
-import { getMerchant } from '@/api/merchant/merchant'
+import ActivityInitiatorFields from './ActivityInitiatorFields'
+import marketingMerchantMixin from '../utils/marketingMerchantMixin'
+import { applyInitiatorDefaults, normalizeInitiatorPayload, isMerchantIdSelected } from '../utils/marketingActivityAuth'
+import { mapGetters } from 'vuex'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
 
 export default {
   name: 'ActivityFormDrawer',
-  components: { RewardEditor, RechargeTierEditor, UserScopePicker, StationScopePicker, UploadFile },
+  mixins: [marketingMerchantMixin],
+  components: { RewardEditor, RechargeTierEditor, UserScopePicker, StationScopePicker, UploadFile, ActivityInitiatorFields },
   props: {
     visible: { type: Boolean, default: false },
     activityType: { type: String, required: true },
@@ -330,9 +314,11 @@ export default {
   },
   data() {
     const validateMerchantInitiatorId = (rule, value, callback) => {
-      if (['3', '4', '5', '6'].includes(this.activityType) && this.form.activityInitiator === '2' && (!value || value === '0')) {
-        callback(new Error('请选择归属商户'))
-        return
+      if (['3', '4', '5', '6'].includes(this.activityType) && String(this.form.activityInitiator) === '2') {
+        if (!isMerchantIdSelected(value)) {
+          callback(new Error('请选择归属商户'))
+          return
+        }
       }
       callback()
     }
@@ -405,7 +391,7 @@ export default {
         callback()
         return
       }
-      if (this.form.activityInitiator === '2' && !this.form.activityInitiatorId) {
+      if (this.form.activityInitiator === '2' && !isMerchantIdSelected(this.form.activityInitiatorId)) {
         callback(new Error('请先选择归属商户'))
         return
       }
@@ -434,7 +420,6 @@ export default {
       loading: false,
       submitting: false,
       form: {},
-      merchantOptions: [],
       registerRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
@@ -494,6 +479,7 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['adminUser']),
     visibleSync: {
       get() { return this.visible },
       set(val) { this.$emit('update:visible', val) }
@@ -511,37 +497,30 @@ export default {
     chargeStationMerchantId() {
       if (this.activityType !== '4' || this.form.activityInitiator !== '2') return ''
       const id = this.form.activityInitiatorId
-      return id && id !== '0' ? id : ''
+      return isMerchantIdSelected(id) ? String(id) : ''
     }
   },
-  created() {
-    this.loadMerchantOptions()
-  },
   methods: {
-    loadMerchantOptions() {
-      getMerchant({ roleType: 'OPERATOR', type: 1 }).then(res => {
-        this.merchantOptions = (res && res.code === 200) ? (res.data || []) : []
-      })
+    isMerchantIdSelected,
+    onMerchantSelectChange() {
+      if (this.activityType === '4') {
+        this.$set(this.form, 'stationScopes', [])
+      }
     },
     onInitiatorChange(val) {
       if (val === '1') {
-        this.form.activityInitiatorId = '0'
-      } else if (!this.form.activityInitiatorId || this.form.activityInitiatorId === '0') {
+        this.$set(this.form, 'activityInitiatorId', '0')
+      } else if (!isMerchantIdSelected(this.form.activityInitiatorId)) {
         this.form.activityInitiatorId = ''
       }
       if (this.activityType === '4') {
-        this.form.stationScopes = []
+        this.$set(this.form, 'stationScopes', [])
       }
       this.$nextTick(() => {
         if (['3', '4', '5', '6'].includes(this.activityType) && this.$refs.formRef) {
           this.$refs.formRef.validateField('activityInitiatorId')
         }
       })
-    },
-    onChargeMerchantChange() {
-      if (this.activityType === '4') {
-        this.form.stationScopes = []
-      }
     },
     onStationScopeChange() {
       this.form.stationScopes = []
@@ -560,6 +539,7 @@ export default {
       })
     },
     onOpen() {
+      this.loadMerchantOptions()
       if (this.isEdit) {
         this.loadDetail()
       } else {
@@ -606,6 +586,7 @@ export default {
           userScope: '1',
           userScopes: []
         }
+        applyInitiatorDefaults(this.form, this.adminUser)
       } else if (type === '4') {
         this.form = {
           activityInitiator: '1',
@@ -623,6 +604,7 @@ export default {
           userScope: '1',
           userScopes: []
         }
+        applyInitiatorDefaults(this.form, this.adminUser)
       } else if (type === '5') {
         this.form = {
           activityInitiator: '1',
@@ -639,6 +621,7 @@ export default {
           userScope: '1',
           userScopes: []
         }
+        applyInitiatorDefaults(this.form, this.adminUser)
       } else if (type === '6') {
         this.form = {
           activityInitiator: '1',
@@ -650,6 +633,7 @@ export default {
           userScope: '1',
           userScopes: []
         }
+        applyInitiatorDefaults(this.form, this.adminUser)
       }
     },
     loadDetail() {
@@ -700,7 +684,9 @@ export default {
           this.form = {
             activityId: activity.activityId,
             activityInitiator: activity.activityInitiator || '1',
-            activityInitiatorId: activity.activityInitiatorId || '0',
+            activityInitiatorId: activity.activityInitiator === '2'
+              ? String(activity.activityInitiatorId || '')
+              : '0',
             activityName: activity.activityName,
             timeRange: activity.activityBeginTime && activity.activityEndTime
               ? [activity.activityBeginTime, activity.activityEndTime] : [],
@@ -719,7 +705,9 @@ export default {
           this.form = {
             activityId: activity.activityId,
             activityInitiator: activity.activityInitiator || '1',
-            activityInitiatorId: activity.activityInitiatorId || '0',
+            activityInitiatorId: activity.activityInitiator === '2'
+              ? String(activity.activityInitiatorId || '')
+              : '0',
             activityName: activity.activityName,
             timeRange: activity.activityBeginTime && activity.activityEndTime
               ? [activity.activityBeginTime, activity.activityEndTime] : [],
@@ -737,7 +725,9 @@ export default {
           this.form = {
             activityId: activity.activityId,
             activityInitiator: activity.activityInitiator || '1',
-            activityInitiatorId: activity.activityInitiatorId || '0',
+            activityInitiatorId: activity.activityInitiator === '2'
+              ? String(activity.activityInitiatorId || '')
+              : '0',
             activityName: activity.activityName,
             activityRemark: activity.activityRemark || '',
             sendTotalCount: Number((subConfig && subConfig.sendTotalCount) || 100),
@@ -768,12 +758,15 @@ export default {
     buildPayload() {
       const type = this.activityType
       const isPlatformOnly = type === '1' || type === '2'
+      const initiator = isPlatformOnly
+        ? { activityInitiator: '1', activityInitiatorId: '0' }
+        : normalizeInitiatorPayload(this.form, this.adminUser)
       const activity = {
         activityId: this.form.activityId || '',
         activityName: this.form.activityName,
         activityType: type,
-        activityInitiator: isPlatformOnly ? '1' : (this.form.activityInitiator || '1'),
-        activityInitiatorId: isPlatformOnly ? '0' : (this.form.activityInitiator === '1' ? '0' : (this.form.activityInitiatorId || '0')),
+        activityInitiator: initiator.activityInitiator,
+        activityInitiatorId: initiator.activityInitiatorId,
         activityRemark: this.form.activityRemark || ''
       }
       let rewards = []

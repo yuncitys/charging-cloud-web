@@ -65,7 +65,7 @@ export function getMarketingInitiatorContext(adminUser) {
   }
 }
 
-/** 空商户 ID（el-select 用 undefined 比 null 更稳定） */
+/** 空商户 ID（与 el-select String 选项值一致，未选用空字符串） */
 function isEmptyMerchantId(id) {
   return id == null || id === '' || id === '0' || id === 0
 }
@@ -76,13 +76,13 @@ export function applyInitiatorDefaults(form, adminUser) {
   if (ctx.canChooseInitiator) {
     form.activityInitiator = form.activityInitiator || '1'
     if (form.activityInitiator === '2') {
-      form.activityInitiatorId = isEmptyMerchantId(form.activityInitiatorId) ? undefined : Number(form.activityInitiatorId)
+      form.activityInitiatorId = isEmptyMerchantId(form.activityInitiatorId) ? '' : String(form.activityInitiatorId)
     } else {
       form.activityInitiatorId = '0'
     }
   } else {
     form.activityInitiator = '2'
-    form.activityInitiatorId = isEmptyMerchantId(form.activityInitiatorId) ? undefined : Number(form.activityInitiatorId)
+    form.activityInitiatorId = isEmptyMerchantId(form.activityInitiatorId) ? '' : String(form.activityInitiatorId)
   }
   return ctx
 }
