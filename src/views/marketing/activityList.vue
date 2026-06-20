@@ -37,7 +37,7 @@
         <el-option v-for="item in activityStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
-      <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新建{{ typeMeta ? typeMeta.label : '活动' }}</el-button>
+      <el-button v-if="canEdit" class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新建{{ typeMeta ? typeMeta.label : '活动' }}</el-button>
 
       <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 20px;">
         <el-table-column type="index" width="55" label="序号" align="center">
@@ -73,8 +73,8 @@
         <el-table-column label="操作" align="center" width="160" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
-              <el-button type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
-              <el-dropdown trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+              <el-button v-if="canView" type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
+              <el-dropdown v-if="canEdit" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
                 <el-button type="primary" size="mini">
                   更多<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
@@ -149,6 +149,9 @@
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from './constants/activityTypes'
+import { hasActivityTypeEdit, hasActivityTypeView } from './utils/marketingActivityAuth'
+import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
+import { mapGetters } from 'vuex'
 import { isDiscountActivityType } from './constants/discountActivity'
 import ActivityFormDrawer from './components/ActivityFormDrawer'
 import ActivityDetailDrawer from './components/ActivityDetailDrawer'
@@ -184,11 +187,18 @@ export default {
     }
   },
   computed: {
+    ...mapGetters(['adminUser']),
     fixedType() {
       return this.$route.query.activityType || ''
     },
     typeMeta() {
       return getActivityTypeMeta(this.fixedType)
+    },
+    canView() {
+      return hasActivityTypeView(this.fixedType)
+    },
+    canEdit() {
+      return hasActivityTypeEdit(this.fixedType)
     },
     drawerSupported() {
       return ['1', '2', '3', '4', '5', '6'].includes(this.fixedType) || isDiscountActivityType(this.fixedType)
@@ -199,15 +209,36 @@ export default {
   },
   watch: {
     '$route.query.activityType'() {
+      if (!this.ensureTypeAccess()) return
       this.syncTypeFilter()
       this.handleFilter()
     }
   },
   created() {
+    if (!this.ensureTypeAccess()) return
     this.syncTypeFilter()
     this.getList()
   },
   methods: {
+    ensureTypeAccess() {
+      if (!this.fixedType || !this.typeMeta) {
+        this.$message.warning('无效的活动类型')
+        this.goHub()
+        return false
+      }
+      if (!this.canView) {
+        this.$message.warning('暂无该活动类型的查看权限')
+        this.goHub()
+        return false
+      }
+      const roleType = getLoginUserRoleTypeMin(this.adminUser)
+      if (this.typeMeta.platformOnly && roleType > 1) {
+        this.$message.warning('该活动类型仅平台管理员可管理')
+        this.goHub()
+        return false
+      }
+      return true
+    },
     syncTypeFilter() {
       this.listQuery.activityType = this.fixedType
     },
@@ -259,6 +290,7 @@ export default {
       this.getList()
     },
     handleCreate() {
+      if (!this.canEdit) return
       if (this.drawerSupported) {
         this.editingActivityId = ''
         this.formDrawerVisible = true
@@ -270,6 +302,7 @@ export default {
       })
     },
     handleEdit(row) {
+      if (!this.canEdit) return
       if (this.drawerSupported) {
         this.editingActivityId = row.activityId
         this.formDrawerVisible = true
