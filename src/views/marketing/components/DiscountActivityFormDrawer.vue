@@ -87,7 +87,7 @@
           </template>
         </template>
 
-        <template v-if="merchantStationReady">
+        <template v-if="isStationType">
           <el-form-item label="电站范围" prop="stationScopeType">
             <el-radio-group v-model="form.stationScopeType" @change="onStationScopeTypeChange">
               <el-radio v-for="item in stationScopeTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
@@ -95,78 +95,89 @@
           </el-form-item>
 
           <el-form-item label="参与电站" prop="stationScopes">
-          <template v-if="form.stationScopeType === '1'">
-            <div class="limit-row limit-row--full">
-              <el-select v-model="selectedStationIds" multiple filterable collapse-tags placeholder="请选择电站" class="limit-row__count">
-                <el-option v-for="station in stationOptions" :key="station.id" :label="station.name" :value="station.id" />
-              </el-select>
-              <el-button type="primary" class="limit-row__type" @click="addSelectedStations">添加电站</el-button>
-            </div>
-          </template>
-          <template v-else>
-            <el-input
-              v-model="batchStationText"
-              type="textarea"
-              :rows="3"
-              placeholder="请输入电站ID，支持逗号、空格、换行分隔"
-            />
-            <div class="station-batch-actions">
-              <el-button type="primary" size="mini" @click="addBatchStations">批量添加电站</el-button>
-              <p class="field-hint">{{ batchStationHint }}</p>
-            </div>
-          </template>
-          <el-table :data="form.stationScopes" border size="small" max-height="320" style="margin-top: 12px;">
-            <el-table-column type="index" width="50" label="序号" align="center" />
-            <el-table-column prop="dataId" label="电站ID" align="center" width="110" />
-            <el-table-column prop="dataName" label="电站名称" align="center" min-width="180" show-overflow-tooltip />
-            <template v-if="showStationRateColumns">
-              <el-table-column v-if="isUnifiedRate" :label="'统一优惠值（' + rateUnit + '）'" align="center" min-width="180">
+            <template v-if="form.stationScopeType === '1'">
+              <div class="limit-row limit-row--full">
+                <el-select
+                  v-model="selectedStationIds"
+                  multiple
+                  filterable
+                  collapse-tags
+                  placeholder="请选择电站"
+                  class="limit-row__count"
+                  :disabled="stationPickerDisabled"
+                >
+                  <el-option v-for="station in stationOptions" :key="station.id" :label="station.name" :value="station.id" />
+                </el-select>
+                <el-button type="primary" class="limit-row__type" :disabled="stationPickerDisabled" @click="addSelectedStations">添加电站</el-button>
+              </div>
+            </template>
+            <template v-else>
+              <el-input
+                v-model="batchStationText"
+                type="textarea"
+                :rows="3"
+                placeholder="请输入电站ID，支持逗号、空格、换行分隔"
+                :disabled="stationPickerDisabled"
+              />
+              <div class="station-batch-actions">
+                <el-button type="primary" size="mini" :disabled="stationPickerDisabled" @click="addBatchStations">批量添加电站</el-button>
+                <p class="field-hint">{{ batchStationHint }}</p>
+              </div>
+            </template>
+            <el-table :data="form.stationScopes" border size="small" max-height="320" style="margin-top: 12px;">
+              <template slot="empty">
+                <span class="station-table-empty">{{ stationTableEmptyText }}</span>
+              </template>
+              <el-table-column type="index" width="50" label="序号" align="center" />
+              <el-table-column prop="dataId" label="电站ID" align="center" width="110" />
+              <el-table-column prop="dataName" label="电站名称" align="center" min-width="180" show-overflow-tooltip />
+              <template v-if="showStationRateColumns">
+                <el-table-column v-if="isUnifiedRate" :label="'统一优惠值（' + rateUnit + '）'" align="center" min-width="180">
+                  <template slot-scope="scope">
+                    <el-input v-model="scope.row.unifiedRateValue" size="mini" :disabled="stationPickerDisabled">
+                      <template slot="append">{{ rateUnit }}</template>
+                    </el-input>
+                  </template>
+                </el-table-column>
+                <template v-else>
+                  <el-table-column :label="'尖（' + rateUnit + '）'" align="center" min-width="130">
+                    <template slot-scope="scope">
+                      <el-input v-model="scope.row.sharpRateValue" size="mini" :disabled="stationPickerDisabled">
+                        <template slot="append">{{ rateUnit }}</template>
+                      </el-input>
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="'峰（' + rateUnit + '）'" align="center" min-width="130">
+                    <template slot-scope="scope">
+                      <el-input v-model="scope.row.peakRateValue" size="mini" :disabled="stationPickerDisabled">
+                        <template slot="append">{{ rateUnit }}</template>
+                      </el-input>
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="'平（' + rateUnit + '）'" align="center" min-width="130">
+                    <template slot-scope="scope">
+                      <el-input v-model="scope.row.flatRateValue" size="mini" :disabled="stationPickerDisabled">
+                        <template slot="append">{{ rateUnit }}</template>
+                      </el-input>
+                    </template>
+                  </el-table-column>
+                  <el-table-column :label="'谷（' + rateUnit + '）'" align="center" min-width="130">
+                    <template slot-scope="scope">
+                      <el-input v-model="scope.row.valleyRateValue" size="mini" :disabled="stationPickerDisabled">
+                        <template slot="append">{{ rateUnit }}</template>
+                      </el-input>
+                    </template>
+                  </el-table-column>
+                </template>
+              </template>
+              <el-table-column label="操作" align="center" width="90" fixed="right">
                 <template slot-scope="scope">
-                  <el-input v-model="scope.row.unifiedRateValue" size="mini">
-                    <template slot="append">{{ rateUnit }}</template>
-                  </el-input>
+                  <el-button type="text" size="mini" :disabled="stationPickerDisabled" @click="removeStation(scope.$index)">删除</el-button>
                 </template>
               </el-table-column>
-              <template v-else>
-                <el-table-column :label="'尖（' + rateUnit + '）'" align="center" min-width="130">
-                  <template slot-scope="scope">
-                    <el-input v-model="scope.row.sharpRateValue" size="mini">
-                      <template slot="append">{{ rateUnit }}</template>
-                    </el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column :label="'峰（' + rateUnit + '）'" align="center" min-width="130">
-                  <template slot-scope="scope">
-                    <el-input v-model="scope.row.peakRateValue" size="mini">
-                      <template slot="append">{{ rateUnit }}</template>
-                    </el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column :label="'平（' + rateUnit + '）'" align="center" min-width="130">
-                  <template slot-scope="scope">
-                    <el-input v-model="scope.row.flatRateValue" size="mini">
-                      <template slot="append">{{ rateUnit }}</template>
-                    </el-input>
-                  </template>
-                </el-table-column>
-                <el-table-column :label="'谷（' + rateUnit + '）'" align="center" min-width="130">
-                  <template slot-scope="scope">
-                    <el-input v-model="scope.row.valleyRateValue" size="mini">
-                      <template slot="append">{{ rateUnit }}</template>
-                    </el-input>
-                  </template>
-                </el-table-column>
-              </template>
-            </template>
-            <el-table-column label="操作" align="center" width="90" fixed="right">
-              <template slot-scope="scope">
-                <el-button type="text" size="mini" @click="removeStation(scope.$index)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+            </el-table>
           </el-form-item>
         </template>
-        <p v-if="form.activityInitiator === '2' && !merchantStationReady" class="field-hint">请先选择归属商户</p>
 
         <template v-if="isUserType">
           <el-form-item label="参与用户设置" prop="userScopeType">
@@ -521,6 +532,13 @@ export default {
     merchantStationReady() {
       return this.form.activityInitiator !== '2' || isMerchantIdSelected(this.form.activityInitiatorId)
     },
+    stationPickerDisabled() {
+      return this.form.activityInitiator === '2' && !isMerchantIdSelected(this.form.activityInitiatorId)
+    },
+    stationTableEmptyText() {
+      if (this.stationPickerDisabled) return '请先选择归属商户'
+      return '暂无数据'
+    },
     batchStationHint() {
       if (this.form.activityInitiator === '2') {
         return '仅支持当前商户下存在的电站 ID，重复项将自动忽略。'
@@ -738,6 +756,7 @@ export default {
       return true
     },
     addSelectedStations() {
+      if (this.stationPickerDisabled) return
       if (!this.selectedStationIds.length) {
         this.$message.warning('请先选择电站')
         return
@@ -756,6 +775,7 @@ export default {
       this.$nextTick(() => this.$refs.formRef && this.$refs.formRef.validateField('stationScopes'))
     },
     addBatchStations() {
+      if (this.stationPickerDisabled) return
       const text = (this.batchStationText || '').trim()
       if (!text) {
         this.$message.warning('请输入电站ID')
@@ -1026,5 +1046,11 @@ export default {
   width: 56px;
   color: #606266;
   flex-shrink: 0;
+}
+.station-table-empty {
+  display: inline-block;
+  padding: 24px 0;
+  color: #909399;
+  font-size: 13px;
 }
 </style>

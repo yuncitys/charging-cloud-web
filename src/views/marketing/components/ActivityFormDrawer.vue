@@ -168,12 +168,11 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.stationScope !== '3'" label="选择电站" prop="stationScopes">
-          <p v-if="form.activityInitiator === '2' && !isMerchantIdSelected(form.activityInitiatorId)" class="field-hint">请先选择归属商户</p>
           <station-scope-picker
-            v-else
             ref="stationPicker"
             :station-scope="form.stationScope"
             :merchant-id="chargeStationMerchantId"
+            :disabled="stationScopePickerDisabled"
             v-model="form.stationScopes"
           />
         </el-form-item>
@@ -498,6 +497,9 @@ export default {
       if (this.activityType !== '4' || this.form.activityInitiator !== '2') return ''
       const id = this.form.activityInitiatorId
       return isMerchantIdSelected(id) ? String(id) : ''
+    },
+    stationScopePickerDisabled() {
+      return this.form.activityInitiator === '2' && !isMerchantIdSelected(this.form.activityInitiatorId)
     }
   },
   methods: {

@@ -1,30 +1,41 @@
 <template>
-  <div class="station-scope-picker">
+  <div class="station-scope-picker" :class="{ 'station-scope-picker--disabled': disabled }">
     <template v-if="stationScope === '1'">
       <div class="station-scope-picker__toolbar">
-        <el-checkbox v-model="selectAll" :disabled="!stationLeafIds.length" @change="toggleAll">全选</el-checkbox>
-        <el-input v-model="keyword" placeholder="请输入关键字进行过滤" clearable size="small" class="station-scope-picker__search" />
-        <el-button type="primary" size="small" @click="loadScopeData">搜索</el-button>
+        <el-checkbox v-model="selectAll" :disabled="disabled || !stationLeafIds.length" @change="toggleAll">全选</el-checkbox>
+        <el-input v-model="keyword" placeholder="请输入关键字进行过滤" clearable size="small" class="station-scope-picker__search" :disabled="disabled" />
+        <el-button type="primary" size="small" :disabled="disabled" @click="loadScopeData">搜索</el-button>
       </div>
-      <el-tree
-        ref="merchantTree"
-        :data="merchantTree"
-        show-checkbox
-        node-key="id"
-        :props="{ label: 'name', children: 'children', disabled: 'disabled' }"
-        :filter-node-method="filterNode"
-        default-expand-all
-        class="station-scope-picker__tree"
-        @check="emitScopes"
-      />
-      <p v-if="!merchantTree.length" class="station-scope-picker__hint">{{ emptyHint }}</p>
-      <p v-else-if="!stationLeafIds.length" class="station-scope-picker__hint">{{ emptyHint }}</p>
+      <div v-if="disabled" class="station-scope-picker__empty-box">{{ pendingMerchantHint }}</div>
+      <template v-else>
+        <el-tree
+          ref="merchantTree"
+          :data="merchantTree"
+          show-checkbox
+          node-key="id"
+          :props="{ label: 'name', children: 'children', disabled: 'disabled' }"
+          :filter-node-method="filterNode"
+          default-expand-all
+          class="station-scope-picker__tree"
+          @check="emitScopes"
+        />
+        <p v-if="!merchantTree.length || !stationLeafIds.length" class="station-scope-picker__hint">{{ emptyHint }}</p>
+      </template>
     </template>
 
     <template v-else-if="stationScope === '2'">
-      <el-select v-model="selectedGroupIds" multiple filterable placeholder="请选择电站分组" style="width: 100%;" @change="emitGroupScopes">
+      <el-select
+        v-model="selectedGroupIds"
+        multiple
+        filterable
+        placeholder="请选择电站分组"
+        style="width: 100%;"
+        :disabled="disabled"
+        @change="emitGroupScopes"
+      >
         <el-option v-for="g in stationGroupOptions" :key="g.id" :label="g.groupName" :value="g.id" />
       </el-select>
+      <p v-if="disabled" class="station-scope-picker__hint">{{ pendingMerchantHint }}</p>
     </template>
 
     <template v-else-if="stationScope === '3'">
@@ -42,7 +53,9 @@ export default {
   props: {
     stationScope: { type: String, default: '1' },
     value: { type: Array, default: () => [] },
-    merchantId: { type: String, default: '' }
+    merchantId: { type: String, default: '' },
+    disabled: { type: Boolean, default: false },
+    pendingMerchantHint: { type: String, default: '请先选择归属商户' }
   },
   data() {
     return {
@@ -62,10 +75,13 @@ export default {
       return this.stationScope === '1' && !!this.merchantId
     },
     emptyHint() {
-      return this.restrictToMerchant ? '该商户下暂无可用电站' : '暂无可用电站'
+      return '暂无数据'
     }
   },
   watch: {
+    disabled() {
+      this.loadScopeData()
+    },
     stationScope(val) {
       this.resetFromValue()
       this.loadScopeData()
@@ -107,6 +123,11 @@ export default {
     },
     loadScopeData() {
       if (this.stationScope !== '1') return
+      if (this.disabled) {
+        this.merchantTree = []
+        this.stationLeafIds = []
+        return
+      }
       const params = {}
       if (this.restrictToMerchant) {
         params.merchantId = Number(this.merchantId)
@@ -175,7 +196,7 @@ export default {
       this.emitScopes()
     },
     emitScopes() {
-      if (this.syncing || !this.$refs.merchantTree) return
+      if (this.disabled || this.syncing || !this.$refs.merchantTree) return
       const nodes = this.$refs.merchantTree.getCheckedNodes(true)
       const scopes = nodes
         .filter(n => typeof n.id === 'number')
@@ -190,7 +211,7 @@ export default {
       }
     },
     emitGroupScopes() {
-      if (this.syncing) return
+      if (this.disabled || this.syncing) return
       const scopes = this.selectedGroupIds.map(id => {
         const g = this.stationGroupOptions.find(x => x.id === id)
         return { dataId: id, dataName: g ? g.groupName : '', stationType: '3' }
@@ -201,6 +222,7 @@ export default {
     },
     validate() {
       if (this.stationScope === '3') return ''
+      if (this.disabled) return this.pendingMerchantHint
       if (!this.value || !this.value.length) return '请选择适用电站范围'
       return ''
     }
@@ -230,5 +252,20 @@ export default {
   margin: 0;
   font-size: 13px;
   color: #909399;
+}
+.station-scope-picker__empty-box {
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  padding: 16px;
+  font-size: 13px;
+  color: #909399;
+  background: #fafafa;
+}
+.station-scope-picker--disabled .station-scope-picker__toolbar {
+  opacity: 0.65;
 }
 </style>
