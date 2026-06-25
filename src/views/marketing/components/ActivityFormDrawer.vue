@@ -788,6 +788,19 @@ export default {
         rewards = this.$refs.tierEditor.toFlatRewards()
         subConfig = { limitType: this.form.limitType, limitCount: this.form.limitCount }
       } else if (type === '3') {
+        const now = new Date()
+        const end = new Date(now)
+        end.setHours(23, 59, 59, 0)
+        if (this.form.sendType === '1') {
+          activity.activityBeginTime = parseTime(now, '{y}-{m}-{d} {h}:{i}:{s}')
+          activity.activityEndTime = parseTime(end, '{y}-{m}-{d} {h}:{i}:{s}')
+        } else if (this.form.sendTime) {
+          const send = new Date(String(this.form.sendTime).replace(/-/g, '/'))
+          const sendEnd = new Date(send)
+          sendEnd.setHours(23, 59, 59, 0)
+          activity.activityBeginTime = this.form.sendTime
+          activity.activityEndTime = parseTime(sendEnd, '{y}-{m}-{d} {h}:{i}:{s}')
+        }
         activity.activityRule = ''
         rewards = this.form.rewards
         subConfig = {
@@ -844,7 +857,7 @@ export default {
         api(payload).then(res => {
           this.submitting = false
           if (res.code === 200) {
-            this.$message.success('保存成功')
+            this.$message.success(res.msg || '保存成功')
             this.visibleSync = false
             this.$emit('saved')
           } else {
