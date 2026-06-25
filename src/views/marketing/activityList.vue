@@ -47,7 +47,7 @@
         <el-table-column prop="activityName" label="活动名称" align="center" min-width="150" show-overflow-tooltip />
         <el-table-column prop="activityStatus" label="状态" align="center" width="120">
           <template slot-scope="scope">
-            <el-tag size="mini" :type="statusTagType(scope.row.activityStatus)">{{ activityStatusLabel(scope.row.activityStatus) }}</el-tag>
+            <el-tag size="mini" :type="directionalStatusTagType(scope.row)">{{ directionalStatusLabel(scope.row) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column v-if="fixedType !== '3' && fixedType !== '6'" label="活动时间" align="center" min-width="200">
@@ -81,7 +81,7 @@
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item command="edit">编辑</el-dropdown-item>
                   <el-dropdown-item v-if="canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
-                  <el-dropdown-item v-if="fixedType === '3'" command="send">发放</el-dropdown-item>
+                  <el-dropdown-item v-if="canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
                   <el-dropdown-item v-if="fixedType === '5'" command="qrcode">二维码</el-dropdown-item>
                   <el-dropdown-item v-if="fixedType === '6'" command="exchange">兑换码</el-dropdown-item>
                 </el-dropdown-menu>
@@ -172,6 +172,7 @@ export default {
   data() {
     return {
       listLoading: false,
+      sendingActivityId: '',
       page: 1,
       limit: 10,
       list: [],
@@ -246,12 +247,50 @@ export default {
       const item = ACTIVITY_STATUS.find(s => s.value === status)
       return item ? item.label : status
     },
+    directionalStatusLabel(row) {
+      if (this.fixedType !== '3') {
+        return this.activityStatusLabel(row.activityStatus)
+      }
+      if (String(row.sendStatus) === '1') {
+        return '已发放'
+      }
+      if (String(row.sendType) === '2') {
+        return '待发放'
+      }
+      if (row.activityStatus === '1') {
+        return '发放中'
+      }
+      return this.activityStatusLabel(row.activityStatus)
+    },
+    directionalStatusTagType(row) {
+      if (this.fixedType !== '3') {
+        return this.statusTagType(row.activityStatus)
+      }
+      if (String(row.sendStatus) === '1') {
+        return 'info'
+      }
+      if (String(row.sendType) === '2') {
+        return 'warning'
+      }
+      if (row.activityStatus === '1') {
+        return ''
+      }
+      return this.statusTagType(row.activityStatus)
+    },
     statusTagType(status) {
       const item = ACTIVITY_STATUS.find(s => s.value === status)
       return item ? item.tagType : 'info'
     },
     canStop(row) {
+      if (this.fixedType === '3' && String(row.sendStatus) === '1') {
+        return false
+      }
       return row.activityStatus === '1' || row.activityStatus === '2'
+    },
+    canDirectionalSend(row) {
+      if (this.fixedType !== '3') return false
+      if (String(row.sendStatus) === '1') return false
+      return String(row.sendType) === '2'
     },
     sendTimeLabel(row) {
       if (String(row.sendType) === '1') return '立即发放'
@@ -351,7 +390,9 @@ export default {
       }).catch(() => {})
     },
     handleDirectionalSend(row) {
+      if (this.sendingActivityId) return
       this.$confirm('确认立即向活动范围内用户定向发放？', '定向发放', { type: 'warning' }).then(() => {
+        this.sendingActivityId = row.activityId
         directionalSend(row.activityId).then(res => {
           if (res.code === 200) {
             this.$message.success(res.msg || '发放完成')
@@ -359,6 +400,8 @@ export default {
           } else {
             this.$message.error(res.msg || '发放失败')
           }
+        }).finally(() => {
+          this.sendingActivityId = ''
         })
       }).catch(() => {})
     },
