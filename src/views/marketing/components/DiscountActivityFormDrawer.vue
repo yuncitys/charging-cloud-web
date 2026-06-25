@@ -87,7 +87,7 @@
           </template>
         </template>
 
-        <template v-if="isStationType">
+        <template v-if="showStationScopeFields">
           <el-form-item label="电站范围" prop="stationScopeType">
             <el-radio-group v-model="form.stationScopeType" @change="onStationScopeTypeChange">
               <el-radio v-for="item in stationScopeTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
@@ -356,6 +356,10 @@ export default {
       validateRateValue('谷时段优惠值', value, callback)
     }
     const validateStationScopes = (rule, value, callback) => {
+      if (!this.showStationScopeFields) {
+        callback()
+        return
+      }
       if (!this.merchantStationReady) {
         callback()
         return
@@ -488,6 +492,9 @@ export default {
     },
     isUserType() {
       return String(this.activityType) === '8'
+    },
+    showStationScopeFields() {
+      return this.isStationType || this.isUserType
     },
     typeMeta() {
       return getActivityTypeMeta(this.activityType)
