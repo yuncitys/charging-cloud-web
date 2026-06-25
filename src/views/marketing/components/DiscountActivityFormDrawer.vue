@@ -817,9 +817,15 @@ export default {
       this.form.stationScopes.splice(index, 1)
       this.$nextTick(() => this.$refs.formRef && this.$refs.formRef.validateField('stationScopes'))
     },
-    mapUserScopesFromDetail(config) {
+    mapUserScopesFromDetail(config, apiUserScopes) {
       const userScopeType = String(config.userScopeType || '1')
-      return participantsToUserScopes(config.participants, userScopeType)
+      const fromParticipants = participantsToUserScopes(config.participants, userScopeType)
+      if (fromParticipants.length) return fromParticipants
+      return (apiUserScopes || []).map(item => ({
+        dataId: Number(item.dataId),
+        dataName: item.dataName || String(item.dataId),
+        orgType: item.orgType || (userScopeType === '1' ? '2' : '1')
+      })).filter(item => Number.isFinite(item.dataId))
     },
     addTimeSlot() {
       this.form.timeSlots.push({
@@ -862,7 +868,7 @@ export default {
       activityDetail(this.activityId).then(res => {
         this.loading = false
         if (res.code !== 200 || !res.data) return
-        const { activity, stationScopes, subConfig } = res.data
+        const { activity, stationScopes, subConfig, userScopes } = res.data
         const config = subConfig || {}
         const rateValues = {
           unifiedRateValue: config.unifiedRateValue != null ? String(config.unifiedRateValue) : '',
@@ -888,7 +894,7 @@ export default {
           stationScopeType: String(config.stationScopeType || '1') === '3' ? '1' : String(config.stationScopeType || '1'),
           stationScopes: this.mapStationScopesFromDetail(stationScopes, config.stationRates),
           userScopeType: String(config.userScopeType || '1'),
-          userScopes: this.mapUserScopesFromDetail(config),
+          userScopes: this.mapUserScopesFromDetail(config, userScopes),
           weekDays: this.isStationType ? String(config.weekDays || defaultWeekDays()) : defaultWeekDays(),
           timeSlots: (config.timeSlots && config.timeSlots.length ? config.timeSlots : defaultTimeSlots()).map((slot, idx) => ({
             startTime: slot.startTime || '00:00',

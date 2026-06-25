@@ -68,10 +68,15 @@ export default {
     }
   },
   watch: {
-    userScope(val) {
-      this.resetFromValue()
-      if (val === '2') {
-        this.loadUserGroupOptions()
+    userScope: {
+      immediate: true,
+      handler(val) {
+        this.resetFromValue()
+        if (val === '2') {
+          this.loadUserGroupOptions()
+        } else if (val === '1') {
+          this.loadCustomers()
+        }
       }
     },
     value: {
@@ -84,16 +89,28 @@ export default {
       this.$refs.customerTree && this.$refs.customerTree.filter(val)
     }
   },
-  created() {
-    this.loadCustomers()
-  },
   methods: {
+    normalizeGroupId(id) {
+      if (id == null || id === '') return null
+      const num = Number(id)
+      return Number.isFinite(num) ? num : String(id)
+    },
+    matchGroupId(a, b) {
+      if (a == null || b == null) return false
+      return String(a) === String(b)
+    },
+    findUserGroupOption(id) {
+      return this.userGroupOptions.find(x => this.matchGroupId(x.id, id))
+    },
     loadUserGroupOptions() {
       if (this.userGroupLoading || this.userGroupLoaded) return
       this.userGroupLoading = true
       userGroupOptions().then(res => {
         this.userGroupOptions = res.data || []
         this.userGroupLoaded = true
+        if (this.userScope === '2') {
+          this.resetFromValue()
+        }
       }).finally(() => {
         this.userGroupLoading = false
       })
@@ -154,7 +171,10 @@ export default {
       const scopes = this.value || []
       this.syncing = true
       if (this.userScope === '2') {
-        this.selectedGroupIds = scopes.map(s => s.dataId)
+        this.selectedGroupIds = scopes.map(s => {
+          const option = this.findUserGroupOption(s.dataId)
+          return option ? option.id : this.normalizeGroupId(s.dataId)
+        }).filter(id => id != null)
       } else if (this.userScope === '4') {
         this.phoneText = scopes.map(s => s.dataName).join('\n')
       } else {
@@ -200,9 +220,16 @@ export default {
     },
     emitGroupScopes() {
       if (this.syncing) return
+      const prevScopes = this.value || []
       const scopes = this.selectedGroupIds.map(id => {
-        const g = this.userGroupOptions.find(x => x.id === id)
-        return { dataId: id, dataName: g ? g.groupName : '', orgType: '2' }
+        const g = this.findUserGroupOption(id)
+        const prev = prevScopes.find(s => this.matchGroupId(s.dataId, id))
+        const dataId = this.normalizeGroupId(id)
+        return {
+          dataId,
+          dataName: g ? g.groupName : (prev && prev.dataName) || String(id),
+          orgType: '2'
+        }
       })
       if (!this.scopesEqual(scopes, this.value)) {
         this.$emit('input', scopes)
