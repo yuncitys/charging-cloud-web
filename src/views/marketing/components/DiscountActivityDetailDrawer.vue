@@ -108,7 +108,7 @@
         </div>
 
         <div class="detail-section">
-          <div class="detail-section__title">参与电站/用户</div>
+          <div class="detail-section__title">参与电站</div>
           <el-table :data="stationRows" border size="small" max-height="320">
             <el-table-column type="index" width="50" label="序号" align="center" />
             <el-table-column prop="dataId" label="电站ID" align="center" width="110" />
