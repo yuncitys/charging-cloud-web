@@ -108,3 +108,9 @@ export function normalizeInitiatorPayload(form, adminUser) {
 export function isMerchantIdSelected(id) {
   return !isEmptyMerchantId(id)
 }
+
+/** 活动是否允许编辑（仅未开始） */
+export function canEditMarketingActivity(activity) {
+  if (!activity) return false
+  return String(activity.activityStatus) === '2'
+}

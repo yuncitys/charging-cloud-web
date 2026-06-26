@@ -74,16 +74,17 @@
           <template slot-scope="scope">
             <div class="marketing-table-actions">
               <el-button v-if="canView" type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
-              <el-dropdown v-if="canEdit" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+              <el-dropdown v-if="canView" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
                 <el-button type="primary" size="mini">
                   更多<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="edit">编辑</el-dropdown-item>
-                  <el-dropdown-item v-if="canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
-                  <el-dropdown-item v-if="canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
-                  <el-dropdown-item v-if="fixedType === '5'" command="qrcode">二维码</el-dropdown-item>
-                  <el-dropdown-item v-if="fixedType === '6'" command="exchange">兑换码</el-dropdown-item>
+                  <el-dropdown-item command="record">领取记录</el-dropdown-item>
+                  <el-dropdown-item v-if="canEdit && canEditRow(scope.row)" command="edit" divided>编辑</el-dropdown-item>
+                  <el-dropdown-item v-if="canEdit && canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
+                  <el-dropdown-item v-if="canEdit && canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
+                  <el-dropdown-item v-if="canEdit && fixedType === '5'" command="qrcode">二维码</el-dropdown-item>
+                  <el-dropdown-item v-if="canEdit && fixedType === '6'" command="exchange">兑换码</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -149,7 +150,7 @@
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from './constants/activityTypes'
-import { hasActivityTypeEdit, hasActivityTypeView } from './utils/marketingActivityAuth'
+import { hasActivityTypeEdit, hasActivityTypeView, canEditMarketingActivity } from './utils/marketingActivityAuth'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
 import { mapGetters } from 'vuex'
 import { isDiscountActivityType } from './constants/discountActivity'
@@ -292,6 +293,9 @@ export default {
       if (String(row.sendStatus) === '1') return false
       return String(row.sendType) === '2'
     },
+    canEditRow(row) {
+      return canEditMarketingActivity(row)
+    },
     sendTimeLabel(row) {
       if (String(row.sendType) === '1') return '立即发放'
       if (String(row.sendType) === '2') {
@@ -342,6 +346,10 @@ export default {
     },
     handleEdit(row) {
       if (!this.canEdit) return
+      if (!this.canEditRow(row)) {
+        this.$message.warning('仅未开始状态的活动可编辑')
+        return
+      }
       if (this.drawerSupported) {
         this.editingActivityId = row.activityId
         this.formDrawerVisible = true
@@ -360,12 +368,29 @@ export default {
       this.detailActivityId = row.activityId
       this.detailDrawerVisible = true
     },
-    onDetailEdit() {
-      this.editingActivityId = this.detailActivityId
+    handleRecord(row) {
+      this.$router.push({
+        name: 'activityReceiveRecordList',
+        query: {
+          activityId: row.activityId,
+          activityName: row.activityName,
+          activityType: row.activityType || this.fixedType,
+          typeName: this.$route.query.typeName
+        }
+      })
+    },
+    onDetailEdit(activity) {
+      if (!this.canEditRow(activity)) {
+        this.$message.warning('仅未开始状态的活动可编辑')
+        return
+      }
+      this.editingActivityId = activity.activityId
       this.formDrawerVisible = true
     },
     handleMoreCommand(command, row) {
-      if (command === 'edit') {
+      if (command === 'record') {
+        this.handleRecord(row)
+      } else if (command === 'edit') {
         this.handleEdit(row)
       } else if (command === 'stop') {
         this.handleStop(row)

@@ -244,7 +244,7 @@
 
     <div class="marketing-activity-drawer__footer">
       <el-button @click="visibleSync = false">关闭</el-button>
-      <el-button v-if="activity" type="primary" @click="handleEdit">编辑</el-button>
+      <el-button v-if="canShowEdit" type="primary" @click="handleEdit">编辑</el-button>
     </div>
   </el-drawer>
 </template>
@@ -253,6 +253,7 @@
 import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
+import { canEditMarketingActivity, hasActivityTypeEdit } from '../utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
 
@@ -305,6 +306,9 @@ export default {
     statusTagType() {
       const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
       return item ? item.tagType : 'info'
+    },
+    canShowEdit() {
+      return this.activity && hasActivityTypeEdit(this.activityType) && canEditMarketingActivity(this.activity)
     },
     showInitiator() {
       return ['3', '4', '5', '6'].includes(this.activityType)
