@@ -1,63 +1,46 @@
 <template>
   <div class="app-container">
+    <div class="marketing-page-header__back">
+      <el-button type="text" icon="el-icon-arrow-left" @click="goBack">返回活动列表</el-button>
+    </div>
+
+    <div class="issue-page-title">{{ pageTitle }}</div>
+
     <div class="filter-container">
       <el-date-picker
         v-model="receiveTimeRange"
         class="filter-item"
         type="datetimerange"
-        range-separator="至"
-        start-placeholder="请选择开始日期"
-        end-placeholder="请选择结束日期"
+        range-separator="—"
+        start-placeholder="领取开始"
+        end-placeholder="领取结束"
         value-format="yyyy-MM-dd HH:mm:ss"
         :default-time="['00:00:00', '23:59:59']"
-        style="width: 360px; margin-right: 20px;"
-        @change="handleReceiveTimeChange"
+        style="width: 340px; margin-right: 20px;"
+        @change="onReceiveTimeChange"
       />
       <el-input
         v-model="listQuery.userAccount"
         class="filter-item"
-        placeholder="请输入领取用户"
+        placeholder="领取用户"
         clearable
-        style="width: 180px; margin-right: 20px;"
+        style="width: 140px; margin-right: 20px;"
         @keyup.enter.native="handleFilter"
         @clear="handleFilter"
       />
       <el-input
         v-model="listQuery.userOrgName"
         class="filter-item"
-        placeholder="请输入归属客户"
-        clearable
-        style="width: 180px; margin-right: 20px;"
-        @keyup.enter.native="handleFilter"
-        @clear="handleFilter"
-      />
-      <el-input
-        v-model="listQuery.activityName"
-        class="filter-item"
-        placeholder="请输入活动名称"
-        clearable
-        style="width: 180px; margin-right: 20px;"
-        @keyup.enter.native="handleFilter"
-        @clear="handleFilter"
-      />
-      <el-select
-        v-model="listQuery.activityType"
-        class="filter-item"
-        placeholder="请选择活动类型"
+        placeholder="归属客户"
         clearable
         style="width: 160px; margin-right: 20px;"
-        @change="handleFilter"
-      >
-        <el-option v-for="item in activityTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-      </el-select>
-      <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">确认</el-button>
+        @keyup.enter.native="handleFilter"
+        @clear="handleFilter"
+      />
+      <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">确认</el-button>
       <el-button class="filter-item" @click="handleReset">清空</el-button>
 
-      <div class="table-section-header">
-        <span class="table-section-header__title">领取记录清单</span>
-      </div>
-
-      <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 12px;">
+      <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 20px;">
         <el-table-column type="index" width="55" label="序号" align="center">
           <template slot-scope="scope"><span>{{ scope.$index + (page - 1) * limit + 1 }}</span></template>
         </el-table-column>
@@ -99,7 +82,7 @@ import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
 export default {
-  name: 'receiveRecordList',
+  name: 'activityReceiveRecordList',
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -113,21 +96,32 @@ export default {
       limit: 10,
       list: [],
       total: 0,
-      receiveTimeRange: null,
+      receiveTimeRange: [],
       listQuery: {
         page: 1,
         limit: 10,
-        activityName: '',
+        activityId: '',
         activityType: '',
         userAccount: '',
         userOrgName: '',
         receiveTimeStart: '',
         receiveTimeEnd: ''
-      },
-      activityTypeOptions: ACTIVITY_TYPES
+      }
+    }
+  },
+  computed: {
+    pageTitle() {
+      const name = this.$route.query.activityName || '活动'
+      return `${name}领取记录`
     }
   },
   created() {
+    this.listQuery.activityId = this.$route.query.activityId || ''
+    this.listQuery.activityType = this.$route.query.activityType || ''
+    if (!this.listQuery.activityId) {
+      this.goBack()
+      return
+    }
     this.getList()
   },
   methods: {
@@ -135,7 +129,17 @@ export default {
       const item = ACTIVITY_TYPES.find(t => t.value === String(type))
       return item ? item.label : type
     },
-    handleReceiveTimeChange(val) {
+    goBack() {
+      const query = {}
+      if (this.$route.query.activityType) {
+        query.activityType = this.$route.query.activityType
+      }
+      if (this.$route.query.typeName) {
+        query.typeName = this.$route.query.typeName
+      }
+      this.$router.push({ name: 'activityList', query })
+    },
+    onReceiveTimeChange(val) {
       if (val && val.length === 2) {
         this.listQuery.receiveTimeStart = val[0]
         this.listQuery.receiveTimeEnd = val[1]
@@ -143,6 +147,20 @@ export default {
         this.listQuery.receiveTimeStart = ''
         this.listQuery.receiveTimeEnd = ''
       }
+    },
+    handleReset() {
+      this.receiveTimeRange = []
+      this.listQuery = {
+        page: 1,
+        limit: this.listQuery.limit,
+        activityId: this.$route.query.activityId || '',
+        activityType: this.$route.query.activityType || '',
+        userAccount: '',
+        userOrgName: '',
+        receiveTimeStart: '',
+        receiveTimeEnd: ''
+      }
+      this.getList()
     },
     getList() {
       this.listLoading = true
@@ -154,20 +172,6 @@ export default {
     },
     handleFilter() {
       this.listQuery.page = 1
-      this.getList()
-    },
-    handleReset() {
-      this.receiveTimeRange = null
-      this.listQuery = {
-        page: 1,
-        limit: this.listQuery.limit,
-        activityName: '',
-        activityType: '',
-        userAccount: '',
-        userOrgName: '',
-        receiveTimeStart: '',
-        receiveTimeEnd: ''
-      }
       this.getList()
     },
     handleSizeChange(val) {
@@ -185,15 +189,10 @@ export default {
 </script>
 
 <style scoped>
-.table-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-}
-.table-section-header__title {
-  font-size: 14px;
+.issue-page-title {
+  font-size: 18px;
   font-weight: 600;
   color: #303133;
+  margin-bottom: 16px;
 }
 </style>

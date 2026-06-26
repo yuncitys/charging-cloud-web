@@ -963,6 +963,14 @@ export const constantRoutes = [{
         title: '领取记录',
       }
     }, {
+      path: 'activityReceiveRecordList',
+      component: () => import('@/views/marketing/activityReceiveRecordList'),
+      name: 'activityReceiveRecordList',
+      hidden: true,
+      meta: {
+        title: '活动领取记录',
+      }
+    }, {
       path: 'useRecordList',
       component: () => import('@/views/marketing/useRecordList'),
       name: 'useRecordList',
