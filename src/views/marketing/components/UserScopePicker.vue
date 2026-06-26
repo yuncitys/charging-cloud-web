@@ -207,11 +207,14 @@ export default {
         .map(n => {
           const dataId = this.normalizeCustomerId(n.id)
           if (dataId == null) return null
-          return {
+          const scope = {
             dataId,
-            dataName: n.name,
-            orgType: n.orgFinalType || n.orgMold || '1'
+            dataName: n.name
           }
+          if (dataId > 0 && n.orgType != null && n.orgType !== '') {
+            scope.orgType = String(n.orgType)
+          }
+          return scope
         })
         .filter(Boolean)
       if (!this.scopesEqual(scopes, this.value)) {
@@ -227,8 +230,7 @@ export default {
         const dataId = this.normalizeGroupId(id)
         return {
           dataId,
-          dataName: g ? g.groupName : (prev && prev.dataName) || String(id),
-          orgType: '2'
+          dataName: g ? g.groupName : (prev && prev.dataName) || String(id)
         }
       })
       if (!this.scopesEqual(scopes, this.value)) {
@@ -239,8 +241,7 @@ export default {
       if (this.syncing) return
       const scopes = this.phoneText.split('\n').map(s => s.trim()).filter(Boolean).map((phone, idx) => ({
         dataId: idx + 1,
-        dataName: phone,
-        orgType: '4'
+        dataName: phone
       }))
       if (!this.scopesEqual(scopes, this.value)) {
         this.$emit('input', scopes)

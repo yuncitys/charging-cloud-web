@@ -44,13 +44,19 @@ export function userScopesToParticipants(userScopes, userScopeType) {
 
 export function participantsToUserScopes(participants, userScopeType) {
   const participantType = String(userScopeType) === '1' ? '1' : '2'
+  const customerScope = String(userScopeType) === '2'
   return (participants || [])
     .filter(item => String(item.participantType || participantType) === participantType)
-    .map(item => ({
-      dataId: Number(item.participantId),
-      dataName: item.participantName || String(item.participantId),
-      orgType: String(userScopeType) === '1' ? '2' : '1'
-    }))
+    .map(item => {
+      const scope = {
+        dataId: Number(item.participantId),
+        dataName: item.participantName || String(item.participantId)
+      }
+      if (customerScope && item.orgType != null && item.orgType !== '') {
+        scope.orgType = String(item.orgType)
+      }
+      return scope
+    })
 }
 
 export function getParticipantTypeLabel(type) {

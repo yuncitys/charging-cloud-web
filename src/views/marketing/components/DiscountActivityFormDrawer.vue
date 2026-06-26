@@ -821,11 +821,16 @@ export default {
       const userScopeType = String(config.userScopeType || '1')
       const fromParticipants = participantsToUserScopes(config.participants, userScopeType)
       if (fromParticipants.length) return fromParticipants
-      return (apiUserScopes || []).map(item => ({
-        dataId: Number(item.dataId),
-        dataName: item.dataName || String(item.dataId),
-        orgType: item.orgType || (userScopeType === '1' ? '2' : '1')
-      })).filter(item => Number.isFinite(item.dataId))
+      return (apiUserScopes || []).map(item => {
+        const scope = {
+          dataId: Number(item.dataId),
+          dataName: item.dataName || String(item.dataId)
+        }
+        if (userScopeType === '2' && item.orgType != null && item.orgType !== '') {
+          scope.orgType = String(item.orgType)
+        }
+        return scope
+      }).filter(item => Number.isFinite(item.dataId))
     },
     addTimeSlot() {
       this.form.timeSlots.push({

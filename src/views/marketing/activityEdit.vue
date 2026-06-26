@@ -405,12 +405,12 @@ export default {
       if (this.showUserGroupSelect) {
         this.selectedUserGroupIds.forEach(id => {
           const g = this.userGroupOptions.find(x => x.id === id)
-          userScopes.push({ dataId: id, dataName: g ? g.groupName : '', orgType: '2' })
+          userScopes.push({ dataId: id, dataName: g ? g.groupName : '' })
         })
       }
       if (this.showSpecifiedUsers && this.specifiedUserPhones) {
         this.specifiedUserPhones.split('\n').map(s => s.trim()).filter(Boolean).forEach((phone, idx) => {
-          userScopes.push({ dataId: idx + 1, dataName: phone, orgType: '4' })
+          userScopes.push({ dataId: idx + 1, dataName: phone })
         })
       }
       return { stationScopes, userScopes }
