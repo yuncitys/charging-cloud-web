@@ -79,7 +79,7 @@
                   更多<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="record">领取记录</el-dropdown-item>
+                  <el-dropdown-item v-if="!useDiscountDrawer" command="record">领取记录</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit && canEditRow(scope.row)" command="edit" divided>编辑</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit && canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit && canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
