@@ -50,7 +50,7 @@
             <el-tag size="mini" :type="directionalStatusTagType(scope.row)">{{ directionalStatusLabel(scope.row) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column v-if="fixedType !== '3' && fixedType !== '6'" label="活动时间" align="center" min-width="200">
+        <el-table-column v-if="fixedType !== '3'" label="活动时间" align="center" min-width="200">
           <template slot-scope="scope">
             <span>{{ scope.row.activityBeginTime | formatDate }} ~ {{ scope.row.activityEndTime | formatDate }}</span>
           </template>
