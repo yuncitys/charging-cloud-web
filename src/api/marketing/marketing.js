@@ -146,6 +146,10 @@ export function generateCodes(activityId, count) {
   return formRequest(`${BASE}/activity/exchange/generateCodes`, { activityId, count })
 }
 
+export function listExchangeCodes(params) {
+  return request({ url: `${BASE}/activity/exchange/listCodes`, method: 'get', params })
+}
+
 // ---------- 记录 ----------
 export function receiveRecordPage(params) {
   return request({ url: `${BASE}/receiveRecord/page`, method: 'get', params })

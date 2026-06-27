@@ -4,22 +4,40 @@
 
     <div class="filter-container" style="margin-top: 20px;">
       <el-form inline>
+        <el-form-item label="发放总数量">
+          <span>{{ sendTotalCount }}</span>
+        </el-form-item>
+        <el-form-item label="已生成">
+          <span>{{ generatedTotal }}</span>
+        </el-form-item>
+        <el-form-item label="剩余可生成">
+          <span>{{ remainingCount }}</span>
+        </el-form-item>
         <el-form-item label="生成数量">
-          <el-input-number v-model="generateCount" :min="1" :max="5000" />
+          <el-input-number v-model="generateCount" :min="1" :max="maxGenerateCount" :disabled="remainingCount <= 0" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="generating" icon="el-icon-plus" @click="handleGenerate">批量生成</el-button>
+          <el-button type="primary" :loading="generating" :disabled="remainingCount <= 0" icon="el-icon-plus" @click="handleGenerate">批量生成</el-button>
         </el-form-item>
         <el-form-item label="状态筛选">
-          <el-select v-model="statusFilter" clearable placeholder="全部" @change="applyFilter">
+          <el-select v-model="statusFilter" clearable placeholder="全部" @change="handleFilter">
             <el-option label="未兑换" value="0" />
             <el-option label="已兑换" value="1" />
           </el-select>
         </el-form-item>
       </el-form>
 
-      <el-table v-loading="listLoading" :data="filteredList" fit highlight-current-row style="width: 100%;">
-        <el-table-column type="index" width="55" label="序号" align="center" />
+      <el-table
+        v-loading="listLoading"
+        :data="codeList"
+        fit
+        highlight-current-row
+        style="width: 100%;"
+        empty-text="暂无兑换码，请批量生成"
+      >
+        <el-table-column type="index" width="55" label="序号" align="center">
+          <template slot-scope="scope"><span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span></template>
+        </el-table-column>
         <el-table-column prop="conversionCode" label="兑换码" align="center" min-width="200" />
         <el-table-column prop="conversionStatus" label="状态" align="center" width="100">
           <template slot-scope="scope">
@@ -34,13 +52,24 @@
         </el-table-column>
       </el-table>
 
-      <el-empty v-if="!codeList.length && !generating" description="暂无兑换码，请批量生成" />
+      <div class="pagination-container">
+        <el-pagination
+          :current-page="listQuery.page"
+          :page-sizes="[10, 20, 30, 50]"
+          :page-size="listQuery.limit"
+          :total="total"
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { generateCodes } from '@/api/marketing/marketing'
+import { activityDetail, generateCodes, listExchangeCodes } from '@/api/marketing/marketing'
 import { parseTime } from '@/utils/index'
 
 export default {
@@ -57,23 +86,38 @@ export default {
       generating: false,
       activityId: '',
       activityName: '',
+      sendTotalCount: 0,
+      generatedTotal: 0,
       generateCount: 100,
       statusFilter: '',
-      codeList: []
+      codeList: [],
+      total: 0,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        activityId: ''
+      }
     }
   },
   computed: {
-    filteredList() {
-      if (!this.statusFilter) return this.codeList
-      return this.codeList.filter(item => item.conversionStatus === this.statusFilter)
+    remainingCount() {
+      return Math.max(this.sendTotalCount - this.generatedTotal, 0)
+    },
+    maxGenerateCount() {
+      return Math.max(this.remainingCount, 1)
     }
   },
   created() {
     this.activityId = this.$route.query.activityId || ''
     this.activityName = this.$route.query.activityName || ''
+    this.listQuery.activityId = this.activityId
     if (!this.activityId) {
       this.$message.warning('缺少活动ID')
+      return
     }
+    this.loadActivityInfo()
+    this.loadGeneratedTotal()
+    this.loadCodeList()
   },
   methods: {
     goBack() {
@@ -85,22 +129,81 @@ export default {
         }
       })
     },
-    applyFilter() {},
+    loadActivityInfo() {
+      activityDetail(this.activityId).then(res => {
+        if (res.code !== 200 || !res.data) return
+        const subConfig = res.data.subConfig || {}
+        this.sendTotalCount = Number(subConfig.sendTotalCount || 0)
+        this.syncGenerateCount()
+      })
+    },
+    loadGeneratedTotal() {
+      listExchangeCodes({
+        activityId: this.activityId,
+        page: 1,
+        limit: 1
+      }).then(res => {
+        if (res.code === 200) {
+          this.generatedTotal = Number(res.count || 0)
+          this.syncGenerateCount()
+        }
+      })
+    },
+    loadCodeList() {
+      this.listLoading = true
+      listExchangeCodes({
+        activityId: this.activityId,
+        page: this.listQuery.page,
+        limit: this.listQuery.limit,
+        conversionStatus: this.statusFilter || undefined
+      }).then(res => {
+        this.listLoading = false
+        if (res.code === 200) {
+          this.codeList = res.data || []
+          this.total = Number(res.count || 0)
+        } else {
+          this.$message.error(res.msg || '查询兑换码失败')
+        }
+      }).catch(() => { this.listLoading = false })
+    },
+    syncGenerateCount() {
+      const remaining = this.remainingCount
+      if (remaining <= 0) {
+        this.generateCount = 1
+        return
+      }
+      this.generateCount = Math.min(this.generateCount, remaining)
+    },
+    handleFilter() {
+      this.listQuery.page = 1
+      this.loadCodeList()
+    },
+    handleSizeChange(val) {
+      this.listQuery.limit = val
+      this.listQuery.page = 1
+      this.loadCodeList()
+    },
+    handleCurrentChange(val) {
+      this.listQuery.page = val
+      this.loadCodeList()
+    },
     handleGenerate() {
       if (!this.activityId) return
+      if (this.remainingCount <= 0) {
+        this.$message.warning('已达到发放总数量上限，无法继续生成')
+        return
+      }
+      if (this.generateCount > this.remainingCount) {
+        this.$message.warning(`生成数量不能超过剩余可生成数量（${this.remainingCount}）`)
+        return
+      }
       this.generating = true
       generateCodes(this.activityId, this.generateCount).then(res => {
         this.generating = false
         if (res.code === 200) {
-          const codes = res.data || []
-          const newRows = codes.map(code => ({
-            conversionCode: code,
-            conversionStatus: '0',
-            conversionUserAccount: '',
-            conversionTime: null
-          }))
-          this.codeList = newRows.concat(this.codeList)
-          this.$message.success(res.msg || `成功生成 ${codes.length} 个兑换码`)
+          this.$message.success(res.msg || `成功生成 ${(res.data || []).length} 个兑换码`)
+          this.loadGeneratedTotal()
+          this.loadCodeList()
         } else {
           this.$message.error(res.msg || '生成失败')
         }
