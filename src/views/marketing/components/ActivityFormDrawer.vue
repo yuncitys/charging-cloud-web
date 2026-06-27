@@ -258,6 +258,17 @@
         <el-form-item label="活动名称" prop="activityName">
           <el-input v-model="form.activityName" placeholder="请输入活动名称" maxlength="50" />
         </el-form-item>
+        <el-form-item label="活动时间" prop="timeRange">
+          <el-date-picker
+            v-model="form.timeRange"
+            type="datetimerange"
+            range-separator="—"
+            start-placeholder="请选择开始日期"
+            end-placeholder="请选择结束日期"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            style="width: 100%;"
+          />
+        </el-form-item>
         <el-form-item label="活动说明">
           <el-input v-model="form.activityRemark" type="textarea" :rows="3" placeholder="请输入活动说明" />
         </el-form-item>
@@ -468,6 +479,7 @@ export default {
       },
       exchangeRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
+        timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
         activityInitiator: [{ required: true, message: '请选择发起方', trigger: 'change' }],
         activityInitiatorId: [{ required: true, validator: validateMerchantInitiatorId, trigger: 'change' }],
         sendTotalCount: [{ required: true, validator: validateSendTotalCount, trigger: 'blur' }],
@@ -629,6 +641,7 @@ export default {
           activityInitiator: '1',
           activityInitiatorId: '0',
           activityName: '',
+          timeRange: [],
           activityRemark: '',
           sendTotalCount: 100,
           rewards: [{ rewardType: '2', rewardId: '', rewardCount: 1 }],
@@ -731,6 +744,8 @@ export default {
               ? String(activity.activityInitiatorId || '')
               : '0',
             activityName: activity.activityName,
+            timeRange: activity.activityBeginTime && activity.activityEndTime
+              ? [activity.activityBeginTime, activity.activityEndTime] : [],
             activityRemark: activity.activityRemark || '',
             sendTotalCount: Number((subConfig && subConfig.sendTotalCount) || 100),
             rewards: rewards && rewards.length ? rewards : [{ rewardType: '2', rewardId: '', rewardCount: 1 }],
@@ -837,6 +852,8 @@ export default {
         }
         userScopes = this.form.userScope === '3' ? [] : (this.form.userScopes || [])
       } else if (type === '6') {
+        activity.activityBeginTime = this.form.timeRange[0]
+        activity.activityEndTime = this.form.timeRange[1]
         activity.activityRule = ''
         rewards = this.form.rewards
         subConfig = {
