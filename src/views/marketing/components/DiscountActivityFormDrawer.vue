@@ -248,6 +248,7 @@ import UserScopePicker from './UserScopePicker'
 import ActivityInitiatorFields from './ActivityInitiatorFields'
 import marketingMerchantMixin from '../utils/marketingMerchantMixin'
 import { applyInitiatorDefaults, normalizeInitiatorPayload, isMerchantIdSelected } from '../utils/marketingActivityAuth'
+import { applyCopyFormAdjustments } from '../utils/marketingActivityCopy'
 import { mapGetters } from 'vuex'
 import { getActivityTypeMeta } from '../constants/activityTypes'
 import {
@@ -291,7 +292,8 @@ export default {
   props: {
     visible: { type: Boolean, default: false },
     activityType: { type: String, required: true },
-    activityId: { type: String, default: '' }
+    activityId: { type: String, default: '' },
+    copySourceId: { type: String, default: '' }
   },
   data() {
     const validateInitiatorMerchant = (rule, value, callback) => {
@@ -487,6 +489,9 @@ export default {
     isEdit() {
       return !!this.activityId
     },
+    isCopy() {
+      return !!this.copySourceId
+    },
     isStationType() {
       return String(this.activityType) === '7'
     },
@@ -501,6 +506,7 @@ export default {
     },
     drawerTitle() {
       const typeLabel = this.typeMeta ? this.typeMeta.label : '折扣活动'
+      if (this.isCopy) return `复制${typeLabel}`
       return `${this.isEdit ? '编辑' : '新增'}${typeLabel}`
     },
     discountTypeOptions() {
@@ -660,8 +666,10 @@ export default {
     },
     onOpen() {
       this.loadMerchantOptions()
-      if (this.isEdit) {
-        this.loadDetail()
+      if (this.isCopy) {
+        this.loadDetail(this.copySourceId)
+      } else if (this.isEdit) {
+        this.loadDetail(this.activityId)
       } else {
         this.resetForm()
       }
@@ -867,10 +875,11 @@ export default {
         }
       })
     },
-    loadDetail() {
-      if (!this.activityId) return
+    loadDetail(sourceId) {
+      const id = sourceId || this.activityId
+      if (!id) return
       this.loading = true
-      activityDetail(this.activityId).then(res => {
+      activityDetail(id).then(res => {
         this.loading = false
         if (res.code !== 200 || !res.data) return
         const { activity, stationScopes, subConfig, userScopes } = res.data
@@ -908,6 +917,9 @@ export default {
           }))
         }
         this.selectedWeekDays = this.weekDaysToValues(this.form.weekDays)
+        if (this.isCopy) {
+          applyCopyFormAdjustments(this.form)
+        }
         this.loadStationOptions()
       }).catch(() => {
         this.loading = false
@@ -1003,7 +1015,7 @@ export default {
         api(payload).then(res => {
           this.submitting = false
           if (res.code === 200) {
-            this.$message.success('保存成功')
+            this.$message.success(this.isCopy ? '复制成功，已创建新活动' : '保存成功')
             this.visibleSync = false
             this.$emit('saved')
           } else {

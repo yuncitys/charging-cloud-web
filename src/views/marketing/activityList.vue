@@ -80,6 +80,7 @@
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item v-if="!useDiscountDrawer" command="record">领取记录</el-dropdown-item>
+                  <el-dropdown-item v-if="canEdit" command="copy">复制</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit && canEditRow(scope.row)" command="edit" divided>编辑</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit && canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
                   <el-dropdown-item v-if="canEdit && canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
@@ -111,6 +112,7 @@
       :visible.sync="formDrawerVisible"
       :activity-type="fixedType"
       :activity-id="editingActivityId"
+      :copy-source-id="copySourceId"
       @saved="getList"
     />
 
@@ -119,6 +121,7 @@
       :visible.sync="formDrawerVisible"
       :activity-type="fixedType"
       :activity-id="editingActivityId"
+      :copy-source-id="copySourceId"
       @saved="getList"
     />
 
@@ -208,6 +211,7 @@ export default {
       qrcodeActivityName: '',
       formDrawerVisible: false,
       editingActivityId: '',
+      copySourceId: '',
       detailDrawerVisible: false,
       detailActivityId: ''
     }
@@ -254,6 +258,12 @@ export default {
         this.qrcodeData = null
         this.qrcodeActivityName = ''
         this.qrcodeLoading = false
+      }
+    },
+    formDrawerVisible(val) {
+      if (!val) {
+        this.editingActivityId = ''
+        this.copySourceId = ''
       }
     }
   },
@@ -377,6 +387,7 @@ export default {
       if (!this.canEdit) return
       if (this.drawerSupported) {
         this.editingActivityId = ''
+        this.copySourceId = ''
         this.formDrawerVisible = true
         return
       }
@@ -393,6 +404,7 @@ export default {
       }
       if (this.drawerSupported) {
         this.editingActivityId = row.activityId
+        this.copySourceId = ''
         this.formDrawerVisible = true
         return
       }
@@ -426,11 +438,24 @@ export default {
         return
       }
       this.editingActivityId = activity.activityId
+      this.copySourceId = ''
       this.formDrawerVisible = true
+    },
+    handleCopy(row) {
+      if (!this.canEdit) return
+      if (this.drawerSupported) {
+        this.editingActivityId = ''
+        this.copySourceId = row.activityId
+        this.formDrawerVisible = true
+        return
+      }
+      this.$message.warning('当前活动类型暂不支持复制')
     },
     handleMoreCommand(command, row) {
       if (command === 'record') {
         this.handleRecord(row)
+      } else if (command === 'copy') {
+        this.handleCopy(row)
       } else if (command === 'edit') {
         this.handleEdit(row)
       } else if (command === 'stop') {
