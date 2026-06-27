@@ -138,10 +138,32 @@
       @edit="onDetailEdit"
     />
 
-    <el-dialog title="扫码活动二维码" :visible.sync="qrcodeVisible" width="480px">
-      <div v-if="qrcodeContent" class="qrcode-box">
-        <p class="qrcode-tip">将以下参数配置到小程序码 scene 中，用户扫码即可进入领券页。</p>
-        <el-input v-model="qrcodeContent" readonly />
+    <el-dialog title="扫码活动二维码" :visible.sync="qrcodeVisible" width="520px" append-to-body>
+      <div v-loading="qrcodeLoading" class="qrcode-box">
+        <template v-if="qrcodeData">
+          <div v-if="qrcodeImageSrc" class="qrcode-image-wrap">
+            <img :src="qrcodeImageSrc" class="qrcode-image" alt="扫码领券二维码">
+          </div>
+          <p class="qrcode-tip">用户微信扫码后将进入小程序领券页</p>
+          <div class="qrcode-meta">
+            <div class="qrcode-meta-row">
+              <span class="qrcode-meta-label">活动名称</span>
+              <span class="qrcode-meta-value">{{ qrcodeActivityName }}</span>
+            </div>
+            <div class="qrcode-meta-row">
+              <span class="qrcode-meta-label">页面路径</span>
+              <span class="qrcode-meta-value">{{ qrcodeData.pagePath }}</span>
+            </div>
+            <div class="qrcode-meta-row">
+              <span class="qrcode-meta-label">scene</span>
+              <span class="qrcode-meta-value">{{ qrcodeData.scene }}</span>
+            </div>
+          </div>
+          <div class="qrcode-actions">
+            <el-button type="primary" :loading="qrcodeLoading" @click="handleRegenerateQrcode">重新生成</el-button>
+            <el-button :disabled="!qrcodeImageSrc" @click="downloadQrcode">下载二维码</el-button>
+          </div>
+        </template>
       </div>
     </el-dialog>
   </div>
@@ -181,7 +203,9 @@ export default {
       listQuery: { page: 1, limit: 10, activityId: '', activityName: '', activityType: '', activityStatus: '' },
       activityStatusOptions: ACTIVITY_STATUS,
       qrcodeVisible: false,
-      qrcodeContent: '',
+      qrcodeLoading: false,
+      qrcodeData: null,
+      qrcodeActivityName: '',
       formDrawerVisible: false,
       editingActivityId: '',
       detailDrawerVisible: false,
@@ -207,6 +231,16 @@ export default {
     },
     useDiscountDrawer() {
       return isDiscountActivityType(this.fixedType)
+    },
+    qrcodeImageSrc() {
+      if (!this.qrcodeData) return ''
+      if (this.qrcodeData.qrcodeBase64) {
+        return `data:image/png;base64,${this.qrcodeData.qrcodeBase64}`
+      }
+      const url = this.qrcodeData.qrcodeUrl
+      if (!url) return ''
+      if (/^https?:\/\//.test(url)) return url
+      return (this.Global && this.Global.APIURl ? this.Global.APIURl : '') + url
     }
   },
   watch: {
@@ -214,6 +248,13 @@ export default {
       if (!this.ensureTypeAccess()) return
       this.syncTypeFilter()
       this.handleFilter()
+    },
+    qrcodeVisible(val) {
+      if (!val) {
+        this.qrcodeData = null
+        this.qrcodeActivityName = ''
+        this.qrcodeLoading = false
+      }
     }
   },
   created() {
@@ -431,14 +472,36 @@ export default {
       }).catch(() => {})
     },
     handleQrcode(row) {
-      activityQrcode(row.activityId).then(res => {
-        if (res.code === 200) {
-          this.qrcodeContent = res.data || ''
-          this.qrcodeVisible = true
+      this.qrcodeActivityName = row.activityName || ''
+      this.qrcodeVisible = true
+      this.fetchQrcode(row.activityId, false)
+    },
+    handleRegenerateQrcode() {
+      const activityId = this.qrcodeData && this.qrcodeData.activityId
+      if (!activityId) return
+      this.fetchQrcode(activityId, true)
+    },
+    fetchQrcode(activityId, regenerate) {
+      this.qrcodeLoading = true
+      activityQrcode(activityId, regenerate).then(res => {
+        if (res.code === 200 && res.data) {
+          this.qrcodeData = res.data
         } else {
-          this.$message.error(res.msg || '获取失败')
+          this.$message.error(res.msg || '获取二维码失败')
         }
+      }).catch(() => {
+        this.$message.error('获取二维码失败')
+      }).finally(() => {
+        this.qrcodeLoading = false
       })
+    },
+    downloadQrcode() {
+      if (!this.qrcodeImageSrc) return
+      const activityId = (this.qrcodeData && this.qrcodeData.activityId) || 'activity'
+      const link = document.createElement('a')
+      link.href = this.qrcodeImageSrc
+      link.download = `扫码领券-${activityId}.png`
+      link.click()
     },
     handleExchangeCodes(row) {
       this.$router.push({
@@ -456,9 +519,66 @@ export default {
 </script>
 
 <style scoped>
+.qrcode-box {
+  min-height: 120px;
+}
+
+.qrcode-image-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.qrcode-image {
+  width: 220px;
+  height: 220px;
+  border: 1px solid #ebeef5;
+  border-radius: 8px;
+  background: #fff;
+}
+
 .qrcode-tip {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   color: #606266;
   font-size: 13px;
+}
+
+.qrcode-meta {
+  margin-bottom: 16px;
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.qrcode-meta-row {
+  display: flex;
+  border-bottom: 1px solid #ebeef5;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.qrcode-meta-row:last-child {
+  border-bottom: none;
+}
+
+.qrcode-meta-label {
+  flex: 0 0 88px;
+  padding: 10px 12px;
+  color: #909399;
+  background: #fafafa;
+  border-right: 1px solid #ebeef5;
+}
+
+.qrcode-meta-value {
+  flex: 1;
+  padding: 10px 12px;
+  color: #606266;
+  word-break: break-all;
+}
+
+.qrcode-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
 }
 </style>

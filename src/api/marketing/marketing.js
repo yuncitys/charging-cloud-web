@@ -138,8 +138,8 @@ export function directionalSend(activityId) {
   return formRequest(`${BASE}/activity/directional/send`, { activityId })
 }
 
-export function activityQrcode(activityId) {
-  return request({ url: `${BASE}/activity/scan/qrcode`, method: 'get', params: { activityId } })
+export function activityQrcode(activityId, regenerate = false) {
+  return request({ url: `${BASE}/activity/scan/qrcode`, method: 'get', params: { activityId, regenerate } })
 }
 
 export function generateCodes(activityId, count) {
