@@ -1,6 +1,6 @@
 <template>
 	<div style="display: inline-block;">
-		<el-button style="margin-right: 20px ;" type="primary" class="filter-item" @click="downloadOrder"
+		<el-button :size="size" style="margin-right: 20px ;" type="primary" class="filter-item" @click="downloadOrder"
 			:loading="downloadLoading" icon="el-icon-download"
 			v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:export')">导出Excel
 		</el-button>
@@ -21,6 +21,38 @@
 		getNowTime
 	} from '@/utils/index'
   	import downloadProgress from '@/components/Common/downloadProgress.vue'
+
+	function buildOrderExportData(queryData, extra = {}) {
+		const data = {
+			limit: 5000,
+			orderCode: queryData.orderCode || '',
+			orderCodeType: queryData.orderCodeType || 1,
+			deviceCode: queryData.deviceCode || '',
+			orderType: queryData.orderType,
+			userCode: queryData.userCode || '',
+			phoneNumber: queryData.phoneNumber || '',
+			plateNumber: queryData.plateNumber || '',
+			cardNo: queryData.cardNo || '',
+			companyName: queryData.companyName || '',
+			vinCode: queryData.vinCode || '',
+			createTimeStart: queryData.createTimeStart || '',
+			createTimeEnd: queryData.createTimeEnd || '',
+			timeQueryType: queryData.timeQueryType || 1,
+			networkProvince: queryData.networkProvince || '',
+			networkName: queryData.networkName || '',
+			ruleId: queryData.ruleId,
+			chargingStationIds: queryData.chargingStationIds || '',
+			...extra
+		}
+		;['payStatus', 'orderStatus', 'electricOut'].forEach((key) => {
+			const value = queryData[key]
+			if (value !== '' && value !== null && value !== undefined) {
+				data[key] = value
+			}
+		})
+		return data
+	}
+
 	export default {
 		name: 'downExcel',
 		components: {
@@ -38,6 +70,10 @@
 				default () {
 					return []
 				}
+			},
+			size: {
+				type: String,
+				default: ''
 			}
 		},
 		data() {
@@ -54,22 +90,9 @@
 		methods: {
 			//订单导出（进度条
 			downloadOrder() {
-				let downloadData = {
-					limit: 5000,
-					payStatus: this.queryData.payStatus,
-					orderStatus: this.queryData.orderStatus,
-					orderCode: this.queryData.orderCode,
-					deviceCode: this.queryData.deviceCode,
-					orderType: this.queryData.orderType,
-					userCode: this.queryData.userCode,
-					phoneNumber: this.queryData.phoneNumber,
-					createTimeStart: this.queryData.createTimeStart,
-					createTimeEnd: this.queryData.createTimeEnd,
-					networkProvince: this.queryData.networkProvince,
-					networkName: this.queryData.networkName,
-					ruleId: this.queryData.ruleId,
+				const downloadData = buildOrderExportData(this.queryData, {
 					exportKeys: this.exportKeys.join(',')
-				}
+				})
 				downloadExcel(downloadData).then(res => {
 					if (res.code == 200) {
 						let taskId = res.data.id
@@ -80,19 +103,7 @@
 			//导出订单（流
 			handleDownloadNew() {
 				this.downloadLoading = true
-				let downloadData = {
-					orderStatus: this.queryData.orderStatus,
-					orderCode: this.queryData.orderCode,
-					deviceCode: this.queryData.deviceCode,
-					orderType: this.queryData.orderType,
-					userCode: this.queryData.userCode,
-					phoneNumber: this.queryData.phoneNumber,
-					createTimeStart: this.queryData.createTimeStart,
-					createTimeEnd: this.queryData.createTimeEnd,
-					networkProvince: this.queryData.networkProvince,
-					networkName: this.queryData.networkName,
-					ruleId: this.queryData.ruleId
-				}
+				const downloadData = buildOrderExportData(this.queryData)
 				exportExcel(downloadData).then(res => {
 					let blob = res
 					let objectUrl = URL.createObjectURL(blob);
@@ -107,18 +118,7 @@
 			//导出订单（数据
 			handleDownload() {
 				this.downloadLoading = true
-				let downloadData = {
-					orderStatus: this.queryData.orderStatus,
-					orderCode: this.queryData.orderCode,
-					deviceCode: this.queryData.deviceCode,
-					orderType: this.queryData.orderType,
-					userCode: this.queryData.userCode,
-					phoneNumber: this.queryData.phoneNumber,
-					createTimeStart: this.queryData.createTimeStart,
-					createTimeEnd: this.queryData.createTimeEnd,
-					networkProvince: this.queryData.networkProvince,
-					networkName: this.queryData.networkName
-				}
+				const downloadData = buildOrderExportData(this.queryData)
 				downloadExcel(downloadData).then(res => {
 					this.downloadLoading = false
 					if (res.code == 200) {
