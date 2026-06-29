@@ -1,47 +1,18 @@
 <template>
   <div class="app-container">
-    <div class="filter-container">
-      <el-input v-model="listQuery.orderCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入订单号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.deviceCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入设备号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.userCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入用户ID号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.phoneNumber" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入手机号" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <!-- <el-input v-model="listQuery.networkProvince" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入站点省份" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" />
-      <el-input v-model="listQuery.networkName" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请输入站点名称" clearable @clear="handleFilter()" @keyup.enter.native="handleFilter" /> -->
-      <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.chargingStationIds" multiple filterable clearable
-        @change="handleFilter()" placeholder="请选择充电站">
-          <el-option
-            v-for="item in chargingStationList"
-            :key="item.id"
-            :label="item.networkName"
-            :value="item.id">
-          </el-option>
-      </el-select>
-      <el-select v-model="listQuery.orderStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请选择订单状态" clearable @change="handleFilter">
-        <el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
-      </el-select>
-      <el-select v-model="listQuery.payStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
-        placeholder="请选择支付状态" clearable @change="handleFilter">
-        <el-option v-for="item in payTags" :key="item.id" :label="item.title" :value="item.id" />
-      </el-select>
-      <el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
-        style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
-        format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
-      </el-date-picker>
-      <el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
-        icon="el-icon-search">
-        查询
-      </el-button>
+    <order-search-panel
+      :list-query="listQuery"
+      :time.sync="time"
+      :charging-station-list="chargingStationList"
+      :tags="tags"
+      :pay-tags="payTags"
+      :export-keys="exportKeys"
+      @filter="handleFilter"
+      @reset="resetSearch"
+      @date-change="dateChange"
+    />
 
-      <!-- 导出Excel -->
-      <downExcel :queryData="listQuery" :exportKeys="exportKeys" />
-
+    <div class="filter-container order-list-toolbar">
       <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
         <el-tab-pane v-for="(item, index) in ruleIdList" :key="item.id" :label="item.title" :name="item.id">
         </el-tab-pane>
@@ -227,12 +198,16 @@
     getNowTime
   } from '@/utils/index'
   import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
-  import downExcel from './components/downExcel.vue'
+  import OrderSearchPanel from './components/OrderSearchPanel.vue'
   import imgView from '@/components/Common/imgView.vue'
+  import { createDefaultListQuery, sanitizeOrderListQuery } from './utils/orderListQuery.js'
+
+  const ORDER_TYPE = 1
+
   export default {
     name: 'scanOrderList',
     components: {
-      downExcel,
+      OrderSearchPanel,
       imgView
     },
     data() {
@@ -246,23 +221,7 @@
         tableKey: 0,
         tableMaxHeight: 620,
         chargingStationList: [],
-        listQuery: {
-          page: 1,
-          limit: 10,
-          payStatus: '',
-          orderStatus: '',
-          orderCode: '',
-          deviceCode: '',
-          phoneNumber: '',
-          userCode: '',
-          createTimeStart: '',
-          createTimeEnd: '',
-          networkProvince: '',
-          networkName: '',
-          orderType: 1,
-          ruleId: getDefaultRuleIdNumber(),
-          chargingStationIds: ''
-        },
+        listQuery: createDefaultListQuery(ORDER_TYPE, getDefaultRuleIdNumber()),
         cacheKey: 'scanOrderList',
         formThead: {
           orderCode: true,
@@ -510,15 +469,16 @@
         this.listQuery.page = 1
         this.getLists()
       },
+      resetSearch() {
+        const ruleId = this.listQuery.ruleId
+        this.listQuery = createDefaultListQuery(ORDER_TYPE, ruleId)
+        this.time = ''
+        this.listQuery.page = 1
+        this.getLists()
+      },
       getLists() {
         this.listLoading = true
-        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
-        if (listQuery.createTimeStart == null) {
-          listQuery.createTimeStart = ''
-        }
-        if (listQuery.createTimeEnd == null) {
-          listQuery.createTimeEnd = ''
-        }
+        const listQuery = sanitizeOrderListQuery(this.listQuery)
         getList(listQuery).then(res => {
           if (res.code == 200) {
             console.log(res)
@@ -662,6 +622,10 @@
 </script>
 
 <style>
+  .order-list-toolbar {
+    margin-bottom: 12px;
+  }
+
   .order-layout-table .el-table__cell {
     padding: 0 !important;
   }
