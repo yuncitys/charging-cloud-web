@@ -245,13 +245,13 @@
           </div>
         </div>
       </template>
-      <el-empty v-else-if="!detailLoading" description="未找到订单或缺少 orderId 参数" />
+      <div v-else-if="!detailLoading" class="detail-empty">未找到订单或缺少 orderId / orderCode 参数</div>
     </div>
   </div>
 </template>
 
 <script>
-import { findOrderInfoById, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
+import { findOrderInfoById, findOrderInfoByOrderCode, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
 import { getOrderExpenseInfo } from '@/api/orderExpenseInfo/orderExpenseInfo.js'
 import { parseTime } from '@/utils/index'
 import OrderTrendChart from './OrderTrendChart.vue'
@@ -298,6 +298,11 @@ export default {
       const q = this.$route.query || {}
       const id = q.orderId != null && q.orderId !== '' ? q.orderId : q.id
       return id != null && id !== '' ? Number(id) : NaN
+    },
+    orderCode() {
+      const q = this.$route.query || {}
+      const code = q.orderCode
+      return code != null && String(code).trim() !== '' ? String(code).trim() : ''
     },
     isCarOrder() {
       return this.orderInfo.ruleId === RULE_CAR
@@ -348,6 +353,9 @@ export default {
       this.bootstrap()
     },
     '$route.query.id'() {
+      this.bootstrap()
+    },
+    '$route.query.orderCode'() {
       this.bootstrap()
     }
   },
@@ -449,6 +457,10 @@ export default {
       }
     },
     bootstrap() {
+      if (this.orderCode) {
+        this.loadDetailByOrderCode()
+        return
+      }
       if (!Number.isFinite(this.orderId)) {
         this.orderInfo = {}
         this.chargeDetails = []
@@ -457,6 +469,28 @@ export default {
         return
       }
       this.loadDetail()
+    },
+    loadDetailByOrderCode() {
+      this.detailLoading = true
+      findOrderInfoByOrderCode({ orderCode: this.orderCode }).then(res => {
+        this.detailLoading = false
+        if (res.code === 200 && res.data) {
+          this.orderInfo = res.data
+          const code = this.orderInfo.orderCode || this.orderCode
+          if (code) {
+            this.loadExpense(code)
+            if (this.canViewCharts) {
+              this.loadCharts(code)
+            }
+          }
+        } else {
+          this.orderInfo = {}
+          this.$message.error(res.msg || '加载订单详情失败')
+        }
+      }).catch(() => {
+        this.detailLoading = false
+        this.orderInfo = {}
+      })
     },
     loadDetail() {
       this.detailLoading = true
@@ -573,5 +607,11 @@ export default {
 }
 .charts-block {
   margin-top: 8px;
+}
+.detail-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: #909399;
+  font-size: 14px;
 }
 </style>

@@ -68,7 +68,7 @@
               @click="handleCancelUserCoupon(scope.row)"
             >作废</el-button>
             <el-button
-              v-if="scope.row.orderId"
+              v-if="scope.row.orderCode"
               type="text"
               size="small"
               @click="viewOrder(scope.row)"
@@ -230,10 +230,10 @@ export default {
       }).catch(() => {})
     },
     viewOrder(row) {
-      if (!row.orderId) return
+      if (!row.orderCode) return
       this.$router.push({
         name: 'orderDetail',
-        query: { orderId: row.orderId }
+        query: { orderCode: row.orderCode }
       })
     }
   }

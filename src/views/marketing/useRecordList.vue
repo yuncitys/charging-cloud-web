@@ -3,7 +3,7 @@
     <div class="filter-container">
       <el-input v-model="listQuery.userCardCouponId" style="width: 220px;margin-right: 20px;" class="filter-item"
         placeholder="用户卡券ID" clearable @keyup.enter.native="handleFilter" @clear="handleFilter" />
-      <el-input v-model="listQuery.orderId" style="width: 200px;margin-right: 20px;" class="filter-item"
+      <el-input v-model="listQuery.orderCode" style="width: 200px;margin-right: 20px;" class="filter-item"
         placeholder="订单号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter" />
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
 
@@ -12,7 +12,7 @@
           <template slot-scope="scope"><span>{{ scope.$index + (page - 1) * limit + 1 }}</span></template>
         </el-table-column>
         <el-table-column prop="userCardCouponId" label="用户卡券ID" align="center" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="orderId" label="订单号" align="center" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="orderCode" label="订单号" align="center" min-width="160" show-overflow-tooltip />
         <el-table-column prop="discountAmount" label="抵扣金额" align="center" width="100" />
         <el-table-column prop="confirmStatus" label="确认状态" align="center" width="100">
           <template slot-scope="scope">
@@ -30,7 +30,7 @@
           @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
 
-      <el-empty v-if="!listLoading && !list.length" description="暂无使用记录（P3 订单抵扣上线后会有数据）" />
+      <div v-if="!listLoading && !list.length" class="list-empty">暂无使用记录</div>
     </div>
   </div>
 </template>
@@ -54,7 +54,7 @@ export default {
       limit: 10,
       list: [],
       total: 0,
-      listQuery: { page: 1, limit: 10, userCardCouponId: '', orderId: '' }
+      listQuery: { page: 1, limit: 10, userCardCouponId: '', orderCode: '' }
     }
   },
   created() {
@@ -86,3 +86,13 @@ export default {
   }
 }
 </script>
+
+<style scoped>
+.list-empty {
+  margin-top: 20px;
+  padding: 40px 16px;
+  text-align: center;
+  color: #909399;
+  font-size: 14px;
+}
+</style>
