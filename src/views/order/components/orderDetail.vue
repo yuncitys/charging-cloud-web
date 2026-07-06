@@ -162,6 +162,14 @@
               <span class="kv-label">订单支付金额</span>
               <span class="kv-value">{{ moneyText(orderInfo.actualPrice) }}</span>
             </el-col>
+            <el-col v-if="settlementInfo" :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">优惠合计</span>
+              <span class="kv-value discount-amount">-{{ moneyText(settlementInfo.totalDiscountAmount) }}</span>
+            </el-col>
+            <el-col v-if="settlementInfo" :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">折后应付</span>
+              <span class="kv-value">{{ moneyText(settlementInfo.payableAmount) }}</span>
+            </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
               <span class="kv-label">订单实付金额</span>
               <span class="kv-value">{{ moneyText(orderInfo.realityPayMoney) }}</span>
@@ -175,6 +183,45 @@
               <span class="kv-value">{{ payTypeText(orderInfo.payType) }}</span>
             </el-col>
           </el-row>
+        </el-card>
+
+        <!-- 优惠明细 -->
+        <el-card v-if="hasMarketingDiscount" class="block-card" shadow="never">
+          <div class="block-title">优惠明细</div>
+          <el-row :gutter="16" class="kv-grid discount-summary">
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">生效方式</span>
+              <span class="kv-value">{{ settlementInfo.effectiveTypeLabel || '—' }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">活动优惠</span>
+              <span class="kv-value">-{{ moneyText(settlementInfo.totalActivityDiscountAmount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">卡券优惠</span>
+              <span class="kv-value">-{{ moneyText(settlementInfo.totalCouponDiscountAmount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">优惠合计</span>
+              <span class="kv-value discount-amount">-{{ moneyText(settlementInfo.totalDiscountAmount) }}</span>
+            </el-col>
+          </el-row>
+          <el-table :data="discountList" size="small" border class="discount-table">
+            <el-table-column type="index" width="50" label="序号" align="center" />
+            <el-table-column prop="discountTypeLabel" label="优惠类型" align="center" width="100" />
+            <el-table-column prop="discountName" label="名称" align="center" min-width="140" show-overflow-tooltip />
+            <el-table-column label="卡券类型" align="center" width="100">
+              <template slot-scope="scope">
+                <span v-if="scope.row.discountType === 'COUPON'">{{ scope.row.couponTypeLabel || '—' }}</span>
+                <span v-else-if="scope.row.discountType === 'DISCOUNT'">{{ scope.row.activityTypeLabel || '—' }}</span>
+                <span v-else>—</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="chargedDiscountAmount" label="电费优惠(元)" align="center" width="110" />
+            <el-table-column prop="serviceDiscountAmount" label="服务费优惠(元)" align="center" width="120" />
+            <el-table-column prop="totalDiscountAmount" label="合计(元)" align="center" width="90" />
+            <el-table-column prop="discountDetail" label="说明" align="center" min-width="160" show-overflow-tooltip />
+          </el-table>
         </el-card>
 
         <!-- 充电明细 -->
@@ -309,6 +356,18 @@ export default {
     },
     canViewCharts() {
       return this.btnAuthen && this.btnAuthen.permsVerifAuthention(':sys:orderInfo:findDevicePowerDetails')
+    },
+    settlementInfo() {
+      return this.orderInfo && this.orderInfo.settlementInfo ? this.orderInfo.settlementInfo : null
+    },
+    discountList() {
+      return (this.orderInfo && this.orderInfo.discountList) ? this.orderInfo.discountList : []
+    },
+    hasMarketingDiscount() {
+      if (!this.settlementInfo) return false
+      if (this.discountList.length > 0) return true
+      const total = Number(this.settlementInfo.totalDiscountAmount)
+      return Number.isFinite(total) && total > 0
     },
     seriesPower() {
       return [{
@@ -592,6 +651,15 @@ export default {
   color: #000;
   font-size: 14px;
   word-break: break-word;
+}
+.discount-summary {
+  margin-bottom: 12px;
+}
+.discount-amount {
+  color: #e6a23c;
+}
+.discount-table {
+  margin-top: 4px;
 }
 
 .order-detail-page .el-card__body {
