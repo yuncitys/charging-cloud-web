@@ -261,6 +261,7 @@
   import DownChargingStationSingleStatistics from './components/DownChargingStationSingleStatistics'
   import {
     chargingStationSection,
+    chargingStationSectionSummary,
     chargingStationSingle,
     chargingStationFund
   } from '@/api/business/businessStatistics.js'
@@ -340,34 +341,46 @@
       }
     },
     methods: {
-      /**
-       * 根据充电站汇总列表数据汇总顶部统计卡片展示的数据
-       * @param {Array} list 充电站汇总数据列表
-       */
-      updateSummaryTotalFromSectionList(list) {
-        const total = {
-          totalChargeNumber: 0,
-          totalChargeDurations: 0,
-          totalDevice: 0,
-          actualPrice: 0,
-          realityPayMoney: 0,
-          electricityPrice: 0,
-          servicePrice: 0,
-          totalPower: 0
-        }
-        if (Array.isArray(list) && list.length) {
-          list.forEach(item => {
-            total.totalChargeNumber += Number(item.totalChargeNumber) || 0
-            total.totalChargeDurations += Number(item.totalChargeDurations) || 0
-            total.totalDevice += Number(item.totalDevice) || 0
-            total.actualPrice += Number(item.actualPrice) || 0
-            total.realityPayMoney += Number(item.realityPayMoney) || 0
-            total.electricityPrice += Number(item.electricityPrice) || 0
-            total.servicePrice += Number(item.servicePrice) || 0
-            total.totalPower += Number(item.totalPower) || 0
-          })
-        }
-        this.summaryTotal = total
+      getChargingStationSectionSummary() {
+        const listQuery = JSON.parse(JSON.stringify(this.listQuery))
+        chargingStationSectionSummary(listQuery).then(res => {
+          if (res.code == 200 && res.data) {
+            this.summaryTotal = {
+              actualPrice: Number(res.data.actualPrice) || 0,
+              realityPayMoney: Number(res.data.realityPayMoney) || 0,
+              electricityPrice: Number(res.data.electricityPrice) || 0,
+              servicePrice: Number(res.data.servicePrice) || 0,
+              totalPower: Number(res.data.totalPower) || 0,
+              totalChargeNumber: Number(res.data.totalChargeNumber) || 0,
+              totalChargeDurations: Number(res.data.totalChargeDurations) || 0,
+              totalDevice: Number(res.data.totalDevice) || 0
+            }
+          } else {
+            this.$message.error(res.msg || '合计统计失败')
+            this.summaryTotal = {
+              actualPrice: 0,
+              realityPayMoney: 0,
+              electricityPrice: 0,
+              servicePrice: 0,
+              totalPower: 0,
+              totalChargeNumber: 0,
+              totalChargeDurations: 0,
+              totalDevice: 0
+            }
+          }
+        }).catch(() => {
+          this.$message.error('合计统计失败')
+          this.summaryTotal = {
+            actualPrice: 0,
+            realityPayMoney: 0,
+            electricityPrice: 0,
+            servicePrice: 0,
+            totalPower: 0,
+            totalChargeNumber: 0,
+            totalChargeDurations: 0,
+            totalDevice: 0
+          }
+        })
       },
       /**
        * 金额格式化，保留两位小数并添加千分位分隔
@@ -476,7 +489,6 @@
             this.listLoading1 = false
             this.chargingStationSectionTotal = res.count
             this.chargingStationSectionList = res.data
-            this.updateSummaryTotalFromSectionList(res.data)
             // console.log("chargingStationSectionList：",res.data)
             // this.$forceUpdate()
           }else {
@@ -515,6 +527,7 @@
         this.getChargingStationSingleList()
         this.getChargingStationFundList()
         this.getChargingStationSectionList()
+        this.getChargingStationSectionSummary()
       },
       handleSizeChange(val) {
       	this.listQuery.limit = val
@@ -558,6 +571,7 @@
       this.getChargingStationSingleList()
       this.getChargingStationFundList()
       this.getChargingStationSectionList()
+      this.getChargingStationSectionSummary()
     },
   }
 
