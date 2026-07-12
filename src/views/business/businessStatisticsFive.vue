@@ -41,7 +41,7 @@
       <div class="summary-cards">
         <div class="summary-card summary-card--service-count">
           <div class="summary-label">总服务次数(次)</div>
-          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.chargingCount, 0) }}</div>
+          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.totalChargeNumber, 0) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--amount">
@@ -49,14 +49,19 @@
           <div class="summary-value summary-money">{{ formatMoney(summaryTotal.actualPrice) }}</div>
           <div class="summary-card-icon" />
         </div>
+        <div class="summary-card summary-card--reality-pay">
+          <div class="summary-label">实收金额(元)</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.realityPayMoney) }}</div>
+          <div class="summary-card-icon" />
+        </div>
         <div class="summary-card summary-card--power">
-          <div class="summary-label">总使用电量(次)</div>
-          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.chargingPowerCount, 4) }}</div>
+          <div class="summary-label">总使用电量(度)</div>
+          <div class="summary-value summary-energy">{{ formatNumber(summaryTotal.totalPower, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--duration">
           <div class="summary-label">总充电时长(分)</div>
-          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.actualDuration, 0) }}</div>
+          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.totalChargeDurations, 0) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--electric">
@@ -245,7 +250,8 @@
   import {
     chargingUserChargeCurve,
     chargingUserChargeSingle,
-    chargingUserChargeSection
+    chargingUserChargeSection,
+    chargingUserChargeSectionSummary
   } from '@/api/business/businessStatistics.js'
   const lineChartData = {
     chargingOrderCount: [],
@@ -269,12 +275,13 @@
           datetime: []
         },
         summaryTotal: {
-          chargingCount: 0,
           actualPrice: 0,
-          chargingPowerCount: 0,
-          actualDuration: 0,
+          realityPayMoney: 0,
           electricityPrice: 0,
           servicePrice: 0,
+          totalPower: 0,
+          totalChargeNumber: 0,
+          totalChargeDurations: 0,
           placeholderPrice: 0
         },
         phoneMaskEnabled: true,
@@ -320,32 +327,46 @@
       }
     },
     methods: {
-      /**
-       * 根据传入的用户充电汇总列表更新顶部总计数据
-       * @param {Array} list 用户充电汇总数据列表
-       */
-      updateSummaryTotalFromSectionList(list) {
-        const total = {
-          chargingCount: 0,
-          actualPrice: 0,
-          chargingPowerCount: 0,
-          actualDuration: 0,
-          electricityPrice: 0,
-          servicePrice: 0,
-          placeholderPrice: 0
-        }
-        if (Array.isArray(list) && list.length) {
-          list.forEach(item => {
-            total.chargingCount += Number(item.chargingCount) || 0
-            total.actualPrice += Number(item.actualPrice) || 0
-            total.chargingPowerCount += Number(item.chargingPowerCount) || 0
-            total.actualDuration += Number(item.actualDuration) || 0
-            total.electricityPrice += Number(item.electricityPrice) || 0
-            total.servicePrice += Number(item.servicePrice) || 0
-            total.placeholderPrice += Number(item.placeholderPrice) || 0
-          })
-        }
-        this.summaryTotal = total
+      getChargingUserChargeSectionSummary() {
+        const listQuery = JSON.parse(JSON.stringify(this.listQuery))
+        chargingUserChargeSectionSummary(listQuery).then(res => {
+          if (res.code == 200 && res.data) {
+            this.summaryTotal = {
+              actualPrice: Number(res.data.actualPrice) || 0,
+              realityPayMoney: Number(res.data.realityPayMoney) || 0,
+              electricityPrice: Number(res.data.electricityPrice) || 0,
+              servicePrice: Number(res.data.servicePrice) || 0,
+              totalPower: Number(res.data.totalPower) || 0,
+              totalChargeNumber: Number(res.data.totalChargeNumber) || 0,
+              totalChargeDurations: Number(res.data.totalChargeDurations) || 0,
+              placeholderPrice: 0
+            }
+          } else {
+            this.$message.error(res.msg || '合计统计失败')
+            this.summaryTotal = {
+              actualPrice: 0,
+              realityPayMoney: 0,
+              electricityPrice: 0,
+              servicePrice: 0,
+              totalPower: 0,
+              totalChargeNumber: 0,
+              totalChargeDurations: 0,
+              placeholderPrice: 0
+            }
+          }
+        }).catch(() => {
+          this.$message.error('合计统计失败')
+          this.summaryTotal = {
+            actualPrice: 0,
+            realityPayMoney: 0,
+            electricityPrice: 0,
+            servicePrice: 0,
+            totalPower: 0,
+            totalChargeNumber: 0,
+            totalChargeDurations: 0,
+            placeholderPrice: 0
+          }
+        })
       },
       formatPhone(value) {
         if (!value) return ''
@@ -462,7 +483,6 @@
             this.listLoading2 = false
             this.chargingUserChargingSectionTotal = res.count
             this.chargingUserChargingSectionList = res.data
-            this.updateSummaryTotalFromSectionList(res.data)
             this.$forceUpdate()
           }else {
       			this.$message.error(res.msg)
@@ -488,6 +508,7 @@
         this.getChargingUserChargeCurve()
         this.getChargingUserChargeSingle()
         this.getChargingUserChargeSection()
+        this.getChargingUserChargeSectionSummary()
       },
       handleSizeChange1(val) {
       	this.listQuery.limit = val
@@ -521,6 +542,7 @@
       this.getChargingUserChargeCurve()
       this.getChargingUserChargeSingle()
       this.getChargingUserChargeSection()
+      this.getChargingUserChargeSectionSummary()
     },
   }
 
@@ -681,6 +703,10 @@
   background: linear-gradient(135deg, #409EFF, #2d8cf0);
 }
 
+.summary-card--reality-pay {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
 .summary-card--power {
   background: linear-gradient(135deg, #00c9ff, #92fe9d);
 }
@@ -707,6 +733,10 @@
 
 .summary-card--amount .summary-card-icon {
   background-image: url(../../assets/home-panel/trade-panel.png);
+}
+
+.summary-card--reality-pay .summary-card-icon {
+  background-image: url(../../assets/home-panel/order-panel.png);
 }
 
 .summary-card--power .summary-card-icon {
