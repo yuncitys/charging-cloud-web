@@ -58,17 +58,17 @@
         </div>
         <div class="summary-card summary-card--duration">
           <div class="summary-label">充电时长合计(h)</div>
-          <div class="summary-value summary-duration">{{ formatNumber(summaryTotal.chargeDurationHours, 2) }}</div>
+          <div class="summary-value summary-duration">{{ formatNumber((summaryTotal.totalChargeDurations || 0) / 60, 2) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--amount">
           <div class="summary-label">订单总金额(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.orderTotalAmount) }}</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.actualPrice) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--electric">
           <div class="summary-label">用户实付合计(元)</div>
-          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.userActualPayTotal) }}</div>
+          <div class="summary-value summary-money">{{ formatMoney(summaryTotal.realityPayMoney) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--servicefee">
@@ -83,12 +83,12 @@
         </div>
         <div class="summary-card summary-card--electric">
           <div class="summary-label">总电费(元)</div>
-          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.electricityFee, 4) }}</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.electricityPrice, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--servicefee">
           <div class="summary-label">总服务费(元)</div>
-          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.serviceFee, 4) }}</div>
+          <div class="summary-value summary-money">{{ formatNumber(summaryTotal.servicePrice, 4) }}</div>
           <div class="summary-card-icon" />
         </div>
       </div>
@@ -139,7 +139,8 @@
   import DownChargingTrendStatistics from './components/DownChargingTrendStatistics'
   import {
     chargingTrend,
-    chargingTrendList
+    chargingTrendList,
+    chargingTrendSummary
   } from '@/api/business/businessStatistics.js'
   import { getMerchant } from '@/api/merchant/merchant.js'
   import {
@@ -164,14 +165,14 @@
           servicePrice: []
         },
         summaryTotal: {
-          totalChargeNumber: 0,
-          chargeDurationHours: 0,
-          orderTotalAmount: 0,
-          userActualPayTotal: 0,
-          merchantReceiptTotal: 0,
+          actualPrice: 0,
+          realityPayMoney: 0,
+          electricityPrice: 0,
+          servicePrice: 0,
           totalPower: 0,
-          electricityFee: 0,
-          serviceFee: 0
+          totalChargeNumber: 0,
+          totalChargeDurations: 0,
+          merchantReceiptTotal: 0
         },
         page: 1,
         limit: 10,
@@ -216,34 +217,46 @@
       }
     },
     methods: {
-      /**
-       * 根据充电趋势明细列表汇总顶部统计卡片展示的数据
-       * @param {Array} list 充电趋势明细列表
-       */
-      updateSummaryTotalFromTrendList(list) {
-        const total = {
-          totalChargeNumber: 0,
-          chargeDurationHours: 0,
-          orderTotalAmount: 0,
-          userActualPayTotal: 0,
-          merchantReceiptTotal: 0,
-          totalPower: 0,
-          electricityFee: 0,
-          serviceFee: 0
-        }
-        if (Array.isArray(list) && list.length) {
-          list.forEach(item => {
-            total.totalChargeNumber += Number(item.totalChargeNumber) || 0
-            total.chargeDurationHours += Number(item.chargeDurationHours) || 0
-            total.orderTotalAmount += Number(item.orderTotalAmount) || 0
-            total.userActualPayTotal += Number(item.userActualPayTotal) || 0
-            total.merchantReceiptTotal += Number(item.merchantReceiptTotal) || 0
-            total.totalPower += Number(item.totalPower) || 0
-            total.electricityFee += Number(item.electricityFee) || 0
-            total.serviceFee += Number(item.serviceFee) || 0
-          })
-        }
-        this.summaryTotal = total
+      getChargingTrendSummary() {
+        const listQuery = JSON.parse(JSON.stringify(this.listQuery))
+        chargingTrendSummary(listQuery).then(res => {
+          if (res.code == 200 && res.data) {
+            this.summaryTotal = {
+              actualPrice: Number(res.data.actualPrice) || 0,
+              realityPayMoney: Number(res.data.realityPayMoney) || 0,
+              electricityPrice: Number(res.data.electricityPrice) || 0,
+              servicePrice: Number(res.data.servicePrice) || 0,
+              totalPower: Number(res.data.totalPower) || 0,
+              totalChargeNumber: Number(res.data.totalChargeNumber) || 0,
+              totalChargeDurations: Number(res.data.totalChargeDurations) || 0,
+              merchantReceiptTotal: Number(res.data.merchantReceiptTotal) || 0
+            }
+          } else {
+            this.$message.error(res.msg || '合计统计失败')
+            this.summaryTotal = {
+              actualPrice: 0,
+              realityPayMoney: 0,
+              electricityPrice: 0,
+              servicePrice: 0,
+              totalPower: 0,
+              totalChargeNumber: 0,
+              totalChargeDurations: 0,
+              merchantReceiptTotal: 0
+            }
+          }
+        }).catch(() => {
+          this.$message.error('合计统计失败')
+          this.summaryTotal = {
+            actualPrice: 0,
+            realityPayMoney: 0,
+            electricityPrice: 0,
+            servicePrice: 0,
+            totalPower: 0,
+            totalChargeNumber: 0,
+            totalChargeDurations: 0,
+            merchantReceiptTotal: 0
+          }
+        })
       },
       /**
        * 金额格式化，保留两位小数并添加千分位分隔
@@ -366,7 +379,6 @@
             this.total = res.count
             this.chargingTrendList = res.data
             this.tableKey += 1
-            this.updateSummaryTotalFromTrendList(res.data)
           } else {
             this.$message.error(res.msg)
           }
@@ -389,6 +401,7 @@
         this.listQuery.limit = 10
       	this.getChargingTrend()
         this.getChargingTrendList()
+        this.getChargingTrendSummary()
       },
       handleSizeChange(val) {
       	this.listQuery.limit = val
@@ -415,6 +428,7 @@
       this.getChargingStationList()
       this.getChargingTrend()
       this.getChargingTrendList()
+      this.getChargingTrendSummary()
     },
   }
 
