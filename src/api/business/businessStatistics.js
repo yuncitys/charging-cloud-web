@@ -108,6 +108,29 @@ export function chargingTrendList(data) {
     data
   })
 }
+
+// 充电趋势合计
+export function chargingTrendSummary(data) {
+  return request({
+    url: '/api/web/reports/chargingTrend/summary',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
 // 导出充电趋势详情
 export function exportChargingTrendList(data) {
 	return request({
@@ -173,6 +196,29 @@ export function chargingStationSection(data) {
     data
   })
 }
+
+// 充电站汇总合计
+export function chargingStationSectionSummary(data) {
+  return request({
+    url: '/api/web/reports/chargingStationSection/summary',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
 export function exportChargingStationStatistics(data) {
   return request({
     url: '/api/web/reports/chargingStationSection/export',
@@ -449,6 +495,29 @@ export function chargingUserChargeSection(data) {
     data
   })
 }
+
+// 用户充电汇总合计
+export function chargingUserChargeSectionSummary(data) {
+  return request({
+    url: '/api/web/reports/chargingUserChargeSection/summary',
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        ret = ret.substring(0, ret.lastIndexOf('&'))
+        return ret
+      }
+    ],
+    data
+  })
+}
+
 export function exportChargingUserChargeSection(data) {
   return request({
     url: '/api/web/reports/chargingUserChargeSection/export',
