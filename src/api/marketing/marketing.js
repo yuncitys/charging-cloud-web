@@ -150,6 +150,15 @@ export function listExchangeCodes(params) {
   return request({ url: `${BASE}/activity/exchange/listCodes`, method: 'get', params })
 }
 
+export function exportExchangeCodes(params) {
+  return request({
+    url: `${BASE}/activity/exchange/exportCodes`,
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
 // ---------- 记录 ----------
 export function receiveRecordPage(params) {
   return request({ url: `${BASE}/receiveRecord/page`, method: 'get', params })

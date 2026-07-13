@@ -25,6 +25,9 @@
             <el-option label="已兑换" value="1" />
           </el-select>
         </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :loading="exporting" icon="el-icon-download" @click="handleExport">导出 Excel</el-button>
+        </el-form-item>
       </el-form>
 
       <el-table
@@ -69,7 +72,7 @@
 </template>
 
 <script>
-import { activityDetail, generateCodes, listExchangeCodes } from '@/api/marketing/marketing'
+import { activityDetail, exportExchangeCodes, generateCodes, listExchangeCodes } from '@/api/marketing/marketing'
 import { parseTime } from '@/utils/index'
 
 export default {
@@ -84,6 +87,7 @@ export default {
     return {
       listLoading: false,
       generating: false,
+      exporting: false,
       activityId: '',
       activityName: '',
       sendTotalCount: 0,
@@ -208,6 +212,55 @@ export default {
           this.$message.error(res.msg || '生成失败')
         }
       }).catch(() => { this.generating = false })
+    },
+    handleExport() {
+      if (!this.activityId) return
+      this.exporting = true
+      exportExchangeCodes({
+        activityId: this.activityId,
+        status: this.statusFilter || undefined
+      }).then(res => {
+        const blob = res
+        const isJsonBlob = blob.type && (blob.type.includes('json') || blob.type.includes('text/plain'))
+        const checkJson = isJsonBlob || blob.size < 1024
+        const finish = () => { this.exporting = false }
+        if (checkJson) {
+          blob.text().then(text => {
+            if (text.trim().startsWith('{')) {
+              try {
+                const json = JSON.parse(text)
+                this.$message.error(json.msg || '导出失败')
+              } catch (e) {
+                this.$message.error('导出失败')
+              }
+              finish()
+              return
+            }
+            this.downloadExchangeCodeBlob(blob)
+            finish()
+          }).catch(() => {
+            this.$message.error('导出失败')
+            finish()
+          })
+          return
+        }
+        this.downloadExchangeCodeBlob(blob)
+        finish()
+      }).catch(() => {
+        this.exporting = false
+        this.$message.error('导出失败')
+      })
+    },
+    downloadExchangeCodeBlob(blob) {
+      const fileBlob = blob.type
+        ? blob
+        : new Blob([blob], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+      const url = window.URL.createObjectURL(fileBlob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `兑换码-${this.activityId}.xlsx`
+      a.click()
+      window.URL.revokeObjectURL(url)
     }
   }
 }
