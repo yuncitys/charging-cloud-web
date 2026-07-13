@@ -11,6 +11,14 @@
     @close="onClose"
   >
     <div v-if="visibleSync" v-loading="loading" class="marketing-activity-drawer__body">
+      <el-alert
+        v-if="typeMeta && typeMeta.autoIssueTip"
+        :title="typeMeta.autoIssueTip"
+        type="info"
+        :closable="false"
+        show-icon
+        style="margin-bottom: 16px;"
+      />
       <!-- 注册领取 -->
       <el-form v-if="activityType === '1'" ref="formRef" :model="form" :rules="registerRules" label-width="100px" label-position="top">
         <el-form-item label="活动名称" prop="activityName">

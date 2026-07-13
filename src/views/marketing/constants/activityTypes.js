@@ -18,7 +18,8 @@ export const ACTIVITY_TYPES = [
     showStationScope: false,
     showUserScope: true,
     userScopeInSub: false,
-    subFields: []
+    subFields: [],
+    autoIssueTip: '用户通过手机号完成注册后自动发放卡券。'
   },
   {
     value: '2',
@@ -36,7 +37,8 @@ export const ACTIVITY_TYPES = [
     showStationScope: false,
     showUserScope: true,
     userScopeInSub: false,
-    subFields: ['limitType', 'limitCount']
+    subFields: ['limitType', 'limitCount'],
+    autoIssueTip: '用户余额充值成功后，按最高匹配档位自动发放卡券。'
   },
   {
     value: '3',
@@ -65,13 +67,13 @@ export const ACTIVITY_TYPES = [
     description: '用户充电满指定度数后可领取奖励，激励用户多充多领。',
     viewPermission: ':marketing:activity:charge:view',
     editPermission: ':marketing:activity:charge:edit',
-    p1Tip: '保存配置后，充电完成自动发券将于下一版本开通（P2）。',
     drawerForm: true,
     showRewardThreshold: false,
     showStationScope: true,
     showUserScope: true,
     userScopeInSub: true,
-    subFields: ['limitPower', 'limitType', 'limitCount', 'stationScope', 'chargeUserScope']
+    subFields: ['limitPower', 'limitType', 'limitCount', 'stationScope', 'chargeUserScope'],
+    autoIssueTip: '汽车充电结算后，活动期内累计充电度数达标自动发放卡券。'
   },
   {
     value: '5',

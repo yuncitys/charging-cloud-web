@@ -19,6 +19,15 @@
           </div>
         </div>
 
+        <el-alert
+          v-if="typeMeta && typeMeta.autoIssueTip"
+          :title="typeMeta.autoIssueTip"
+          type="info"
+          :closable="false"
+          show-icon
+          style="margin-bottom: 16px;"
+        />
+
         <div class="detail-section">
           <div class="detail-section__title">基本信息</div>
           <div class="detail-grid">
