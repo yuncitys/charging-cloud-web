@@ -175,3 +175,16 @@ export function userCouponPage(params) {
 export function cancelUserCoupon(userCardCouponId) {
   return formRequest(`${BASE}/userCoupon/cancel`, { userCardCouponId })
 }
+
+// ---------- 营销补款 ----------
+export function pageSubsidyLedger(params) {
+  return request({ url: `${BASE}/subsidy/ledger/page`, method: 'get', params })
+}
+
+export function pageSubsidyBatch(params) {
+  return request({ url: `${BASE}/subsidy/batch/page`, method: 'get', params })
+}
+
+export function confirmSubsidyBatch(batchId) {
+  return formRequest(`${BASE}/subsidy/batch/confirmOffline`, { batchId })
+}

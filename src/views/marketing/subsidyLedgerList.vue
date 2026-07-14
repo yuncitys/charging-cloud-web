@@ -1,0 +1,182 @@
+<template>
+  <div class="app-container">
+    <el-tabs v-model="activeTab" @tab-click="loadActive">
+      <el-tab-pane label="补款台账" name="ledger">
+        <div class="filter-container">
+          <el-input v-model="ledgerQuery.periodId" class="filter-item" style="width: 150px;" placeholder="账期ID" clearable />
+          <el-input v-model="ledgerQuery.merchantId" class="filter-item" style="width: 150px;" placeholder="商户ID" clearable />
+          <el-select v-model="ledgerQuery.status" class="filter-item" style="width: 150px;" placeholder="补款状态" clearable>
+            <el-option label="待补款" value="0" />
+            <el-option label="已补款" value="1" />
+            <el-option label="失败" value="2" />
+          </el-select>
+          <el-button type="primary" icon="el-icon-search" @click="searchLedger">查询</el-button>
+        </div>
+        <el-table v-loading="ledgerLoading" :data="ledgerRows" fit highlight-current-row>
+          <el-table-column type="index" label="序号" width="55" align="center" />
+          <el-table-column prop="periodId" label="账期ID" width="100" align="center" />
+          <el-table-column prop="merchantId" label="商户ID" width="100" align="center" />
+          <el-table-column prop="stationId" label="站点ID" width="100" align="center" />
+          <el-table-column prop="bizOrderCode" label="订单号" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="subsidyAmount" label="补款金额" width="120" align="right" />
+          <el-table-column label="状态" width="110" align="center">
+            <template slot-scope="scope">
+              <el-tag size="mini" :type="ledgerStatusType(scope.row.status)">{{ ledgerStatusLabel(scope.row.status) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="payoutBatchId" label="出款批次" width="110" align="center" />
+          <el-table-column prop="createTime" label="创建时间" width="160">
+            <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
+          </el-table-column>
+        </el-table>
+        <el-pagination class="pagination-container" :current-page="ledgerQuery.page" :page-size="ledgerQuery.limit"
+          :page-sizes="[10, 20, 30, 50]" :total="ledgerTotal" background
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="ledgerSizeChange" @current-change="ledgerPageChange" />
+      </el-tab-pane>
+
+      <el-tab-pane label="出款批次" name="batch">
+        <div class="filter-container">
+          <el-input v-model="batchQuery.periodId" class="filter-item" style="width: 150px;" placeholder="账期ID" clearable />
+          <el-input v-model="batchQuery.merchantId" class="filter-item" style="width: 150px;" placeholder="商户ID" clearable />
+          <el-select v-model="batchQuery.status" class="filter-item" style="width: 170px;" placeholder="批次状态" clearable>
+            <el-option label="待确认" value="0" />
+            <el-option label="已确认线下打款" value="1" />
+            <el-option label="失败" value="2" />
+          </el-select>
+          <el-button type="primary" icon="el-icon-search" @click="searchBatch">查询</el-button>
+        </div>
+        <el-table v-loading="batchLoading" :data="batchRows" fit highlight-current-row>
+          <el-table-column type="index" label="序号" width="55" align="center" />
+          <el-table-column prop="id" label="批次ID" width="100" align="center" />
+          <el-table-column prop="periodId" label="账期ID" width="100" align="center" />
+          <el-table-column prop="merchantId" label="商户ID" width="100" align="center" />
+          <el-table-column prop="totalAmount" label="补款总额" width="120" align="right" />
+          <el-table-column label="出款状态" width="150" align="center">
+            <template slot-scope="scope">
+              <el-tag size="mini" :type="batchStatusType(scope.row.status)">{{ batchStatusLabel(scope.row.status) }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="180" show-overflow-tooltip />
+          <el-table-column prop="updateTime" label="更新时间" width="160">
+            <template slot-scope="scope">{{ scope.row.updateTime | formatDate }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="150" align="center">
+            <template slot-scope="scope">
+              <el-button v-if="String(scope.row.status) === '0'" type="primary" size="mini" @click="confirmOffline(scope.row)">确认线下打款</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination class="pagination-container" :current-page="batchQuery.page" :page-size="batchQuery.limit"
+          :page-sizes="[10, 20, 30, 50]" :total="batchTotal" background
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="batchSizeChange" @current-change="batchPageChange" />
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+</template>
+
+<script>
+import { confirmSubsidyBatch, pageSubsidyBatch, pageSubsidyLedger } from '@/api/marketing/marketing'
+import { parseTime } from '@/utils/index'
+
+export default {
+  name: 'subsidyLedgerList',
+  filters: {
+    formatDate(value) {
+      return value ? parseTime(value) : ''
+    }
+  },
+  data() {
+    return {
+      activeTab: 'ledger',
+      ledgerLoading: false,
+      batchLoading: false,
+      ledgerRows: [],
+      batchRows: [],
+      ledgerTotal: 0,
+      batchTotal: 0,
+      ledgerQuery: { page: 1, limit: 10, periodId: '', merchantId: '', status: '' },
+      batchQuery: { page: 1, limit: 10, periodId: '', merchantId: '', status: '' }
+    }
+  },
+  created() {
+    this.getLedger()
+  },
+  methods: {
+    getLedger() {
+      this.ledgerLoading = true
+      pageSubsidyLedger(this.ledgerQuery).then(res => {
+        this.ledgerRows = res.data || []
+        this.ledgerTotal = res.count || 0
+      }).finally(() => { this.ledgerLoading = false })
+    },
+    getBatch() {
+      this.batchLoading = true
+      pageSubsidyBatch(this.batchQuery).then(res => {
+        this.batchRows = res.data || []
+        this.batchTotal = res.count || 0
+      }).finally(() => { this.batchLoading = false })
+    },
+    loadActive() {
+      if (this.activeTab === 'ledger') this.getLedger()
+      else this.getBatch()
+    },
+    searchLedger() {
+      this.ledgerQuery.page = 1
+      this.getLedger()
+    },
+    searchBatch() {
+      this.batchQuery.page = 1
+      this.getBatch()
+    },
+    ledgerSizeChange(limit) {
+      this.ledgerQuery.limit = limit
+      this.getLedger()
+    },
+    ledgerPageChange(page) {
+      this.ledgerQuery.page = page
+      this.getLedger()
+    },
+    batchSizeChange(limit) {
+      this.batchQuery.limit = limit
+      this.getBatch()
+    },
+    batchPageChange(page) {
+      this.batchQuery.page = page
+      this.getBatch()
+    },
+    confirmOffline(row) {
+      this.$confirm(`确认批次 ${row.id} 已完成线下打款？`, '确认线下打款', { type: 'warning' }).then(() => {
+        return confirmSubsidyBatch(row.id)
+      }).then(() => {
+        this.$message.success('已确认线下打款')
+        this.getBatch()
+        this.getLedger()
+      }).catch(() => {})
+    },
+    ledgerStatusLabel(status) {
+      return ({ 0: '待补款', 1: '已补款', 2: '失败' })[status] || '未知'
+    },
+    ledgerStatusType(status) {
+      return ({ 0: 'warning', 1: 'success', 2: 'danger' })[status] || 'info'
+    },
+    batchStatusLabel(status) {
+      return ({ 0: '待确认', 1: '已确认线下打款', 2: '失败' })[status] || '未知'
+    },
+    batchStatusType(status) {
+      return ({ 0: 'warning', 1: 'success', 2: 'danger' })[status] || 'info'
+    }
+  }
+}
+</script>
+
+<style scoped>
+.filter-item {
+  margin-right: 12px;
+}
+
+.pagination-container {
+  margin-top: 18px;
+}
+</style>

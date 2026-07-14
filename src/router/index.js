@@ -986,6 +986,14 @@ export const constantRoutes = [{
       meta: {
         title: '兑换码管理',
       }
+    }, {
+      path: 'subsidyLedgerList',
+      component: () => import('@/views/marketing/subsidyLedgerList'),
+      name: 'subsidyLedgerList',
+      hidden: true,
+      meta: {
+        title: '营销补款台账',
+      }
     }]
   },
   {
