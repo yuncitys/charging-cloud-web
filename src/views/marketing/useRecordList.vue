@@ -16,7 +16,9 @@
         <el-table-column prop="discountAmount" label="抵扣金额" align="center" width="100" />
         <el-table-column prop="confirmStatus" label="确认状态" align="center" width="100">
           <template slot-scope="scope">
-            <el-tag size="mini">{{ scope.row.confirmStatus === '1' ? '已确认' : '待确认' }}</el-tag>
+            <el-tag size="mini" :type="scope.row.confirmStatus === '1' ? 'success' : (scope.row.confirmStatus === '2' ? 'info' : 'warning')">
+              {{ confirmStatusLabel(scope.row.confirmStatus) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="useTime" label="使用时间" align="center" width="160">
@@ -61,6 +63,10 @@ export default {
     this.getList()
   },
   methods: {
+    confirmStatusLabel(status) {
+      const map = { '0': '待确认', '1': '已确认', '2': '已回滚' }
+      return map[String(status)] || '未知'
+    },
     getList() {
       this.listLoading = true
       useRecordPage(this.listQuery).then(res => {
