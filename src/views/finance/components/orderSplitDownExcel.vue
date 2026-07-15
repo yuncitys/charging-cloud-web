@@ -51,7 +51,6 @@
 					splitOrderCode: this.queryData.splitOrderCode,
 					status: this.queryData.status,
 					merchantId: this.queryData.merchantId,
-					adminId: this.queryData.adminId,
 					createTimeStart: this.queryData.createTimeStart,
 					createTimeEnd: this.queryData.createTimeEnd
 				}
