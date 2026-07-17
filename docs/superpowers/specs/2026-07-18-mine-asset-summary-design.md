@@ -125,6 +125,6 @@ GET /api/app/user/assetSummary
 |------|--------|------|
 | `charging-cloud` | `6f9ef2f9` | `feat(user): add assetSummary for wallet and unused coupon count` |
 | `charging-cloud-uniapp` | `d59fd69` | `feat(mine): load wallet card via user assetSummary` |
-| `charging-cloud-web` | （本提交） | 计划勾选 + 本文实现状态 |
+| `charging-cloud-web` | `b7256f9` | 计划勾选 + 本文实现状态 |
 
 **手工验收 A1–A5：** 待执行（未勾选）。
