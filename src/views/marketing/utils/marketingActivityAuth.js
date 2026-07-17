@@ -44,7 +44,7 @@ export function getVisibleActivityTypes(adminUser) {
   const roleType = getLoginUserRoleTypeMin(adminUser)
   return ACTIVITY_TYPES.filter(item => {
     if (!hasActivityTypeView(item.value)) return false
-    if (item.platformOnly && roleType > 1) return false
+    if (item.platformOnly && roleType > 2) return false
     return true
   })
 }

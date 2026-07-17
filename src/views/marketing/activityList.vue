@@ -285,8 +285,8 @@ export default {
         return false
       }
       const roleType = getLoginUserRoleTypeMin(this.adminUser)
-      if (this.typeMeta.platformOnly && roleType > 1) {
-        this.$message.warning('该活动类型仅平台管理员可管理')
+      if (this.typeMeta.platformOnly && roleType > 2) {
+        this.$message.warning('该活动类型仅平台/租户管理员可管理')
         this.goHub()
         return false
       }
