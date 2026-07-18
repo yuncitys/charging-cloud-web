@@ -16,14 +16,24 @@
 - `docs/superpowers/specs/2026-06-14-marketing-center-design.md`  
 - `charging-cloud/doc/marketing-settlement-split-qa.md` 附录 A  
 
-### 进度总览（2026-07-15）
+### 进度总览（2026-07-18）
 
 | Workstream | 状态 | 说明 |
 |------------|------|------|
 | **A 双轨资金** | ✅ 代码完成 | 合入 `develop/charging-marketing`；待 DBA 跑 SQL + 验收 A-1～A-5 |
-| **B 体验边角** | ✅ 代码完成 | 合入各仓同分支；B4 需配置 XXL-JOB；**B UX 修订（2026-07-16）：** ✅ 代码完成（[`plan`](./2026-07-16-marketing-b-ux-revision.md) / [`design`](../specs/2026-07-16-marketing-b-ux-revision-design.md)），待手工 QA S1–S4 / R1–R4 |
+| **B 体验边角** | ✅ 代码完成 | B1–B5 + B UX + 07-17/18 调整；B4 需 XXL-JOB；手工 QA 待测 |
+| **资产汇总** | ✅ 代码完成 | `/user/assetSummary` +「我的」接入；A1–A5 手工验收待测 |
+| **电单车营销用券** | ✅ 代码完成 | mPay 选券 + settle/释券/CHARGE；B1–B9 手工 QA 待测（见 [`2026-07-18-bike-marketing-coupon`](../specs/2026-07-18-bike-marketing-coupon-design.md)） |
 | **C 可靠性补齐** | ❌ 待做 | 异常单营销钩子、OCPP 起充失败释券 |
 | Gate 0 联调 | ⏳ 待测 | 上一计划 8 条场景 |
+
+**B 体验（现行口径）：**
+- 汽车站列表 `car-site-tags` 展示「X张券可用」（非首页悬浮角标）
+- 独立充值活动页 `rechargeActivity`；`recharge.vue`「充值有礼」入口
+- 「我的」无活动中心；**已删除** C 端 `activityList` / `codeExchange` 页（兑换在 `myCoupon` 内）
+- 「我的」钱包卡走 `assetSummary`（余额三字段 + 未使用券数）
+- 卡券详情对齐列表卡片；已用/过期用 icon
+- App `activity/list` 支持 `activityType`，返回 `activityRemark`（供充值入口）
 
 ---
 
@@ -34,14 +44,14 @@
 | Workstream | 内容 | 风险 | 建议顺序 | 状态 |
 |------------|------|------|----------|------|
 | **A 双轨资金** | `split_base_type`、台账双基数、出款 cap、补款台账/批次 | 高（动分账钱） | **先做** | ✅ |
-| **B 体验边角** | 首页角标、券详情页、运营位、过期 Job、使用记录回滚态 | 低 | 可并行 | ✅ |
+| **B 体验边角** | 站列表券 tip、券详情、充值活动入口、过期 Job、使用记录回滚态 | 低 | 可并行 | ✅ |
 | **C 可靠性补齐** | 异常单营销钩子、OCPP 起充失败释券 | 中 | 可与 B 并行 | ❌ 下一批 |
 
 **明确不做：**
 
 | 项 | 原因 |
 |----|------|
-| 单车（`ruleId≠2`）营销价/用券 | 产品设计排除 |
+| 单车（`ruleId≠2`）营销 | **已修订：** 见 [`2026-07-18-bike-marketing-coupon-design.md`](../specs/2026-07-18-bike-marketing-coupon-design.md)（用券+自动卡+CHARGE；站/用户折扣仍排除；列表 tip 本轮不做） |
 | 会员/积分商城 | 无表、不在营销中心范围 |
 | 领券订阅消息推送 | 可选增强，本计划不纳入 |
 | P2 自动发券 / 兑换码导出 / 结算汇总填实 | **已完成**，见上一计划 |
@@ -65,9 +75,10 @@
 | `.../SettlementLedgerPayoutServiceImpl.java` | A | 渠道出款 cap |
 | `.../MarketingSubsidyLedgerService*.java` | A | 补款台账 |
 | `charging-cloud-web/.../marketing/subsidy*.vue`（可选） | A | 补款记录页 |
-| `charging-cloud-uniapp/pages/home/home.vue` | B | 券角标 |
+| `charging-cloud-uniapp/pages/home/home.vue` | B | 站列表「X张券可用」（原角标已移除） |
 | `charging-cloud-uniapp/pages/subPack/marketing/couponDetail/` | B | 独立详情页 |
-| `charging-cloud-uniapp/...` 运营入口 | B | `getActivityList` 消费 |
+| `charging-cloud-uniapp/pages/subPack/recharge/recharge.vue` | B | 「充值有礼」消费 `getActivityList`（activityList 页已删） |
+| `charging-cloud` `/user/assetSummary` + uniapp `mine.vue` | — | 我的页资产汇总（2026-07-18） |
 | `.../MarketingUserCouponServiceImpl.java` + Job | B | 过期券日更 |
 | `charging-cloud-web/.../useRecordList.vue` | B | 回滚态展示 |
 | `.../ChargeOrderBillServiceImpl.java` | C | `abnormalOrderSettlement` 挂营销 |
@@ -287,10 +298,12 @@ if (channelCap.compareTo(BigDecimal.ZERO) > 0 && netTotal.compareTo(channelCap) 
 **状态：** ✅ Workstream B 代码已合入各仓库 `develop/charging-marketing`（未合主干）。
 
 **备注：**
-- B3 入口放在个人中心「活动中心」
+- B1 首页悬浮角标 → **已被 B UX 取代**：汽车站列表「X张券可用」tag（`81cd2a6` 等）
+- B3 个人中心「活动中心」→ **2026-07-17 去入口**（`2047a7e`）；**2026-07-18 删 `activityList`/`codeExchange` 页**；充值领取走 `recharge.vue`（`736cd01`）；兑换在 `myCoupon`
 - B4 XXL-JOB 目标：`TaskService.expireMarketingUserCoupons`（需运维配置日调度）
 - B5 未加 confirmStatus 筛选（后端分页暂不支持）
-- **B UX 修订（2026-07-16）：** 见 [`2026-07-16-marketing-b-ux-revision.md`](./2026-07-16-marketing-b-ux-revision.md)。Task 1–4 已合入 `develop/charging-marketing`（cloud `bec6b321`/`91a55569`，uniapp `11839fd`/`1d88726`）；验收 S1–S4 / R1–R4 待测。
+- **资产汇总：** [`2026-07-18-mine-asset-summary-design.md`](../specs/2026-07-18-mine-asset-summary-design.md)
+- **B UX 修订与后续调整：** [`2026-07-16-marketing-b-ux-revision-design.md`](../specs/2026-07-16-marketing-b-ux-revision-design.md)
 
 ### Task B1: 首页未使用券角标
 
@@ -458,9 +471,9 @@ A1 → A2 → A3 → A4 → A5 → A6     （财务闭环，顺序依赖）
 
 | # | 场景 | 期望 |
 |---|------|------|
-| B-1 | 首页登录有未使用券 | 角标数字正确 |
-| B-2 | 我的卡券点详情 | 进独立详情页 |
-| B-3 | 活动中心入口 | 能看到进行中活动并跳转 |
+| B-1 | 登录用户汽车站有可用券 | `car-site-tags` 显示「N张券可用」（非首页 FAB） |
+| B-2 | 我的卡券点详情 | 进独立详情页；已用/过期有 icon |
+| B-3 | 充值页有进行中充值领取活动 | 显示「充值有礼」→ 活动页；无活动中心/独立兑换页；兑换在我的卡券 |
 | B-4 | Job 跑完 | 过期未使用券状态更新 |
 | B-5 | 使用记录 | 回滚显示「已回滚」 |
 
@@ -477,7 +490,7 @@ A1 → A2 → A3 → A4 → A5 → A6     （财务闭环，顺序依赖）
 
 | 检查项 | 结论 |
 |--------|------|
-| 上一计划「剩余未完成」表全覆盖 | ✅ 除联调（Gate0）与单车（排除） |
+| 上一计划「剩余未完成」表全覆盖 | ✅ 除联调（Gate0）；电单车用券见 07-18 设计（代码完成，B1–B9 待测） |
 | 附录 A P0–P3 | ✅ A1–A6 |
 | 无 TBD 占位 | ✅ 默认 split 规则已写死；代付通道明确不做 |
 | 与已完成 Task10 关系 | A2 在其基础上修正「折前不扣商户」 |
@@ -492,18 +505,18 @@ A1 → A2 → A3 → A4 → A5 → A6     （财务闭环，顺序依赖）
 | 1 | 交付方式 | **按独立交付线**：先完整做 **Workstream A**，再 B，再 C | A ✅ → B ✅ → C 待做 |
 | 2 | `split_base_type` 默认 | **接受**：平台承担 → 折前(1)；商户承担 → 折后(2)；活动表暂不配开关 | ✅ A1/A2 |
 | 3 | 补款出款 | **接受首期**：台账 + 账期汇总 + **线下确认**；不做企业代付自动打款 | ✅ A6 |
-| 4 | B3 运营位 | C 端「进行中活动」入口；入口放个人中心 | ✅ B3「活动中心」 |
+| 4 | B3 运营位 | 原「活动中心」页；**已删页**；充值领取仅 `recharge.vue`「充值有礼」→ `rechargeActivity` | ✅ 调整后 |
 
 ### 「活动运营位」是什么？（问题 4）
 
-指 **C 端给用户看的「进行中营销活动」入口/列表**，不是后台管理页。
+指 **C 端给用户看的营销活动入口**，不是后台管理页。
 
 | | 说明 |
 |--|------|
-| **背景** | UniApp 已有 API 封装 `getActivityList`（`api/marketing.js`） |
-| **计划里的 B3** | 用户可点的入口，拉进行中扫码领券 / 券码兑换等活动并跳转 |
-| **和角标的区别** | 首页券角标（B1）=「你有几张未用券」；运营位（B3）=「最近有哪些活动可参与」 |
-| **落地** | ✅ 个人中心「活动中心」→ 活动列表页（`1619ac7`） |
+| **背景** | 曾做个人中心「活动中心」+ `activityList` 页 |
+| **现行入口（2026-07-18）** | **仅**余额充值页「充值有礼」→ `rechargeActivity`；`activityList`/`codeExchange` 已删除 |
+| **和站券 tag 的区别** | 站列表「X张券可用」= 持券可用提示；充值入口 = 引导充值领券 |
+| **落地** | ✅ `recharge.vue` + 删页（2026-07-18） |
 
 ---
 
@@ -533,7 +546,7 @@ A1 → A2 → A3 → A4 → A5 → A6     （财务闭环，顺序依赖）
 
 见上文「Workstream B 完成记录」表（B1–B5）。验收清单 B-1～B-5 待测；B4 需运维配置 XXL-JOB。
 
-**B UX 修订（2026-07-16）：** Task 1–4 代码已完成（cloud `bec6b321`/`91a55569`，uniapp `11839fd`/`1d88726`）；手工验收 S1–S4 / R1–R4 待测。详见 [`2026-07-16-marketing-b-ux-revision.md`](./2026-07-16-marketing-b-ux-revision.md)。
+**B UX（至 2026-07-18）：** 含删 `activityList`/`codeExchange`、资产汇总接入。详见 B UX / assetSummary 设计文档。手工验收 S1–S4 / R1–R5、资产 A1–A5 仍待测。
 
 ### 下一批：Workstream C
 
@@ -541,3 +554,14 @@ A1 → A2 → A3 → A4 → A5 → A6     （财务闭环，顺序依赖）
 |------|------|------|
 | C1 | `abnormalOrderSettlement` 挂营销结算 / CHARGE 发券 | ❌ |
 | C2 | OCPP 起充失败释放预锁券 | ❌ |
+
+### 电单车营销用券（2026-07-18，旁路扩展）
+
+| Task | Commit | 仓库 |
+|------|--------|------|
+| 锁券 + settle 跳过活动折 + 应付 + CHARGE | `82ef2802` | cloud |
+| WJ 起充失败释券 | `1bbca378` | cloud |
+| preview 跳过活动折 | `bc1ec3d2` | cloud |
+| mPay 手选券 | `68c8b10` | uniapp |
+
+**状态：** ✅ 代码已合入 `develop/charging-marketing`（未合主干）。手工验收 B1–B9 待测。详见 [`2026-07-18-bike-marketing-coupon-design.md`](../specs/2026-07-18-bike-marketing-coupon-design.md) 与 [`2026-07-18-bike-marketing-coupon.md`](2026-07-18-bike-marketing-coupon.md)。
