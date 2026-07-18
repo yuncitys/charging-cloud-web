@@ -192,7 +192,7 @@ flowchart TD
 | `charging-cloud` | `1bbca378` | WJ 电单车起充失败释券（MQTT/TCP） |
 | `charging-cloud` | `bc1ec3d2` | preview 跳过电单车活动折 |
 | `charging-cloud-uniapp` | `68c8b10` | mPay 满减/折扣手选券 |
-| `charging-cloud-web` | `f2fd893` | 计划勾选 + 实现状态 |
+| `charging-cloud-web` | `5cc1810` | 计划勾选 + 实现状态 |
 
 **手工验收 B1–B9：** 待执行（未勾选）。
 
