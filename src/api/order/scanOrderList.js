@@ -64,6 +64,28 @@ export function findOrderInfoById(data) {
 	})
 }
 
+// 按订单号查询订单详情（与 findOrderInfoById 返回结构一致）
+export function findOrderInfoByOrderCode(data) {
+	return request({
+		url: '/api/web/order/findOrderInfoByOrderCode',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
 //订单退款
 export function orderRefund(data) {
 	return request({

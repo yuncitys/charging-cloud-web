@@ -20,6 +20,14 @@ export function getChargingCustomerPage(data) {
   })
 }
 
+export function getChargingOrganizationTree(params) {
+  return request({
+    url: '/api/web/chargingCustomer/organizationTree',
+    method: 'get',
+    params
+  })
+}
+
 export function getChargingCustomerDetail(id) {
   return request({
     url: `/api/web/chargingCustomer/detail/${id}`,

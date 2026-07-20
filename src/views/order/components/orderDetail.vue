@@ -162,6 +162,14 @@
               <span class="kv-label">订单支付金额</span>
               <span class="kv-value">{{ moneyText(orderInfo.actualPrice) }}</span>
             </el-col>
+            <el-col v-if="settlementInfo" :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">优惠合计</span>
+              <span class="kv-value discount-amount">-{{ moneyText(settlementInfo.totalDiscountAmount) }}</span>
+            </el-col>
+            <el-col v-if="settlementInfo" :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">折后应付</span>
+              <span class="kv-value">{{ moneyText(settlementInfo.payableAmount) }}</span>
+            </el-col>
             <el-col :xs="24" :sm="12" :md="8" class="kv-item">
               <span class="kv-label">订单实付金额</span>
               <span class="kv-value">{{ moneyText(orderInfo.realityPayMoney) }}</span>
@@ -175,6 +183,45 @@
               <span class="kv-value">{{ payTypeText(orderInfo.payType) }}</span>
             </el-col>
           </el-row>
+        </el-card>
+
+        <!-- 优惠明细 -->
+        <el-card v-if="hasMarketingDiscount" class="block-card" shadow="never">
+          <div class="block-title">优惠明细</div>
+          <el-row :gutter="16" class="kv-grid discount-summary">
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">生效方式</span>
+              <span class="kv-value">{{ settlementInfo.effectiveTypeLabel || '—' }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">活动优惠</span>
+              <span class="kv-value">-{{ moneyText(settlementInfo.totalActivityDiscountAmount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">卡券优惠</span>
+              <span class="kv-value">-{{ moneyText(settlementInfo.totalCouponDiscountAmount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="6" class="kv-item">
+              <span class="kv-label">优惠合计</span>
+              <span class="kv-value discount-amount">-{{ moneyText(settlementInfo.totalDiscountAmount) }}</span>
+            </el-col>
+          </el-row>
+          <el-table :data="discountList" size="small" border class="discount-table">
+            <el-table-column type="index" width="50" label="序号" align="center" />
+            <el-table-column prop="discountTypeLabel" label="优惠类型" align="center" width="100" />
+            <el-table-column prop="discountName" label="名称" align="center" min-width="140" show-overflow-tooltip />
+            <el-table-column label="卡券类型" align="center" width="100">
+              <template slot-scope="scope">
+                <span v-if="scope.row.discountType === 'COUPON'">{{ scope.row.couponTypeLabel || '—' }}</span>
+                <span v-else-if="scope.row.discountType === 'DISCOUNT'">{{ scope.row.activityTypeLabel || '—' }}</span>
+                <span v-else>—</span>
+              </template>
+            </el-table-column>
+            <el-table-column prop="chargedDiscountAmount" label="电费优惠(元)" align="center" width="110" />
+            <el-table-column prop="serviceDiscountAmount" label="服务费优惠(元)" align="center" width="120" />
+            <el-table-column prop="totalDiscountAmount" label="合计(元)" align="center" width="90" />
+            <el-table-column prop="discountDetail" label="说明" align="center" min-width="160" show-overflow-tooltip />
+          </el-table>
         </el-card>
 
         <!-- 充电明细 -->
@@ -245,13 +292,13 @@
           </div>
         </div>
       </template>
-      <el-empty v-else-if="!detailLoading" description="未找到订单或缺少 orderId 参数" />
+      <div v-else-if="!detailLoading" class="detail-empty">未找到订单或缺少 orderId / orderCode 参数</div>
     </div>
   </div>
 </template>
 
 <script>
-import { findOrderInfoById, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
+import { findOrderInfoById, findOrderInfoByOrderCode, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
 import { getOrderExpenseInfo } from '@/api/orderExpenseInfo/orderExpenseInfo.js'
 import { parseTime } from '@/utils/index'
 import OrderTrendChart from './OrderTrendChart.vue'
@@ -299,11 +346,28 @@ export default {
       const id = q.orderId != null && q.orderId !== '' ? q.orderId : q.id
       return id != null && id !== '' ? Number(id) : NaN
     },
+    orderCode() {
+      const q = this.$route.query || {}
+      const code = q.orderCode
+      return code != null && String(code).trim() !== '' ? String(code).trim() : ''
+    },
     isCarOrder() {
       return this.orderInfo.ruleId === RULE_CAR
     },
     canViewCharts() {
       return this.btnAuthen && this.btnAuthen.permsVerifAuthention(':sys:orderInfo:findDevicePowerDetails')
+    },
+    settlementInfo() {
+      return this.orderInfo && this.orderInfo.settlementInfo ? this.orderInfo.settlementInfo : null
+    },
+    discountList() {
+      return (this.orderInfo && this.orderInfo.discountList) ? this.orderInfo.discountList : []
+    },
+    hasMarketingDiscount() {
+      if (!this.settlementInfo) return false
+      if (this.discountList.length > 0) return true
+      const total = Number(this.settlementInfo.totalDiscountAmount)
+      return Number.isFinite(total) && total > 0
     },
     seriesPower() {
       return [{
@@ -348,6 +412,9 @@ export default {
       this.bootstrap()
     },
     '$route.query.id'() {
+      this.bootstrap()
+    },
+    '$route.query.orderCode'() {
       this.bootstrap()
     }
   },
@@ -449,6 +516,10 @@ export default {
       }
     },
     bootstrap() {
+      if (this.orderCode) {
+        this.loadDetailByOrderCode()
+        return
+      }
       if (!Number.isFinite(this.orderId)) {
         this.orderInfo = {}
         this.chargeDetails = []
@@ -457,6 +528,28 @@ export default {
         return
       }
       this.loadDetail()
+    },
+    loadDetailByOrderCode() {
+      this.detailLoading = true
+      findOrderInfoByOrderCode({ orderCode: this.orderCode }).then(res => {
+        this.detailLoading = false
+        if (res.code === 200 && res.data) {
+          this.orderInfo = res.data
+          const code = this.orderInfo.orderCode || this.orderCode
+          if (code) {
+            this.loadExpense(code)
+            if (this.canViewCharts) {
+              this.loadCharts(code)
+            }
+          }
+        } else {
+          this.orderInfo = {}
+          this.$message.error(res.msg || '加载订单详情失败')
+        }
+      }).catch(() => {
+        this.detailLoading = false
+        this.orderInfo = {}
+      })
     },
     loadDetail() {
       this.detailLoading = true
@@ -559,6 +652,15 @@ export default {
   font-size: 14px;
   word-break: break-word;
 }
+.discount-summary {
+  margin-bottom: 12px;
+}
+.discount-amount {
+  color: #e6a23c;
+}
+.discount-table {
+  margin-top: 4px;
+}
 
 .order-detail-page .el-card__body {
   padding: 10px 12px 4px;
@@ -573,5 +675,11 @@ export default {
 }
 .charts-block {
   margin-top: 8px;
+}
+.detail-empty {
+  padding: 48px 16px;
+  text-align: center;
+  color: #909399;
+  font-size: 14px;
 }
 </style>
