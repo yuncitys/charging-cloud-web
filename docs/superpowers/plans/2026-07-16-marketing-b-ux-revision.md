@@ -16,7 +16,7 @@
 
 - 「X张券可用」仅展示，不可点击跳转
 - 充值成功仅 toast，不跳转「我的卡券」
-- 不改 `recharge.vue` 套餐逻辑
+- **初版：** 不改 `recharge.vue` 套餐逻辑 → **2026-07-17：** 已加活动入口条 + 套餐 UI 简化（见设计文档「后续调整」）
 - 单车站本轮不展示券数
 - 活动页支付必须 `bizRecordId` 为空，走自定义金额（`giftMoney=0`）
 - 提交信息用英文 conventional commits；仓库各自提交
@@ -33,12 +33,14 @@
 | `charging-cloud/.../vo/MarketingRechargeActivityDetailVo.java`（新建） | App 充值活动详情 DTO |
 | `charging-cloud/.../MarketingActivityService.java` (+ Impl) | `rechargeDetail` |
 | `charging-cloud/.../AppMarketingController.java` | `GET .../activity/recharge/detail` |
-| `charging-cloud-uniapp/pages/home/home.vue` | 去角标；价格旁券数文案 |
+| `charging-cloud-uniapp/pages/home/home.vue` | 去角标；`car-site-tags` 券数文案（现行） |
 | `charging-cloud-uniapp/pages/subPack/siteList/siteList.vue` | 同首页汽车卡片券数 |
-| `charging-cloud-uniapp/api/marketing.js` | `getRechargeActivityDetail` |
+| `charging-cloud-uniapp/api/marketing.js` | `getRechargeActivityDetail`；list 传 `activityType` |
 | `charging-cloud-uniapp/pages/subPack/marketing/rechargeActivity/rechargeActivity.vue` | 充值活动页 |
-| `charging-cloud-uniapp/pages.json` | 注册路由 |
-| `charging-cloud-uniapp/.../activityList/activityList.vue` | type=2 跳转新页 |
+| `charging-cloud-uniapp/pages/subPack/recharge/recharge.vue` | 余额充值 Tab「充值有礼」入口（2026-07-17） |
+| `charging-cloud-uniapp/pages/mine/mine.vue` | 移除「活动中心」（2026-07-17） |
+| `charging-cloud-uniapp/pages.json` | 注册路由；**2026-07-18 移除** activityList / codeExchange |
+| ~~activityList / codeExchange~~ | **2026-07-18 已删除页面** |
 
 ---
 
@@ -420,6 +422,21 @@ EOF
 
 **状态：** ✅ Task 1–4 代码已完成，合入 `develop/charging-marketing`（未合主干）。Task 5 手工验收（S1–S4 / R1–R4）待测。
 
+### 后续体验调整（2026-07-17，非本计划 Task，已合入同分支）
+
+| 项 | Commit | 仓库 |
+|----|--------|------|
+| 站券 tip → `car-site-tags` | `81cd2a6` 等 | uniapp |
+| 充值页活动入口条 | `736cd01` | uniapp |
+| list `activityType` / `activityRemark` | `87afc4e9` / `1c07b55` | cloud / uniapp |
+| 活动页蓝系 UI | `cddaedb` 等 | uniapp |
+| 充值套餐档位 UI 简化 | `a708fa6` | uniapp |
+| 卡券详情对齐列表 + 状态 icon | `ab66e9f` 等 | uniapp |
+| 移除「我的」活动中心 | `2047a7e` | uniapp |
+| matchStation 按卡券缓存 | `d7a85042` | cloud |
+
+权威现行口径见设计文档「后续调整」节。
+
 ---
 
 ### Task 5: 文档勾选 + 联调清单
@@ -429,18 +446,19 @@ EOF
 - Modify: `charging-cloud-web/docs/superpowers/specs/2026-07-16-marketing-b-ux-revision-design.md`（可选：文末加「实现状态」）
 - Modify: `charging-cloud-web/docs/superpowers/plans/2026-07-14-marketing-remaining-gaps.md`（进度备注「B UX 修订进行中/完成」）
 
-- [ ] **Step 1: 手工验收（对照设计）**
+- [ ] **Step 1: 手工验收（对照设计现行口径）**
 
 | # | 场景 | 期望 |
 |---|------|------|
-| S1 | 登录，站有可用券 | 卡片「N张券可用」 |
+| S1 | 登录，站有可用券 | `car-site-tags` 显示「N张券可用」 |
 | S2 | 券不匹配该站 | 不显示 |
 | S3 | 未登录 | 无文案、无角标 |
 | S4 | 首页 | 无右下角卡券 FAB |
-| R1 | 活动中心点充值领取 | 进活动页，档位=后台 |
+| R1 | 充值页「充值有礼」 | 进活动页，档位=后台 |
 | R2 | 选档支付成功 | 余额增加；提示到账；不跳转 |
-| R3 | `recharge.vue` | 套餐不变 |
-| R4 | 活动非进行中 | 不可充 |
+| R3 | `recharge.vue` 套餐区 | 套餐充值仍可用；有活动时有入口条 |
+| R4 | 活动非进行中 | 不可充；入口条不展示 |
+| R5 | 「我的」页 | 无活动中心；有「我的卡券」（页内可兑换） |
 
 - [ ] **Step 2: Commit 文档（web）**
 
@@ -461,7 +479,7 @@ EOF
 | Spec 一（站券数） | Task 1 + 3 |
 | Spec 二（充值活动页） | Task 2 + 4 |
 | 仅展示 / 成功不跳转 | Task 3/4 步骤写死 |
-| 不改 recharge.vue | ✅ |
+| 不改 recharge.vue（初版） | ⚠️ 已被 07-17 调整覆盖（入口条 + 套餐 UI） |
 | 无 TBD 占位 | ✅ |
 | `bizRecordId` 空 | Task 4 Step 3 写死 |
 

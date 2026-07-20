@@ -18,12 +18,12 @@ Workstream B 已落地首页「卡券」角标与活动中心入口，但存在�
 | 1 | 去掉首页悬浮卡券角标；在汽车站列表按站展示「X张券可用」 |
 | 2 | 新建独立「充值活动页」，档位与后台充值领取活动配置一致；支付复用现有统一支付接口 |
 
-## 非目标
+## 非目标（初版；部分已被 2026-07-17 调整覆盖）
 
-- 不改 `recharge.vue` 套餐配置与页面逻辑
-- 「X张券可用」不可点击、不跳转（仅展示）
-- 充值成功后不跳转「我的卡券」，仅提示
-- 单车站本轮不展示券数
+- ~~不改 `recharge.vue`~~ → **已调整：** 余额充值 Tab 增加「充值有礼」入口条；套餐档位 UI 简化（见「后续调整」）
+- 「X张券可用」不可点击、不跳转（仅展示）— **仍有效**
+- 充值成功后不跳转「我的卡券」，仅提示 — **仍有效**
+- 单车站本轮不展示券数 — **仍有效**
 - Workstream C、订阅消息、企业代付不在范围
 
 ---
@@ -48,10 +48,12 @@ Workstream B 已落地首页「卡券」角标与活动中心入口，但存在�
 ### 1.3 前端（uniapp）
 
 - **删除** `home.vue` 悬浮「卡券」入口及 `couponCount` / `loadCouponCount` 相关逻辑
-- **汽车站卡片**（`home.vue`、`siteList.vue` 对齐）：价格行旁（紧挨 `ActivityPrice`）  
-  - 当 `availableCouponCount > 0` 显示文案：`{{n}}张券可用`  
+- **汽车站卡片**（`home.vue`、`siteList.vue` 对齐）：  
+  - **现行（2026-07-17）：** 放在 `car-site-tags`（mid 与 foot 之间），样式 `car-site-tag--coupon`  
+  - 初版曾放价格行旁，已迁出  
+  - 当 `availableCouponCount > 0` 显示：`{{n}}张券可用`  
   - **仅展示**，不绑定点击跳转
-- 个人中心「我的卡券」入口保留（不受影响）
+- 个人中心「我的卡券」入口保留；「活动中心」入口已移除（见后续调整）
 
 ### 1.4 验收
 
@@ -88,11 +90,13 @@ Workstream B 已落地首页「卡券」角标与活动中心入口，但存在�
 - 档位列表：按 `rewardThreshold` 聚合，展示「充值满 X 元」及该档卡券名称、张数
 - 用户选择一档 → 主按钮「立即充值」
 
-**活动中心（`activityList.vue`）：**
+**入口（现行）：**
 
-- `activityType === '2'`：跳转  
-  `/pages/subPack/marketing/rechargeActivity/rechargeActivity?activityId=...`  
-- 不再 toast「请到我的卡券查看」
+| 入口 | 行为 |
+|------|------|
+| `recharge.vue` 余额充值 Tab「充值有礼」条 | 拉 `getActivityList({ activityType: '2', limit: 1 })`，有进行中活动则展示；点击进活动页；文案优先 `activityRemark` |
+
+**活动页视觉：** 蓝系（`#0184ff`）与 App 主色一致；大档位金额 + 赠券展示。
 
 ### 2.3 活动详情 API
 
@@ -129,10 +133,10 @@ GET /api/app/marketing/activity/recharge/detail
 
 | # | 场景 | 期望 |
 |---|------|------|
-| R1 | 活动中心点充值领取 | 进入活动页，档位与后台配置一致 |
+| R1 | 充值页「充值有礼」点进 | 进入活动页，档位与后台配置一致 |
 | R2 | 选「满 50」支付成功 | 余额 +50；发券为 ≤50 的最高匹配档；页内提示，不跳转 |
-| R3 | 日常 `recharge.vue` | 仍为套餐档位，行为不变 |
-| R4 | 活动非进行中 | 详情失败或按钮不可用 |
+| R3 | 日常 `recharge.vue` 套餐区 | 仍为套餐档位充值；有活动时顶部有入口条 |
+| R4 | 活动非进行中 | 详情失败或按钮不可用；入口条不展示 |
 
 ---
 
@@ -177,5 +181,25 @@ GET /api/app/marketing/activity/recharge/detail
 |------|------|--------|
 | 一、电站「X张券可用」 | ✅ 代码完成 | cloud `bec6b321` + uniapp `11839fd` |
 | 二、独立充值活动页 | ✅ 代码完成 | cloud `91a55569` + uniapp `1d88726` |
+| 列表券数 matchStation 缓存 | ✅ 修复 | cloud `d7a85042` |
 
-**待验收：** S1–S4（站券数）、R1–R4（充值活动页）手工联调未执行。
+**待验收：** S1–S4、R1–R4 及充值页入口手工联调未执行。
+
+---
+
+## 后续调整（2026-07-17）
+
+初版合入后产品/体验迭代，**以本节为现行口径**：
+
+| # | 调整 | Commit（uniapp / cloud） |
+|---|------|--------------------------|
+| 1 | 「X张券可用」迁至 `car-site-tags`（非价格旁）；tag 样式、间距、字号 | `81cd2a6` 等 |
+| 2 | `recharge.vue` 余额充值 Tab 增加「充值有礼」入口 → 活动页 | `736cd01` |
+| 3 | App `activity/list` 支持 `activityType` 筛选；VO/SQL 返回 `activityType`、`activityRemark`；入口用 remark 作副文案 | cloud `87afc4e9` + uniapp `1c07b55` |
+| 4 | 充值活动页 UI：hero + 大金额档位；再统一蓝系 `#0184ff` | `cddaedb` 等 |
+| 5 | `recharge.vue` 套餐档位简化为 `¥` 金额；选中仅蓝边框 | `a708fa6` |
+| 6 | 卡券详情对齐「我的卡券」卡片（缺口分割）；已用/过期用 icon，无灰色半透明 | `ab66e9f` 等 |
+| 7 | 「我的」页**移除「活动中心」**；充值领取主入口改为充值页入口条 | `2047a7e` |
+| 8 | **删除** C 端 `activityList`、`codeExchange` 页面与 `pages.json` 路由；兑换保留在 `myCoupon` | 2026-07-18（待 commit） |
+
+**仍保留：** 「我的卡券」入口与页内兑换；充值页活动入口 + `rechargeActivity`。

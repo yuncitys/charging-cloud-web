@@ -124,7 +124,9 @@ GET /api/app/user/assetSummary
 | 仓库 | Commit | 说明 |
 |------|--------|------|
 | `charging-cloud` | `6f9ef2f9` | `feat(user): add assetSummary for wallet and unused coupon count` |
-| `charging-cloud-uniapp` | `d59fd69` | `feat(mine): load wallet card via user assetSummary` |
-| `charging-cloud-web` | `b7256f9` | 计划勾选 + 本文实现状态 |
+| `charging-cloud-uniapp` | `d59fd69` + `7a3d68b` | 接入 assetSummary；失败时清零钱包字段 |
+| `charging-cloud-web` | `b7256f9` / `c65cef3` | 计划 + 实现状态 |
 
 **手工验收 A1–A5：** 待执行（未勾选）。
+
+**备注：** `http.js` 为 `class Http`，新增方法**不可**带对象字面量尾逗号，否则 Babel `Unexpected token`。
