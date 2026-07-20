@@ -990,7 +990,6 @@ export const constantRoutes = [{
       path: 'subsidyLedgerList',
       component: () => import('@/views/marketing/subsidyLedgerList'),
       name: 'subsidyLedgerList',
-      hidden: true,
       meta: {
         title: '营销补款台账',
       }
