@@ -1,7 +1,7 @@
 <template>
   <div class="app-container">
     <el-tabs v-model="activeTab" @tab-click="loadActive">
-      <el-tab-pane label="补款台账" name="ledger">
+      <el-tab-pane v-if="canLedgerPage" label="补款台账" name="ledger">
         <div class="filter-container">
           <el-input v-model="ledgerQuery.periodId" class="filter-item" style="width: 150px;" placeholder="账期ID" clearable />
           <el-input v-model="ledgerQuery.merchantId" class="filter-item" style="width: 150px;" placeholder="商户ID" clearable />
@@ -35,7 +35,7 @@
           @size-change="ledgerSizeChange" @current-change="ledgerPageChange" />
       </el-tab-pane>
 
-      <el-tab-pane label="出款批次" name="batch">
+      <el-tab-pane v-if="canBatchPage" label="出款批次" name="batch">
         <div class="filter-container">
           <el-input v-model="batchQuery.periodId" class="filter-item" style="width: 150px;" placeholder="账期ID" clearable />
           <el-input v-model="batchQuery.merchantId" class="filter-item" style="width: 150px;" placeholder="商户ID" clearable />
@@ -63,7 +63,7 @@
           </el-table-column>
           <el-table-column label="操作" width="150" align="center">
             <template slot-scope="scope">
-              <el-button v-if="String(scope.row.status) === '0'" type="primary" size="mini" @click="confirmOffline(scope.row)">确认线下打款</el-button>
+              <el-button v-if="canConfirmOffline && String(scope.row.status) === '0'" type="primary" size="mini" @click="confirmOffline(scope.row)">确认线下打款</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -78,6 +78,8 @@
 
 <script>
 import { confirmSubsidyBatch, pageSubsidyBatch, pageSubsidyLedger } from '@/api/marketing/marketing'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
+import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 
 export default {
@@ -100,11 +102,23 @@ export default {
       batchQuery: { page: 1, limit: 10, periodId: '', merchantId: '', status: '' }
     }
   },
+  computed: {
+    canLedgerPage() { return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage) },
+    canBatchPage() { return hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage) },
+    canConfirmOffline() { return hasMarketingPerm(MARKETING_PERMS.subsidyConfirmOffline) }
+  },
   created() {
-    this.getLedger()
+    if (this.canLedgerPage) {
+      this.activeTab = 'ledger'
+      this.getLedger()
+    } else if (this.canBatchPage) {
+      this.activeTab = 'batch'
+      this.getBatch()
+    }
   },
   methods: {
     getLedger() {
+      if (!this.canLedgerPage) return
       this.ledgerLoading = true
       pageSubsidyLedger(this.ledgerQuery).then(res => {
         this.ledgerRows = res.data || []
@@ -112,6 +126,7 @@ export default {
       }).finally(() => { this.ledgerLoading = false })
     },
     getBatch() {
+      if (!this.canBatchPage) return
       this.batchLoading = true
       pageSubsidyBatch(this.batchQuery).then(res => {
         this.batchRows = res.data || []
@@ -147,6 +162,7 @@ export default {
       this.getBatch()
     },
     confirmOffline(row) {
+      if (!this.canConfirmOffline) return
       this.$confirm(`确认批次 ${row.id} 已完成线下打款？`, '确认线下打款', { type: 'warning' }).then(() => {
         return confirmSubsidyBatch(row.id)
       }).then(() => {

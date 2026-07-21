@@ -177,7 +177,8 @@
 import { activityDetail } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
-import { canEditMarketingActivity, hasActivityTypeEdit } from '../utils/marketingActivityAuth'
+import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
+import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import {
   DISCOUNT_TYPE,
   RATE_TYPE,
@@ -243,7 +244,9 @@ export default {
       return item ? item.tagType : 'info'
     },
     canShowEdit() {
-      return this.activity && hasActivityTypeEdit(this.activityType) && canEditMarketingActivity(this.activity)
+      return this.activity &&
+        hasActivityEditAction(this.activityType, MARKETING_PERMS.activityUpdate) &&
+        canEditMarketingActivity(this.activity)
     },
     initiatorLabel() {
       if (!this.activity) return '—'

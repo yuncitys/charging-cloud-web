@@ -17,7 +17,7 @@
           <el-input-number v-model="generateCount" :min="1" :max="maxGenerateCount" :disabled="remainingCount <= 0" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="generating" :disabled="remainingCount <= 0" icon="el-icon-plus" @click="handleGenerate">批量生成</el-button>
+          <el-button v-if="canGenerate" type="primary" :loading="generating" :disabled="remainingCount <= 0" icon="el-icon-plus" @click="handleGenerate">批量生成</el-button>
         </el-form-item>
         <el-form-item label="状态筛选">
           <el-select v-model="statusFilter" clearable placeholder="全部" @change="handleFilter">
@@ -26,7 +26,7 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="exporting" icon="el-icon-download" @click="handleExport">导出 Excel</el-button>
+          <el-button v-if="canExport" type="primary" :loading="exporting" icon="el-icon-download" @click="handleExport">导出 Excel</el-button>
         </el-form-item>
       </el-form>
 
@@ -73,6 +73,8 @@
 
 <script>
 import { activityDetail, exportExchangeCodes, generateCodes, listExchangeCodes } from '@/api/marketing/marketing'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
+import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 
 export default {
@@ -109,6 +111,12 @@ export default {
     },
     maxGenerateCount() {
       return Math.max(this.remainingCount, 1)
+    },
+    canGenerate() {
+      return hasMarketingPerm(MARKETING_PERMS.activityGenerateExchangeCodes)
+    },
+    canExport() {
+      return hasMarketingPerm(MARKETING_PERMS.activityExportExchangeCodes)
     }
   },
   created() {
@@ -192,6 +200,7 @@ export default {
       this.loadCodeList()
     },
     handleGenerate() {
+      if (!this.canGenerate) return
       if (!this.activityId) return
       if (this.remainingCount <= 0) {
         this.$message.warning('已达到发放总数量上限，无法继续生成')
@@ -214,6 +223,7 @@ export default {
       }).catch(() => { this.generating = false })
     },
     handleExport() {
+      if (!this.canExport) return
       if (!this.activityId) return
       this.exporting = true
       exportExchangeCodes({

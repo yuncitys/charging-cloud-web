@@ -197,7 +197,7 @@
 
     <div class="marketing-activity-drawer__footer">
       <el-button @click="visibleSync = false">关闭</el-button>
-      <el-button v-if="coupon && !isCouponCancelled" type="primary" @click="handleEdit">编辑</el-button>
+      <el-button v-if="canShowEdit" type="primary" @click="handleEdit">编辑</el-button>
     </div>
   </el-drawer>
 </template>
@@ -219,6 +219,8 @@ import {
   isDiscountCardType,
   getDiscountShareFlagLabel
 } from '../constants/cardCoupon'
+import { MARKETING_PERMS } from '../constants/marketingPermissions'
+import { hasMarketingPerm } from '../utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
 
@@ -302,6 +304,9 @@ export default {
     },
     isCouponCancelled() {
       return this.coupon && String(this.coupon.cancelFlag) === '1'
+    },
+    canShowEdit() {
+      return this.coupon && !this.isCouponCancelled && hasMarketingPerm(MARKETING_PERMS.cardCouponUpdate)
     },
     filteredStations() {
       const kw = (this.stationKeyword || '').trim()

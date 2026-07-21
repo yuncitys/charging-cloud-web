@@ -12,7 +12,7 @@
     <div class="filter-container">
       <el-input v-model="listQuery.groupName" class="filter-item" placeholder="分组名称" clearable style="width: 200px;margin-right: 20px;" @keyup.enter.native="handleFilter" @clear="handleFilter" />
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
-      <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer()">新增分组</el-button>
+      <el-button v-if="canCreate" class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer()">新增分组</el-button>
 
       <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 20px;">
         <el-table-column type="index" width="55" label="序号" align="center">
@@ -32,20 +32,20 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="260" fixed="right">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
+            <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
             <el-button
-              v-if="scope.row.labelStatus === '1'"
+              v-if="canLabelStatus && scope.row.labelStatus === '1'"
               type="primary"
               size="mini"
               @click="handleToggleStatus(scope.row, '0')"
             >启用</el-button>
             <el-button
-              v-else
+              v-else-if="canLabelStatus"
               type="warning"
               size="mini"
               @click="handleToggleStatus(scope.row, '1')"
             >停用</el-button>
-            <el-button type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
+            <el-button v-if="canDelete" type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -68,6 +68,8 @@
 <script>
 import { stationGroupPage, deleteStationGroup, updateStationGroupLabelStatus } from '@/api/marketing/marketing'
 import StationGroupFormDrawer from './components/StationGroupFormDrawer'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
+import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
@@ -91,6 +93,12 @@ export default {
       drawerVisible: false,
       editingGroup: null
     }
+  },
+  computed: {
+    canCreate() { return hasMarketingPerm(MARKETING_PERMS.stationGroupCreate) },
+    canUpdate() { return hasMarketingPerm(MARKETING_PERMS.stationGroupUpdate) },
+    canDelete() { return hasMarketingPerm(MARKETING_PERMS.stationGroupDelete) },
+    canLabelStatus() { return hasMarketingPerm(MARKETING_PERMS.stationGroupLabelStatus) }
   },
   created() {
     this.getList()
@@ -119,10 +127,12 @@ export default {
       this.getList()
     },
     openDrawer(row) {
+      if (row ? !this.canUpdate : !this.canCreate) return
       this.editingGroup = row || null
       this.drawerVisible = true
     },
     handleToggleStatus(row, labelStatus) {
+      if (!this.canLabelStatus) return
       const action = labelStatus === '0' ? '启用' : '停用'
       this.$confirm(`确认${action}该分组？`, '提示', { type: 'warning' }).then(() => {
         updateStationGroupLabelStatus(row.id, labelStatus).then(res => {
@@ -136,6 +146,7 @@ export default {
       }).catch(() => {})
     },
     handleDelete(row) {
+      if (!this.canDelete) return
       this.$confirm('确认删除该分组？', '提示', { type: 'warning' }).then(() => {
         deleteStationGroup(row.id).then(res => {
           if (res.code === 200) {

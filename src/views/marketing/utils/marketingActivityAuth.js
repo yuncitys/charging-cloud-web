@@ -1,42 +1,55 @@
 import store from '@/store'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
 import { ACTIVITY_TYPES } from '../constants/activityTypes'
+import { MARKETING_PERMS } from '../constants/marketingPermissions'
 
-const GENERIC_VIEW = ':marketing:activity:view'
-const GENERIC_EDIT = ':marketing:activity:edit'
+/** @deprecated 兼容旧名；列表/编辑回退改用接口级权限 */
+const GENERIC_VIEW = MARKETING_PERMS.activityPage
+const GENERIC_EDIT = MARKETING_PERMS.activityUpdate
 
-function hasPerm(perms) {
+export function hasMarketingPerm(perms) {
   const list = store.getters.authentionList || []
   const target = String(perms || '').trim()
+  if (!target) return false
   return list.some(item => String(item.perms || '').trim() === target)
 }
 
 function hasAnyTypeSpecificViewPerm() {
-  return ACTIVITY_TYPES.some(item => item.viewPermission && hasPerm(item.viewPermission))
+  return ACTIVITY_TYPES.some(item => item.viewPermission && hasMarketingPerm(item.viewPermission))
 }
 
 function hasAnyTypeSpecificEditPerm() {
-  return ACTIVITY_TYPES.some(item => item.editPermission && hasPerm(item.editPermission))
+  return ACTIVITY_TYPES.some(item => item.editPermission && hasMarketingPerm(item.editPermission))
 }
 
-/** 某活动类型是否可查看（细粒度权限优先，否则回退通用 view） */
+/** 某活动类型是否可查看（细粒度权限优先，否则回退活动列表权限） */
 export function hasActivityTypeView(type) {
   const meta = ACTIVITY_TYPES.find(item => item.value === String(type))
   if (!meta) return false
   if (hasAnyTypeSpecificViewPerm()) {
-    return !!(meta.viewPermission && hasPerm(meta.viewPermission))
+    return !!(meta.viewPermission && hasMarketingPerm(meta.viewPermission))
   }
-  return hasPerm(GENERIC_VIEW)
+  return hasMarketingPerm(GENERIC_VIEW)
 }
 
-/** 某活动类型是否可编辑 */
+/** 某活动类型是否可编辑（细粒度权限优先，否则回退活动编辑权限） */
 export function hasActivityTypeEdit(type) {
   const meta = ACTIVITY_TYPES.find(item => item.value === String(type))
   if (!meta) return false
   if (hasAnyTypeSpecificEditPerm()) {
-    return !!(meta.editPermission && hasPerm(meta.editPermission))
+    return !!(meta.editPermission && hasMarketingPerm(meta.editPermission))
   }
-  return hasPerm(GENERIC_EDIT)
+  return hasMarketingPerm(GENERIC_EDIT)
+}
+
+/** 类型可看 + 具备指定活动接口权限 */
+export function hasActivityAction(type, functionPerm) {
+  return hasActivityTypeView(type) && hasMarketingPerm(functionPerm)
+}
+
+/** 类型可编 + 具备指定活动接口权限 */
+export function hasActivityEditAction(type, functionPerm) {
+  return hasActivityTypeEdit(type) && hasMarketingPerm(functionPerm)
 }
 
 /** Hub 可见的活动类型（权限 + 平台专属类型角色限制） */
@@ -114,3 +127,6 @@ export function canEditMarketingActivity(activity) {
   if (!activity) return false
   return String(activity.activityStatus) === '2'
 }
+
+// 兼容旧调用名
+export const hasPerm = hasMarketingPerm
