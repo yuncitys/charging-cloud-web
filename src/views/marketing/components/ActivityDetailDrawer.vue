@@ -262,7 +262,8 @@
 import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
-import { canEditMarketingActivity, hasActivityTypeEdit } from '../utils/marketingActivityAuth'
+import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
+import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
 
@@ -317,7 +318,9 @@ export default {
       return item ? item.tagType : 'info'
     },
     canShowEdit() {
-      return this.activity && hasActivityTypeEdit(this.activityType) && canEditMarketingActivity(this.activity)
+      return this.activity &&
+        hasActivityEditAction(this.activityType, MARKETING_PERMS.activityUpdate) &&
+        canEditMarketingActivity(this.activity)
     },
     showInitiator() {
       return ['3', '4', '5', '6'].includes(this.activityType)

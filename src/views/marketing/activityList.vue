@@ -37,7 +37,7 @@
         <el-option v-for="item in activityStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
-      <el-button v-if="canEdit" class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新建{{ typeMeta ? typeMeta.label : '活动' }}</el-button>
+      <el-button v-if="canCreate" class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新建{{ typeMeta ? typeMeta.label : '活动' }}</el-button>
 
       <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 20px;">
         <el-table-column type="index" width="55" label="序号" align="center">
@@ -73,19 +73,19 @@
         <el-table-column label="操作" align="center" width="160" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
-              <el-button v-if="canView" type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
-              <el-dropdown v-if="canView" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+              <el-button v-if="canDetail" type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
+              <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
                 <el-button type="primary" size="mini">
                   更多<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item v-if="!useDiscountDrawer" command="record">领取记录</el-dropdown-item>
-                  <el-dropdown-item v-if="canEdit" command="copy">复制</el-dropdown-item>
-                  <el-dropdown-item v-if="canEdit && canEditRow(scope.row)" command="edit" divided>编辑</el-dropdown-item>
-                  <el-dropdown-item v-if="canEdit && canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
-                  <el-dropdown-item v-if="canEdit && canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
-                  <el-dropdown-item v-if="canEdit && fixedType === '5'" command="qrcode">二维码</el-dropdown-item>
-                  <el-dropdown-item v-if="canEdit && fixedType === '6'" command="exchange">兑换码</el-dropdown-item>
+                  <el-dropdown-item v-if="!useDiscountDrawer && canReceiveRecord" command="record">领取记录</el-dropdown-item>
+                  <el-dropdown-item v-if="canCreate" command="copy">复制</el-dropdown-item>
+                  <el-dropdown-item v-if="canUpdate && canEditRow(scope.row)" command="edit" divided>编辑</el-dropdown-item>
+                  <el-dropdown-item v-if="canStopAction && canStop(scope.row)" command="stop" divided>停用</el-dropdown-item>
+                  <el-dropdown-item v-if="canDirectionalSendAction && canDirectionalSend(scope.row)" command="send">发放</el-dropdown-item>
+                  <el-dropdown-item v-if="canScanQrcode && fixedType === '5'" command="qrcode">二维码</el-dropdown-item>
+                  <el-dropdown-item v-if="canExchangeCodes && fixedType === '6'" command="exchange">兑换码</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -163,7 +163,7 @@
             </div>
           </div>
           <div class="qrcode-actions">
-            <el-button type="primary" :loading="qrcodeLoading" @click="handleRegenerateQrcode">重新生成</el-button>
+            <el-button v-if="canScanQrcode" type="primary" :loading="qrcodeLoading" @click="handleRegenerateQrcode">重新生成</el-button>
             <el-button :disabled="!qrcodeImageSrc" @click="downloadQrcode">下载二维码</el-button>
           </div>
         </template>
@@ -175,7 +175,8 @@
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
 import { ACTIVITY_STATUS, getActivityTypeMeta } from './constants/activityTypes'
-import { hasActivityTypeEdit, hasActivityTypeView, canEditMarketingActivity } from './utils/marketingActivityAuth'
+import { hasActivityTypeEdit, hasActivityTypeView, hasActivityEditAction, hasActivityAction, hasMarketingPerm, canEditMarketingActivity } from './utils/marketingActivityAuth'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
 import { mapGetters } from 'vuex'
 import { isDiscountActivityType } from './constants/discountActivity'
@@ -225,10 +226,38 @@ export default {
       return getActivityTypeMeta(this.fixedType)
     },
     canView() {
-      return hasActivityTypeView(this.fixedType)
+      return hasActivityTypeView(this.fixedType) && hasMarketingPerm(MARKETING_PERMS.activityPage)
     },
+    canDetail() {
+      return hasActivityAction(this.fixedType, MARKETING_PERMS.activityDetail)
+    },
+    canCreate() {
+      return hasActivityEditAction(this.fixedType, MARKETING_PERMS.activityCreate)
+    },
+    canUpdate() {
+      return hasActivityEditAction(this.fixedType, MARKETING_PERMS.activityUpdate)
+    },
+    canStopAction() {
+      return hasActivityEditAction(this.fixedType, MARKETING_PERMS.activityStop)
+    },
+    canDirectionalSendAction() {
+      return hasActivityEditAction(this.fixedType, MARKETING_PERMS.activityDirectionalSend)
+    },
+    canScanQrcode() {
+      return hasActivityEditAction(this.fixedType, MARKETING_PERMS.activityScanQrcode)
+    },
+    canExchangeCodes() {
+      return hasActivityTypeEdit(this.fixedType) && (
+        hasMarketingPerm(MARKETING_PERMS.activityListExchangeCodes) ||
+        hasMarketingPerm(MARKETING_PERMS.activityGenerateExchangeCodes)
+      )
+    },
+    canReceiveRecord() {
+      return hasMarketingPerm(MARKETING_PERMS.receiveRecordPage)
+    },
+    /** @deprecated 兼容旧逻辑；优先用上面的细分权限 */
     canEdit() {
-      return hasActivityTypeEdit(this.fixedType)
+      return this.canCreate || this.canUpdate || this.canStopAction
     },
     drawerSupported() {
       return ['1', '2', '3', '4', '5', '6'].includes(this.fixedType) || isDiscountActivityType(this.fixedType)
@@ -347,6 +376,15 @@ export default {
     canEditRow(row) {
       return canEditMarketingActivity(row)
     },
+    hasMoreActions(row) {
+      return (!this.useDiscountDrawer && this.canReceiveRecord) ||
+        this.canCreate ||
+        (this.canUpdate && this.canEditRow(row)) ||
+        (this.canStopAction && this.canStop(row)) ||
+        (this.canDirectionalSendAction && this.canDirectionalSend(row)) ||
+        (this.canScanQrcode && this.fixedType === '5') ||
+        (this.canExchangeCodes && this.fixedType === '6')
+    },
     sendTimeLabel(row) {
       if (String(row.sendType) === '1') return '立即发放'
       if (String(row.sendType) === '2') {
@@ -384,7 +422,7 @@ export default {
       this.getList()
     },
     handleCreate() {
-      if (!this.canEdit) return
+      if (!this.canCreate) return
       if (this.drawerSupported) {
         this.editingActivityId = ''
         this.copySourceId = ''
@@ -397,7 +435,7 @@ export default {
       })
     },
     handleEdit(row) {
-      if (!this.canEdit) return
+      if (!this.canUpdate) return
       if (!this.canEditRow(row)) {
         this.$message.warning('仅未开始状态的活动可编辑')
         return
@@ -418,10 +456,12 @@ export default {
       })
     },
     handleDetail(row) {
+      if (!this.canDetail) return
       this.detailActivityId = row.activityId
       this.detailDrawerVisible = true
     },
     handleRecord(row) {
+      if (!this.canReceiveRecord) return
       this.$router.push({
         name: 'activityReceiveRecordList',
         query: {
@@ -433,6 +473,7 @@ export default {
       })
     },
     onDetailEdit(activity) {
+      if (!this.canUpdate) return
       if (!this.canEditRow(activity)) {
         this.$message.warning('仅未开始状态的活动可编辑')
         return
@@ -442,7 +483,7 @@ export default {
       this.formDrawerVisible = true
     },
     handleCopy(row) {
-      if (!this.canEdit) return
+      if (!this.canCreate) return
       if (this.drawerSupported) {
         this.editingActivityId = ''
         this.copySourceId = row.activityId
@@ -469,6 +510,7 @@ export default {
       }
     },
     handleStop(row) {
+      if (!this.canStopAction) return
       this.$confirm('确认停用该活动？', '提示', { type: 'warning' }).then(() => {
         stopActivity(row.activityId).then(res => {
           if (res.code === 200) {
@@ -481,6 +523,7 @@ export default {
       }).catch(() => {})
     },
     handleDirectionalSend(row) {
+      if (!this.canDirectionalSendAction) return
       if (this.sendingActivityId) return
       this.$confirm('确认立即向活动范围内用户定向发放？', '定向发放', { type: 'warning' }).then(() => {
         this.sendingActivityId = row.activityId
@@ -497,11 +540,13 @@ export default {
       }).catch(() => {})
     },
     handleQrcode(row) {
+      if (!this.canScanQrcode) return
       this.qrcodeActivityName = row.activityName || ''
       this.qrcodeVisible = true
       this.fetchQrcode(row.activityId, false)
     },
     handleRegenerateQrcode() {
+      if (!this.canScanQrcode) return
       const activityId = this.qrcodeData && this.qrcodeData.activityId
       if (!activityId) return
       this.fetchQrcode(activityId, true)
@@ -529,6 +574,7 @@ export default {
       link.click()
     },
     handleExchangeCodes(row) {
+      if (!this.canExchangeCodes) return
       this.$router.push({
         name: 'exchangeCodeList',
         query: {

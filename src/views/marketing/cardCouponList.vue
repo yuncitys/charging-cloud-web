@@ -22,7 +22,7 @@
         <el-option label="已作废" value="1" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
-      <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新增卡券</el-button>
+      <el-button v-if="canCreate" class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新增卡券</el-button>
 
       <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 20px;">
         <el-table-column type="index" width="55" label="序号" align="center">
@@ -57,16 +57,16 @@
         <el-table-column label="操作" align="center" width="200" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
-              <el-button type="primary" size="mini" @click="handleIssueDetail(scope.row)">发放明细</el-button>
-              <el-dropdown trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+              <el-button v-if="canUserCouponPage" type="primary" size="mini" @click="handleIssueDetail(scope.row)">发放明细</el-button>
+              <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
                 <el-button type="primary" size="mini">
                   更多<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item v-if="!isRowCancelled(scope.row)" command="edit">编辑卡券</el-dropdown-item>
-                  <el-dropdown-item v-if="!isRowCancelled(scope.row)" command="stock">增加库存</el-dropdown-item>
-                  <el-dropdown-item command="detail">卡券详情</el-dropdown-item>
-                  <el-dropdown-item v-if="!isRowCancelled(scope.row)" command="cancel" divided>作废卡券</el-dropdown-item>
+                  <el-dropdown-item v-if="canUpdate && !isRowCancelled(scope.row)" command="edit">编辑卡券</el-dropdown-item>
+                  <el-dropdown-item v-if="canIncreaseStock && !isRowCancelled(scope.row)" command="stock">增加库存</el-dropdown-item>
+                  <el-dropdown-item v-if="canDetail" command="detail">卡券详情</el-dropdown-item>
+                  <el-dropdown-item v-if="canCancel && !isRowCancelled(scope.row)" command="cancel" divided>作废卡券</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -141,6 +141,8 @@ import CardCouponFormDrawer from './components/CardCouponFormDrawer'
 import CardCouponDetailDrawer from './components/CardCouponDetailDrawer'
 import CardCouponStockDrawer from './components/CardCouponStockDrawer'
 import { getDeductionTypeLabel, getCardCouponTypeLabel } from './constants/cardCoupon'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
+import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
@@ -182,6 +184,14 @@ export default {
       }
     }
   },
+  computed: {
+    canCreate() { return hasMarketingPerm(MARKETING_PERMS.cardCouponCreate) },
+    canUpdate() { return hasMarketingPerm(MARKETING_PERMS.cardCouponUpdate) },
+    canDetail() { return hasMarketingPerm(MARKETING_PERMS.cardCouponDetail) },
+    canCancel() { return hasMarketingPerm(MARKETING_PERMS.cardCouponCancel) },
+    canIncreaseStock() { return hasMarketingPerm(MARKETING_PERMS.cardCouponIncreaseStock) },
+    canUserCouponPage() { return hasMarketingPerm(MARKETING_PERMS.userCouponPage) }
+  },
   created() {
     this.getList()
   },
@@ -218,16 +228,19 @@ export default {
       this.getList()
     },
     handleCreate() {
+      if (!this.canCreate) return
       this.editingCouponId = ''
       this.typeDialogVisible = true
     },
     openDrawer(type) {
+      if (!this.canCreate) return
       this.typeDialogVisible = false
       this.drawerCouponType = type
       this.editingCouponId = ''
       this.drawerVisible = true
     },
     handleEdit(row) {
+      if (!this.canUpdate) return
       if (this.isRowCancelled(row)) {
         this.$message.warning('卡券已作废，不可编辑')
         return
@@ -237,10 +250,12 @@ export default {
       this.drawerVisible = true
     },
     handleDetail(row) {
+      if (!this.canDetail) return
       this.detailCouponId = row.cardCouponId
       this.detailDrawerVisible = true
     },
     handleIssueDetail(row) {
+      if (!this.canUserCouponPage) return
       this.$router.push({
         name: 'cardCouponIssueList',
         query: {
@@ -252,6 +267,12 @@ export default {
     onDetailEdit(coupon) {
       if (!coupon) return
       this.handleEdit(coupon)
+    },
+    hasMoreActions(row) {
+      return (this.canUpdate && !this.isRowCancelled(row)) ||
+        (this.canIncreaseStock && !this.isRowCancelled(row)) ||
+        this.canDetail ||
+        (this.canCancel && !this.isRowCancelled(row))
     },
     handleMoreCommand(command, row) {
       if (command === 'edit') {
@@ -265,6 +286,7 @@ export default {
       }
     },
     openStockDrawer(row) {
+      if (!this.canIncreaseStock) return
       this.stockCoupon = {
         cardCouponId: row.cardCouponId,
         cardCouponName: row.cardCouponName,
@@ -274,6 +296,7 @@ export default {
       this.stockDrawerVisible = true
     },
     handleCancel(row) {
+      if (!this.canCancel) return
       this.$confirm('确认作废该卡券？未使用的用户券将同步作废。', '提示', { type: 'warning' }).then(() => {
         cancelCardCoupon(row.cardCouponId).then(res => {
           if (res.code === 200) {

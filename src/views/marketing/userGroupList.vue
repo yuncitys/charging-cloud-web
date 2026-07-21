@@ -12,7 +12,7 @@
     <div class="filter-container">
       <el-input v-model="listQuery.groupName" class="filter-item" placeholder="分组名称" clearable style="width: 200px;margin-right: 20px;" @keyup.enter.native="handleFilter" @clear="handleFilter" />
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
-      <el-button class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer()">新增分组</el-button>
+      <el-button v-if="canCreate" class="filter-item" type="primary" icon="el-icon-plus" @click="openDrawer()">新增分组</el-button>
 
       <el-table v-loading="listLoading" :data="list" fit highlight-current-row style="width: 100%;margin-top: 20px;">
         <el-table-column type="index" width="55" label="序号" align="center">
@@ -38,32 +38,32 @@
         <el-table-column label="操作" align="center" width="420" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
-              <el-button type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
+              <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
               <el-button
-                v-if="canMoveMembers(scope.row)"
+                v-if="canMoveIn && canMoveMembers(scope.row)"
                 type="primary"
                 size="mini"
                 @click="openMoveDrawer(scope.row, 'in')"
               >迁入</el-button>
               <el-button
-                v-if="canMoveMembers(scope.row)"
+                v-if="canMoveOut && canMoveMembers(scope.row)"
                 type="primary"
                 size="mini"
                 @click="openMoveDrawer(scope.row, 'out')"
               >迁出</el-button>
               <el-button
-                v-if="scope.row.labelStatus === '1'"
+                v-if="canLabelStatus && scope.row.labelStatus === '1'"
                 type="primary"
                 size="mini"
                 @click="handleToggleStatus(scope.row, '0')"
               >启用</el-button>
               <el-button
-                v-else
+                v-else-if="canLabelStatus"
                 type="warning"
                 size="mini"
                 @click="handleToggleStatus(scope.row, '1')"
               >停用</el-button>
-              <el-button type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button v-if="canDelete" type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
             </div>
           </template>
         </el-table-column>
@@ -95,6 +95,8 @@
 import { userGroupPage, deleteUserGroup, updateUserGroupLabelStatus } from '@/api/marketing/marketing'
 import UserGroupFormDrawer from './components/UserGroupFormDrawer'
 import UserGroupMoveDrawer from './components/UserGroupMoveDrawer'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
+import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
@@ -121,6 +123,14 @@ export default {
       moveTarget: null,
       moveMode: 'in'
     }
+  },
+  computed: {
+    canCreate() { return hasMarketingPerm(MARKETING_PERMS.userGroupCreate) },
+    canUpdate() { return hasMarketingPerm(MARKETING_PERMS.userGroupUpdate) },
+    canDelete() { return hasMarketingPerm(MARKETING_PERMS.userGroupDelete) },
+    canMoveIn() { return hasMarketingPerm(MARKETING_PERMS.userGroupMoveIn) },
+    canMoveOut() { return hasMarketingPerm(MARKETING_PERMS.userGroupMoveOut) },
+    canLabelStatus() { return hasMarketingPerm(MARKETING_PERMS.userGroupLabelStatus) }
   },
   created() {
     this.getList()
@@ -152,10 +162,13 @@ export default {
       this.getList()
     },
     openDrawer(row) {
+      if (row ? !this.canUpdate : !this.canCreate) return
       this.editingGroup = row || null
       this.drawerVisible = true
     },
     openMoveDrawer(row, mode) {
+      if (mode === 'in' && !this.canMoveIn) return
+      if (mode === 'out' && !this.canMoveOut) return
       if (!this.canMoveMembers(row)) {
         this.$message.warning('仅批量导入类型分组支持迁入迁出')
         return
@@ -165,6 +178,7 @@ export default {
       this.moveDrawerVisible = true
     },
     handleToggleStatus(row, labelStatus) {
+      if (!this.canLabelStatus) return
       const action = labelStatus === '0' ? '启用' : '停用'
       this.$confirm(`确认${action}该分组？`, '提示', { type: 'warning' }).then(() => {
         updateUserGroupLabelStatus(row.id, labelStatus).then(res => {
@@ -178,6 +192,7 @@ export default {
       }).catch(() => {})
     },
     handleDelete(row) {
+      if (!this.canDelete) return
       this.$confirm('确认删除该分组？', '提示', { type: 'warning' }).then(() => {
         deleteUserGroup(row.id).then(res => {
           if (res.code === 200) {

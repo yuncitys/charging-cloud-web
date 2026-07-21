@@ -62,7 +62,7 @@
         <el-table-column label="操作" align="center" width="160" fixed="right">
           <template slot-scope="scope">
             <el-button
-              v-if="canCancel(scope.row)"
+              v-if="canCancelUserCoupon(scope.row)"
               type="text"
               size="small"
               @click="handleCancelUserCoupon(scope.row)"
@@ -96,6 +96,8 @@
 <script>
 import { userCouponPage, cancelUserCoupon } from '@/api/marketing/marketing'
 import { USER_COUPON_STATUS, getUserCouponStatusLabel, getUserCouponStatusTagType } from './constants/cardCoupon'
+import { MARKETING_PERMS } from './constants/marketingPermissions'
+import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
@@ -153,7 +155,8 @@ export default {
     statusTagType(status) {
       return getUserCouponStatusTagType(status)
     },
-    canCancel(row) {
+    canCancelUserCoupon(row) {
+      if (!hasMarketingPerm(MARKETING_PERMS.userCouponCancel)) return false
       return row.usedStatus === '0' || row.usedStatus === '3'
     },
     goBack() {
@@ -218,6 +221,7 @@ export default {
       this.getList()
     },
     handleCancelUserCoupon(row) {
+      if (!hasMarketingPerm(MARKETING_PERMS.userCouponCancel)) return
       this.$confirm('确认作废该用户卡券？', '提示', { type: 'warning' }).then(() => {
         cancelUserCoupon(row.userCardCouponId).then(res => {
           if (res.code === 200) {
