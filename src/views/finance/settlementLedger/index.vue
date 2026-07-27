@@ -164,7 +164,7 @@
         <el-table-column label="更新时间" width="160" align="center">
           <template slot-scope="scope">{{ scope.row.updateTime | formatDate }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="280" align="center" fixed="right" class-name="table-action-cell">
+        <el-table-column label="操作" width="380" align="center" fixed="right" class-name="table-action-cell">
           <template slot-scope="scope">
             <div class="table-action-btns">
               <el-button
@@ -172,7 +172,7 @@
                 size="mini"
                 type="primary"
                 icon="el-icon-document"
-                @click="openDrawer(scope.row)"
+                @click="openDrawer(scope.row, 'ledger')"
               >台账明细</el-button>
               <el-button
                 v-if="scope.row.status !== 2 && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
@@ -185,6 +185,13 @@
               >
                 提交分账
               </el-button>
+              <el-button
+                v-if="canOpenSubsidy"
+                size="mini"
+                type="primary"
+                icon="el-icon-wallet"
+                @click="openDrawer(scope.row, 'subsidy')"
+              >营销补款</el-button>
             </div>
           </template>
         </el-table-column>
@@ -214,6 +221,8 @@
       @close="onDrawerClose"
     >
       <div v-if="drawer.summary" class="drawer-body">
+        <el-tabs v-model="drawerActiveTab" @tab-click="onDrawerTabClick">
+          <el-tab-pane label="台账与分账" name="ledger">
         <el-row :gutter="16" class="summary-row">
           <el-col :span="6">
             <div class="summary-card">
@@ -484,6 +493,15 @@
             @current-change="onLinePage"
           />
         </div>
+          </el-tab-pane>
+          <el-tab-pane v-if="canOpenSubsidy" label="营销补款" name="subsidy" lazy>
+            <SubsidyLedgerPanel
+              v-if="drawer.visible && drawer.periodId && drawerActiveTab === 'subsidy'"
+              :period-id="drawer.periodId"
+              :merchant-id="subsidyPanelMerchantId"
+            />
+          </el-tab-pane>
+        </el-tabs>
       </div>
     </el-drawer>
 
@@ -637,11 +655,15 @@ import { getMerchant } from '@/api/merchant/merchant'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { parseTime } from '@/utils/index'
+import SubsidyLedgerPanel from '@/views/marketing/components/SubsidyLedgerPanel'
+import { MARKETING_PERMS } from '@/views/marketing/constants/marketingPermissions'
+import { hasMarketingPerm } from '@/views/marketing/utils/marketingActivityAuth'
 
 export default {
   name: 'SettlementLedger',
   components: {
-    downloadProgress
+    downloadProgress,
+    SubsidyLedgerPanel
   },
   filters: {
     formatDate(time) {
@@ -720,13 +742,23 @@ export default {
         payDetails: [],
         merchantAlloc: []
       },
-      recalcLineSplitLoadingId: null
+      recalcLineSplitLoadingId: null,
+      drawerActiveTab: 'ledger'
     }
   },
   computed: {
     drawerTitle() {
       if (!this.drawer.summary) return '台账明细'
       return `台账明细 — ${this.drawer.summary.periodKey || ''}`
+    },
+    canOpenSubsidy() {
+      return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage)
+        || hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage)
+    },
+    subsidyPanelMerchantId() {
+      const s = this.drawer.summary
+      if (s && s.merchantId != null && s.merchantId !== '') return s.merchantId
+      return ''
     }
   },
   created() {
@@ -1014,7 +1046,8 @@ export default {
       this.searchForm.page = val
       this.getList()
     },
-    openDrawer(row) {
+    openDrawer(row, tab = 'ledger') {
+      this.drawerActiveTab = tab === 'subsidy' ? 'subsidy' : 'ledger'
       this.drawer.visible = true
       this.drawer.periodId = row.id
       this.lineQuery = {
@@ -1025,6 +1058,8 @@ export default {
         bizOrderCode: '',
         payCode: ''
       }
+      // 先用行数据占位，便于营销补款 Tab 立刻拿到 merchantId
+      this.drawer.summary = row
       periodDetail(row.id).then(res => {
         if (res.code === 200 && res.data) {
           this.drawer.summary = res.data.summary || row
@@ -1032,9 +1067,17 @@ export default {
           this.drawer.summary = row
           this.$message.error(res.msg || '加载账期详情失败')
         }
+        if (this.drawerActiveTab === 'ledger') {
+          this.loadLines()
+          this.loadPayoutBatches()
+        }
+      })
+    },
+    onDrawerTabClick() {
+      if (this.drawerActiveTab === 'ledger' && this.drawer.periodId) {
         this.loadLines()
         this.loadPayoutBatches()
-      })
+      }
     },
     loadPayoutBatches() {
       if (!this.drawer.periodId) return
@@ -1159,6 +1202,7 @@ export default {
       this.drawer.periodId = null
       this.payoutBatches = []
       this.lineExportLoading = false
+      this.drawerActiveTab = 'ledger'
     },
     buildLinePayload(exportMode) {
       const sid = this.lineQuery.stationId
