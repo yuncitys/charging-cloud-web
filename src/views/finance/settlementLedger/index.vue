@@ -172,7 +172,7 @@
                 size="mini"
                 type="primary"
                 icon="el-icon-document"
-                @click="openDrawer(scope.row, 'ledger')"
+                @click="openDrawer(scope.row)"
               >台账明细</el-button>
               <el-button
                 v-if="scope.row.status !== 2 && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
@@ -190,7 +190,7 @@
                 size="mini"
                 type="primary"
                 icon="el-icon-wallet"
-                @click="openDrawer(scope.row, 'subsidy')"
+                @click="openSubsidyDrawer(scope.row)"
               >营销补款</el-button>
             </div>
           </template>
@@ -221,8 +221,6 @@
       @close="onDrawerClose"
     >
       <div v-if="drawer.summary" class="drawer-body">
-        <el-tabs v-model="drawerActiveTab" @tab-click="onDrawerTabClick">
-          <el-tab-pane label="台账与分账" name="ledger">
         <el-row :gutter="16" class="summary-row">
           <el-col :span="6">
             <div class="summary-card">
@@ -493,15 +491,23 @@
             @current-change="onLinePage"
           />
         </div>
-          </el-tab-pane>
-          <el-tab-pane v-if="canOpenSubsidy" label="营销补款" name="subsidy" lazy>
-            <SubsidyLedgerPanel
-              v-if="drawer.visible && drawer.periodId && drawerActiveTab === 'subsidy'"
-              :period-id="drawer.periodId"
-              :merchant-id="subsidyPanelMerchantId"
-            />
-          </el-tab-pane>
-        </el-tabs>
+      </div>
+    </el-drawer>
+
+    <el-drawer
+      :title="subsidyDrawerTitle"
+      :visible.sync="subsidyDrawer.visible"
+      custom-class="settlement-ledger-drawer"
+      direction="rtl"
+      size="86%"
+      append-to-body
+      @close="onSubsidyDrawerClose"
+    >
+      <div v-if="subsidyDrawer.periodId" class="drawer-body">
+        <SubsidyLedgerPanel
+          :period-id="subsidyDrawer.periodId"
+          :merchant-id="subsidyDrawer.merchantId"
+        />
       </div>
     </el-drawer>
 
@@ -743,7 +749,12 @@ export default {
         merchantAlloc: []
       },
       recalcLineSplitLoadingId: null,
-      drawerActiveTab: 'ledger'
+      subsidyDrawer: {
+        visible: false,
+        periodId: null,
+        merchantId: '',
+        periodKey: ''
+      }
     }
   },
   computed: {
@@ -751,14 +762,13 @@ export default {
       if (!this.drawer.summary) return '台账明细'
       return `台账明细 — ${this.drawer.summary.periodKey || ''}`
     },
+    subsidyDrawerTitle() {
+      const key = this.subsidyDrawer.periodKey
+      return key ? `营销补款 — ${key}` : '营销补款'
+    },
     canOpenSubsidy() {
       return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage)
         || hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage)
-    },
-    subsidyPanelMerchantId() {
-      const s = this.drawer.summary
-      if (s && s.merchantId != null && s.merchantId !== '') return s.merchantId
-      return ''
     }
   },
   created() {
@@ -1046,8 +1056,7 @@ export default {
       this.searchForm.page = val
       this.getList()
     },
-    openDrawer(row, tab = 'ledger') {
-      this.drawerActiveTab = tab === 'subsidy' ? 'subsidy' : 'ledger'
+    openDrawer(row) {
       this.drawer.visible = true
       this.drawer.periodId = row.id
       this.lineQuery = {
@@ -1058,8 +1067,6 @@ export default {
         bizOrderCode: '',
         payCode: ''
       }
-      // 先用行数据占位，便于营销补款 Tab 立刻拿到 merchantId
-      this.drawer.summary = row
       periodDetail(row.id).then(res => {
         if (res.code === 200 && res.data) {
           this.drawer.summary = res.data.summary || row
@@ -1067,17 +1074,22 @@ export default {
           this.drawer.summary = row
           this.$message.error(res.msg || '加载账期详情失败')
         }
-        if (this.drawerActiveTab === 'ledger') {
-          this.loadLines()
-          this.loadPayoutBatches()
-        }
-      })
-    },
-    onDrawerTabClick() {
-      if (this.drawerActiveTab === 'ledger' && this.drawer.periodId) {
         this.loadLines()
         this.loadPayoutBatches()
-      }
+      })
+    },
+    openSubsidyDrawer(row) {
+      if (!row || !row.id) return
+      this.subsidyDrawer.periodId = row.id
+      this.subsidyDrawer.periodKey = row.periodKey || ''
+      this.subsidyDrawer.merchantId =
+        row.merchantId != null && row.merchantId !== '' ? row.merchantId : ''
+      this.subsidyDrawer.visible = true
+    },
+    onSubsidyDrawerClose() {
+      this.subsidyDrawer.periodId = null
+      this.subsidyDrawer.merchantId = ''
+      this.subsidyDrawer.periodKey = ''
     },
     loadPayoutBatches() {
       if (!this.drawer.periodId) return
@@ -1202,7 +1214,6 @@ export default {
       this.drawer.periodId = null
       this.payoutBatches = []
       this.lineExportLoading = false
-      this.drawerActiveTab = 'ledger'
     },
     buildLinePayload(exportMode) {
       const sid = this.lineQuery.stationId

@@ -1,19 +1,8 @@
 <template>
   <div class="subsidy-ledger-panel">
-    <div class="period-lock-tip">
-      <span>当前账期 ID：</span>
-      <strong>{{ periodId }}</strong>
-    </div>
     <el-tabs v-model="activeTab" @tab-click="loadActive">
       <el-tab-pane v-if="canLedgerPage" label="补款台账" name="ledger">
         <div class="filter-container">
-          <el-input
-            v-model="ledgerQuery.merchantId"
-            class="filter-item"
-            style="width: 150px;"
-            placeholder="商户ID"
-            clearable
-          />
           <el-select
             v-model="ledgerQuery.status"
             class="filter-item"
@@ -59,13 +48,6 @@
 
       <el-tab-pane v-if="canBatchPage" label="出款批次" name="batch">
         <div class="filter-container">
-          <el-input
-            v-model="batchQuery.merchantId"
-            class="filter-item"
-            style="width: 150px;"
-            placeholder="商户ID"
-            clearable
-          />
           <el-select
             v-model="batchQuery.status"
             class="filter-item"
@@ -258,11 +240,6 @@ export default {
 </script>
 
 <style scoped>
-.period-lock-tip {
-  margin-bottom: 12px;
-  font-size: 13px;
-  color: #606266;
-}
 .filter-item {
   margin-right: 12px;
 }
