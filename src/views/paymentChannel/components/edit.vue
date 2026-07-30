@@ -149,6 +149,80 @@
           </el-col> -->
         </el-row>
         </div>
+        <div class="wxPartnerConfig" v-else-if="form.channelName === '微信服务商'">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="服务商商户号">
+                <el-input v-model="wxPartnerConfig.spMchId" clearable placeholder="服务商商户号"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="服务商AppId">
+                <el-input v-model="wxPartnerConfig.spAppId" clearable placeholder="服务商AppId"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="平台收单子商户号">
+                <el-input v-model="wxPartnerConfig.collectionSubMchId" clearable placeholder="平台收单子商户号"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="启用分账">
+                <el-switch v-model="wxPartnerConfig.profitSharingEnabled"></el-switch>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="小程序id">
+                <el-input v-model="wxPartnerConfig.appletAccount.id" clearable placeholder="小程序id"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="小程序secret">
+                <el-input v-model="wxPartnerConfig.appletAccount.secret" clearable placeholder="小程序secret"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="公众号id">
+                <el-input v-model="wxPartnerConfig.officialAccount.id" clearable placeholder="公众号APPID"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="公众号secret">
+                <el-input v-model="wxPartnerConfig.officialAccount.secret" clearable placeholder="公众号secret"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="API V3秘钥">
+                <el-input v-model="wxPartnerConfig.apiV3Key" clearable placeholder="API V3秘钥"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="证书序列号">
+                <el-input v-model="wxPartnerConfig.serialNo" clearable placeholder="序列号"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="API私钥文件">
+                <el-input v-model="wxPartnerConfig.pemCert" clearable placeholder=".pem文件"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="回调域名">
+                <el-input v-model="wxPartnerConfig.callbackDomain" clearable placeholder="回调域名"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
         <div class="aliConfig" v-else-if="form.channelName === '支付宝'">
           <el-row>
             <el-col :span="12">
@@ -316,6 +390,19 @@ export default {
         'pemCert': '',
         'callbackDomain': ''
       },
+      wxPartnerConfig: {
+        merchantMode: 'PARTNER',
+        spMchId: '',
+        spAppId: '',
+        collectionSubMchId: '',
+        profitSharingEnabled: false,
+        officialAccount: { id: '', secret: '' },
+        appletAccount: { id: '', secret: '' },
+        apiV3Key: '',
+        serialNo: '',
+        pemCert: '',
+        callbackDomain: ''
+      },
       aliConfig: {
         'officialAccount': { 'id': '', 'secret': '' },
         'sandbox': null,
@@ -341,14 +428,16 @@ export default {
         requestDomain: '',
       },
       channelList: [
+        { name: '台州银行', code: 'tzbank' },
         { name: '微信', code: 'wxpay' },
-        { name: '支付宝', code: 'alipay' },
-        { name: '台州银行', code: 'tzbank' }
+        { name: '微信服务商', code: 'wxpay_partner' },
+        { name: '支付宝', code: 'alipay' }
       ],
       serviceProviderList: [
-        { name: '微信', code: 'wxpay' },
-        { name: '支付宝', code: 'alipay' },
-        { name: '台州银行', code: 'tzbank' }
+        { name: '台州银行', code: 'tzbank' },
+        { name: '微信(直连)', code: 'wxpay' },
+        { name: '微信(服务商)', code: 'wxpay_partner' },
+        { name: '支付宝', code: 'alipay' }
       ],
       channelRule: {
         channelName: [
@@ -387,6 +476,8 @@ export default {
         this.form = res.data
         if (this.form.channelName === '微信') {
           this.wxConfig = JSON.parse(this.form.configStr)
+        } else if (this.form.channelName === '微信服务商') {
+          this.wxPartnerConfig = JSON.parse(this.form.configStr)
         } else if (this.form.channelName === '支付宝') {
           this.aliConfig = JSON.parse(this.form.configStr)
         } else if (this.form.channelName === '台州银行') {
@@ -466,6 +557,11 @@ export default {
         if (this.form.channelName === '微信') {
           this.form.channelCode = 'wxpay'
           this.form.configStr = JSON.stringify(this.wxConfig)
+        } else if (this.form.channelName === '微信服务商') {
+          this.form.channelCode = 'wxpay_partner'
+          this.form.serviceProviderId = 'wxpay_partner'
+          this.wxPartnerConfig.merchantMode = 'PARTNER'
+          this.form.configStr = JSON.stringify(this.wxPartnerConfig)
         } else if (this.form.channelName === '支付宝') {
           this.form.channelCode = 'alipay'
           this.form.configStr = JSON.stringify(this.aliConfig)

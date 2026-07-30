@@ -23,10 +23,8 @@
         <el-table-column prop="channelCode" label="渠道代码"></el-table-column>
         <el-table-column prop="serviceProviderId" label="渠道服务商">
           <template slot-scope="scope">
-						<span v-if="scope.row.serviceProviderId == 'wxpay'">微信</span>
-						<span v-if="scope.row.serviceProviderId == 'alipay'">支付宝</span>
-            <span v-if="scope.row.serviceProviderId == 'tzbank'">台州银行</span>
-					</template>
+            <span>{{ formatServiceProvider(scope.row.serviceProviderId) }}</span>
+          </template>
         </el-table-column>
         <el-table-column prop="channelAccount" label="渠道账号"></el-table-column>
         <el-table-column prop="channelPassword" label="渠道密码"></el-table-column>
@@ -59,6 +57,7 @@
 <script>
 import edit from './components/edit'
 import { getList, del, update } from '@/api/channelConfigInfo'
+import { formatServiceProvider } from '@/utils/payChannel'
 export default {
   name: 'channelConfigInfo', // "渠道信息"
   components: { edit },
@@ -88,6 +87,7 @@ export default {
     this.search()
   },
   methods: {
+    formatServiceProvider,
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()
