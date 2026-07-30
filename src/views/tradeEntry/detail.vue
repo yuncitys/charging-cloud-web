@@ -37,14 +37,27 @@
         />
       </div>
 
+      <div v-if="form.serviceProviderId === 'wxpay_partner' && wxAuditRejectReasons.length" style="margin-bottom: 20px;">
+        <el-alert
+          v-for="(reason, index) in wxAuditRejectReasons"
+          :key="index"
+          title="微信驳回原因"
+          type="error"
+          :description="reason"
+          show-icon
+          :closable="false"
+          style="margin-bottom: 10px;"
+        />
+      </div>
+
       <el-form ref="form" :model="form" label-width="160px" size="medium" disabled>
         <!-- Step 1: Basic & Subject Info -->
         <div>
           <el-divider content-position="left">基础信息</el-divider>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="渠道代码">
-                <el-input v-model="form.serviceProviderId" />
+              <el-form-item label="支付渠道">
+                <el-input :value="formatServiceProvider(form.serviceProviderId)" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -63,6 +76,27 @@
               </el-form-item>
             </el-col>
           </el-row>
+
+          <div v-if="form.serviceProviderId === 'wxpay_partner'">
+            <el-divider content-position="left">微信进件信息</el-divider>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="申请单号">
+                  <el-input :value="wxExt.applymentId || '-'" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="微信状态">
+                  <el-input :value="wxExt.channelState || '-'" />
+                </el-form-item>
+              </el-col>
+              <el-col v-if="wxExt.signUrl" :span="24">
+                <el-form-item label="签约链接">
+                  <el-link :href="wxExt.signUrl" type="primary" target="_blank">去签约</el-link>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
 
           <el-divider content-position="left">商户主体信息</el-divider>
           <el-row>
@@ -362,6 +396,7 @@
 import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
+import { formatServiceProvider } from '@/utils/payChannel'
 
 export default {
   name: 'TradeEntryDetail',
@@ -407,6 +442,7 @@ export default {
       legAreaList: [],
       busKindOptions: [],
       merchantList: [],
+      wxExt: {},
       form: {
         id: undefined,
         // Basic
@@ -470,6 +506,26 @@ export default {
     canResubmit() {
       const val = Number(this.form.status)
       return [0, 32, 60].includes(val)
+    },
+    wxAuditRejectReasons() {
+      const raw = this.wxExt && this.wxExt.auditDetailJson
+      if (!raw) return []
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          return parsed.map(item => {
+            if (typeof item === 'string') return item
+            return item.reject_reason || item.rejectReason || item.field_name || item.field || JSON.stringify(item)
+          }).filter(Boolean)
+        }
+        if (typeof parsed === 'object' && parsed !== null) {
+          const reason = parsed.reject_reason || parsed.rejectReason
+          return reason ? [reason] : []
+        }
+        return [String(parsed)]
+      } catch (e) {
+        return [raw]
+      }
     }
   },
   created() {
@@ -483,6 +539,7 @@ export default {
     }
   },
   methods: {
+    formatServiceProvider,
     getMerchantList() {
       getMerchant().then(res => {
         if (res && res.code === 200) {
@@ -519,6 +576,7 @@ export default {
       getTradeEntryDetail(id).then(response => {
         const data = response.data || {}
         this.form = data.tradeEntry || data
+        this.wxExt = data.tradeEntryWx || {}
         this.$set(this.form, 'attchList', Array.isArray(data.attchList) ? data.attchList : [])
         this.mapAttachments(this.form.attchList)
         // 加载地址数据用于回显
