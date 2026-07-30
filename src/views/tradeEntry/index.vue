@@ -70,6 +70,11 @@
           <el-tag>{{ row.merType | typeFilter }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="渠道服务商" width="120" align="center">
+        <template slot-scope="{row}">
+          <span>{{ formatServiceProvider(row.serviceProviderId) }}</span>
+        </template>
+      </el-table-column>
       <el-table-column label="联系人" width="110" align="center">
         <template slot-scope="{row}">
           <span>{{ row.managerName }}</span>
@@ -140,6 +145,7 @@
 
 <script>
 import { listTradeEntry, delTradeEntry, removeTradeEntry } from '@/api/pay/tradeEntry'
+import { formatServiceProvider } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -244,6 +250,7 @@ export default {
     this.getList()
   },
   methods: {
+    formatServiceProvider,
     handleDateChange(val) {
       if (val) {
         this.listQuery.createTimeStart = val[0]

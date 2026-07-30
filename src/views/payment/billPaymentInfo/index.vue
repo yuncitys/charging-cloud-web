@@ -39,9 +39,7 @@
         <el-table-column type="index" width="100" label="序号"/>
         <el-table-column prop="serviceProviderId" label="渠道服务商">
             <template slot-scope="scope">
-              <span v-if="scope.row.serviceProviderId == 'wxpay'">微信</span>
-              <span v-if="scope.row.serviceProviderId == 'alipay'">支付宝</span>
-              <span v-if="scope.row.serviceProviderId == 'tzbank'">台州银行</span>
+              <span>{{ formatServiceProvider(scope.row.serviceProviderId) }}</span>
             </template>
         </el-table-column>
         <el-table-column prop="paymentMethodCode" label="支付方式"></el-table-column>
@@ -87,6 +85,7 @@
 
 <script>
 import { getList, del } from '@/api/billPaymentInfo'
+import { formatServiceProvider } from '@/utils/payChannel'
 export default {
   name: '支付流水信息', // "支付流水信息"
   data() {
@@ -128,6 +127,9 @@ export default {
         },{
           enCode: 'tzbank',
           fullName: '台州银行'
+        },{
+          enCode: 'wxpay_partner',
+          fullName: '微信(服务商)'
         },
       ],
       startTimeAndEndTime: []
@@ -142,6 +144,7 @@ export default {
     this.getLists();
   },
   methods: {
+    formatServiceProvider,
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()

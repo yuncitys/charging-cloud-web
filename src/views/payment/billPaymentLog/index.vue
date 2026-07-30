@@ -24,9 +24,7 @@
       <el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
         <el-table-column prop="serviceProviderId" label="渠道服务商">
             <template slot-scope="scope">
-              <span v-if="scope.row.serviceProviderId == 'wxpay'">微信</span>
-              <span v-if="scope.row.serviceProviderId == 'alipay'">支付宝</span>
-              <span v-if="scope.row.serviceProviderId == 'tzbank'">台州银行</span>
+              <span>{{ formatServiceProvider(scope.row.serviceProviderId) }}</span>
             </template>
         </el-table-column>
         <el-table-column prop="paymentMethodCode" label="支付方式"></el-table-column>
@@ -73,6 +71,7 @@
 </template>
 <script>
 import { getList,del } from '@/api/billPaymentLog'
+import { formatServiceProvider } from '@/utils/payChannel'
 import ReqAndRes from './ReqAndRes'
 export default {
   name: '支付日志', // "支付日志"
@@ -111,6 +110,9 @@ export default {
         },{
           enCode: 'tzbank',
           fullName: '台州银行'
+        },{
+          enCode: 'wxpay_partner',
+          fullName: '微信(服务商)'
         },
       ],
       payStatusList:[
@@ -135,6 +137,7 @@ export default {
     }
   },
   methods: {
+    formatServiceProvider,
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()
