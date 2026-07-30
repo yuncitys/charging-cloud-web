@@ -75,9 +75,14 @@
                 <el-input v-model="form.managerMobile" />
               </el-form-item>
             </el-col>
+            <el-col v-if="isWxPartner" :span="12">
+              <el-form-item label="联系邮箱">
+                <el-input v-model="form.managerEmail" />
+              </el-form-item>
+            </el-col>
           </el-row>
 
-          <div v-if="form.serviceProviderId === 'wxpay_partner'">
+          <div v-if="isWxPartner">
             <el-divider content-position="left">微信进件信息</el-divider>
             <el-row>
               <el-col :span="12">
@@ -88,6 +93,21 @@
               <el-col :span="12">
                 <el-form-item label="微信状态">
                   <el-input :value="wxExt.channelState || '-'" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="结算规则 ID">
+                  <el-input :value="wxExt.settlementId || '-'" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="所属行业">
+                  <el-input :value="wxExt.qualificationType || '-'" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="24">
+                <el-form-item label="经营场景">
+                  <el-input :value="wxSalesSceneLabels" />
                 </el-form-item>
               </el-col>
               <el-col v-if="wxExt.signUrl" :span="24">
@@ -144,7 +164,7 @@
                 <el-input v-model="form.merCertNo" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col v-if="!isWxPartner" :span="12">
               <el-form-item label="营业执照批次号">
                 <el-input v-model="form.corLicenseBatchNo" />
               </el-form-item>
@@ -218,7 +238,7 @@
                 <el-input v-model="form.merAddress" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col v-if="!isWxPartner" :span="12">
               <el-form-item label="经营类目">
                 <el-cascader
                   v-model="form.busKindCode"
@@ -234,6 +254,179 @@
               </el-form-item>
             </el-col>
           </el-row>
+
+          <div v-if="isWxPartner">
+            <template v-if="hasWxScene('SALES_SCENES_STORE')">
+              <el-divider content-position="left">线下场所</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="门头照">
+                    <el-image
+                      style="width: 200px; height: 120px"
+                      :src="form.storeEntranceImg"
+                      :preview-src-list="form.storeEntranceImg ? [form.storeEntranceImg] : []"
+                      fit="contain"
+                    >
+                      <div slot="error" class="image-slot"><i class="el-icon-picture-outline" /></div>
+                    </el-image>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="店内环境照">
+                    <el-image
+                      style="width: 200px; height: 120px"
+                      :src="form.storeInteriorImg"
+                      :preview-src-list="form.storeInteriorImg ? [form.storeInteriorImg] : []"
+                      fit="contain"
+                    >
+                      <div slot="error" class="image-slot"><i class="el-icon-picture-outline" /></div>
+                    </el-image>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_MINI_PROGRAM')">
+              <el-divider content-position="left">小程序场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="服务商小程序 AppId">
+                    <el-input :value="wxExt.miniProgramAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="商家小程序 AppId">
+                    <el-input :value="wxExt.miniProgramSubAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col v-if="scenePics('07').length" :span="24">
+                  <el-form-item label="小程序截图">
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                      <el-image
+                        v-for="(url, idx) in scenePics('07')"
+                        :key="'mini-' + idx"
+                        style="width: 120px; height: 120px"
+                        :src="url"
+                        :preview-src-list="scenePics('07')"
+                        fit="contain"
+                      />
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_MP')">
+              <el-divider content-position="left">公众号场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="服务商公众号 AppId">
+                    <el-input :value="wxExt.mpAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="商家公众号 AppId">
+                    <el-input :value="wxExt.mpSubAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col v-if="scenePics('08').length" :span="24">
+                  <el-form-item label="公众号截图">
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                      <el-image
+                        v-for="(url, idx) in scenePics('08')"
+                        :key="'mp-' + idx"
+                        style="width: 120px; height: 120px"
+                        :src="url"
+                        :preview-src-list="scenePics('08')"
+                        fit="contain"
+                      />
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_WEB')">
+              <el-divider content-position="left">网站场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="网站域名">
+                    <el-input :value="wxExt.webDomain || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="网站 AppId">
+                    <el-input :value="wxExt.webAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col v-if="scenePics('11').length" :span="24">
+                  <el-form-item label="网站授权函">
+                    <el-image
+                      style="width: 200px; height: 120px"
+                      :src="scenePics('11')[0]"
+                      :preview-src-list="scenePics('11')"
+                      fit="contain"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_APP')">
+              <el-divider content-position="left">App 场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="服务商 AppId">
+                    <el-input :value="wxExt.appAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="商家 AppId">
+                    <el-input :value="wxExt.appSubAppid || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col v-if="scenePics('09').length" :span="24">
+                  <el-form-item label="App 截图">
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                      <el-image
+                        v-for="(url, idx) in scenePics('09')"
+                        :key="'app-' + idx"
+                        style="width: 120px; height: 120px"
+                        :src="url"
+                        :preview-src-list="scenePics('09')"
+                        fit="contain"
+                      />
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_WEWORK')">
+              <el-divider content-position="left">企业微信场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="企业微信 CorpID">
+                    <el-input :value="wxExt.weworkSubCorpId || '-'" />
+                  </el-form-item>
+                </el-col>
+                <el-col v-if="scenePics('10').length" :span="24">
+                  <el-form-item label="企业微信截图">
+                    <div style="display: flex; flex-wrap: wrap; gap: 12px;">
+                      <el-image
+                        v-for="(url, idx) in scenePics('10')"
+                        :key="'wework-' + idx"
+                        style="width: 120px; height: 120px"
+                        :src="url"
+                        :preview-src-list="scenePics('10')"
+                        fit="contain"
+                      />
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+          </div>
 
           <el-divider content-position="left">法人/经营者信息</el-divider>
           <el-row>
@@ -268,12 +461,12 @@
                 <el-input v-model="form.corLegIdExaDate" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col v-if="!isWxPartner" :span="12">
               <el-form-item label="证件正面照批次号">
                 <el-input v-model="form.corLegIdFaceImgBatchNo" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col v-if="!isWxPartner" :span="12">
               <el-form-item label="证件背面照批次号">
                 <el-input v-model="form.corLegIdBackImgBatchNo" />
               </el-form-item>
@@ -371,12 +564,12 @@
                 <el-input v-model="form.settBankAccNo" />
               </el-form-item>
             </el-col>
-            <el-col v-if="form.settBankAccType === '0010'" :span="12">
+            <el-col v-if="form.settBankAccType === '0010' && !isWxPartner" :span="12">
               <el-form-item label="持卡人身份证号">
                 <el-input v-model="form.identityNo" />
               </el-form-item>
             </el-col>
-            <el-col v-if="form.settBankAccType === '0010'" :span="12">
+            <el-col v-if="form.settBankAccType === '0010' && !isWxPartner" :span="12">
               <el-form-item label="银行预留手机号">
                 <el-input v-model="form.mobileNo" />
               </el-form-item>
@@ -397,6 +590,7 @@ import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/a
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
 import { formatServiceProvider } from '@/utils/payChannel'
+import { formatSalesSceneLabels, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
 export default {
   name: 'TradeEntryDetail',
@@ -452,6 +646,7 @@ export default {
         apiVersion: '',
         managerName: '',
         managerMobile: '',
+        managerEmail: '',
         // Subject
         merchantNo: '',
         busTradeMerNo: '',
@@ -461,6 +656,9 @@ export default {
         merName: '',
         merCertNo: '',
         corLicenseBatchNo: '',
+        corLicenseImg: '',
+        storeEntranceImg: '',
+        storeInteriorImg: '',
         shortName: '',
         corCapital: 0,
         corIdEffectDate: '',
@@ -477,7 +675,9 @@ export default {
         corLegIdType: '',
         corLegIdNo: '',
         corLegIdFaceImgBatchNo: '',
+        corLegIdFaceImg: '',
         corLegIdBackImgBatchNo: '',
+        corLegIdBackImg: '',
         corLegIdEffectDate: '',
         corLegIdExaDate: '',
         corLegProvince: '',
@@ -497,6 +697,9 @@ export default {
     }
   },
   computed: {
+    isWxPartner() {
+      return this.form.serviceProviderId === 'wxpay_partner'
+    },
     merchantName() {
       const id = this.form && this.form.merchantId
       if (id === null || id === undefined || id === '') return '-'
@@ -526,6 +729,9 @@ export default {
       } catch (e) {
         return [raw]
       }
+    },
+    wxSalesSceneLabels() {
+      return formatSalesSceneLabels(this.wxExt && this.wxExt.salesScenesTypes)
     }
   },
   created() {
@@ -551,6 +757,19 @@ export default {
         this.merchantList = []
       })
     },
+    normalizeWxExt(wxExt) {
+      return flattenTradeEntryWx(wxExt)
+    },
+    hasWxScene(scene) {
+      const scenes = (this.wxExt && this.wxExt.salesScenesTypes) || []
+      return scenes.includes(scene)
+    },
+    scenePics(type) {
+      const ft = parseInt(type, 10)
+      return (this.form.attchList || [])
+        .filter(a => a && a.fileType === ft && (a.fileUrl || a.url || a.path))
+        .map(a => a.fileUrl || a.url || a.path)
+    },
     mapAttachments(attchList) {
       if (!Array.isArray(attchList)) return
       attchList.forEach(a => {
@@ -563,6 +782,10 @@ export default {
           this.$set(this.form, 'corLegIdFaceImg', url)
         } else if (ft === '02') {
           this.$set(this.form, 'corLegIdBackImg', url)
+        } else if (ft === '05') {
+          this.$set(this.form, 'storeEntranceImg', url)
+        } else if (ft === '06') {
+          this.$set(this.form, 'storeInteriorImg', url)
         }
       })
     },
@@ -576,7 +799,7 @@ export default {
       getTradeEntryDetail(id).then(response => {
         const data = response.data || {}
         this.form = data.tradeEntry || data
-        this.wxExt = data.tradeEntryWx || {}
+        this.wxExt = this.normalizeWxExt(data.tradeEntryWx || {})
         this.$set(this.form, 'attchList', Array.isArray(data.attchList) ? data.attchList : [])
         this.mapAttachments(this.form.attchList)
         // 加载地址数据用于回显
@@ -622,7 +845,10 @@ export default {
     },
     handleResubmit() {
       try {
-        const payload = { ...this.form }
+        const payload = { ...this.form, attchList: this.form.attchList || [] }
+        if (this.isWxPartner) {
+          payload.tradeEntryWx = { ...this.wxExt }
+        }
         delete payload.id
         sessionStorage.setItem('tradeEntryPrefill', JSON.stringify(payload))
       } catch (e) {

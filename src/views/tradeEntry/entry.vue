@@ -41,6 +41,11 @@
                 <el-input v-model="form.managerMobile" placeholder="请输入管理员手机号" />
               </el-form-item>
             </el-col>
+            <el-col :span="12" v-if="isWxPartner">
+              <el-form-item label="联系邮箱" prop="managerEmail">
+                <el-input v-model="form.managerEmail" placeholder="用于接收微信开户邮件及业务通知" />
+              </el-form-item>
+            </el-col>
           </el-row>
 
           <el-divider content-position="left">商户主体信息</el-divider>
@@ -95,7 +100,7 @@
                 <el-select v-model="form.tradeMerType" placeholder="请选择交易商户类型" style="width: 100%" :disabled="isEdit" @change="handleTradeMerTypeChange">
                   <el-option label="个体工商户" value="0" />
                   <el-option label="企业" value="1" />
-                  <el-option label="小微商户(自然人)" value="2" />
+                  <el-option v-if="!isWxPartner" label="小微商户(自然人)" value="2" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -146,31 +151,6 @@
               </el-form-item>
             </el-col>
           </el-row>
-
-          <template v-if="isWxPartner">
-            <el-divider content-position="left">微信服务商信息</el-divider>
-            <el-row>
-              <el-col :span="12">
-                <el-form-item label="主体类型" prop="tradeEntryWx.organizationType">
-                  <el-select v-model="form.tradeEntryWx.organizationType" placeholder="请选择主体类型" style="width: 100%" :disabled="isEdit">
-                    <el-option label="小微商户(自然人) — 2401" value="2401" />
-                    <el-option label="个体工商户 — 2500" value="2500" />
-                    <el-option label="企业 — 2502" value="2502" />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="结算规则 ID" prop="tradeEntryWx.qualificationType">
-                  <el-input v-model="form.tradeEntryWx.qualificationType" placeholder="请输入微信行业结算规则 ID" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item label="特约 AppId" prop="tradeEntryWx.subAppid">
-                  <el-input v-model="form.tradeEntryWx.subAppid" placeholder="可选，特约商户 AppId" />
-                </el-form-item>
-              </el-col>
-            </el-row>
-          </template>
         </div>
 
         <!-- Step 2: Address & Legal Person -->
@@ -218,7 +198,7 @@
                 <el-input v-model="form.merAddress" placeholder="请输入详细地址" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="12" v-if="!isWxPartner">
               <el-form-item label="经营类目" prop="busKindCode">
                 <el-cascader
                   v-model="form.busKindCode"
@@ -230,12 +210,250 @@
                 />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="isWxPartner ? 24 : 12">
               <el-form-item label="客户电话" prop="serverPhone">
                 <el-input v-model="form.serverPhone" placeholder="请输入客户电话" />
               </el-form-item>
             </el-col>
+            <template v-if="isWxPartner">
+              <el-col :span="12">
+                <el-form-item label="结算规则 ID" prop="tradeEntryWx.settlementId">
+                  <el-input v-model="form.tradeEntryWx.settlementId" placeholder="入驻结算规则 ID，见微信费率对照表" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="所属行业" prop="tradeEntryWx.qualificationType">
+                  <el-input v-model="form.tradeEntryWx.qualificationType" placeholder="行业名称，如：停车、生活服务" />
+                </el-form-item>
+              </el-col>
+            </template>
           </el-row>
+
+          <template v-if="isWxPartner">
+            <el-divider content-position="left">经营场景</el-divider>
+            <el-row>
+              <el-col :span="24">
+                <el-form-item label="经营场景类型">
+                  <div class="scene-type-row">
+                    <el-checkbox-group v-model="form.tradeEntryWx.salesScenesTypes" class="scene-type-checkboxes">
+                      <el-checkbox v-for="item in wxSalesSceneOptions" :key="item.value" :label="item.value">
+                        {{ item.label }}
+                      </el-checkbox>
+                    </el-checkbox-group>
+                    <span class="scene-type-tip"><i class="el-icon-info" /> 至少选择一项；充电站建议勾选「线下场所」+「小程序」</span>
+                  </div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <template v-if="hasWxScene('SALES_SCENES_STORE')">
+              <el-divider content-position="left">线下场所</el-divider>
+              <el-row :gutter="20">
+                <el-col v-for="item in wxSceneAttachments('SALES_SCENES_STORE')" :key="item.type" :span="12">
+                  <el-form-item :label="item.label">
+                    <div class="scene-upload-inline">
+                      <div v-for="(url, idx) in scenePics(item.type)" :key="item.type + '-' + idx" class="scene-thumb">
+                        <el-image :src="url" :preview-src-list="scenePics(item.type)" fit="cover" />
+                      </div>
+                      <el-upload
+                        class="scene-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="(p) => handleUpload(p, item.type)"
+                        accept=".jpg,.jpeg,.png"
+                      >
+                        <div class="scene-upload-btn">
+                          <i :class="scenePics(item.type).length ? 'el-icon-refresh' : 'el-icon-plus'" />
+                          <span>{{ scenePics(item.type).length ? '更换' : '上传' }}</span>
+                        </div>
+                      </el-upload>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_MINI_PROGRAM')">
+              <el-divider content-position="left">小程序场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="服务商小程序 AppId">
+                    <el-input v-model="form.tradeEntryWx.miniProgramAppid" placeholder="可留空，默认取支付渠道配置" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="商家小程序 AppId">
+                    <el-input v-model="form.tradeEntryWx.miniProgramSubAppid" placeholder="与服务商 AppId 二选一或同时填写" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item label="小程序截图">
+                    <div class="scene-upload-inline">
+                      <div v-for="(url, idx) in scenePics('07')" :key="'07-' + idx" class="scene-thumb">
+                        <el-image :src="url" :preview-src-list="scenePics('07')" fit="cover" />
+                      </div>
+                      <el-upload
+                        class="scene-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="(p) => handleUpload(p, '07', true)"
+                        accept=".jpg,.jpeg,.png"
+                      >
+                        <div class="scene-upload-btn">
+                          <i class="el-icon-plus" />
+                          <span>添加</span>
+                        </div>
+                      </el-upload>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_MP')">
+              <el-divider content-position="left">公众号场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="服务商公众号 AppId">
+                    <el-input v-model="form.tradeEntryWx.mpAppid" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="商家公众号 AppId">
+                    <el-input v-model="form.tradeEntryWx.mpSubAppid" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item label="公众号截图">
+                    <div class="scene-upload-inline">
+                      <div v-for="(url, idx) in scenePics('08')" :key="'08-' + idx" class="scene-thumb">
+                        <el-image :src="url" :preview-src-list="scenePics('08')" fit="cover" />
+                      </div>
+                      <el-upload
+                        class="scene-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="(p) => handleUpload(p, '08', true)"
+                        accept=".jpg,.jpeg,.png"
+                      >
+                        <div class="scene-upload-btn">
+                          <i class="el-icon-plus" />
+                          <span>添加</span>
+                        </div>
+                      </el-upload>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_WEB')">
+              <el-divider content-position="left">网站场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="网站域名">
+                    <el-input v-model="form.tradeEntryWx.webDomain" placeholder="https://example.com" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="网站 AppId">
+                    <el-input v-model="form.tradeEntryWx.webAppid" placeholder="可选" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item label="网站授权函">
+                    <div class="scene-upload-inline">
+                      <div v-for="(url, idx) in scenePics('11')" :key="'11-' + idx" class="scene-thumb">
+                        <el-image :src="url" :preview-src-list="scenePics('11')" fit="cover" />
+                      </div>
+                      <el-upload
+                        class="scene-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="(p) => handleUpload(p, '11')"
+                        accept=".jpg,.jpeg,.png"
+                      >
+                        <div class="scene-upload-btn">
+                          <i :class="scenePics('11').length ? 'el-icon-refresh' : 'el-icon-plus'" />
+                          <span>{{ scenePics('11').length ? '更换' : '上传' }}</span>
+                        </div>
+                      </el-upload>
+                    </div>
+                    <div class="ocr-tip-text">备案主体不一致时需上传</div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_APP')">
+              <el-divider content-position="left">App 场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="服务商 AppId">
+                    <el-input v-model="form.tradeEntryWx.appAppid" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="12">
+                  <el-form-item label="商家 AppId">
+                    <el-input v-model="form.tradeEntryWx.appSubAppid" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item label="App 截图">
+                    <div class="scene-upload-inline">
+                      <div v-for="(url, idx) in scenePics('09')" :key="'09-' + idx" class="scene-thumb">
+                        <el-image :src="url" :preview-src-list="scenePics('09')" fit="cover" />
+                      </div>
+                      <el-upload
+                        class="scene-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="(p) => handleUpload(p, '09', true)"
+                        accept=".jpg,.jpeg,.png"
+                      >
+                        <div class="scene-upload-btn">
+                          <i class="el-icon-plus" />
+                          <span>添加</span>
+                        </div>
+                      </el-upload>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+
+            <template v-if="hasWxScene('SALES_SCENES_WEWORK')">
+              <el-divider content-position="left">企业微信场景</el-divider>
+              <el-row>
+                <el-col :span="12">
+                  <el-form-item label="企业微信 CorpID">
+                    <el-input v-model="form.tradeEntryWx.weworkSubCorpId" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item label="企业微信截图">
+                    <div class="scene-upload-inline">
+                      <div v-for="(url, idx) in scenePics('10')" :key="'10-' + idx" class="scene-thumb">
+                        <el-image :src="url" :preview-src-list="scenePics('10')" fit="cover" />
+                      </div>
+                      <el-upload
+                        class="scene-uploader"
+                        action=""
+                        :show-file-list="false"
+                        :http-request="(p) => handleUpload(p, '10', true)"
+                        accept=".jpg,.jpeg,.png"
+                      >
+                        <div class="scene-upload-btn">
+                          <i class="el-icon-plus" />
+                          <span>添加</span>
+                        </div>
+                      </el-upload>
+                    </div>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </template>
+          </template>
 
           <el-divider content-position="left">法人/经营者信息</el-divider>
           <div class="ocr-upload-container">
@@ -441,12 +659,12 @@
                 <el-input v-model="form.settBankAccNo" placeholder="结算银行卡号" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="form.settBankAccType === '0010'">
+            <el-col :span="12" v-if="form.settBankAccType === '0010' && !isWxPartner">
               <el-form-item label="持卡人身份证号" prop="identityNo">
                 <el-input v-model="form.identityNo" placeholder="结算卡持卡人身份证" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="form.settBankAccType === '0010'">
+            <el-col :span="12" v-if="form.settBankAccType === '0010' && !isWxPartner">
               <el-form-item label="银行预留手机号" prop="mobileNo">
                 <el-input v-model="form.mobileNo" placeholder="用于短信验证" />
               </el-form-item>
@@ -471,6 +689,7 @@ import { getAreaSelector } from '@/api/area/index'
 import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
+import { WX_SALES_SCENE_OPTIONS, WX_SCENE_ATTACHMENT, defaultWxTradeEntryWx, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
 export default {
   name: 'TradeEntryForm',
@@ -488,6 +707,7 @@ export default {
       busKindOptions: [],
       bankList: [],
       merchantList: [],
+      wxSalesSceneOptions: WX_SALES_SCENE_OPTIONS,
       corIdExaDateForever: false,
       corLegIdExaDateForever: false,
       form: {
@@ -499,6 +719,7 @@ export default {
         apiVersion: '',
         managerName: '',
         managerMobile: '',
+        managerEmail: '',
         // Subject
         busTradeMerNo: '',
         merType: '0',
@@ -508,6 +729,8 @@ export default {
         merCertNo: '',
         corLicenseBatchNo: '',
         corLicenseImg: '',
+        storeEntranceImg: '',
+        storeInteriorImg: '',
         shortName: '',
         corCapital: 0,
         corIdEffectDate: '',
@@ -543,11 +766,7 @@ export default {
         mobileNo: '',
         // Attachments
         attchList: [],
-        tradeEntryWx: {
-          organizationType: '',
-          qualificationType: '',
-          subAppid: ''
-        }
+        tradeEntryWx: defaultWxTradeEntryWx()
       },
       rules: {
         tenantId: [{ required: true, message: '请输入租户标识', trigger: 'blur' }],
@@ -571,6 +790,18 @@ export default {
     }
   },
   watch: {
+    'form.serviceProviderId'(val) {
+      if (val === 'wxpay_partner' && this.form.tradeMerType === '2') {
+        this.form.tradeMerType = ''
+      }
+      if (val === 'wxpay_partner') {
+        const wx = this.form.tradeEntryWx || {}
+        if (!wx.salesScenesTypes || !wx.salesScenesTypes.length) {
+          this.form.tradeEntryWx = { ...defaultWxTradeEntryWx(), ...wx }
+        }
+      }
+      this.applyChannelRules()
+    },
     'form.settBankAccType'(val) {
       if (val === '0030') {
         this.rules.settBankBranchName = [{ required: true, message: '请选择开户行名称', trigger: 'change' }]
@@ -580,8 +811,13 @@ export default {
         this.form.identityNo = ''
         this.form.mobileNo = ''
       } else if (val === '0010') {
-        this.rules.identityNo = [{ required: true, message: '请输入持卡人身份证号', trigger: 'blur' }]
-        this.rules.mobileNo = [{ required: true, message: '请输入银行预留手机号', trigger: 'blur' }]
+        if (!this.isWxPartner) {
+          this.rules.identityNo = [{ required: true, message: '请输入持卡人身份证号', trigger: 'blur' }]
+          this.rules.mobileNo = [{ required: true, message: '请输入银行预留手机号', trigger: 'blur' }]
+        } else {
+          this.$delete(this.rules, 'identityNo')
+          this.$delete(this.rules, 'mobileNo')
+        }
         this.$delete(this.rules, 'settBankBranchName')
         this.$delete(this.rules, 'settBankBranchId')
       } else {
@@ -593,8 +829,7 @@ export default {
       this.$nextTick(() => {
         this.$refs.form.clearValidate()
       })
-    }
-    ,
+    },
     corIdExaDateForever(val) {
       if (val) {
         this.form.corIdExaDate = '9999-12-31'
@@ -634,6 +869,9 @@ export default {
           if (data && typeof data === 'object') {
             delete data.id
             Object.assign(this.form, data)
+            if (data.tradeEntryWx) {
+              this.form.tradeEntryWx = flattenTradeEntryWx(data.tradeEntryWx)
+            }
             if (Array.isArray(this.form.attchList)) {
               this.mapAttachmentsFromAttchList(this.form.attchList)
             }
@@ -651,8 +889,69 @@ export default {
       this.form.id = id
       this.fetchData(id)
     }
+    this.applyChannelRules()
   },
   methods: {
+    applyChannelRules() {
+      const val = this.form.serviceProviderId
+      if (val === 'wxpay_partner') {
+        this.rules.managerEmail = [
+          { required: true, message: '请输入联系邮箱', trigger: 'blur' },
+          { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
+        ]
+      } else {
+        this.$delete(this.rules, 'managerEmail')
+      }
+    },
+    normalizeWxExt(wxExt) {
+      return flattenTradeEntryWx(wxExt)
+    },
+    hasWxScene(scene) {
+      const scenes = (this.form.tradeEntryWx && this.form.tradeEntryWx.salesScenesTypes) || []
+      return scenes.includes(scene)
+    },
+    wxSceneAttachments(scene) {
+      return WX_SCENE_ATTACHMENT[scene] || []
+    },
+    scenePics(type) {
+      const ft = parseInt(type, 10)
+      if (ft === 5 && this.form.storeEntranceImg) return [this.form.storeEntranceImg]
+      if (ft === 6 && this.form.storeInteriorImg) return [this.form.storeInteriorImg]
+      return (this.form.attchList || [])
+        .filter(a => a && Number(a.fileType) === ft && a.fileUrl)
+        .map(a => a.fileUrl)
+    },
+    validateWxScenes() {
+      const wx = this.form.tradeEntryWx || {}
+      const scenes = wx.salesScenesTypes || []
+      if (!scenes.length) {
+        return '请至少选择一项经营场景'
+      }
+      const uploaded = (this.form.attchList || []).map(a => Number(a.fileType))
+      const hasType = t => uploaded.includes(parseInt(t, 10))
+      for (const scene of scenes) {
+        if (scene === 'SALES_SCENES_STORE') {
+          if (!this.form.shortName) return '线下场所：商户简称不能为空'
+          if (!this.form.merCountyId || !this.form.merAddress) return '线下场所：经营地址区编码和详细地址不能为空'
+          if (!hasType('05')) return '线下场所：请上传门头照'
+          if (!hasType('06')) return '线下场所：请上传店内环境照'
+        } else if (scene === 'SALES_SCENES_MINI_PROGRAM') {
+          // 服务商 AppId 可由支付渠道配置补全，前端不强制填写
+        } else if (scene === 'SALES_SCENES_MP') {
+          if (!wx.mpAppid && !wx.mpSubAppid) return '公众号场景：服务商或商家公众号 AppId 至少填一项'
+          if (!hasType('08')) return '公众号场景：请上传公众号页面截图'
+        } else if (scene === 'SALES_SCENES_WEB') {
+          if (!wx.webDomain) return '网站场景：请填写互联网网站域名'
+        } else if (scene === 'SALES_SCENES_APP') {
+          if (!wx.appAppid && !wx.appSubAppid) return 'App 场景：服务商或商家 AppId 至少填一项'
+          if (!hasType('09')) return 'App 场景：请上传 App 截图'
+        } else if (scene === 'SALES_SCENES_WEWORK') {
+          if (!wx.weworkSubCorpId) return '企业微信场景：请填写商家企业微信 CorpID'
+          if (!hasType('10')) return '企业微信场景：请上传企业微信页面截图'
+        }
+      }
+      return null
+    },
     getMerchantList() {
       getMerchant().then(res => {
         if (res && res.code == 200) {
@@ -686,6 +985,10 @@ export default {
         } else if (ft === '02') {
           this.$set(this.form, 'corLegIdBackImg', url)
           if (a.fileBatchId) this.form.corLegIdBackImgBatchNo = a.fileBatchId
+        } else if (ft === '05') {
+          this.$set(this.form, 'storeEntranceImg', url)
+        } else if (ft === '06') {
+          this.$set(this.form, 'storeInteriorImg', url)
         }
       })
     },
@@ -758,7 +1061,7 @@ export default {
         this.form.settBankBranchId = bank.bank_code
       }
     },
-    handleUpload(params, type) {
+    handleUpload(params, type, multiple = false) {
       const file = params.file
       const isLt5M = file.size / 1024 / 1024 < 5
 
@@ -786,7 +1089,7 @@ export default {
         if (this.isWxPartner) {
           loading.close()
           this.$message.success('上传成功')
-          this.fillAttachment(type, fileUrl, null, file.name)
+          this.fillAttachment(type, fileUrl, null, file.name, multiple)
           return
         }
 
@@ -806,7 +1109,7 @@ export default {
         if (ocrData) {
           this.$message.success('识别成功')
           this.fillFormData(ocrData, type)
-          this.fillAttachment(type, fileUrl, ocrData, file.name)
+          this.fillAttachment(type, fileUrl, ocrData, file.name, false)
         } else {
           this.$message.warning('未能识别到有效信息')
         }
@@ -816,22 +1119,26 @@ export default {
         this.$message.error('操作失败，请检查网络或稍后重试')
       })
     },
-    fillAttachment(type, fileUrl, ocrData, fileName) {
+    fillAttachment(type, fileUrl, ocrData, fileName, multiple = false) {
       const attach = {
         fileName: fileName,
-        fileType: parseInt(type),
+        fileType: parseInt(type, 10),
         busTradeMerNo: this.form.busTradeMerNo,
         fileUrl: fileUrl
       }
       if (ocrData && ocrData.fileBatchId) {
         attach.fileBatchId = ocrData.fileBatchId
       }
-      this.form.attchList = this.form.attchList.filter(item => item.fileType !== parseInt(type))
-      this.form.attchList.push(attach)
+      if (!multiple) {
+        this.form.attchList = this.form.attchList.filter(item => Number(item.fileType) !== parseInt(type, 10))
+      }
+      this.$set(this.form, 'attchList', [...this.form.attchList, attach])
 
       if (type === '04') this.form.corLicenseImg = fileUrl
       if (type === '01') this.form.corLegIdFaceImg = fileUrl
       if (type === '02') this.form.corLegIdBackImg = fileUrl
+      if (type === '05') this.form.storeEntranceImg = fileUrl
+      if (type === '06') this.form.storeInteriorImg = fileUrl
     },
     fillFormData(data, type) {
       // 04: 营业执照
@@ -907,8 +1214,9 @@ export default {
         Object.assign(this.form, tradeEntryFields)
         const wxExt = detail.tradeEntryWx || tradeEntryWx
         if (wxExt) {
-          Object.assign(this.form.tradeEntryWx, wxExt)
+          this.form.tradeEntryWx = flattenTradeEntryWx(wxExt)
         }
+        this.applyChannelRules()
         this.$set(this.form, 'attchList', Array.isArray(attchList) ? attchList : [])
         this.corIdExaDateForever = String(this.form.corIdExaDate || '') === '9999-12-31'
         this.corLegIdExaDateForever = String(this.form.corLegIdExaDate || '') === '9999-12-31'
@@ -923,10 +1231,6 @@ export default {
         this.form.merCertType = '22'
       } else {
         this.form.merCertType = '11'
-      }
-      const map = { '0': '2500', '1': '2502', '2': '2401' }
-      if (this.isWxPartner) {
-        this.form.tradeEntryWx.organizationType = map[val] || ''
       }
     },
     next() {
@@ -947,12 +1251,29 @@ export default {
     },
     submit() {
       if (this.isWxPartner) {
-        if (!this.form.tradeEntryWx.organizationType) {
-          this.$message.error('请选择主体类型')
+        if (!this.form.managerEmail) {
+          this.$message.error('请输入联系邮箱')
+          return
+        }
+        if (!this.form.tradeEntryWx.settlementId) {
+          this.$message.error('请输入结算规则 ID')
           return
         }
         if (!this.form.tradeEntryWx.qualificationType) {
-          this.$message.error('请输入结算规则 ID')
+          this.$message.error('请输入所属行业')
+          return
+        }
+        const requiredTypes = ["4", "1", "2"]
+        const uploaded = (this.form.attchList || []).map(a => a.fileType)
+        const missing = requiredTypes.filter(t => !uploaded.includes(t))
+        if (missing.length) {
+          const labels = { "4": '营业执照', "1": '身份证正面', "2": '身份证反面' }
+          this.$message.error('请上传：' + missing.map(t => labels[t]).join('、'))
+          return
+        }
+        const sceneError = this.validateWxScenes()
+        if (sceneError) {
+          this.$message.error(sceneError)
           return
         }
       }
@@ -1034,6 +1355,82 @@ export default {
 
 .ocr-preview {
   margin-top: 12px;
+}
+
+.scene-type-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+
+.scene-type-checkboxes {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.scene-type-tip {
+  color: #909399;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.scene-upload-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.scene-thumb {
+  width: 72px;
+  height: 72px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: #fafafa;
+}
+
+.scene-thumb >>> .el-image {
+  width: 72px;
+  height: 72px;
+  display: block;
+}
+
+.scene-uploader >>> .el-upload {
+  width: auto;
+  display: inline-block;
+  line-height: normal;
+}
+
+.scene-upload-btn {
+  width: 72px;
+  height: 72px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #909399;
+  font-size: 12px;
+  cursor: pointer;
+  background: #fafafa;
+  transition: border-color 0.2s, color 0.2s;
+  box-sizing: border-box;
+}
+
+.scene-upload-btn:hover {
+  border-color: #409EFF;
+  color: #409EFF;
+}
+
+.scene-upload-btn i {
+  font-size: 18px;
+  margin-bottom: 2px;
 }
 
 .ocr-preview-image {
