@@ -94,7 +94,7 @@ EOF
 
 **Interfaces:**
 - Produces:
-  - `saveTradeMerchant` 接受 `tradeEntryWx: { organizationType, qualificationType, subAppid }`
+  - `saveTradeMerchant` 接受 `tradeEntryWx: { settlementId, qualificationType }`
   - `detailTradeEntry` 返回 `{ tradeEntry, attchList, tradeEntryWx }`
   - 附件保存时写入 `channelFileId`（若前端传入）
 
@@ -103,9 +103,8 @@ EOF
 ```java
 @Data
 public class TradeEntryWxDTO {
-    private String organizationType;
+    private String settlementId;
     private String qualificationType;
-    private String subAppid;
 }
 ```
 
@@ -252,18 +251,10 @@ isWxPartner () {
 
 | 表单项 | 字段 | 说明 |
 |--------|------|------|
-| 主体类型 | `form.tradeEntryWx.organizationType` | 2401/2500/2502，与 tradeMerType 联动 |
-| 结算规则 ID | `form.tradeEntryWx.qualificationType` | 微信行业编码 |
-| 特约 AppId | `form.tradeEntryWx.subAppid` | 可选 |
+| 结算规则 ID | `form.tradeEntryWx.settlementId` | 微信费率对照表 ID |
+| 所属行业 | `form.tradeEntryWx.qualificationType` | 行业名称 |
 
-`tradeMerType` change 时映射：
-
-```javascript
-const map = { '0': '2500', '1': '2502', '2': '2401' }
-if (this.isWxPartner) {
-  this.form.tradeEntryWx.organizationType = map[val] || ''
-}
-```
+`tradeMerType` 由后端映射 `subject_type`，表单不重复录入主体类型。
 
 - [ ] **Step 4: 上传逻辑分支**
 

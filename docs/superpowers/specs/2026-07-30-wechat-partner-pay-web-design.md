@@ -106,11 +106,14 @@
 
 ### 表单扩展字段（`form.tradeEntryWx`）
 
-- `organizationType`
-- `qualificationType`
-- `subAppid`（可选）
+- `settlementId` — 入驻结算规则 ID
+- `qualificationType` — 所属行业名称（非 ID）
 
-保存时随 `saveTradeMerchant` 一并提交（后端 Task B 完成后）。
+主表新增 `managerEmail`（微信必填）。`tradeMerType` 共用，后端映射 `subject_type`，**不再单独录入主体类型**。
+
+微信专用附件：`05` 门头照、`06` 店内照。
+
+保存时随 `saveTradeMerchant` 一并提交。
 
 ### 详情页扩展展示
 
