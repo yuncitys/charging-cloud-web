@@ -20,6 +20,7 @@
                 <el-select v-model="form.serviceProviderId" placeholder="请选择渠道代码" style="width: 100%" :disabled="isEdit">
                   <el-option label="台州银行 (tzbank)" value="tzbank" />
                   <el-option label="微信支付 (wxpay)" value="wxpay" />
+                  <el-option label="微信服务商 (wxpay_partner)" value="wxpay_partner" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -56,8 +57,11 @@
               <div class="el-upload__text">将营业执照拖到此处，或<em>点击上传</em></div>
               <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过5MB</div>
             </el-upload>
-            <div class="ocr-tip-text">
+            <div v-if="!isWxPartner" class="ocr-tip-text">
               <i class="el-icon-info"></i> 上传营业执照可自动识别并填充下方信息
+            </div>
+            <div v-else class="ocr-tip-text">
+              <i class="el-icon-info"></i> 上传营业执照图片（微信通道不支持 OCR 自动识别）
             </div>
             <div v-if="form.corLicenseImg" class="ocr-preview">
               <el-image
@@ -142,6 +146,31 @@
               </el-form-item>
             </el-col>
           </el-row>
+
+          <template v-if="isWxPartner">
+            <el-divider content-position="left">微信服务商信息</el-divider>
+            <el-row>
+              <el-col :span="12">
+                <el-form-item label="主体类型" prop="tradeEntryWx.organizationType">
+                  <el-select v-model="form.tradeEntryWx.organizationType" placeholder="请选择主体类型" style="width: 100%" :disabled="isEdit">
+                    <el-option label="小微商户(自然人) — 2401" value="2401" />
+                    <el-option label="个体工商户 — 2500" value="2500" />
+                    <el-option label="企业 — 2502" value="2502" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="结算规则 ID" prop="tradeEntryWx.qualificationType">
+                  <el-input v-model="form.tradeEntryWx.qualificationType" placeholder="请输入微信行业结算规则 ID" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="特约 AppId" prop="tradeEntryWx.subAppid">
+                  <el-input v-model="form.tradeEntryWx.subAppid" placeholder="可选，特约商户 AppId" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </template>
         </div>
 
         <!-- Step 2: Address & Legal Person -->
@@ -223,8 +252,11 @@
                   <i class="el-icon-upload"></i>
                   <div class="el-upload__text">将身份证<strong style="color: #409EFF">正面</strong>拖到此处，或<em>点击上传</em></div>
                 </el-upload>
-                <div class="ocr-tip-text">
+                <div v-if="!isWxPartner" class="ocr-tip-text">
                   <i class="el-icon-info"></i> 识别身份证正面
+                </div>
+                <div v-else class="ocr-tip-text">
+                  <i class="el-icon-info"></i> 上传身份证正面
                 </div>
                 <div v-if="form.corLegIdFaceImg" class="ocr-preview">
                   <el-image
@@ -252,8 +284,11 @@
                   <i class="el-icon-upload"></i>
                   <div class="el-upload__text">将身份证<strong style="color: #409EFF">反面</strong>拖到此处，或<em>点击上传</em></div>
                 </el-upload>
-                <div class="ocr-tip-text">
+                <div v-if="!isWxPartner" class="ocr-tip-text">
                   <i class="el-icon-info"></i> 识别身份证反面
+                </div>
+                <div v-else class="ocr-tip-text">
+                  <i class="el-icon-info"></i> 上传身份证反面
                 </div>
                 <div v-if="form.corLegIdBackImg" class="ocr-preview">
                   <el-image
@@ -507,7 +542,12 @@ export default {
         identityNo: '',
         mobileNo: '',
         // Attachments
-        attchList: []
+        attchList: [],
+        tradeEntryWx: {
+          organizationType: '',
+          qualificationType: '',
+          subAppid: ''
+        }
       },
       rules: {
         tenantId: [{ required: true, message: '请输入租户标识', trigger: 'blur' }],
@@ -523,6 +563,11 @@ export default {
         settBankAccName: [{ required: true, message: '请输入账户名称', trigger: 'blur' }],
         settBankAccNo: [{ required: true, message: '请输入银行账号', trigger: 'blur' }]
       }
+    }
+  },
+  computed: {
+    isWxPartner() {
+      return this.form.serviceProviderId === 'wxpay_partner'
     }
   },
   watch: {
@@ -724,22 +769,27 @@ export default {
 
       const loading = this.$loading({
         lock: true,
-        text: '正在上传并识别中...',
+        text: this.isWxPartner ? '正在上传...' : '正在上传并识别中...',
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
 
-      // 1. Upload file
       const uploadFormData = new FormData()
       uploadFormData.append('file', file)
 
       upload('WebAnnexFile', uploadFormData).then(uploadRes => {
-        const fileUrl = uploadRes.data.url || uploadRes.data // Adapt to response
+        const fileUrl = uploadRes.data.url || uploadRes.data
         if (!fileUrl) {
           throw new Error('文件上传失败，未获取到URL')
         }
 
-        // 2. OCR Recognition
+        if (this.isWxPartner) {
+          loading.close()
+          this.$message.success('上传成功')
+          this.fillAttachment(type, fileUrl, null, file.name)
+          return
+        }
+
         const ocrFormData = new FormData()
         ocrFormData.append('file', file)
         ocrFormData.append('imageType', type)
@@ -749,29 +799,14 @@ export default {
         return imgInfoDiscern(ocrFormData).then(ocrRes => {
           return { ocrData: ocrRes.data || ocrRes, fileUrl }
         })
-      }).then(({ ocrData, fileUrl }) => {
+      }).then(result => {
+        if (!result) return
+        const { ocrData, fileUrl } = result
         loading.close()
         if (ocrData) {
           this.$message.success('识别成功')
           this.fillFormData(ocrData, type)
-
-          // 3. Construct Attach object and add to attchList
-          const attach = {
-            fileBatchId: ocrData.fileBatchId,
-            fileName: file.name,
-            fileType: parseInt(type),
-            busTradeMerNo: this.form.busTradeMerNo,
-            fileUrl: fileUrl
-          }
-          // Remove existing attach of same type if any (optional, but good for re-upload)
-          this.form.attchList = this.form.attchList.filter(item => item.fileType !== parseInt(type))
-          this.form.attchList.push(attach)
-
-          // Update preview images
-          if (type === '04') this.form.corLicenseImg = fileUrl
-          if (type === '01') this.form.corLegIdFaceImg = fileUrl
-          if (type === '02') this.form.corLegIdBackImg = fileUrl
-
+          this.fillAttachment(type, fileUrl, ocrData, file.name)
         } else {
           this.$message.warning('未能识别到有效信息')
         }
@@ -780,6 +815,23 @@ export default {
         console.error('操作失败', err)
         this.$message.error('操作失败，请检查网络或稍后重试')
       })
+    },
+    fillAttachment(type, fileUrl, ocrData, fileName) {
+      const attach = {
+        fileName: fileName,
+        fileType: parseInt(type),
+        busTradeMerNo: this.form.busTradeMerNo,
+        fileUrl: fileUrl
+      }
+      if (ocrData && ocrData.fileBatchId) {
+        attach.fileBatchId = ocrData.fileBatchId
+      }
+      this.form.attchList = this.form.attchList.filter(item => item.fileType !== parseInt(type))
+      this.form.attchList.push(attach)
+
+      if (type === '04') this.form.corLicenseImg = fileUrl
+      if (type === '01') this.form.corLegIdFaceImg = fileUrl
+      if (type === '02') this.form.corLegIdBackImg = fileUrl
     },
     fillFormData(data, type) {
       // 04: 营业执照
@@ -851,7 +903,12 @@ export default {
         const detail = (response && response.data) || response || {}
         const tradeEntry = detail.tradeEntry || detail
         const attchList = detail.attchList || []
-        Object.assign(this.form, tradeEntry)
+        const { tradeEntryWx, ...tradeEntryFields } = tradeEntry
+        Object.assign(this.form, tradeEntryFields)
+        const wxExt = detail.tradeEntryWx || tradeEntryWx
+        if (wxExt) {
+          Object.assign(this.form.tradeEntryWx, wxExt)
+        }
         this.$set(this.form, 'attchList', Array.isArray(attchList) ? attchList : [])
         this.corIdExaDateForever = String(this.form.corIdExaDate || '') === '9999-12-31'
         this.corLegIdExaDateForever = String(this.form.corLegIdExaDate || '') === '9999-12-31'
@@ -866,6 +923,10 @@ export default {
         this.form.merCertType = '22'
       } else {
         this.form.merCertType = '11'
+      }
+      const map = { '0': '2500', '1': '2502', '2': '2401' }
+      if (this.isWxPartner) {
+        this.form.tradeEntryWx.organizationType = map[val] || ''
       }
     },
     next() {
@@ -885,12 +946,26 @@ export default {
       }).catch(() => {})
     },
     submit() {
+      if (this.isWxPartner) {
+        if (!this.form.tradeEntryWx.organizationType) {
+          this.$message.error('请选择主体类型')
+          return
+        }
+        if (!this.form.tradeEntryWx.qualificationType) {
+          this.$message.error('请输入结算规则 ID')
+          return
+        }
+      }
       this.$refs.form.validate(valid => {
         if (valid) {
           this.loading = true
           const isUpdate = !!this.form.id || this.isEdit
           const request = isUpdate ? updateTradeEntry : addTradeEntry
-          request(this.form).then(res => {
+          const payload = { ...this.form }
+          if (!this.isWxPartner) {
+            delete payload.tradeEntryWx
+          }
+          request(payload).then(res => {
             if (res && res.code === 200) {
               const data = (res && res.data) || {}
               const merNoFromResp =
