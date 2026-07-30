@@ -164,7 +164,7 @@
         <el-table-column label="更新时间" width="160" align="center">
           <template slot-scope="scope">{{ scope.row.updateTime | formatDate }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="280" align="center" fixed="right" class-name="table-action-cell">
+        <el-table-column label="操作" width="380" align="center" fixed="right" class-name="table-action-cell">
           <template slot-scope="scope">
             <div class="table-action-btns">
               <el-button
@@ -185,6 +185,13 @@
               >
                 提交分账
               </el-button>
+              <el-button
+                v-if="canOpenSubsidy"
+                size="mini"
+                type="primary"
+                icon="el-icon-wallet"
+                @click="openSubsidyDrawer(scope.row)"
+              >营销补款</el-button>
             </div>
           </template>
         </el-table-column>
@@ -487,6 +494,23 @@
       </div>
     </el-drawer>
 
+    <el-drawer
+      :title="subsidyDrawerTitle"
+      :visible.sync="subsidyDrawer.visible"
+      custom-class="settlement-ledger-drawer"
+      direction="rtl"
+      size="86%"
+      append-to-body
+      @close="onSubsidyDrawerClose"
+    >
+      <div v-if="subsidyDrawer.periodId" class="drawer-body">
+        <SubsidyLedgerPanel
+          :period-id="subsidyDrawer.periodId"
+          :merchant-id="subsidyDrawer.merchantId"
+        />
+      </div>
+    </el-drawer>
+
     <el-dialog
       title="分账批次 — 逐单结果"
       :visible.sync="payoutItemDialog.visible"
@@ -637,11 +661,15 @@ import { getMerchant } from '@/api/merchant/merchant'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { parseTime } from '@/utils/index'
+import SubsidyLedgerPanel from '@/views/marketing/components/SubsidyLedgerPanel'
+import { MARKETING_PERMS } from '@/views/marketing/constants/marketingPermissions'
+import { hasMarketingPerm } from '@/views/marketing/utils/marketingActivityAuth'
 
 export default {
   name: 'SettlementLedger',
   components: {
-    downloadProgress
+    downloadProgress,
+    SubsidyLedgerPanel
   },
   filters: {
     formatDate(time) {
@@ -720,13 +748,27 @@ export default {
         payDetails: [],
         merchantAlloc: []
       },
-      recalcLineSplitLoadingId: null
+      recalcLineSplitLoadingId: null,
+      subsidyDrawer: {
+        visible: false,
+        periodId: null,
+        merchantId: '',
+        periodKey: ''
+      }
     }
   },
   computed: {
     drawerTitle() {
       if (!this.drawer.summary) return '台账明细'
       return `台账明细 — ${this.drawer.summary.periodKey || ''}`
+    },
+    subsidyDrawerTitle() {
+      const key = this.subsidyDrawer.periodKey
+      return key ? `营销补款 — ${key}` : '营销补款'
+    },
+    canOpenSubsidy() {
+      return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage)
+        || hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage)
     }
   },
   created() {
@@ -1035,6 +1077,19 @@ export default {
         this.loadLines()
         this.loadPayoutBatches()
       })
+    },
+    openSubsidyDrawer(row) {
+      if (!row || !row.id) return
+      this.subsidyDrawer.periodId = row.id
+      this.subsidyDrawer.periodKey = row.periodKey || ''
+      this.subsidyDrawer.merchantId =
+        row.merchantId != null && row.merchantId !== '' ? row.merchantId : ''
+      this.subsidyDrawer.visible = true
+    },
+    onSubsidyDrawerClose() {
+      this.subsidyDrawer.periodId = null
+      this.subsidyDrawer.merchantId = ''
+      this.subsidyDrawer.periodKey = ''
     },
     loadPayoutBatches() {
       if (!this.drawer.periodId) return

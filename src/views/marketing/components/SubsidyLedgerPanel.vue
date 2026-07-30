@@ -1,11 +1,15 @@
 <template>
-  <div class="app-container">
+  <div class="subsidy-ledger-panel">
     <el-tabs v-model="activeTab" @tab-click="loadActive">
       <el-tab-pane v-if="canLedgerPage" label="补款台账" name="ledger">
         <div class="filter-container">
-          <el-input v-model="ledgerQuery.periodId" class="filter-item" style="width: 150px;" placeholder="账期ID" clearable />
-          <el-input v-model="ledgerQuery.merchantId" class="filter-item" style="width: 150px;" placeholder="商户ID" clearable />
-          <el-select v-model="ledgerQuery.status" class="filter-item" style="width: 150px;" placeholder="补款状态" clearable>
+          <el-select
+            v-model="ledgerQuery.status"
+            class="filter-item"
+            style="width: 150px;"
+            placeholder="补款状态"
+            clearable
+          >
             <el-option label="待补款" value="0" />
             <el-option label="已补款" value="1" />
             <el-option label="失败" value="2" />
@@ -29,17 +33,28 @@
             <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
           </el-table-column>
         </el-table>
-        <el-pagination class="pagination-container" :current-page="ledgerQuery.page" :page-size="ledgerQuery.limit"
-          :page-sizes="[10, 20, 30, 50]" :total="ledgerTotal" background
+        <el-pagination
+          class="pagination-container"
+          :current-page="ledgerQuery.page"
+          :page-size="ledgerQuery.limit"
+          :page-sizes="[10, 20, 30, 50]"
+          :total="ledgerTotal"
+          background
           layout="total, sizes, prev, pager, next, jumper"
-          @size-change="ledgerSizeChange" @current-change="ledgerPageChange" />
+          @size-change="ledgerSizeChange"
+          @current-change="ledgerPageChange"
+        />
       </el-tab-pane>
 
       <el-tab-pane v-if="canBatchPage" label="出款批次" name="batch">
         <div class="filter-container">
-          <el-input v-model="batchQuery.periodId" class="filter-item" style="width: 150px;" placeholder="账期ID" clearable />
-          <el-input v-model="batchQuery.merchantId" class="filter-item" style="width: 150px;" placeholder="商户ID" clearable />
-          <el-select v-model="batchQuery.status" class="filter-item" style="width: 170px;" placeholder="批次状态" clearable>
+          <el-select
+            v-model="batchQuery.status"
+            class="filter-item"
+            style="width: 170px;"
+            placeholder="批次状态"
+            clearable
+          >
             <el-option label="待确认" value="0" />
             <el-option label="已确认线下打款" value="1" />
             <el-option label="失败" value="2" />
@@ -63,14 +78,26 @@
           </el-table-column>
           <el-table-column label="操作" width="150" align="center">
             <template slot-scope="scope">
-              <el-button v-if="canConfirmOffline && String(scope.row.status) === '0'" type="primary" size="mini" @click="confirmOffline(scope.row)">确认线下打款</el-button>
+              <el-button
+                v-if="canConfirmOffline && String(scope.row.status) === '0'"
+                type="primary"
+                size="mini"
+                @click="confirmOffline(scope.row)"
+              >确认线下打款</el-button>
             </template>
           </el-table-column>
         </el-table>
-        <el-pagination class="pagination-container" :current-page="batchQuery.page" :page-size="batchQuery.limit"
-          :page-sizes="[10, 20, 30, 50]" :total="batchTotal" background
+        <el-pagination
+          class="pagination-container"
+          :current-page="batchQuery.page"
+          :page-size="batchQuery.limit"
+          :page-sizes="[10, 20, 30, 50]"
+          :total="batchTotal"
+          background
           layout="total, sizes, prev, pager, next, jumper"
-          @size-change="batchSizeChange" @current-change="batchPageChange" />
+          @size-change="batchSizeChange"
+          @current-change="batchPageChange"
+        />
       </el-tab-pane>
     </el-tabs>
   </div>
@@ -78,16 +105,20 @@
 
 <script>
 import { confirmSubsidyBatch, pageSubsidyBatch, pageSubsidyLedger } from '@/api/marketing/marketing'
-import { MARKETING_PERMS } from './constants/marketingPermissions'
-import { hasMarketingPerm } from './utils/marketingActivityAuth'
+import { MARKETING_PERMS } from '../constants/marketingPermissions'
+import { hasMarketingPerm } from '../utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
 
 export default {
-  name: 'subsidyLedgerList',
+  name: 'SubsidyLedgerPanel',
   filters: {
     formatDate(value) {
       return value ? parseTime(value) : ''
     }
+  },
+  props: {
+    periodId: { type: [Number, String], required: true },
+    merchantId: { type: [Number, String], default: '' }
   },
   data() {
     return {
@@ -98,8 +129,8 @@ export default {
       batchRows: [],
       ledgerTotal: 0,
       batchTotal: 0,
-      ledgerQuery: { page: 1, limit: 10, periodId: '', merchantId: '', status: '' },
-      batchQuery: { page: 1, limit: 10, periodId: '', merchantId: '', status: '' }
+      ledgerQuery: { page: 1, limit: 10, merchantId: '', status: '' },
+      batchQuery: { page: 1, limit: 10, merchantId: '', status: '' }
     }
   },
   computed: {
@@ -107,28 +138,49 @@ export default {
     canBatchPage() { return hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage) },
     canConfirmOffline() { return hasMarketingPerm(MARKETING_PERMS.subsidyConfirmOffline) }
   },
-  created() {
-    if (this.canLedgerPage) {
-      this.activeTab = 'ledger'
-      this.getLedger()
-    } else if (this.canBatchPage) {
-      this.activeTab = 'batch'
-      this.getBatch()
+  watch: {
+    periodId: {
+      immediate: true,
+      handler(val) {
+        if (val === null || val === undefined || val === '') return
+        this.resetQueriesFromProps()
+        this.bootstrapTab()
+        this.loadActive()
+      }
+    },
+    merchantId() {
+      this.resetQueriesFromProps()
+      this.loadActive()
     }
   },
   methods: {
+    resetQueriesFromProps() {
+      const mid = this.merchantId === null || this.merchantId === undefined ? '' : String(this.merchantId)
+      this.ledgerQuery = { page: 1, limit: this.ledgerQuery.limit || 10, merchantId: mid, status: '' }
+      this.batchQuery = { page: 1, limit: this.batchQuery.limit || 10, merchantId: mid, status: '' }
+    },
+    bootstrapTab() {
+      if (this.canLedgerPage) this.activeTab = 'ledger'
+      else if (this.canBatchPage) this.activeTab = 'batch'
+    },
+    buildLedgerParams() {
+      return { ...this.ledgerQuery, periodId: this.periodId }
+    },
+    buildBatchParams() {
+      return { ...this.batchQuery, periodId: this.periodId }
+    },
     getLedger() {
-      if (!this.canLedgerPage) return
+      if (!this.canLedgerPage || !this.periodId) return
       this.ledgerLoading = true
-      pageSubsidyLedger(this.ledgerQuery).then(res => {
+      pageSubsidyLedger(this.buildLedgerParams()).then(res => {
         this.ledgerRows = res.data || []
         this.ledgerTotal = res.count || 0
       }).finally(() => { this.ledgerLoading = false })
     },
     getBatch() {
-      if (!this.canBatchPage) return
+      if (!this.canBatchPage || !this.periodId) return
       this.batchLoading = true
-      pageSubsidyBatch(this.batchQuery).then(res => {
+      pageSubsidyBatch(this.buildBatchParams()).then(res => {
         this.batchRows = res.data || []
         this.batchTotal = res.count || 0
       }).finally(() => { this.batchLoading = false })
@@ -191,7 +243,6 @@ export default {
 .filter-item {
   margin-right: 12px;
 }
-
 .pagination-container {
   margin-top: 18px;
 }
