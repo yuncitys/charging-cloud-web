@@ -6,6 +6,26 @@
         <div style="float: right;">
           <el-tag :type="form.status | statusTypeFilter" style="margin-right: 10px;">{{ form.status | statusFilter }}</el-tag>
           <el-button
+            v-if="canAuditEntry && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
+            type="success"
+            size="mini"
+            :loading="auditLoading"
+            style="margin-right: 10px;"
+            @click="handleAuditEntry(true)"
+          >
+            审核通过
+          </el-button>
+          <el-button
+            v-if="canAuditEntry && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
+            type="danger"
+            size="mini"
+            :loading="auditLoading"
+            style="margin-right: 10px;"
+            @click="handleAuditEntry(false)"
+          >
+            驳回进件
+          </el-button>
+          <el-button
             v-if="canSubmitEntry && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
             type="warning"
             size="mini"
@@ -38,7 +58,7 @@
 
       <div v-if="form.auditRemark" style="margin-bottom: 20px;">
         <el-alert
-          title="审核失败原因"
+          :title="platformAuditRejected ? '平台审核意见' : '审核失败原因'"
           type="error"
           :description="form.auditRemark"
           show-icon
@@ -595,7 +615,7 @@
 </template>
 
 <script>
-import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry } from '@/api/pay/tradeEntry'
+import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
 import { formatServiceProvider } from '@/utils/payChannel'
@@ -639,6 +659,7 @@ export default {
     return {
       statusLoading: false,
       submitLoading: false,
+      auditLoading: false,
       provinceList: [],
       cityList: [],
       areaList: [],
@@ -718,7 +739,14 @@ export default {
     },
     canSubmitEntry() {
       const val = Number(this.form.status)
-      return [0, 60].includes(val) && !!this.form.busTradeMerNo
+      const auditStatus = Number(this.form.auditStatus)
+      return [0, 60].includes(val) && auditStatus === 30 && !!this.form.busTradeMerNo
+    },
+    canAuditEntry() {
+      return Number(this.form.status) === 0 && Number(this.form.auditStatus) === 10
+    },
+    platformAuditRejected() {
+      return Number(this.form.status) === 0 && Number(this.form.auditStatus) === 20
     },
     canEditEntry() {
       const val = Number(this.form.status)
@@ -856,6 +884,54 @@ export default {
       }).catch(() => {
         this.statusLoading = false
       })
+    },
+    handleAuditEntry(approved) {
+      if (!this.canAuditEntry) {
+        this.$message.warning('当前状态不可审核')
+        return
+      }
+      if (approved) {
+        this.$confirm('确认通过该进件资料的平台审核？通过后方可提交至支付渠道。', '平台审核', {
+          confirmButtonText: '审核通过',
+          cancelButtonText: '取消',
+          type: 'success'
+        }).then(() => {
+          this.auditLoading = true
+          auditTradeEntry(this.form.id, { approved: true }).then(res => {
+            this.auditLoading = false
+            if (res && res.code === 200) {
+              this.$message.success('审核通过')
+              this.fetchData(this.form.id)
+            } else {
+              this.$message.error((res && res.msg) || '审核失败')
+            }
+          }).catch(() => {
+            this.auditLoading = false
+            this.$message.error('审核失败')
+          })
+        }).catch(() => {})
+        return
+      }
+      this.$prompt('请输入驳回原因', '平台审核驳回', {
+        confirmButtonText: '确定驳回',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputValidator: value => !!(value && value.trim()) || '请填写驳回原因'
+      }).then(({ value }) => {
+        this.auditLoading = true
+        auditTradeEntry(this.form.id, { approved: false, auditRemark: value.trim() }).then(res => {
+          this.auditLoading = false
+          if (res && res.code === 200) {
+            this.$message.success('已驳回')
+            this.fetchData(this.form.id)
+          } else {
+            this.$message.error((res && res.msg) || '操作失败')
+          }
+        }).catch(() => {
+          this.auditLoading = false
+          this.$message.error('操作失败')
+        })
+      }).catch(() => {})
     },
     handleSubmitEntry() {
       if (!this.canSubmitEntry) {

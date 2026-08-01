@@ -1296,7 +1296,7 @@ export default {
                 (data && data.tradeEntry && data.tradeEntry.busTradeMerNo) || ''
               if (merNoFromResp) this.$set(this.form, 'busTradeMerNo', merNoFromResp)
               this.$message({
-                message: '保存成功，请由有提交权限的人员在列表或详情页提交进件',
+                message: '保存成功，请等待平台审核通过后再提交进件',
                 type: 'success',
                 duration: 5000
               })

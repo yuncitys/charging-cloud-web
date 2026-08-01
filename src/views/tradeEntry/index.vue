@@ -95,7 +95,7 @@
           <el-tag :type="row.auditStatus | auditStatusTypeFilter">{{ row.auditStatus | auditStatusFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="460" fixed="right" class-name="table-action-cell">
+      <el-table-column label="操作" align="center" width="540" fixed="right" class-name="table-action-cell">
         <template slot-scope="{row}">
           <div class="table-action-btns">
             <el-button
@@ -108,6 +108,26 @@
               详情
             </el-button>
             <el-button
+              v-if="canAuditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
+              size="mini"
+              type="success"
+              icon="el-icon-check"
+              :loading="row._auditing"
+              @click="handleAuditEntry(row, true)"
+            >
+              审核通过
+            </el-button>
+            <el-button
+              v-if="canAuditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
+              size="mini"
+              type="danger"
+              icon="el-icon-close"
+              :loading="row._auditing"
+              @click="handleAuditEntry(row, false)"
+            >
+             驳回进件
+            </el-button>
+            <el-button
               v-if="canSubmitEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
               size="mini"
               type="warning"
@@ -115,7 +135,7 @@
               :loading="row._submitting"
               @click="handleSubmitEntry(row)"
             >
-              提交
+              提交进件
             </el-button>
             <el-button
               v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
@@ -154,7 +174,7 @@
 </template>
 
 <script>
-import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry } from '@/api/pay/tradeEntry'
+import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
 import { formatServiceProvider } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 
@@ -201,9 +221,9 @@ export default {
     },
     auditStatusFilter(status) {
       const statusMap = {
-        10: '待审核',
-        20: '审核拒绝',
-        30: '审核通过'
+        10: '待平台审核',
+        20: '平台驳回',
+        30: '平台已通过'
       }
       return statusMap[status] || status
     },
@@ -236,9 +256,9 @@ export default {
         60: '入网失败'
       },
       auditStatusMap: {
-        10: '待审核',
-        20: '审核拒绝',
-        30: '审核通过'
+        10: '待平台审核',
+        20: '平台驳回',
+        30: '平台已通过'
       },
       listQuery: {
         page: 1,
@@ -297,9 +317,61 @@ export default {
     handleDetail(row) {
       this.$router.push('/tradeEntry/detail/' + row.id)
     },
+    canAuditEntry(row) {
+      return Number(row && row.status) === 0 && Number(row && row.auditStatus) === 10
+    },
     canSubmitEntry(row) {
       const status = Number(row && row.status)
-      return [0, 60].includes(status) && row && row.busTradeMerNo
+      const auditStatus = Number(row && row.auditStatus)
+      return [0, 60].includes(status) && auditStatus === 30 && row && row.busTradeMerNo
+    },
+    handleAuditEntry(row, approved) {
+      if (!this.canAuditEntry(row)) {
+        this.$message.warning('当前状态不可审核')
+        return
+      }
+      if (approved) {
+        this.$confirm('确认通过该进件资料的平台审核？通过后方可提交至支付渠道。', '平台审核', {
+          confirmButtonText: '审核通过',
+          cancelButtonText: '取消',
+          type: 'success'
+        }).then(() => {
+          this.$set(row, '_auditing', true)
+          auditTradeEntry(row.id, { approved: true }).then(res => {
+            this.$set(row, '_auditing', false)
+            if (res && res.code === 200) {
+              this.$message.success('审核通过')
+              this.getList()
+            } else {
+              this.$message.error((res && res.msg) || '审核失败')
+            }
+          }).catch(() => {
+            this.$set(row, '_auditing', false)
+            this.$message.error('审核失败')
+          })
+        }).catch(() => {})
+        return
+      }
+      this.$prompt('请输入驳回原因', '平台审核驳回', {
+        confirmButtonText: '确定驳回',
+        cancelButtonText: '取消',
+        inputType: 'textarea',
+        inputValidator: value => !!(value && value.trim()) || '请填写驳回原因'
+      }).then(({ value }) => {
+        this.$set(row, '_auditing', true)
+        auditTradeEntry(row.id, { approved: false, auditRemark: value.trim() }).then(res => {
+          this.$set(row, '_auditing', false)
+          if (res && res.code === 200) {
+            this.$message.success('已驳回')
+            this.getList()
+          } else {
+            this.$message.error((res && res.msg) || '操作失败')
+          }
+        }).catch(() => {
+          this.$set(row, '_auditing', false)
+          this.$message.error('操作失败')
+        })
+      }).catch(() => {})
     },
     handleSubmitEntry(row) {
       if (!this.canSubmitEntry(row)) {

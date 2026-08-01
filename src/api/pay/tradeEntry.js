@@ -121,3 +121,11 @@ export function submitTradeEntry(busTradeMerNo) {
     data: { busTradeMerNo }
   })
 }
+
+export function auditTradeEntry(id, data) {
+  return request({
+    url: `/api/payment/tradeMerchant/auditTradeEntry/${id}`,
+    method: 'post',
+    data
+  })
+}
