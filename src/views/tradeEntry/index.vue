@@ -95,7 +95,7 @@
           <el-tag :type="row.auditStatus | auditStatusTypeFilter">{{ row.auditStatus | auditStatusFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="380" fixed="right" class-name="table-action-cell">
+      <el-table-column label="操作" align="center" width="460" fixed="right" class-name="table-action-cell">
         <template slot-scope="{row}">
           <div class="table-action-btns">
             <el-button
@@ -106,6 +106,16 @@
               @click="handleDetail(row)"
             >
               详情
+            </el-button>
+            <el-button
+              v-if="canSubmitEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
+              size="mini"
+              type="warning"
+              icon="el-icon-upload2"
+              :loading="row._submitting"
+              @click="handleSubmitEntry(row)"
+            >
+              提交
             </el-button>
             <el-button
               v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
@@ -144,7 +154,7 @@
 </template>
 
 <script>
-import { listTradeEntry, delTradeEntry, removeTradeEntry } from '@/api/pay/tradeEntry'
+import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry } from '@/api/pay/tradeEntry'
 import { formatServiceProvider } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 
@@ -286,6 +296,35 @@ export default {
     },
     handleDetail(row) {
       this.$router.push('/tradeEntry/detail/' + row.id)
+    },
+    canSubmitEntry(row) {
+      const status = Number(row && row.status)
+      return [0, 60].includes(status) && row && row.busTradeMerNo
+    },
+    handleSubmitEntry(row) {
+      if (!this.canSubmitEntry(row)) {
+        this.$message.warning('当前状态不可提交进件')
+        return
+      }
+      this.$confirm('确认将该商户资料提交至支付渠道？提交后将进入渠道审核流程。', '提交进件', {
+        confirmButtonText: '确定提交',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.$set(row, '_submitting', true)
+        submitTradeEntry(row.busTradeMerNo).then(res => {
+          this.$set(row, '_submitting', false)
+          if (res && res.code === 200) {
+            this.$message.success('提交进件成功')
+            this.getList()
+          } else {
+            this.$message.error((res && res.msg) || '提交进件失败')
+          }
+        }).catch(() => {
+          this.$set(row, '_submitting', false)
+          this.$message.error('提交进件失败')
+        })
+      }).catch(() => {})
     },
     handleCancel(row) {
       this.$confirm('确认注销该商户？注销后该账户将无法使用，是否继续？', '提示', {

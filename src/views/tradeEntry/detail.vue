@@ -6,14 +6,23 @@
         <div style="float: right;">
           <el-tag :type="form.status | statusTypeFilter" style="margin-right: 10px;">{{ form.status | statusFilter }}</el-tag>
           <el-button
-            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
+            v-if="canSubmitEntry && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
             type="warning"
             size="mini"
-            :disabled="!canResubmit"
+            :loading="submitLoading"
             style="margin-right: 10px;"
-            @click="handleResubmit"
+            @click="handleSubmitEntry"
           >
-            重新提交
+            提交进件
+          </el-button>
+          <el-button
+            v-if="canEditEntry"
+            type="primary"
+            size="mini"
+            style="margin-right: 10px;"
+            @click="handleEditEntry"
+          >
+            编辑资料
           </el-button>
           <el-button
             v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:query')"
@@ -586,7 +595,7 @@
 </template>
 
 <script>
-import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus } from '@/api/pay/tradeEntry'
+import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
 import { formatServiceProvider } from '@/utils/payChannel'
@@ -629,6 +638,7 @@ export default {
   data() {
     return {
       statusLoading: false,
+      submitLoading: false,
       provinceList: [],
       cityList: [],
       areaList: [],
@@ -706,7 +716,11 @@ export default {
       const item = (this.merchantList || []).find(m => String(m.id) === String(id))
       return (item && item.name) || String(id)
     },
-    canResubmit() {
+    canSubmitEntry() {
+      const val = Number(this.form.status)
+      return [0, 60].includes(val) && !!this.form.busTradeMerNo
+    },
+    canEditEntry() {
       const val = Number(this.form.status)
       return [0, 32, 60].includes(val)
     },
@@ -842,6 +856,34 @@ export default {
       }).catch(() => {
         this.statusLoading = false
       })
+    },
+    handleSubmitEntry() {
+      if (!this.canSubmitEntry) {
+        this.$message.warning('当前状态不可提交进件')
+        return
+      }
+      this.$confirm('确认将该商户资料提交至支付渠道？提交后将进入渠道审核流程。', '提交进件', {
+        confirmButtonText: '确定提交',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.submitLoading = true
+        submitTradeEntry(this.form.busTradeMerNo).then(res => {
+          this.submitLoading = false
+          if (res && res.code === 200) {
+            this.$message.success('提交进件成功')
+            this.fetchData(this.form.id)
+          } else {
+            this.$message.error((res && res.msg) || '提交进件失败')
+          }
+        }).catch(() => {
+          this.submitLoading = false
+          this.$message.error('提交进件失败')
+        })
+      }).catch(() => {})
+    },
+    handleEditEntry() {
+      this.handleResubmit()
     },
     handleResubmit() {
       try {

@@ -676,7 +676,7 @@
           <el-button @click="cancel">取消</el-button>
           <el-button v-if="active > 0" @click="prev">上一步</el-button>
           <el-button v-if="active < 2" type="primary" @click="next">下一步</el-button>
-          <el-button v-if="active === 2" type="primary" :loading="loading" @click="submit">提交</el-button>
+          <el-button v-if="active === 2" type="primary" :loading="loading" @click="save">保存</el-button>
         </div>
       </el-form>
     </el-card>
@@ -684,7 +684,7 @@
 </template>
 
 <script>
-import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern, submitTradeEntry } from '@/api/pay/tradeEntry'
+import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern } from '@/api/pay/tradeEntry'
 import { getAreaSelector } from '@/api/area/index'
 import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
@@ -1249,7 +1249,7 @@ export default {
         this.$router.push('/tradeEntry/list')
       }).catch(() => {})
     },
-    submit() {
+    save() {
       if (this.isWxPartner) {
         if (!this.form.managerEmail) {
           this.$message.error('请输入联系邮箱')
@@ -1287,33 +1287,24 @@ export default {
             delete payload.tradeEntryWx
           }
           request(payload).then(res => {
+            this.loading = false
             if (res && res.code === 200) {
               const data = (res && res.data) || {}
               const merNoFromResp =
                 (data && typeof data === 'string' ? data : '') ||
                 (data && data.busTradeMerNo) ||
-                (data && data.tradeEntry && data.tradeEntry.busTradeMerNo) ||
-                ''
-
-              // 保存成功后，把接口返回的商户号写回表单，避免二次提交仍为空
+                (data && data.tradeEntry && data.tradeEntry.busTradeMerNo) || ''
               if (merNoFromResp) this.$set(this.form, 'busTradeMerNo', merNoFromResp)
-
-              const busTradeMerNo = this.form.busTradeMerNo
-              return submitTradeEntry(busTradeMerNo).then(sres => {
-                if (sres && sres.code === 200) {
-                  this.$message({ message: '提交成功', type: 'success' })
-                  this.loading = false
-                  this.$router.push('/tradeEntry/list')
-                } else {
-                  this.loading = false
-                  this.$message.error((sres && sres.msg) || '提交失败')
-                }
+              this.$message({
+                message: '保存成功，请由有提交权限的人员在列表或详情页提交进件',
+                type: 'success',
+                duration: 5000
               })
+              this.$router.push('/tradeEntry/list')
             } else {
-              this.loading = false
               this.$message.error((res && res.msg) || '保存失败')
             }
-          }).catch(err => {
+          }).catch(() => {
             this.loading = false
             this.$message.error('请求失败')
           })
