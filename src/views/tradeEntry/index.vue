@@ -90,12 +90,12 @@
           <el-tag :type="row.status | statusTypeFilter">{{ row.status | statusFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="审核状态" width="100" align="center">
+      <el-table-column label="审核状态" width="120" align="center">
         <template slot-scope="{row}">
           <el-tag :type="row.auditStatus | auditStatusTypeFilter">{{ row.auditStatus | auditStatusFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="540" fixed="right" class-name="table-action-cell">
+      <el-table-column label="操作" align="center" width="310" fixed="right" class-name="table-action-cell">
         <template slot-scope="{row}">
           <div class="table-action-btns">
             <el-button
@@ -108,54 +108,6 @@
               详情
             </el-button>
             <el-button
-              v-if="canAuditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
-              size="mini"
-              type="success"
-              icon="el-icon-check"
-              :loading="row._auditing"
-              @click="handleAuditEntry(row, true)"
-            >
-              审核通过
-            </el-button>
-            <el-button
-              v-if="canAuditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
-              size="mini"
-              type="danger"
-              icon="el-icon-close"
-              :loading="row._auditing"
-              @click="handleAuditEntry(row, false)"
-            >
-             驳回进件
-            </el-button>
-            <el-button
-              v-if="canSubmitEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
-              size="mini"
-              type="warning"
-              icon="el-icon-upload2"
-              :loading="row._submitting"
-              @click="handleSubmitEntry(row)"
-            >
-              提交进件
-            </el-button>
-            <el-button
-              v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
-              size="mini"
-              type="primary"
-              icon="el-icon-edit"
-              @click="handleUpdate(row)"
-            >
-              修改
-            </el-button>
-            <el-button
-              v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
-              size="mini"
-              type="primary"
-              icon="el-icon-circle-close"
-              @click="handleCancel(row)"
-            >
-              注销
-            </el-button>
-            <el-button
               v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:delete')"
               size="mini"
               type="danger"
@@ -164,6 +116,57 @@
             >
               删除
             </el-button>
+            <el-dropdown
+              v-if="hasMoreActions(row)"
+              size="mini"
+              trigger="click"
+              @command="(command) => handleMoreCommand(command, row)"
+            >
+              <el-button size="mini" type="primary" icon="el-icon-more">
+                更多<i class="el-icon-arrow-down el-icon--right" />
+              </el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item
+                  v-if="canAuditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
+                  command="auditPass"
+                  icon="el-icon-check"
+                  :disabled="row._auditing"
+                >
+                  审核通过
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="canAuditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit')"
+                  command="auditReject"
+                  icon="el-icon-close"
+                  :disabled="row._auditing"
+                >
+                  驳回进件
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="canSubmitEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit')"
+                  command="submit"
+                  icon="el-icon-upload2"
+                  :disabled="row._submitting"
+                >
+                  提交进件
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
+                  command="edit"
+                  icon="el-icon-edit"
+                >
+                  修改进件
+                </el-dropdown-item>
+                <el-dropdown-item
+                  v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
+                  command="cancel"
+                  icon="el-icon-circle-close"
+                  divided
+                >
+                  注销进件
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
           </div>
         </template>
       </el-table-column>
@@ -316,6 +319,33 @@ export default {
     },
     handleDetail(row) {
       this.$router.push('/tradeEntry/detail/' + row.id)
+    },
+    hasMoreActions(row) {
+      return (this.canAuditEntry(row) && this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit'))
+        || (this.canSubmitEntry(row) && this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit'))
+        || this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')
+        || this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')
+    },
+    handleMoreCommand(command, row) {
+      switch (command) {
+        case 'auditPass':
+          this.handleAuditEntry(row, true)
+          break
+        case 'auditReject':
+          this.handleAuditEntry(row, false)
+          break
+        case 'submit':
+          this.handleSubmitEntry(row)
+          break
+        case 'edit':
+          this.handleUpdate(row)
+          break
+        case 'cancel':
+          this.handleCancel(row)
+          break
+        default:
+          break
+      }
     },
     canAuditEntry(row) {
       return Number(row && row.status) === 0 && Number(row && row.auditStatus) === 10
