@@ -19,8 +19,8 @@
               <el-form-item label="渠道代码" prop="serviceProviderId">
                 <el-select v-model="form.serviceProviderId" placeholder="请选择渠道代码" style="width: 100%" :disabled="isEdit">
                   <el-option label="台州银行 (tzbank)" value="tzbank" />
-                  <el-option label="微信支付 (wxpay)" value="wxpay" />
                   <el-option label="微信服务商 (wxpay_partner)" value="wxpay_partner" />
+                  <el-option label="默认 (local)" value="local" />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -62,11 +62,11 @@
               <div class="el-upload__text">将营业执照拖到此处，或<em>点击上传</em></div>
               <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过5MB</div>
             </el-upload>
-            <div v-if="!isWxPartner" class="ocr-tip-text">
+            <div v-if="!isWxPartner && !isLocal" class="ocr-tip-text">
               <i class="el-icon-info"></i> 上传营业执照可自动识别并填充下方信息
             </div>
             <div v-else class="ocr-tip-text">
-              <i class="el-icon-info"></i> 上传营业执照图片（微信通道不支持 OCR 自动识别）
+              <i class="el-icon-info"></i> {{ isLocal ? '本地渠道仅保存图片，不支持 OCR 自动识别' : '上传营业执照图片（微信通道不支持 OCR 自动识别）' }}
             </div>
             <div v-if="form.corLicenseImg" class="ocr-preview">
               <el-image
@@ -787,6 +787,9 @@ export default {
   computed: {
     isWxPartner() {
       return this.form.serviceProviderId === 'wxpay_partner'
+    },
+    isLocal() {
+      return this.form.serviceProviderId === 'local'
     }
   },
   watch: {
@@ -1086,7 +1089,7 @@ export default {
           throw new Error('文件上传失败，未获取到URL')
         }
 
-        if (this.isWxPartner) {
+        if (this.isWxPartner || this.isLocal) {
           loading.close()
           this.$message.success('上传成功')
           this.fillAttachment(type, fileUrl, null, file.name, multiple)

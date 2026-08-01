@@ -45,7 +45,7 @@
             编辑资料
           </el-button>
           <el-button
-            v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:query')"
+            v-if="!isLocal && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:query')"
             type="primary"
             size="mini"
             :loading="statusLoading"
@@ -56,7 +56,7 @@
         </div>
       </div>
 
-      <div v-if="form.auditRemark" style="margin-bottom: 20px;">
+      <div v-if="showAuditRemark" style="margin-bottom: 20px;">
         <el-alert
           :title="platformAuditRejected ? '平台审核意见' : '审核失败原因'"
           type="error"
@@ -66,7 +66,7 @@
         />
       </div>
 
-      <div v-if="form.serviceProviderId === 'wxpay_partner' && wxAuditRejectReasons.length" style="margin-bottom: 20px;">
+      <div v-if="isWxPartner && wxAuditRejectReasons.length" style="margin-bottom: 20px;">
         <el-alert
           v-for="(reason, index) in wxAuditRejectReasons"
           :key="index"
@@ -85,7 +85,7 @@
           <el-divider content-position="left">基础信息</el-divider>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="支付渠道">
+              <el-form-item label="渠道代码">
                 <el-input :value="formatServiceProvider(form.serviceProviderId)" />
               </el-form-item>
             </el-col>
@@ -618,7 +618,7 @@
 import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel } from '@/utils/payChannel'
 import { formatSalesSceneLabels, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
 export default {
@@ -731,6 +731,9 @@ export default {
     isWxPartner() {
       return this.form.serviceProviderId === 'wxpay_partner'
     },
+    isLocal() {
+      return isLocalChannel(this.form.serviceProviderId)
+    },
     merchantName() {
       const id = this.form && this.form.merchantId
       if (id === null || id === undefined || id === '') return '-'
@@ -738,6 +741,9 @@ export default {
       return (item && item.name) || String(id)
     },
     canSubmitEntry() {
+      if (this.isLocal) {
+        return false
+      }
       const val = Number(this.form.status)
       const auditStatus = Number(this.form.auditStatus)
       return [0, 60].includes(val) && auditStatus === 30 && !!this.form.busTradeMerNo
@@ -748,8 +754,20 @@ export default {
     platformAuditRejected() {
       return Number(this.form.status) === 0 && Number(this.form.auditStatus) === 20
     },
+    showAuditRemark() {
+      if (!this.form.auditRemark) {
+        return false
+      }
+      if (Number(this.form.auditStatus) === 20) {
+        return true
+      }
+      return Number(this.form.status) === 60
+    },
     canEditEntry() {
       const val = Number(this.form.status)
+      if (this.isLocal) {
+        return [0, 30, 32, 60].includes(val)
+      }
       return [0, 32, 60].includes(val)
     },
     wxAuditRejectReasons() {
@@ -891,7 +909,10 @@ export default {
         return
       }
       if (approved) {
-        this.$confirm('确认通过该进件资料的平台审核？通过后方可提交至支付渠道。', '平台审核', {
+        this.$confirm(
+          this.isLocal ? '确认通过该进件资料的平台审核？通过后将自动生成商户号并生效。' : '确认通过该进件资料的平台审核？通过后方可提交至支付渠道。',
+          '平台审核',
+          {
           confirmButtonText: '审核通过',
           cancelButtonText: '取消',
           type: 'success'

@@ -55,12 +55,12 @@
           <span>{{ row.id }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="商户编号" prop="busTradeMerNo" align="center" width="180">
+      <el-table-column label="商户编号" prop="busTradeMerNo" align="center" width="210">
         <template slot-scope="{row}">
           <span>{{ row.busTradeMerNo }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="商户名称" prop="merName" min-width="150" align="center" show-overflow-tooltip>
+      <el-table-column label="商户名称" prop="merName" min-width="120" align="center" show-overflow-tooltip>
         <template slot-scope="{row}">
           <span>{{ row.merName }}</span>
         </template>
@@ -70,17 +70,17 @@
           <el-tag>{{ row.merType | typeFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="渠道服务商" width="120" align="center">
+      <!-- <el-table-column label="渠道服务商" width="120" align="center">
         <template slot-scope="{row}">
           <span>{{ formatServiceProvider(row.serviceProviderId) }}</span>
         </template>
-      </el-table-column>
-      <el-table-column label="联系人" width="110" align="center">
+      </el-table-column> -->
+      <el-table-column label="联系人" width="180" align="center">
         <template slot-scope="{row}">
           <span>{{ row.managerName }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="手机号" width="120" align="center">
+      <el-table-column label="手机号" width="180" align="center">
         <template slot-scope="{row}">
           <span>{{ row.managerMobile }}</span>
         </template>
@@ -151,7 +151,7 @@
                   提交进件
                 </el-dropdown-item>
                 <el-dropdown-item
-                  v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
+                  v-if="canEditEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')"
                   command="edit"
                   icon="el-icon-edit"
                 >
@@ -178,7 +178,7 @@
 
 <script>
 import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -284,6 +284,7 @@ export default {
   },
   methods: {
     formatServiceProvider,
+    isLocalChannel,
     handleDateChange(val) {
       if (val) {
         this.listQuery.createTimeStart = val[0]
@@ -323,7 +324,7 @@ export default {
     hasMoreActions(row) {
       return (this.canAuditEntry(row) && this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:audit'))
         || (this.canSubmitEntry(row) && this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:submit'))
-        || this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit')
+        || (this.canEditEntry(row) && this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:edit'))
         || this.btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')
     },
     handleMoreCommand(command, row) {
@@ -350,7 +351,17 @@ export default {
     canAuditEntry(row) {
       return Number(row && row.status) === 0 && Number(row && row.auditStatus) === 10
     },
+    canEditEntry(row) {
+      const status = Number(row && row.status)
+      if (isLocalChannel(row && row.serviceProviderId)) {
+        return [0, 30, 32, 60].includes(status)
+      }
+      return true
+    },
     canSubmitEntry(row) {
+      if (isLocalChannel(row && row.serviceProviderId)) {
+        return false
+      }
       const status = Number(row && row.status)
       const auditStatus = Number(row && row.auditStatus)
       return [0, 60].includes(status) && auditStatus === 30 && row && row.busTradeMerNo
@@ -361,7 +372,10 @@ export default {
         return
       }
       if (approved) {
-        this.$confirm('确认通过该进件资料的平台审核？通过后方可提交至支付渠道。', '平台审核', {
+        const isLocal = isLocalChannel(row.serviceProviderId)
+        this.$confirm(
+          isLocal ? '确认通过该进件资料的平台审核？通过后将自动生成商户号并生效。' : '确认通过该进件资料的平台审核？通过后方可提交至支付渠道。',
+          '平台审核', {
           confirmButtonText: '审核通过',
           cancelButtonText: '取消',
           type: 'success'
