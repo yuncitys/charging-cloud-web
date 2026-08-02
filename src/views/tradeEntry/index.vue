@@ -158,7 +158,7 @@
                   修改进件
                 </el-dropdown-item>
                 <el-dropdown-item
-                  v-if="btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
+                  v-if="canCancelEntry(row) && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:cancel')"
                   command="cancel"
                   icon="el-icon-circle-close"
                   divided
@@ -348,15 +348,15 @@ export default {
           break
       }
     },
+    canCancelEntry(row) {
+      return [30].includes(Number(row && row.status))
+    },
     canAuditEntry(row) {
       return Number(row && row.status) === 0 && Number(row && row.auditStatus) === 10
     },
     canEditEntry(row) {
       const status = Number(row && row.status)
-      if (isLocalChannel(row && row.serviceProviderId)) {
-        return [0, 30, 32, 60].includes(status)
-      }
-      return true
+      return [30, 32].includes(status)
     },
     canSubmitEntry(row) {
       if (isLocalChannel(row && row.serviceProviderId)) {

@@ -36,7 +36,7 @@
             提交进件
           </el-button>
           <el-button
-            v-if="canEditEntry"
+            v-if="canEditEntry && btnAuthen.permsVerifAuthention(':payment:tradeMerchant:add')"
             type="primary"
             size="mini"
             style="margin-right: 10px;"
@@ -765,9 +765,6 @@ export default {
     },
     canEditEntry() {
       const val = Number(this.form.status)
-      if (this.isLocal) {
-        return [0, 30, 32, 60].includes(val)
-      }
       return [0, 32, 60].includes(val)
     },
     wxAuditRejectReasons() {
