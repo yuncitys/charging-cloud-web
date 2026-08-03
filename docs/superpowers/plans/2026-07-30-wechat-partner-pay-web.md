@@ -4,7 +4,7 @@
 
 **Goal:** 管理端支持 `wxpay_partner` 通道配置与微信特约商户进件；列表页统一展示通道名称。
 
-**Architecture:** 新建 `payChannel.js` 常量；`paymentChannel/edit.vue` 增加 Partner 配置区；`tradeEntry/entry.vue` 按渠道分支表单与上传；`detail.vue` 展示扩展表；依赖 charging-cloud 分支补齐 save/detail API。
+**Architecture:** 新建 `payChannel.js`、`wxSalesScene.js` 常量；`paymentChannel/edit.vue` 增加 Partner 配置区；`tradeEntry/entry.vue` 按渠道分支表单、Option C 多经营场景与上传；`detail.vue` 展示扩展表 + 查询状态；依赖 charging-cloud 分支 save/detail/query API。
 
 **Tech Stack:** Vue 2、Element UI、现有 `@/api/channelConfigInfo`、`@/api/pay/tradeEntry`
 
@@ -12,10 +12,12 @@
 
 **后端 Spec：** [charging-cloud/docs/superpowers/specs/2026-07-29-wechat-partner-pay-design.md](../../../charging-cloud/docs/superpowers/specs/2026-07-29-wechat-partner-pay-design.md)
 
+**进度（2026-07-31）：** W0–W4 + Task B 已实现；W5 联调待完成。
+
 ## Global Constraints
 
 - **分支：** 从 **`main`** 切 `feature/wechat-partner-pay-web`；**禁止**在其它业务分支直接改
-- **仓库：** `charging-cloud-web`（本 plan）；后端缺口在 `charging-cloud` 的 `feature/wechat-partner-pay`
+- **仓库：** `charging-cloud-web`（本 plan）；后端在 `charging-cloud` 的 `feature/wechat-partner-pay`
 - **通道 code：** `wxpay_partner`；展示名「微信(服务商)」
 - **不改：** 台账分账提交逻辑、小程序端
 - **Commit：** 按 Task 粒度提交
@@ -27,10 +29,11 @@
 | 路径 | 职责 |
 |------|------|
 | `src/utils/payChannel.js` | **新建** 通道 code → 中文名 |
+| `src/utils/wxSalesScene.js` | **新建** 经营场景选项、附件映射、extJson 互转 |
 | `src/views/paymentChannel/components/edit.vue` | Partner 配置表单 + confirm 序列化 |
 | `src/views/paymentChannel/index.vue` | 列表展示 |
-| `src/views/tradeEntry/entry.vue` | 渠道分支 + wx 字段 + 上传逻辑 |
-| `src/views/tradeEntry/detail.vue` | 扩展信息 + 签约链接 |
+| `src/views/tradeEntry/entry.vue` | 渠道分支 + wx 字段 + Option C 场景 + 上传逻辑 |
+| `src/views/tradeEntry/detail.vue` | 扩展信息 + 签约链接 + 查询状态 |
 | `src/views/tradeEntry/index.vue` | 渠道列（P1） |
 | `src/api/pay/tradeEntry.js` | 类型注释/字段透传（如需） |
 | `payment/billPaymentInfo/index.vue` 等 | 通道展示（P1） |
@@ -41,8 +44,9 @@
 |------|------|
 | `SubmitTradeEntryRequest.java` | 增加 `TradeEntryWxDTO tradeEntryWx` |
 | `MerchantTradeEntryDetailVO.java` | 增加 `MerchantTradeEntryWx tradeEntryWx` |
-| `TradeEntryController.saveTradeMerchant` | upsert 扩展表；attach 写 `channelFileId` |
+| `TradeEntryController.saveTradeMerchant` | upsert 扩展表；attach 写 `fileBatchId`（微信 media_id 由 submit 时写入） |
 | `TradeEntryController.detailTradeEntry` | 查询并返回扩展表 |
+| `WxPartnerTradeEntryStrategyImpl.java` | submit/query/uploadMissingMedia |
 
 ---
 
@@ -50,15 +54,9 @@
 
 **Files:** 无代码
 
-- [ ] **Step 1: 确认当前分支**
+- [x] **Step 1: 确认当前分支**
 
-```bash
-cd /Users/guanzilan/DevelopProject/charging-cloud-web
-git branch --show-current
-# 不要在未合并的功能分支上直接开发
-```
-
-- [ ] **Step 2: 拉取 main 并创建分支**
+- [x] **Step 2: 拉取 main 并创建分支**
 
 ```bash
 git fetch origin main
@@ -66,17 +64,7 @@ git checkout origin/main
 git checkout -b feature/wechat-partner-pay-web
 ```
 
-- [ ] **Step 3: 提交设计文档（若 main 尚无）**
-
-```bash
-git add docs/superpowers/specs/2026-07-30-wechat-partner-pay-web-design.md \
-        docs/superpowers/plans/2026-07-30-wechat-partner-pay-web.md
-git commit -m "$(cat <<'EOF'
-docs: add WeChat partner pay web design and plan
-
-EOF
-)"
-```
+- [x] **Step 3: 提交设计文档（若 main 尚无）**
 
 ---
 
@@ -87,64 +75,35 @@ EOF
 
 **Files:**
 - Modify: `sharecharge-pay/.../dto/SubmitTradeEntryRequest.java`
-- Create: `sharecharge-pay/.../dto/TradeEntryWxDTO.java`（或内嵌字段）
+- Create: `sharecharge-pay/.../dto/TradeEntryWxDTO.java`
 - Modify: `sharecharge-pay/.../vo/MerchantTradeEntryDetailVO.java`
 - Modify: `sharecharge-pay/.../controller/TradeEntryController.java`
-- Modify: `sharecharge-pay/.../dto/SubmitTradeEntryRequest.Attach` — 支持 `channelFileId`
 
 **Interfaces:**
 - Produces:
-  - `saveTradeMerchant` 接受 `tradeEntryWx: { settlementId, qualificationType }`
+  - `saveTradeMerchant` 接受 `tradeEntryWx: { settlementId, qualificationType, salesScenesTypes, extJson }`
   - `detailTradeEntry` 返回 `{ tradeEntry, attchList, tradeEntryWx }`
-  - 附件保存时写入 `channelFileId`（若前端传入）
+  - submit 时 `uploadMissingMedia` 将 OSS 文件转 `media_id` 写 `fileBatchId`（**不**使用 `channelFileId`）
 
-- [ ] **Step 1: TradeEntryWxDTO**
+- [x] **Step 1: TradeEntryWxDTO**
 
 ```java
 @Data
 public class TradeEntryWxDTO {
     private String settlementId;
     private String qualificationType;
+    private List<String> salesScenesTypes;
+    private String extJson;
 }
 ```
 
-- [ ] **Step 2: SubmitTradeEntryRequest 增加字段**
+- [x] **Step 2: SubmitTradeEntryRequest 增加字段**
 
-```java
-private TradeEntryWxDTO tradeEntryWx;
-```
+- [x] **Step 3: saveTradeMerchant 末尾 upsert 扩展表**
 
-- [ ] **Step 3: saveTradeMerchant 末尾 upsert**
+- [x] **Step 4: detailTradeEntry 返回扩展表**
 
-```java
-if (PayChannel.WECHAT_PARTNER.getCode().equals(merchantTradeEntry.getServiceProviderId())
-        && submitTradeEntryRequest.getTradeEntryWx() != null) {
-    MerchantTradeEntryWx wx = new MerchantTradeEntryWx();
-    wx.setTradeEntryId(merchantTradeEntry.getId());
-    BeanUtils.copyProperties(submitTradeEntryRequest.getTradeEntryWx(), wx);
-    wx.setBusinessCode(busTradeMerNo);
-    merchantTradeEntryWxService.saveOrUpdateByTradeEntryId(wx);
-}
-```
-
-附件循环内增加：`attach.setChannelFileId(attch.getChannelFileId());`
-
-- [ ] **Step 4: detailTradeEntry 返回扩展表**
-
-```java
-vo.setTradeEntryWx(merchantTradeEntryWxService.getByTradeEntryId(id));
-```
-
-- [ ] **Step 5: 编译 + commit**
-
-```bash
-mvn -pl sharecharge-pay/sharecharge-pay-server -am compile -DskipTests -q
-git commit -m "$(cat <<'EOF'
-feat(pay): expose trade entry wx extension in save and detail APIs
-
-EOF
-)"
-```
+- [x] **Step 5: 编译 + commit**
 
 ---
 
@@ -155,140 +114,60 @@ EOF
 - Modify: `src/views/paymentChannel/components/edit.vue`
 - Modify: `src/views/paymentChannel/index.vue`
 
-**Interfaces:**
-- Produces: `formatServiceProvider(code)` 供列表使用
-- Produces: `wxPartnerConfig` 数据模型与 `confirm()` 序列化
+- [x] **Step 1: 创建 payChannel.js**
 
-- [ ] **Step 1: 创建 payChannel.js**（见 design spec）
+- [x] **Step 2: edit.vue — 下拉与 channelList**
 
-- [ ] **Step 2: edit.vue — 下拉与 channelList**
+- [x] **Step 3: edit.vue — wxPartnerConfig 区块**
 
-```javascript
-serviceProviderList: [
-  { name: '台州银行', code: 'tzbank' },
-  { name: '微信(直连)', code: 'wxpay' },
-  { name: '微信(服务商)', code: 'wxpay_partner' },
-  { name: '支付宝', code: 'alipay' }
-],
-channelList: [
-  { name: '台州银行', code: 'tzbank' },
-  { name: '微信', code: 'wxpay' },
-  { name: '微信服务商', code: 'wxpay_partner' },
-  { name: '支付宝', code: 'alipay' }
-]
-```
+- [x] **Step 4: confirm() 分支**
 
-- [ ] **Step 3: edit.vue — wxPartnerConfig 区块**
+- [x] **Step 5: index.vue 使用 formatServiceProvider**
 
-在 `channelName === '微信服务商'` 时展示（复用 wx 证书字段 + 新增）：
-
-- `merchantMode` 固定 `PARTNER`（hidden）
-- `spMchId`、`spAppId`、`collectionSubMchId`
-- `profitSharingEnabled` switch
-- 小程序/公众号、`apiV3Key`、`serialNo`、`pemCert`、`callbackDomain`（与现有 wxConfig 类似）
-
-`data()` 增加 `wxPartnerConfig` 对象，结构与后端 `WxPartnerParams` 一致。
-
-- [ ] **Step 4: confirm() 分支**
-
-```javascript
-} else if (this.form.channelName === '微信服务商') {
-  this.form.channelCode = 'wxpay_partner'
-  this.form.serviceProviderId = 'wxpay_partner'
-  this.wxPartnerConfig.merchantMode = 'PARTNER'
-  this.form.configStr = JSON.stringify(this.wxPartnerConfig)
-}
-```
-
-`created()` 编辑回显：`channelName === '微信服务商'` 时 `JSON.parse` → `wxPartnerConfig`。
-
-- [ ] **Step 5: index.vue 使用 formatServiceProvider**
-
-替换硬编码 `v-if scope.row.serviceProviderId == 'wxpay'` 等为：
-
-```vue
-<span>{{ formatServiceProvider(scope.row.serviceProviderId) }}</span>
-```
-
-- [ ] **Step 6: Commit**
-
-```bash
-git commit -m "$(cat <<'EOF'
-feat(web): add wxpay_partner payment channel config UI
-
-EOF
-)"
-```
+- [x] **Step 6: Commit**
 
 ---
 
 ### Task W2: 进件表单（entry.vue）
 
 **Files:**
+- Create: `src/utils/wxSalesScene.js`
 - Modify: `src/views/tradeEntry/entry.vue`
 
 **Interfaces:**
 - Consumes: Task B 的 `tradeEntryWx` save API
-- Produces: `isWxPartner` computed；`form.tradeEntryWx` 对象
+- Produces: `isWxPartner` computed；`form.tradeEntryWx` 对象；Option C 场景 UI
 
-- [ ] **Step 1: 渠道下拉**
+- [x] **Step 1: 渠道下拉** — 含 `wxpay_partner`
 
-```vue
-<el-option label="微信服务商 (wxpay_partner)" value="wxpay_partner" />
-```
+- [x] **Step 2: computed `isWxPartner`**
 
-保留 `tzbank`；`wxpay` 直连可保留或隐藏（按产品决定，默认保留）。
-
-- [ ] **Step 2: computed**
-
-```javascript
-isWxPartner () {
-  return this.form.serviceProviderId === 'wxpay_partner'
-}
-```
-
-- [ ] **Step 3: 微信专用字段区块（v-if="isWxPartner"）**
+- [x] **Step 3: 微信专用字段**
 
 | 表单项 | 字段 | 说明 |
 |--------|------|------|
-| 结算规则 ID | `form.tradeEntryWx.settlementId` | 微信费率对照表 ID |
+| 联系邮箱 | `form.managerEmail` | 微信必填 |
+| 结算规则 ID | `form.tradeEntryWx.settlementId` | 与所属行业同排 |
 | 所属行业 | `form.tradeEntryWx.qualificationType` | 行业名称 |
+| 经营场景 | `form.tradeEntryWx.salesScenesTypes` | 6 种多选，默认线下门店 |
 
-`tradeMerType` 由后端映射 `subject_type`，表单不重复录入主体类型。
+- [x] **Step 4: Option C 场景区块**
 
-- [ ] **Step 4: 上传逻辑分支**
+按选中场景动态展示 AppId/域名/CorpID 及附件 05–11；`wxSalesScene.js` 提供映射与校验。
 
-`handleUpload` 内：
+- [x] **Step 5: 上传逻辑分支**
 
-```javascript
-if (this.isWxPartner) {
-  // 仅 OSS 上传 + 填充 attchList，不调 imgInfoDiscern
-  return uploadToOss(file).then(fileUrl => {
-    this.fillAttachment(type, fileUrl, null)
-  })
-}
-// 现有 tzbank OCR 逻辑
-```
+wx 通道仅 OSS 上传 + 填充 `attchList`，不调 `imgInfoDiscern`；submit 时后端转 `media_id`。
 
-`fillAttachment` 写入 `attchList` 项含 `fileType/fileUrl/fileName`；OCR 的 `fileBatchId` 对微信可为空。
+- [x] **Step 6: submit 前校验**
 
-- [ ] **Step 5: submit 前校验**
+wx 通道：`managerEmail`、`settlementId`、`qualificationType`、场景附件必填；`tradeMerType=2` 拦截。
 
-wx 通道：`organizationType`、`qualificationType` 必填。
+- [x] **Step 7: 编辑回显**
 
-- [ ] **Step 6: 编辑回显**
+`loadDetail` 时合并 `detail.tradeEntryWx`，经 `restoreTradeEntryWx()` 还原 extJson。
 
-`loadDetail` 时合并 `detail.tradeEntryWx` 到 `form.tradeEntryWx`。
-
-- [ ] **Step 7: Commit**
-
-```bash
-git commit -m "$(cat <<'EOF'
-feat(web): wxpay_partner trade entry form and upload flow
-
-EOF
-)"
-```
+- [x] **Step 8: Commit**
 
 ---
 
@@ -297,33 +176,21 @@ EOF
 **Files:**
 - Modify: `src/views/tradeEntry/detail.vue`
 
-- [ ] **Step 1: data 增加 wxExt**
+- [x] **Step 1: data 增加 wxExt**
 
-```javascript
-wxExt: {}
-```
+- [x] **Step 2: loadDetail 合并 tradeEntryWx**
 
-- [ ] **Step 2: loadDetail 合并 tradeEntryWx**
+- [x] **Step 3: 模板 — 微信扩展信息**
 
-- [ ] **Step 3: 模板 — 微信扩展信息（v-if="form.serviceProviderId === 'wxpay_partner'"）**
+展示：申请单号、微信状态、签约链接、驳回明细。
 
-展示：
-- 申请单号 `wxExt.applymentId`
-- 微信状态 `wxExt.channelState`
-- 签约链接：`<el-link :href="wxExt.signUrl" target="_blank">去签约</el-link>`（有值时）
-- 驳回明细：解析 `wxExt.auditDetailJson` 为 alert 列表
+- [x] **Step 4: 查询状态按钮**
 
-- [ ] **Step 4: 渠道展示用 formatServiceProvider**
+调用 `query` API 同步进度（微信无 HTTP 进件回调）。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: 渠道展示用 formatServiceProvider**
 
-```bash
-git commit -m "$(cat <<'EOF'
-feat(web): show WeChat partner trade entry extension on detail page
-
-EOF
-)"
-```
+- [x] **Step 6: Commit**
 
 ---
 
@@ -334,21 +201,13 @@ EOF
 - Modify: `src/views/payment/billPaymentInfo/index.vue`
 - Modify: `src/views/payment/billPaymentLog/index.vue`
 - Modify: `src/views/payment/billRefundInfo/index.vue`
-- Modify: `src/views/tradeEntry/index.vue`（可选：渠道列）
+- Modify: `src/views/tradeEntry/index.vue`
 
-- [ ] **Step 1:** 各页 `serviceProviderList` 增加 `{ enCode: 'wxpay_partner', fullName: '微信(服务商)' }` 或使用 `payChannel.js`
+- [x] **Step 1:** 各页增加 `wxpay_partner` 或使用 `payChannel.js`
 
-- [ ] **Step 2:** 表格列改用 `formatServiceProvider(scope.row.serviceProviderId)`
+- [x] **Step 2:** 表格列改用 `formatServiceProvider(scope.row.serviceProviderId)`
 
-- [ ] **Step 3: Commit**
-
-```bash
-git commit -m "$(cat <<'EOF'
-feat(web): display wxpay_partner across payment admin lists
-
-EOF
-)"
-```
+- [x] **Step 3: Commit**
 
 ---
 
@@ -358,11 +217,13 @@ EOF
 
 - [ ] **Step 2: 配置支付方式** — `paymentChannelInfo` 绑定 `wx_applet` + 对应 channelId
 
-- [ ] **Step 3: 进件** — 选 wxpay_partner，保存 → 提交 → 详情见 applymentId / signUrl
+- [ ] **Step 3: 进件** — 选 wxpay_partner，填 Option C 场景，保存 → 提交 → 详情见 applymentId / signUrl
 
-- [ ] **Step 4: 查询状态** — 详情页「查询状态」按钮
+- [ ] **Step 4: 查询状态** — 详情页「查询状态」按钮，验证状态映射
 
-- [ ] **Step 5: 记录结果** — 更新 plan 或 test checklist
+- [ ] **Step 5: 支付/分账**（可选）— 小额支付 + 分账链路
+
+- [ ] **Step 6: 记录结果** — 更新 plan test checklist
 
 ---
 
@@ -371,9 +232,11 @@ EOF
 | 场景 | 预期 |
 |------|------|
 | 新增微信服务商渠道配置 | configStr 含 collectionSubMchId；列表显示「微信(服务商)」 |
-| 进件保存 wx 字段 | DB `t_merchant_trade_entry_wx` 有记录 |
+| 进件保存 wx 字段 | DB `t_merchant_trade_entry_wx` 有记录（含 sales_scenes_types） |
 | 进件提交 | status→10；applyment_id 写入 |
+| Option C 多场景 | 选中场景对应附件必填；submit 成功 |
 | 详情签约链接 | sign_url 可打开 |
+| 查询状态 | query 同步 channelState / merchantNo |
 | 账单列表筛选 | 可选 wxpay_partner |
 | 台州银行进件 | 回归无影响 |
 
@@ -384,9 +247,11 @@ EOF
 ```
 Task B (charging-cloud API)
     ↓
-Task W2 / W3 (进件 save + detail)
+Task W2 / W3 (进件 save + detail + query)
 Task W1 可独立先行
 Task W4 可任意时刻
+    ↓
+Task W5 (E2E 联调)
 ```
 
 建议顺序：**W0 → W1 → B → W2 → W3 → W4 → W5**
