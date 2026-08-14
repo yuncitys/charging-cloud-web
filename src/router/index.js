@@ -1043,6 +1043,14 @@ export const constantRoutes = [{
         title: '小程序配置',
         icon: 'el-icon-s-custom',
       }
+    }, {
+      path: 'largeScreenMockConfig',
+      component: () => import('@/views/configAdmin/largeScreenMockConfig'),
+      name: 'largeScreenMockConfig',
+      meta: {
+        title: '大屏虚拟数据配置',
+        icon: 'el-icon-s-data',
+      }
     }, ]
   },
   {
