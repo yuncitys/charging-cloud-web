@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<Frame :width="pageWidth" :height="pageHeight">
+		<Frame v-if="statusReady" :width="pageWidth" :height="pageHeight">
 			<div :class="[isDark ? 'dark_mainBody' : 'light_mainBody','mainBody']">
 				<Title />
 				<div class="mainContent">
@@ -43,7 +43,7 @@
 	import RealOrder from './components/RealOrder'
 	import Device from './components/Device'
 	import UpDownLine from './components/UpDownLine'
-	import { getLargeScreenDataMode } from '@/api/largeScreen/largeScreen.js'
+	import { getVisualMockStatus, setLargeScreenDataMode } from '@/api/largeScreen/largeScreen.js'
 	export default {
 		components: {
 			Frame,
@@ -64,18 +64,24 @@
 				pageWidth: 1920,
 				pageHeight: 1080,
 				dataMode: 'real',
+				statusReady: false,
 			}
 		},
 		created() {
-			this.dataMode = getLargeScreenDataMode()
-			try {
-				window.sessionStorage.setItem('largeScreenDataMode', this.dataMode)
-			} catch (e) {}
-			try {
-				window.localStorage.setItem('largeScreenDataMode', this.dataMode)
-			} catch (e) {}
+			this.syncDataMode()
 		},
-		methods: {}
+		methods: {
+			syncDataMode() {
+				getVisualMockStatus().then(res => {
+					const enabled = res && res.code === 200 && res.data && res.data.mockEnabled
+					this.dataMode = setLargeScreenDataMode(enabled ? 'mock' : 'real')
+				}).catch(() => {
+					this.dataMode = setLargeScreenDataMode('real')
+				}).finally(() => {
+					this.statusReady = true
+				})
+			}
+		}
 	}
 </script>
 
