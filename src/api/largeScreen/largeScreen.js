@@ -67,6 +67,8 @@ const MOCK_DEVICE_COUNT_STORAGE_KEY = 'largeScreen_mock_device_count_state_v1'
 const MOCK_DEVICE_COUNT_STORAGE_VERSION = 1
 const MOCK_VISUAL_TICK_INTERVAL_MS = 5000
 const ONE_DAY_MS = 24 * 60 * 60 * 1000
+/** 模拟全天 tick 数（不含当天最后一格，与真实跨天结算一致） */
+const SLOTS_PER_DAY = Math.floor(ONE_DAY_MS / MOCK_VISUAL_TICK_INTERVAL_MS) - 1
 
 function pad2(n) {
 	return String(n).padStart(2, '0')
@@ -252,48 +254,181 @@ function initTodayOrderCountForNewDay(dayStartTs, salt, previousValue) {
 	return getMockTodayDayBase(dayStartTs, salt) + preserved
 }
 
-function finalizeDayBeforeRollover(state, now = Date.now()) {
+function simulateFullDayTotals(dayStartTs) {
+	let todayMoneyNow = roundMoney(getMockTodayDayBase(dayStartTs, 31))
+	let wxTodayOrderNow = getMockTodayDayBase(dayStartTs, 23)
+	let cardTodayOrderNow = getMockTodayDayBase(dayStartTs, 27)
+	let newUserNow = 0
+	for (let slot = 0; slot <= SLOTS_PER_DAY; slot++) {
+		todayMoneyNow = roundMoney(todayMoneyNow + getMockTodayMoneyDelta(dayStartTs, slot))
+		wxTodayOrderNow += getMockTodayOrderDelta(
+			dayStartTs,
+			slot,
+			MOCK_TODAY_WX_ORDER_MIN_DELTA,
+			MOCK_TODAY_WX_ORDER_MAX_DELTA,
+			13
+		)
+		cardTodayOrderNow += getMockTodayOrderDelta(
+			dayStartTs,
+			slot,
+			MOCK_TODAY_CARD_ORDER_MIN_DELTA,
+			MOCK_TODAY_CARD_ORDER_MAX_DELTA,
+			17
+		)
+		newUserNow += getMockTodayUserDelta(dayStartTs, slot)
+	}
+	return {
+		todayMoneyNow,
+		wxTodayOrderNow,
+		cardTodayOrderNow,
+		newUserNow,
+	}
+}
+
+function getCompletedDayTotals(state, dayStartTs) {
+	const savedDayStartTs = Math.floor(toFiniteNumber(state.dayStartTs, dayStartTs))
+	const isSavedDay = state.dayKey === formatDateKey(dayStartTs) && savedDayStartTs === dayStartTs
+	if (isSavedDay) {
+		return {
+			todayMoneyNow: roundMoney(toFiniteNumber(state.todayMoneyNow, 0)),
+			wxTodayOrderNow: Math.max(0, Math.floor(toFiniteNumber(state.wxTodayOrderNow, 0))),
+			cardTodayOrderNow: Math.max(0, Math.floor(toFiniteNumber(state.cardTodayOrderNow, 0))),
+			newUserNow: Math.max(0, Math.floor(toFiniteNumber(state.newUserNow, 0))),
+		}
+	}
+	return simulateFullDayTotals(dayStartTs)
+}
+
+function resolveStateWeekKey(state, dayStartTs) {
+	if (state.weekKey) return state.weekKey
+	if (state.dayStartTs) return formatWeekKey(state.dayStartTs)
+	return formatWeekKey(dayStartTs)
+}
+
+function resolveStateMonthKey(state, dayStartTs) {
+	if (state.monthKey) return state.monthKey
+	if (state.dayStartTs) return formatMonthKey(state.dayStartTs)
+	return formatMonthKey(dayStartTs)
+}
+
+/** 将已结束的一日数据写入全量/本月/本周累计（按完成日所属自然周/月） */
+function applyCompletedDayToAccumulators(state, completedDayStartTs, totals) {
 	const nextState = {
 		...state,
 		baseMoney: MOCK_BASE_MONEY,
 		totalDailyAccum: roundMoney(toFiniteNumber(state.totalDailyAccum, 0)),
 		monthDailyAccum: roundMoney(toFiniteNumber(state.monthDailyAccum, 0)),
-		todayMoneyNow: roundMoney(toFiniteNumber(state.todayMoneyNow, 0)),
+		wxWeekOrderAccum: Math.max(0, Math.floor(toFiniteNumber(state.wxWeekOrderAccum, 0))),
+		cardWeekOrderAccum: Math.max(0, Math.floor(toFiniteNumber(state.cardWeekOrderAccum, 0))),
 	}
-	const todayAmount = nextState.todayMoneyNow
-	const wxTodayOrders = Math.max(0, Math.floor(toFiniteNumber(nextState.wxTodayOrderNow, 0)))
-	const cardTodayOrders = Math.max(0, Math.floor(toFiniteNumber(nextState.cardTodayOrderNow, 0)))
-	const todayNewUsers = Math.max(0, Math.floor(toFiniteNumber(nextState.newUserNow, 0)))
+	const todayAmount = roundMoney(totals.todayMoneyNow)
+	const wxTodayOrders = Math.max(0, Math.floor(totals.wxTodayOrderNow))
+	const cardTodayOrders = Math.max(0, Math.floor(totals.cardTodayOrderNow))
+	const todayNewUsers = Math.max(0, Math.floor(totals.newUserNow))
+	const completedMonthKey = formatMonthKey(completedDayStartTs)
+	const completedWeekKey = formatWeekKey(completedDayStartTs)
+	const stateMonthKey = resolveStateMonthKey(nextState, completedDayStartTs)
+	const stateWeekKey = resolveStateWeekKey(nextState, completedDayStartTs)
+
 	nextState.totalUserDailyAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.totalUserDailyAccum, 0))) + todayNewUsers
 	nextState.totalDailyAccum = roundMoney(nextState.totalDailyAccum + todayAmount)
-	nextState.wxOrderTotalDailyAccum += wxTodayOrders
-	nextState.cardOrderTotalDailyAccum += cardTodayOrders
-	const newMonthKey = formatMonthKey(now)
-	if (nextState.monthKey === newMonthKey) {
+	nextState.wxOrderTotalDailyAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.wxOrderTotalDailyAccum, 0))) + wxTodayOrders
+	nextState.cardOrderTotalDailyAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.cardOrderTotalDailyAccum, 0))) + cardTodayOrders
+
+	if (stateMonthKey === completedMonthKey) {
 		nextState.monthDailyAccum = roundMoney(nextState.monthDailyAccum + todayAmount)
 	} else {
-		nextState.monthDailyAccum = 0
+		nextState.monthDailyAccum = todayAmount
 	}
-	const newWeekKey = formatWeekKey(now)
-	nextState.wxWeekOrderAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.wxWeekOrderAccum, 0)))
-	nextState.cardWeekOrderAccum = Math.max(0, Math.floor(toFiniteNumber(nextState.cardWeekOrderAccum, 0)))
-	if (nextState.weekKey === newWeekKey) {
+	nextState.monthKey = completedMonthKey
+
+	if (stateWeekKey === completedWeekKey) {
 		nextState.wxWeekOrderAccum += wxTodayOrders
 		nextState.cardWeekOrderAccum += cardTodayOrders
 	} else {
+		nextState.wxWeekOrderAccum = wxTodayOrders
+		nextState.cardWeekOrderAccum = cardTodayOrders
+	}
+	nextState.weekKey = completedWeekKey
+	return nextState
+}
+
+function resetStateForNewDay(state, nextDayStartTs) {
+	const nextState = { ...state, baseMoney: MOCK_BASE_MONEY }
+	const newWeekKey = formatWeekKey(nextDayStartTs)
+	const newMonthKey = formatMonthKey(nextDayStartTs)
+
+	if (nextState.weekKey !== newWeekKey) {
 		nextState.wxWeekOrderAccum = 0
 		nextState.cardWeekOrderAccum = 0
 	}
-	nextState.dayStartTs = getDayStartTs(now)
-	nextState.todayMoneyNow = roundMoney(getMockTodayDayBase(nextState.dayStartTs, 31))
-	nextState.wxTodayOrderNow = getMockTodayDayBase(nextState.dayStartTs, 23)
-	nextState.cardTodayOrderNow = getMockTodayDayBase(nextState.dayStartTs, 27)
-	nextState.newUserNow = 0
-	nextState.lastTodayMoneySlot = -1
-	nextState.dayKey = formatDateKey(now)
+	if (nextState.monthKey !== newMonthKey) {
+		nextState.monthDailyAccum = 0
+	}
+
+	nextState.dayStartTs = nextDayStartTs
+	nextState.dayKey = formatDateKey(nextDayStartTs)
 	nextState.monthKey = newMonthKey
 	nextState.weekKey = newWeekKey
+	nextState.todayMoneyNow = roundMoney(getMockTodayDayBase(nextDayStartTs, 31))
+	nextState.wxTodayOrderNow = getMockTodayDayBase(nextDayStartTs, 23)
+	nextState.cardTodayOrderNow = getMockTodayDayBase(nextDayStartTs, 27)
+	nextState.newUserNow = 0
+	nextState.lastTodayMoneySlot = -1
 	return nextState
+}
+
+/** 逐日补算跳过的天数，避免只结算最后一次打开的那天 */
+function catchUpMissedDays(state, now = Date.now()) {
+	const targetDayStartTs = getDayStartTs(now)
+	let currentDayStartTs = Math.floor(toFiniteNumber(state.dayStartTs, targetDayStartTs))
+	if (currentDayStartTs <= 0 || currentDayStartTs > targetDayStartTs) {
+		currentDayStartTs = targetDayStartTs
+	}
+
+	while (currentDayStartTs < targetDayStartTs) {
+		const totals = getCompletedDayTotals(state, currentDayStartTs)
+		state = applyCompletedDayToAccumulators(state, currentDayStartTs, totals)
+		const nextDayStartTs = currentDayStartTs + ONE_DAY_MS
+		state = resetStateForNewDay(state, nextDayStartTs)
+		currentDayStartTs = nextDayStartTs
+	}
+	return state
+}
+
+/** 同天打开且本周/本月累计为空时，按已过的自然日预填（修复历史 storage 与当周首次打开） */
+function seedCurrentPeriodAccumulatorsIfNeeded(state, now = Date.now()) {
+	const dayStartTs = getDayStartTs(now)
+	const weekStartTs = getWeekStartTs(now)
+	const monthDate = new Date(dayStartTs)
+	const monthStartTs = getDayStartTs(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1))
+
+	if (roundMoney(toFiniteNumber(state.monthDailyAccum, 0)) === 0 && dayStartTs > monthStartTs) {
+		let cursor = monthStartTs
+		while (cursor < dayStartTs) {
+			const totals = simulateFullDayTotals(cursor)
+			state.monthDailyAccum = roundMoney(toFiniteNumber(state.monthDailyAccum, 0) + totals.todayMoneyNow)
+			cursor += ONE_DAY_MS
+		}
+		state.monthKey = formatMonthKey(now)
+	}
+
+	if (
+		Math.floor(toFiniteNumber(state.wxWeekOrderAccum, 0)) === 0
+		&& Math.floor(toFiniteNumber(state.cardWeekOrderAccum, 0)) === 0
+		&& dayStartTs > weekStartTs
+	) {
+		let cursor = weekStartTs
+		while (cursor < dayStartTs) {
+			const totals = simulateFullDayTotals(cursor)
+			state.wxWeekOrderAccum = Math.max(0, Math.floor(toFiniteNumber(state.wxWeekOrderAccum, 0))) + totals.wxTodayOrderNow
+			state.cardWeekOrderAccum = Math.max(0, Math.floor(toFiniteNumber(state.cardWeekOrderAccum, 0))) + totals.cardTodayOrderNow
+			cursor += ONE_DAY_MS
+		}
+		state.weekKey = formatWeekKey(now)
+	}
+
+	return state
 }
 
 /** 今日新增用户：与金额/订单同频，每 5 秒有概率 +1 */
@@ -369,8 +504,11 @@ function getMockGrowthState(now = Date.now()) {
 	const dayKey = formatDateKey(now)
 	if (!state || state.version !== MOCK_GROWTH_STORAGE_VERSION) {
 		state = createMockGrowthState(state, now)
+		state = seedCurrentPeriodAccumulatorsIfNeeded(state, now)
 	} else if (state.dayKey !== dayKey) {
-		state = finalizeDayBeforeRollover(state, now)
+		state = catchUpMissedDays(state, now)
+	} else {
+		state = seedCurrentPeriodAccumulatorsIfNeeded(state, now)
 	}
 	state = advanceMockGrowthState(state, now)
 
