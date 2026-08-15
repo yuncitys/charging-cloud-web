@@ -24,13 +24,11 @@
 <script>
 	import {
 		getCount,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
-	import {
-		mapGetters
-	} from 'vuex'
+	import largeScreenRefresh from '../mixins/largeScreenRefresh'
 	export default {
 		name: 'Recharge',
+		mixins: [largeScreenRefresh],
 		components: {
 
 		},
@@ -38,21 +36,17 @@
 			return {
 				netPayMoney: 0,
 				icPayMoney: 0,
-				refreshTimer: null,
 			}
 		},
 		watch: {
 
 		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
 			getCount() {
 				getCount().then(res => {
 					if (res.code === 200) {
 						let countPayMoney = res.data.countPayMoney
-						countPayMoney.forEach((item, index) => {
+						countPayMoney.forEach((item) => {
 							if (item.type === 1) {
 								this.netPayMoney = item.payMoney
 							} else if (item.type === 2) {
@@ -68,15 +62,8 @@
 		},
 		created() {
 			this.getCount()
-			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
-					this.getCount()
-				}, 5000)
-			}
+			this.startLargeScreenInterval(() => this.getCount())
 		},
-		destroyed() {
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
-		}
 	}
 </script>
 

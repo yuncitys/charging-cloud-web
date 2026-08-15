@@ -57,13 +57,11 @@
 <script>
 	import {
 		getListByNetWorkDot,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
-	import {
-		mapGetters
-	} from 'vuex'
+	import largeScreenRefresh from '../mixins/largeScreenRefresh'
 	export default {
 		name: 'Rank',
+		mixins: [largeScreenRefresh],
 		components: {
 
 		},
@@ -81,7 +79,6 @@
 				],
 				navIndex: 0,
 				list: [],
-				refreshTimer: null,
 				classOption: {
 					step: 0.3,
 					hoverStop: true,
@@ -97,9 +94,6 @@
 
 		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
 			changeIndex(index) {
 				this.navIndex = index
 				this.getListByNetWorkDot()
@@ -112,7 +106,7 @@
 				getListByNetWorkDot(data).then(res => {
 					if (res.code === 200) {
 						let list = res.data
-						list.forEach((item, index) => {
+						list.forEach((item) => {
 							item.time = this.formatTime(new Date(), 'yyyy-MM-dd HH: mm: ss')
 						})
 						this.list = list
@@ -156,15 +150,8 @@
 		},
 		created() {
 			this.getListByNetWorkDot()
-			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
-					this.getListByNetWorkDot()
-				}, 20000)
-			}
+			this.startLargeScreenInterval(() => this.getListByNetWorkDot(), this.getLargeScreenMockStatus().tickIntervalMs * 4)
 		},
-		destroyed() {
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
-		}
 	}
 </script>
 

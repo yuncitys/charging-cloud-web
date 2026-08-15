@@ -1,56 +1,61 @@
 import request from '@/utils/request'
 
-function getBaseConfig() {
-	if (typeof globalThis !== 'undefined' && globalThis.BaseConfig) {
-		return globalThis.BaseConfig
-	}
-	if (typeof window !== 'undefined' && window.BaseConfig) {
-		return window.BaseConfig
-	}
-	return null
+const MODE_STORAGE_KEY = 'largeScreenDataMode'
+const TICK_STORAGE_KEY = 'largeScreenTickIntervalMs'
+const DEFAULT_TICK_INTERVAL_MS = 5000
+
+function writeStorage(storage, key, value) {
+	try {
+		if (storage) storage.setItem(key, value)
+	} catch (e) {}
 }
 
-export function setLargeScreenDataMode(mode) {
-	const normalized = String(mode || '').trim().toLowerCase()
-	const value = normalized === 'mock' ? 'mock' : 'real'
+function readStorage(key) {
 	try {
-		window.sessionStorage.setItem('largeScreenDataMode', value)
+		const fromSession = window.sessionStorage.getItem(key)
+		if (fromSession) return fromSession
 	} catch (e) {}
 	try {
-		window.localStorage.setItem('largeScreenDataMode', value)
-	} catch (e) {}
-	return value
+		return window.localStorage.getItem(key) || ''
+	} catch (e) {
+		return ''
+	}
 }
 
+/** 由大屏页根据后端 /visual/mockStatus 写入，供子组件决定是否轮询 */
+export function setLargeScreenMockStatus({ mockEnabled, tickIntervalMs } = {}) {
+	const mode = mockEnabled ? 'mock' : 'real'
+	const tick = Number(tickIntervalMs)
+	const normalizedTick = Number.isFinite(tick) && tick >= 1000 ? Math.floor(tick) : DEFAULT_TICK_INTERVAL_MS
+	writeStorage(window.sessionStorage, MODE_STORAGE_KEY, mode)
+	writeStorage(window.localStorage, MODE_STORAGE_KEY, mode)
+	writeStorage(window.sessionStorage, TICK_STORAGE_KEY, String(normalizedTick))
+	writeStorage(window.localStorage, TICK_STORAGE_KEY, String(normalizedTick))
+	return {
+		mockEnabled: mode === 'mock',
+		tickIntervalMs: normalizedTick,
+	}
+}
+
+export function getLargeScreenMockStatus() {
+	const mode = String(readStorage(MODE_STORAGE_KEY) || '').trim().toLowerCase()
+	const tickRaw = Number(readStorage(TICK_STORAGE_KEY))
+	return {
+		mockEnabled: mode === 'mock',
+		tickIntervalMs: Number.isFinite(tickRaw) && tickRaw >= 1000 ? Math.floor(tickRaw) : DEFAULT_TICK_INTERVAL_MS,
+	}
+}
+
+/** @deprecated 兼容旧调用，请优先使用 getLargeScreenMockStatus */
 export function getLargeScreenDataMode() {
-	let fromStorage = ''
-	try {
-		fromStorage = window.sessionStorage.getItem('largeScreenDataMode') || ''
-	} catch (e) {}
-	if (!fromStorage) {
-		try {
-			fromStorage = window.localStorage.getItem('largeScreenDataMode') || ''
-		} catch (e) {}
-	}
-	const storageMode = String(fromStorage || '').trim().toLowerCase()
-	if (storageMode === 'mock' || storageMode === 'real') {
-		return storageMode
-	}
+	return getLargeScreenMockStatus().mockEnabled ? 'mock' : 'real'
+}
 
-	const cfg = getBaseConfig()
-	const cfgMode = cfg && cfg.VUE_LARGE_SCREEN_DATA_SOURCE != null ? String(cfg.VUE_LARGE_SCREEN_DATA_SOURCE) : ''
-	const normalized = cfgMode.trim().toLowerCase()
-	if (normalized === 'mock' || normalized === 'real') {
-		return normalized
-	}
-
-	const envMode = process.env.VUE_APP_LARGE_SCREEN_DATA_SOURCE != null ? String(process.env.VUE_APP_LARGE_SCREEN_DATA_SOURCE) : ''
-	const envNormalized = envMode.trim().toLowerCase()
-	if (envNormalized === 'mock' || envNormalized === 'real') {
-		return envNormalized
-	}
-
-	return 'real'
+/** @deprecated 兼容旧调用，请优先使用 setLargeScreenMockStatus */
+export function setLargeScreenDataMode(mode) {
+	return setLargeScreenMockStatus({ mockEnabled: String(mode || '').toLowerCase() === 'mock' }).mockEnabled
+		? 'mock'
+		: 'real'
 }
 
 function formBody(data) {
@@ -58,7 +63,7 @@ function formBody(data) {
 		url: '',
 		method: 'post',
 		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+			'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8',
 		},
 		transformRequest: [
 			function(payload) {

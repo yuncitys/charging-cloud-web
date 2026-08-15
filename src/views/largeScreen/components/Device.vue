@@ -61,20 +61,17 @@
 	import {
     getDeviceCount,
 		getDeviceLogList,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
-	import {
-		mapGetters
-	} from 'vuex'
+	import largeScreenRefresh from '../mixins/largeScreenRefresh'
 	export default {
 		name: 'Device',
+		mixins: [largeScreenRefresh],
 		components: {
 
 		},
 		data() {
 			return {
 				list: [],
-				refreshTimer: null,
 				classOption: {
 					step: 0.35,
 					hoverStop: true,
@@ -95,21 +92,6 @@
 
 		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
-			scheduleMockDailyRefresh() {
-				if (!this.isMockMode()) return
-				const now = new Date()
-				const nextRefresh = new Date(now)
-				nextRefresh.setHours(24, 0, 5, 0)
-				const delay = Math.max(1000, nextRefresh.getTime() - now.getTime())
-				this.refreshTimer = setTimeout(() => {
-					this.getDeviceCount()
-					this.getDeviceLogList()
-					this.scheduleMockDailyRefresh()
-				}, delay)
-			},
 			alarmText(item) {
 				const ai = item ? item.alarmItem : null
 				if (ai && typeof ai === 'object') {
@@ -147,21 +129,19 @@
 						})
 					}
 				})
+			},
+			refreshDeviceData() {
+				this.getDeviceCount()
+				this.getDeviceLogList()
 			}
 		},
 		mounted() {
 
 		},
 		created() {
-			this.getDeviceCount()
-			this.getDeviceLogList()
-			if (this.isMockMode()) {
-				this.scheduleMockDailyRefresh()
-			}
+			this.refreshDeviceData()
+			this.startLargeScreenDailyRefresh(() => this.refreshDeviceData())
 		},
-		destroyed() {
-			if (this.refreshTimer) clearTimeout(this.refreshTimer)
-		}
 	}
 </script>
 

@@ -28,9 +28,6 @@
 </template>
 
 <script>
-	import {
-		mapGetters
-	} from 'vuex'
 	import Frame from '@/components/Common/Frame'
 	import Screenfull from '@/components/Screenfull'
 	import Title from './components/Title'
@@ -43,7 +40,7 @@
 	import RealOrder from './components/RealOrder'
 	import Device from './components/Device'
 	import UpDownLine from './components/UpDownLine'
-	import { getVisualMockStatus, setLargeScreenDataMode } from '@/api/largeScreen/largeScreen.js'
+	import { getVisualMockStatus, setLargeScreenMockStatus } from '@/api/largeScreen/largeScreen.js'
 	export default {
 		components: {
 			Frame,
@@ -63,20 +60,22 @@
 			return {
 				pageWidth: 1920,
 				pageHeight: 1080,
-				dataMode: 'real',
 				statusReady: false,
 			}
 		},
 		created() {
-			this.syncDataMode()
+			this.syncMockStatus()
 		},
 		methods: {
-			syncDataMode() {
+			syncMockStatus() {
 				getVisualMockStatus().then(res => {
-					const enabled = res && res.code === 200 && res.data && res.data.mockEnabled
-					this.dataMode = setLargeScreenDataMode(enabled ? 'mock' : 'real')
+					const data = res && res.code === 200 ? (res.data || {}) : {}
+					setLargeScreenMockStatus({
+						mockEnabled: !!data.mockEnabled,
+						tickIntervalMs: data.tickIntervalMs,
+					})
 				}).catch(() => {
-					this.dataMode = setLargeScreenDataMode('real')
+					setLargeScreenMockStatus({ mockEnabled: false })
 				}).finally(() => {
 					this.statusReady = true
 				})

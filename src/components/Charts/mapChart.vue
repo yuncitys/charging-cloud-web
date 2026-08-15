@@ -19,10 +19,10 @@
 	import resize from './mixins/resize'
 	import {
 		getProvinceByDevice,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
+	import largeScreenRefresh from '@/views/largeScreen/mixins/largeScreenRefresh'
 	export default {
-		mixins: [resize],
+		mixins: [resize, largeScreenRefresh],
 		props: {
 			width: {
 				type: String,
@@ -37,7 +37,6 @@
 			return {
 				mapName: '全国',
                 breadcrumbs: ['全国'],
-				refreshTimer: null,
 				provinceCdataTemplate: [],
 				cdata: [{
 						name: '北京市',
@@ -194,19 +193,9 @@
 				value: 0,
 			}))
 			this.refreshMapData()
-			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
-					this.refreshMapData()
-				}, 5000)
-			}
-		},
-		destroyed() {
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
+			this.startLargeScreenInterval(() => this.refreshMapData())
 		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
             /**
              * 处理地图点击事件：仅在“下钻成功”（存在已注册地图）时更新面包屑与地图
              * - 全国 -> 省：只有当对应省份地图已注册时才切换并更新面包屑
