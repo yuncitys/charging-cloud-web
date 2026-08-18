@@ -116,7 +116,7 @@ export default {
           fullName: '支付宝'
         },{
           enCode: 'tzbank',
-          fullName: '台州银行'
+          fullName: 'TZBank'
         },{
           enCode: 'wxpay_partner',
           fullName: '微信(服务商)'
