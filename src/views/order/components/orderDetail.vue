@@ -440,6 +440,7 @@ export default {
       if (t === 1) return '扫码充电'
       if (t === 2) return '免费充电'
       if (t === 3) return '包月充电'
+      if (t === 4) return '互联互通'
       return this.disp(t)
     },
     payStatusText(s) {
@@ -467,6 +468,7 @@ export default {
       if (text === 'SWIPE_CARD') return '刷卡支付'
       if (text === 'MONTH_CARD') return '月卡支付'
       if (text === 'FREE') return '免费'
+      if (text === 'EVCS') return '互联互通'
       return payType
     },
     startTypeText(startType) {

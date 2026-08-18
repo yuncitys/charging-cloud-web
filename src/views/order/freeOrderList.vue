@@ -365,6 +365,7 @@ export default {
       if (type === 1) return '扫码'
       if (type === 2) return '免费'
       if (type === 3) return '包月'
+      if (type === 4) return '互联互通'
       return this.disp(type)
     },
     electricOutText(type) {
@@ -423,6 +424,7 @@ export default {
       if (text === 'SWIPE_CARD') return '刷卡支付'
       if (text === 'MONTH_CARD') return '月卡支付'
       if (text === 'FREE') return '免费'
+      if (text === 'EVCS') return '互联互通'
       return payType
     },
     goOrderDetail(row) {
