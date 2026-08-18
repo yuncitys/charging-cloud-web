@@ -18,7 +18,7 @@
             <el-col :span="12">
               <el-form-item label="渠道代码" prop="serviceProviderId">
                 <el-select v-model="form.serviceProviderId" placeholder="请选择渠道代码" style="width: 100%" :disabled="isEdit">
-                  <el-option label="TZBank (tzbank)" value="tzbank" />
+                  <el-option label="合作银行 (tzbank)" value="tzbank" />
                   <el-option label="微信服务商 (wxpay_partner)" value="wxpay_partner" />
                   <el-option label="默认 (local)" value="local" />
                 </el-select>

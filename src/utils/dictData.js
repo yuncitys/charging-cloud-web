@@ -1535,7 +1535,7 @@ class dictData {
 				"bank_code": "313338707013"
 			},
 			{
-				"bank_name": "TZBank股份有限公司",
+				"bank_name": "合作银行股份有限公司",
 				"bank_code": "313345001665"
 			},
 			{
