@@ -24,7 +24,7 @@
 | Web 主分支 | **`main`**（非 charging-cloud 的 master） |
 | 功能分支 | `feature/wechat-partner-pay-web` |
 | 通道 code | `wxpay_partner` |
-| 进件渠道选项 | TZBank / 微信(服务商)；保留现有 `wxpay` 直连选项不动 |
+| 进件渠道选项 | 合作银行 / 微信(服务商)；保留现有 `wxpay` 直连选项不动 |
 | 渠道配置 | `paymentChannel` 新增「微信服务商」类型 + Partner 配置表单 |
 | 分账/台账页 | **不改业务逻辑**，仅可选展示通道名称 |
 | 主体类型 | 共用主表 `tradeMerType`，**不重复录入**；后端映射 `subject_type` |
@@ -101,7 +101,7 @@
 
 ## 进件表单（wxpay_partner）
 
-### 与TZBank差异
+### 与合作银行差异
 
 | 能力 | tzbank | wxpay_partner |
 |------|--------|---------------|
@@ -164,7 +164,7 @@
 
 ```javascript
 export const SERVICE_PROVIDER_MAP = {
-  tzbank: 'TZBank',
+  tzbank: '合作银行',
   wxpay: '微信(直连)',
   wxpay_partner: '微信(服务商)',
   alipay: '支付宝'

@@ -273,7 +273,7 @@
             </el-col>
           </el-row>
         </div>
-        <div class="tzbankConfig" v-else-if="form.channelName === 'TZBank'">
+        <div class="tzbankConfig" v-else-if="form.channelName === '合作银行'">
           <el-row>
             <el-col :span="12">
               <el-form-item label="平台商户号">
@@ -428,13 +428,13 @@ export default {
         requestDomain: '',
       },
       channelList: [
-        { name: 'TZBank', code: 'tzbank' },
+        { name: '合作银行', code: 'tzbank' },
         { name: '微信', code: 'wxpay' },
         { name: '微信服务商', code: 'wxpay_partner' },
         { name: '支付宝', code: 'alipay' }
       ],
       serviceProviderList: [
-        { name: 'TZBank', code: 'tzbank' },
+        { name: '合作银行', code: 'tzbank' },
         { name: '微信(直连)', code: 'wxpay' },
         { name: '微信(服务商)', code: 'wxpay_partner' },
         { name: '支付宝', code: 'alipay' }
@@ -480,7 +480,7 @@ export default {
           this.wxPartnerConfig = JSON.parse(this.form.configStr)
         } else if (this.form.channelName === '支付宝') {
           this.aliConfig = JSON.parse(this.form.configStr)
-        } else if (this.form.channelName === 'TZBank') {
+        } else if (this.form.channelName === '合作银行') {
           this.tzbankConfig = JSON.parse(this.form.configStr)
         }
       })
@@ -565,7 +565,7 @@ export default {
         } else if (this.form.channelName === '支付宝') {
           this.form.channelCode = 'alipay'
           this.form.configStr = JSON.stringify(this.aliConfig)
-        } else if (this.form.channelName === 'TZBank') {
+        } else if (this.form.channelName === '合作银行') {
           this.form.channelCode = 'tzbank'
           this.form.configStr = JSON.stringify(this.tzbankConfig)
         }

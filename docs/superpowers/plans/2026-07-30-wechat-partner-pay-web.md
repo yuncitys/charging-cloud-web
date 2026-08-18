@@ -238,7 +238,7 @@ wx 通道：`managerEmail`、`settlementId`、`qualificationType`、场景附件
 | 详情签约链接 | sign_url 可打开 |
 | 查询状态 | query 同步 channelState / merchantNo |
 | 账单列表筛选 | 可选 wxpay_partner |
-| TZBank进件 | 回归无影响 |
+| 合作银行进件 | 回归无影响 |
 
 ---
 
