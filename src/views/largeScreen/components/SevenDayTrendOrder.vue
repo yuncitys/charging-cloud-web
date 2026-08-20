@@ -12,14 +12,12 @@
 <script>
 	import {
 		getSevenDayTrendByOrder,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
-	import {
-		mapGetters
-	} from 'vuex'
   import SevenDayTrend from '@/components/Charts/SevenDayTrend'
+	import largeScreenRefresh from '../mixins/largeScreenRefresh'
 	export default {
 		name: 'DeviceNoOrder',
+		mixins: [largeScreenRefresh],
     components: {
     	SevenDayTrend
     },
@@ -32,45 +30,9 @@
         	chargingDegree: [],
         	DAY: []
         },
-				refreshTimer: null,
 			}
 		},
-		watch: {
-
-		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
-			getCacheKey() {
-				const d = new Date()
-				const y = d.getFullYear()
-				const m = String(d.getMonth() + 1).padStart(2, '0')
-				const day = String(d.getDate()).padStart(2, '0')
-				return `largeScreen_mock_seven_day_trend_${y}-${m}-${day}`
-			},
-			tryLoadCache() {
-				try {
-					const raw = window.sessionStorage.getItem(this.getCacheKey())
-					if (!raw) return false
-					const parsed = JSON.parse(raw)
-					if (!parsed || !parsed.lineChartData) return false
-					this.lineChartData = parsed.lineChartData
-					return true
-				} catch (e) {
-					return false
-				}
-			},
-			saveCache() {
-				try {
-					window.sessionStorage.setItem(this.getCacheKey(), JSON.stringify({ lineChartData: this.lineChartData }))
-				} catch (e) {}
-			},
-			msUntilNextDay() {
-				const now = new Date()
-				const next = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 2)
-				return Math.max(1000, next.getTime() - now.getTime())
-			},
 			getSevenDayTrendByOrder() {
 				getSevenDayTrendByOrder().then(res => {
 					if (res.code === 200) {
@@ -81,40 +43,21 @@
 							chargingDegree: [],
 							DAY: []
 						}
-						sevenDayTrendByOrder.forEach((item, index) => {
+						sevenDayTrendByOrder.forEach((item) => {
 							lineChartData.DAY.push(item.DAY)
 							lineChartData.chargingAmount.push(item.chargingAmount)
 							lineChartData.chargingOrder.push(item.chargingOrder)
 							lineChartData.chargingDegree.push(item.chargingDegree)
 						})
 						this.lineChartData = lineChartData
-						if (this.isMockMode()) this.saveCache()
 					}
 				})
 			}
 		},
-		mounted() {
-
-		},
 		created() {
-			if (this.isMockMode()) {
-				if (!this.tryLoadCache()) this.getSevenDayTrendByOrder()
-				this.refreshTimer = setTimeout(() => {
-					this.getSevenDayTrendByOrder()
-					this.refreshTimer = setInterval(() => {
-						this.getSevenDayTrendByOrder()
-					}, 24 * 60 * 60 * 1000)
-				}, this.msUntilNextDay())
-			} else {
-				this.getSevenDayTrendByOrder()
-			}
+			this.getSevenDayTrendByOrder()
+			this.startLargeScreenDailyRefresh(() => this.getSevenDayTrendByOrder())
 		},
-		destroyed() {
-			if (this.refreshTimer) {
-				clearInterval(this.refreshTimer)
-				clearTimeout(this.refreshTimer)
-			}
-		}
 	}
 </script>
 

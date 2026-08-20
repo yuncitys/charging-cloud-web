@@ -35,20 +35,17 @@
 <script>
 	import {
 		getOrderList,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
-	import {
-		mapGetters
-	} from 'vuex'
+	import largeScreenRefresh from '../mixins/largeScreenRefresh'
 	export default {
 		name: 'RealOrder',
+		mixins: [largeScreenRefresh],
 		components: {
 
 		},
 		data() {
 			return {
 				list: [],
-				refreshTimer: null,
 				classOption: {
 					step: 0.35,
 					hoverStop: true,
@@ -64,9 +61,6 @@
 
 		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
 			getOrderList() {
 				getOrderList().then(res => {
 					if (res.code === 200) {
@@ -80,15 +74,8 @@
 		},
 		created() {
 			this.getOrderList()
-			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
-					this.getOrderList()
-				}, 12000)
-			}
+			this.startLargeScreenInterval(() => this.getOrderList(), this.getLargeScreenMockStatus().tickIntervalMs * 2)
 		},
-		destroyed() {
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
-		}
 	}
 </script>
 

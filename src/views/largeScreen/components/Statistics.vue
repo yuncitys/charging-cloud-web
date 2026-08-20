@@ -155,13 +155,11 @@
 <script>
 	import {
 		getCount,
-		getLargeScreenDataMode
 	} from '@/api/largeScreen/largeScreen.js'
-	import {
-		mapGetters
-	} from 'vuex'
+	import largeScreenRefresh from '../mixins/largeScreenRefresh'
 	export default {
 		name: 'Statistics',
+		mixins: [largeScreenRefresh],
 		components: {
 
 		},
@@ -170,7 +168,6 @@
 				dateDay: null,
 				dateYear: null,
 				dateWeek: null,
-				refreshTimer: null,
 				weekday: ['周日', '周一', '周二', '周三', '周四', '周五', '周六'],
 				countOrderCard: {
 					currentDay: 0,
@@ -201,9 +198,6 @@
 
 		},
 		methods: {
-			isMockMode() {
-				return getLargeScreenDataMode() === 'mock'
-			},
 			formatAmount(value) {
 				if (value == null || value === '') return '0.00'
 				if (typeof value === 'string') {
@@ -286,15 +280,10 @@
 		created() {
 			this.timeFn()
 			this.getCount()
-			if (this.isMockMode()) {
-				this.refreshTimer = setInterval(() => {
-					this.getCount()
-				}, 5000)
-			}
+			this.startLargeScreenInterval(() => this.getCount())
 		},
 		destroyed() {
 			if (this.timing) clearInterval(this.timing)
-			if (this.refreshTimer) clearInterval(this.refreshTimer)
 		}
 	}
 </script>
