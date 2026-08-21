@@ -1,72 +1,75 @@
 <template>
-  <el-dialog
+  <el-drawer
     title="双枪并充配置"
     :visible.sync="visible"
-    :append-to-body="true"
-    width="560px"
+    custom-class="parallel-charge-drawer"
+    direction="rtl"
+    size="520px"
+    append-to-body
     @close="handleClose"
   >
-    <el-form
-      ref="form"
-      v-loading="loading"
-      :model="form"
-      label-position="left"
-      label-width="140px"
-    >
-      <el-form-item label="电站名称">
-        <el-input v-model="form.networkName" disabled />
-      </el-form-item>
-      <el-form-item label="是否配置双枪并充" required>
-        <el-radio-group v-model="form.isMoreCharge">
-          <el-radio :label="false">否</el-radio>
-          <el-radio :label="true">是</el-radio>
-        </el-radio-group>
-      </el-form-item>
-      <el-form-item v-if="form.isMoreCharge === true" label="选择电桩">
-        <div class="pile-select-box">
-          <div class="search-bar">
-            <el-checkbox
-              :value="selectAll"
-              :indeterminate="selectAllIndeterminate"
-              :disabled="!filteredDevices.length"
-              @change="toggleAll"
-            >
-              全选
-            </el-checkbox>
-            <el-input
-              v-model="searchKey"
-              placeholder="请输入关键字进行过滤"
-              clearable
-              size="small"
-            />
-            <el-button type="primary" size="small" @click="applySearch">搜索</el-button>
-          </div>
-          <el-checkbox-group v-model="form.deviceIds" class="pile-list">
-            <el-checkbox
-              v-for="item in filteredDevices"
-              :key="item.deviceId"
-              :label="item.deviceId"
-              class="pile-item"
-            >
-              {{ formatDeviceLabel(item) }}
-            </el-checkbox>
-            <p v-if="!filteredDevices.length" class="empty-hint">暂无匹配电桩</p>
-          </el-checkbox-group>
-        </div>
-      </el-form-item>
-    </el-form>
-    <span slot="footer" class="dialog-footer">
-      <el-button @click="visible = false">取 消</el-button>
-      <el-button
-        v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
-        type="primary"
-        :loading="saving"
-        @click="handleSave"
+    <div v-loading="loading" class="parallel-charge-drawer-body">
+      <el-form
+        ref="form"
+        :model="form"
+        label-position="left"
+        label-width="140px"
       >
-        确 定
-      </el-button>
-    </span>
-  </el-dialog>
+        <el-form-item label="电站名称">
+          <el-input v-model="form.networkName" disabled />
+        </el-form-item>
+        <el-form-item label="是否配置双枪并充" required>
+          <el-radio-group v-model="form.isMoreCharge">
+            <el-radio :label="false">否</el-radio>
+            <el-radio :label="true">是</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item v-if="form.isMoreCharge === true" label="选择电桩">
+          <div class="pile-select-box">
+            <div class="search-bar">
+              <el-checkbox
+                :value="selectAll"
+                :indeterminate="selectAllIndeterminate"
+                :disabled="!filteredDevices.length"
+                @change="toggleAll"
+              >
+                全选
+              </el-checkbox>
+              <el-input
+                v-model="searchKey"
+                placeholder="请输入关键字进行过滤"
+                clearable
+                size="small"
+              />
+              <el-button type="primary" size="small" @click="applySearch">搜索</el-button>
+            </div>
+            <el-checkbox-group v-model="form.deviceIds" class="pile-list">
+              <el-checkbox
+                v-for="item in filteredDevices"
+                :key="item.deviceId"
+                :label="item.deviceId"
+                class="pile-item"
+              >
+                {{ formatDeviceLabel(item) }}
+              </el-checkbox>
+              <p v-if="!filteredDevices.length" class="empty-hint">暂无匹配电桩</p>
+            </el-checkbox-group>
+          </div>
+        </el-form-item>
+        <el-form-item class="drawer-form-actions" label-width="0">
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(':netWorkDot:parallelCharge:edit')"
+            type="primary"
+            :loading="saving"
+            @click="handleSave"
+          >
+            确 定
+          </el-button>
+          <el-button @click="visible = false">取 消</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </el-drawer>
 </template>
 
 <script>
@@ -222,6 +225,9 @@ export default {
 </script>
 
 <style scoped>
+.parallel-charge-drawer-body {
+  padding: 0 20px 20px;
+}
 .pile-select-box {
   border: 1px solid #ebeef5;
   border-radius: 4px;
@@ -238,7 +244,7 @@ export default {
   flex: 1;
 }
 .pile-list {
-  max-height: 240px;
+  max-height: 360px;
   overflow-y: auto;
   padding: 6px 10px;
   display: flex;
@@ -252,5 +258,14 @@ export default {
   margin: 8px 0;
   font-size: 13px;
   color: #909399;
+}
+.drawer-form-actions {
+  margin-top: 24px;
+}
+</style>
+
+<style>
+.parallel-charge-drawer .el-drawer__body {
+  overflow: auto;
 }
 </style>

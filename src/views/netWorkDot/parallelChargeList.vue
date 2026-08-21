@@ -49,8 +49,20 @@
           prop="networkName"
           label="电站名称"
           align="center"
+          min-width="160"
           show-overflow-tooltip
         />
+        <el-table-column
+          prop="merchantName"
+          label="归属商户"
+          align="center"
+          min-width="140"
+          show-overflow-tooltip
+        >
+          <template slot-scope="scope">
+            <span>{{ scope.row.merchantName || '—' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="是否配置并充" align="center" width="140">
           <template slot-scope="scope">
             <span>{{ formatConfigured(scope.row.isMoreCharge) }}</span>
@@ -66,10 +78,31 @@
             <span>{{ scope.row.selectedDeviceCount == null ? 0 : scope.row.selectedDeviceCount }}</span>
           </template>
         </el-table-column>
+        <el-table-column
+          prop="updateUser"
+          label="修改用户"
+          align="center"
+          width="120"
+          show-overflow-tooltip
+        >
+          <template slot-scope="scope">
+            <span>{{ scope.row.updateUser || '—' }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column
+          prop="updateTime"
+          label="修改时间"
+          align="center"
+          width="170"
+        >
+          <template slot-scope="scope">
+            <span>{{ scope.row.updateTime ? parseTime(scope.row.updateTime) : '—' }}</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" align="center" width="140" fixed="right">
           <template slot-scope="scope">
             <el-button
-              v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
+              v-if="btnAuthen.permsVerifAuthention(':netWorkDot:parallelCharge:edit')"
               type="primary"
               size="mini"
               @click="openConfig(scope.row)"
@@ -92,13 +125,14 @@
         />
       </div>
     </div>
-    <parallel-charge-config ref="configDialog" @saved="getLists" />
+    <parallel-charge-config ref="configDrawer" @saved="getLists" />
   </div>
 </template>
 
 <script>
 import { pageParallelCharge } from '@/api/netWorkDot/parallelCharge.js'
 import ParallelChargeConfig from './components/parallelChargeConfig.vue'
+import { parseTime } from '@/utils/index'
 
 export default {
   name: 'ParallelChargeList',
@@ -120,6 +154,7 @@ export default {
     this.getLists()
   },
   methods: {
+    parseTime,
     formatConfigured(val) {
       if (val === true || val === 1 || val === '1') return '是'
       return '否'
@@ -158,7 +193,7 @@ export default {
       })
     },
     openConfig(row) {
-      this.$refs.configDialog && this.$refs.configDialog.open(row)
+      this.$refs.configDrawer && this.$refs.configDrawer.open(row)
     },
     handleSizeChange(val) {
       this.listQuery.limit = val
