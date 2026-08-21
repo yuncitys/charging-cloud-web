@@ -68,7 +68,12 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="140" fixed="right">
           <template slot-scope="scope">
-            <el-button type="primary" size="mini" @click="openConfig(scope.row)">
+            <el-button
+              v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
+              type="primary"
+              size="mini"
+              @click="openConfig(scope.row)"
+            >
               配置
             </el-button>
           </template>

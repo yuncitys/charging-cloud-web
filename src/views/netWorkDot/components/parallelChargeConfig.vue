@@ -57,7 +57,14 @@
     </el-form>
     <span slot="footer" class="dialog-footer">
       <el-button @click="visible = false">取 消</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">确 定</el-button>
+      <el-button
+        v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
+        type="primary"
+        :loading="saving"
+        @click="handleSave"
+      >
+        确 定
+      </el-button>
     </span>
   </el-dialog>
 </template>
