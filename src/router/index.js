@@ -1388,8 +1388,14 @@ const routeDefinitions = [{
 /** 无需鉴权的基础路由 */
 export const constantRoutes = routeDefinitions.slice(0, 5)
 
-/** 需按菜单 href 过滤的业务路由 */
-export const asyncRoutes = routeDefinitions.slice(5)
+/** 需按菜单 href 过滤的业务路由（不含兜底 *，* 在 addRoutes 时最后追加） */
+export const asyncRoutes = routeDefinitions.slice(5).filter(route => route.path !== '*')
+
+export const catchAllRoute = {
+  path: '*',
+  redirect: '/404',
+  hidden: true
+}
 
 // 创建一个router对象
 const createRouter = () => new Router({

@@ -22,14 +22,12 @@ export default {
     const leafHref = getLeafHref(item)
 
     if (hasChildren) {
-      const titleVnode = h(
-        'span',
-        { slot: 'title', class: 'sidebar-only-submenu-title' },
-        [
-          item.icon ? h('i', { class: item.icon + ' sidebar-only-icon' }) : null,
-          h('span', { class: 'sidebar-only-title-text' }, item.title)
-        ]
-      )
+      // 目录：icon 与 title 必须是 title 插槽的直接子节点（i + span）
+      // 若包在外层 span 内，el-menu--collapse 会把 title 下 span 宽高置 0，图标一并消失
+      const titleNodes = [
+        item.icon ? h('i', { slot: 'title', class: item.icon + ' sidebar-only-icon' }) : null,
+        h('span', { slot: 'title', class: 'sidebar-only-title-text' }, item.title)
+      ]
 
       const childNodes = navChildren.map(child =>
         h('SidebarOnlyItem', {
@@ -41,7 +39,7 @@ export default {
       return h(
         'el-submenu',
         { props: { index: 'sidebar-sub-' + String(item.id || item.title) } },
-        [titleVnode, ...childNodes]
+        [...titleNodes, ...childNodes]
       )
     }
 

@@ -1,6 +1,7 @@
 import {
   asyncRoutes,
-  constantRoutes
+  constantRoutes,
+  catchAllRoute
 } from '@/router'
 import router, { resetRouter } from '@/router'
 import {
@@ -103,8 +104,9 @@ const actions = {
           resetRouter()
           accessedRoutes = filterRoutesByHref(asyncRoutes, allowedSet)
           const accessiblePaths = buildAccessiblePaths(authentionList, accessedRoutes)
-          router.addRoutes(accessedRoutes)
-          commit('SET_ROUTES', accessedRoutes)
+          const routesToAdd = [...accessedRoutes, catchAllRoute]
+          router.addRoutes(routesToAdd)
+          commit('SET_ROUTES', routesToAdd)
           commit('setAllowedHrefs', Array.from(accessiblePaths))
           commit('setRoutesLoaded', true)
         } else {

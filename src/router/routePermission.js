@@ -1,6 +1,6 @@
 import { MENU_TYPE } from '@/views/permission/constants/menuType'
 
-const PUBLIC_PATHS = new Set(['/dashboard'])
+const PUBLIC_PATHS = new Set(['/dashboard', '/404', '/401'])
 
 export function normalizePath(path) {
   if (!path) {
