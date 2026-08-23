@@ -40,11 +40,11 @@
 - Modify: `src/layout/components/topSidebar/topSidebar.vue`
 - Create: `src/utils/menuNav.js`（找首个叶子 href、过滤按钮）
 
-- [ ] **Step 1:** `menuNav.js` — `isNavNode(menu)`：`menuType !== 2` 且（目录或有效 href）
-- [ ] **Step 2:** `SidebarOnlyItem.js` — 去掉 `depth < 1`；递归 `isNavNode` 过滤
-- [ ] **Step 3:** `SidebarOnly/index.vue` — 多级 active/expanded 状态
-- [ ] **Step 4:** `Sidebar/index.vue` — mix 侧栏改嵌套 `el-submenu`
-- [ ] **Step 5:** `topSidebar.vue` — 点击顶级目录跳首个叶子；localStorage active 路径
+- [x] **Step 1:** `menuNav.js` — `isNavNode(menu)`：`menuType !== 2` 且（目录或有效 href）
+- [x] **Step 2:** `SidebarOnlyItem.js` — 去掉 `depth < 1`；递归 `isNavNode` 过滤
+- [x] **Step 3:** `SidebarOnly/index.vue` — 多级 active/expanded 状态
+- [x] **Step 4:** `Sidebar/index.vue` — mix 侧栏改嵌套 `el-submenu`
+- [x] **Step 5:** `topSidebar.vue` — 点击顶级目录跳首个叶子；localStorage active 路径
 
 ---
 
@@ -56,23 +56,10 @@
 - Modify: `src/store/modules/permission.js`
 - Modify: `src/permission.js`
 
-- [ ] **Step 1:** 从 `constantRoutes` 拆出 `asyncRouteMap`（所有需授权业务路由）
-- [ ] **Step 2:** `routePermission.js`:
-
-```javascript
-export function collectAllowedHrefs(authorizationList) {
-  return authorizationList
-    .filter(m => m.menuType === 1 && m.href)
-    .map(m => m.href)
-}
-
-export function filterRoutesByHref(routes, allowedHrefs, parentPath = '') {
-  // 递归过滤；hidden 路由检查 meta.authFollow
-}
-```
-
-- [ ] **Step 3:** `permission.js` store — 登录后 `resetRouter()` + `router.addRoutes(filtered)`
-- [ ] **Step 4:** `permission.js` 守卫 — 白名单外 path 不在 allowed + hidden 规则 → `/401`
+- [x] **Step 1:** 从 `constantRoutes` 拆出 `asyncRouteMap`（所有需授权业务路由）
+- [x] **Step 2:** `routePermission.js`
+- [x] **Step 3:** `permission.js` store — 登录后 `resetRouter()` + `router.addRoutes(filtered)`
+- [x] **Step 4:** `permission.js` 守卫 — 白名单外 path 不在 allowed + hidden 规则 → `/401`
 - [ ] **Step 5:** 给 hidden 编辑页加 `meta: { authFollow: '/marketing/cardCouponList' }`（逐模块补全，优先营销/订单）
 
 ---

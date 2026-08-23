@@ -98,6 +98,7 @@
   import {
     logout
   } from '@/api/user'
+  import { findFirstLeafHref, getNavChildren } from '@/utils/menuNav'
   export default {
     components: {
       Screenfull,
@@ -143,23 +144,25 @@
       onClick(item) {
         window.localStorage.setItem("pActiveMenu", item.title);
         this.pActiveMenu = item.title;
-        if (item.children.length > 0) {
-          this.$store.commit('permission/setLeftMeunList', item.children);
+        const navChildren = getNavChildren(item)
+        const targetHref = findFirstLeafHref(item) || item.href
+
+        if (navChildren.length > 0) {
+          this.$store.commit('permission/setLeftMeunList', item.children || navChildren);
           this.$store.dispatch('app/openSideBar')
-          this.$router.push({
-            path: item.children[0].href
-          });
-          window.localStorage.setItem("activeMenu", item.children[0].href);
-          window.localStorage.setItem("leftMeunList", JSON.stringify(item.children));
-        } else {
-          window.localStorage.removeItem("leftMeunList", item.title);
+          if (targetHref) {
+            this.$router.push({ path: targetHref });
+            window.localStorage.setItem("activeMenu", targetHref);
+          }
+          window.localStorage.setItem("leftMeunList", JSON.stringify(item.children || navChildren));
+        } else if (targetHref) {
+          window.localStorage.removeItem("leftMeunList");
           this.$store.commit('permission/setLeftMeunList', []);
           this.$store.dispatch('app/closeSideBar', {
             withoutAnimation: false
           })
-          this.$router.push({
-            path: item.href
-          })
+          this.$router.push({ path: targetHref })
+          window.localStorage.setItem("activeMenu", targetHref);
         }
       },
       toggleMenuLayout() {
@@ -176,6 +179,7 @@
         }
         logout(logoutFrom).then(res => {
           if (res.code == 200) {
+            this.$store.dispatch('permission/resetPermission')
             this.$store.dispatch('user/resetToken')
             this.$router.push(`/login?redirect=${this.$route.fullPath}`);
             window.localStorage.removeItem("activeMenu");

@@ -78,15 +78,13 @@
 
       <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
         :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
-        :collapse-transition="false" mode="vertical" class="leftElmenuClass">
-        <template v-for="item in leftMeunList">
-          <el-menu-item :index="item.href" :key="item.title">
-            <div @click="onClick(item.href)">
-              <i :class="item.icon"></i>
-              <span>{{ item.title }}</span>
-            </div>
-          </el-menu-item>
-        </template>
+        :collapse-transition="false" mode="vertical" class="leftElmenuClass sidebar-only-menu"
+        @select="handleMenuSelect">
+        <sidebar-only-item
+          v-for="item in leftMeunList"
+          :key="String(item.id || item.title)"
+          :item="item"
+        />
       </el-menu>
     </el-scrollbar>
   </div>
@@ -98,6 +96,7 @@
   } from 'vuex'
   import Logo from './Logo'
   import SidebarItem from './SidebarItem'
+  import SidebarOnlyItem from '../SidebarOnly/SidebarOnlyItem'
   import variables from '@/styles/variables.scss'
   import subMenu from "./subMenu";
   export default {
@@ -125,17 +124,22 @@
       this.activeMenu = window.localStorage.getItem("activeMenu") || this.$route.path;
     },
     methods: {
+      handleMenuSelect(index) {
+        if (index && index.startsWith('/')) {
+          if (this.$route.path !== index) {
+            this.$router.push({ path: index })
+          }
+          this.activeMenu = index
+          window.localStorage.setItem("activeMenu", index)
+        }
+      },
       onClick(name) {
-        this.$router.push({
-          path: name
-        })
-        this.activeMenu = name;
-        // window.sessionStorage.setItem("activeMenu", name);
-        window.localStorage.setItem("activeMenu", name);
+        this.handleMenuSelect(name)
       }
     },
     components: {
       SidebarItem,
+      SidebarOnlyItem,
       Logo,
       subMenu
     },
@@ -225,6 +229,18 @@
 
   .leftElmenuClass {
     border: none !important;
+
+    &.sidebar-only-menu {
+      .el-submenu > .el-submenu__title {
+        height: auto !important;
+        line-height: normal !important;
+        padding: 3px 6px !important;
+      }
+
+      .el-submenu .el-menu-item {
+        padding-left: 20px !important;
+      }
+    }
 
     & .el-menu-item {
       // padding-left: revert !important;

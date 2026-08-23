@@ -68,6 +68,7 @@
   import {
     getRouter
   } from '@/api/user'
+  import { findFirstLeafHref } from '@/utils/menuNav'
   export default {
     name: 'Login',
     components: {
@@ -161,11 +162,10 @@
               rememberMe: this.loginForm.rememberMe,
               grant_type: this.loginForm.grant_type.trim(),
             }
+            this.$store.dispatch('permission/resetPermission')
             this.$store.dispatch('user/login', loginForm)
               .then((res) => {
                 this.loading = false
-                // window.sessionStorage.setItem("activeMenu", "");
-                // window.sessionStorage.setItem("pActiveMenu", "首页");
                 window.localStorage.setItem("pActiveMenu", "首页");
                 window.localStorage.setItem("activeMenu", "");
                 window.localStorage.setItem("leftMeunList", "");
@@ -173,23 +173,19 @@
                   if (res.code == 200) {
                     let menuList = res.data.menuList
                     let flag = false
-                    menuList.forEach((item, index) => {
+                    menuList.forEach((item) => {
                       if (item.href === '/dashboard') {
                         flag = true
                       }
                     })
                     if (flag) {
-                      this.$router.push({
-                        path: '/'
-                      })
+                      this.$router.push({ path: '/' })
+                    } else if (menuList.length) {
+                      const path = findFirstLeafHref(menuList[0]) || '/'
+                      this.$router.push({ path })
                     } else {
-                      let path = menuList[0].children[0].href || '/'
-                      console.log(path)
-                      this.$router.push({
-                        path: path
-                      })
+                      this.$router.push({ path: '/' })
                     }
-                  } else {
                   }
                 })
               })

@@ -34,7 +34,7 @@ import Layout from '@/layout'
  * a base page that does not have permission requirements
  * all roles can be accessed
  */
-export const constantRoutes = [{
+const routeDefinitions = [{
     path: '/login',
     component: () => import('@/views/login/index'),
     hidden: true,
@@ -1385,15 +1385,11 @@ export const constantRoutes = [{
   }
 ]
 
-/**
- * asyncRoutes
- * the routes that need to be dynamically loaded based on user roles
- */
-export const asyncRoutes = [{
-  path: '*',
-  redirect: '/404',
-  hidden: true
-}]
+/** 无需鉴权的基础路由 */
+export const constantRoutes = routeDefinitions.slice(0, 5)
+
+/** 需按菜单 href 过滤的业务路由 */
+export const asyncRoutes = routeDefinitions.slice(5)
 
 // 创建一个router对象
 const createRouter = () => new Router({

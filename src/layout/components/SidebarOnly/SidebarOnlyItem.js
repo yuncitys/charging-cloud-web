@@ -1,11 +1,7 @@
 /**
- * 左侧菜单布局 - 递归菜单项组件（render 函数版）
- *
- * 只渲染两个层级：
- *   depth=0  顶级分组（el-submenu），展示其有 href 的子节点
- *   depth=1  菜单页面（el-menu-item），不再往下递归
- *   depth>=2 第三层起全是按钮/权限，直接忽略
+ * 左侧菜单布局 - 递归菜单项（支持多级目录/页面，过滤按钮）
  */
+import { getNavChildren, getLeafHref } from '@/utils/menuNav'
 
 export default {
   name: 'SidebarOnlyItem',
@@ -21,15 +17,11 @@ export default {
   },
   render(h) {
     const item = this.item
-
-    // depth >= 1 时不再展开子节点（第三层起是按钮/权限）
-    const menuChildren = this.depth < 1
-      ? (item.children || []).filter(c => c.href)
-      : []
-    const hasChildren = menuChildren.length > 0
+    const navChildren = getNavChildren(item)
+    const hasChildren = navChildren.length > 0
+    const leafHref = getLeafHref(item)
 
     if (hasChildren) {
-      // ---- 有子菜单：渲染为可展开的 el-submenu ----
       const titleVnode = h(
         'span',
         { slot: 'title', class: 'sidebar-only-submenu-title' },
@@ -39,10 +31,10 @@ export default {
         ]
       )
 
-      const childNodes = menuChildren.map(child =>
+      const childNodes = navChildren.map(child =>
         h('SidebarOnlyItem', {
           props: { item: child, depth: this.depth + 1 },
-          key: String(child.id || child.title)
+          key: String(child.id || child.href || child.title)
         })
       )
 
@@ -53,8 +45,7 @@ export default {
       )
     }
 
-    // ---- 无子菜单：渲染为叶节点 el-menu-item ----
-    const index = item.href || null
+    const index = leafHref || (item.href && !String(item.href).startsWith(':') ? item.href : null)
     if (!index) {
       return h('span', { style: 'display:none' })
     }
