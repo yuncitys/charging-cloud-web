@@ -7,34 +7,29 @@ Vue.use(Router)
 import Layout from '@/layout'
 
 /**
- * 路由模块拆分（方案 A — 仅代码组织，不改变运行时行为）
+ * 路由组织（方案 A + B）
  *
- * 解决的问题：菜单按业务重组（运营/财务 + 二级目录），但 URL 仍按历史前缀
- *             （/charge、/finance、/configAdmin…）分散在多个 Layout 里，单文件难维护。
- * 做法：按菜单一级模块拆到 router/modules/*.js，注释标明菜单归属；href/组件/权限不变。
+ * A：按菜单一级拆到 router/modules/*.js，对照菜单管理。
+ * B：模块内登记扁平页面（完整 path + component），buildLayoutRoutes 按 URL 第一段包 Layout。
+ *    例如财务菜单的「分账设置」写在 finance.js，运行时仍挂到 /charge Layout。
  *
- * 面包屑不一致 → 见方案 C：components/Breadcrumb + menuNav.findMenuTrailByHref
- * 长期扁平注册 → 方案 B（未做）：pages/*.js + buildRoutes，稳定后再考虑
+ * 面包屑 / 顶栏搜索读 menuList → 见 Breadcrumb、HeaderSearch、menuNav.findMenuTrailByHref
  */
+import { buildLayoutRoutes } from './buildRoutes'
 import baseRoutes from './modules/base'
-import userRoutes from './modules/user'
-import businessRoutes from './modules/business'
-import deviceRoutes from './modules/device'
-import operationsRoutes from './modules/operations'
-import financeRoutes from './modules/finance'
-import orderRoutes from './modules/order'
-import marketingRoutes from './modules/marketing'
-import opsRoutes from './modules/ops'
-import systemRoutes from './modules/system'
-import customerRoutes from './modules/customer'
+import userPages from './modules/user'
+import businessPages from './modules/business'
+import devicePages from './modules/device'
+import operationsPages from './modules/operations'
+import financePages from './modules/finance'
+import orderPages from './modules/order'
+import marketingPages from './modules/marketing'
+import opsPages from './modules/ops'
+import systemPages from './modules/system'
+import customerPages from './modules/customer'
 
 /**
- * Note: sub-menu only appear when route children.length >= 1
- * Detail see: https://panjiachen.github.io/vue-element-admin-site/guide/essentials/router-and-nav.html
- *
  * hidden: true
- * alwaysShow: true
- * redirect: noRedirect
  * name: 'router-name'  // keep-alive
  * meta.authFollow: '/parent/list/href'
  *   - 权限：routePermission 对 hidden 页放行（同列表页授权即可访问）
@@ -73,18 +68,18 @@ export const setPwdRoute = {
 export const constantRoutes = baseRoutes.concat([largeScreenRoute, setPwdRoute])
 
 /** 需按菜单 href 过滤的业务路由（不含兜底 *，* 在 addRoutes 时最后追加） */
-export const asyncRoutes = [
-  ...userRoutes,
-  ...businessRoutes,
-  ...deviceRoutes,
-  ...operationsRoutes,
-  ...financeRoutes,
-  ...orderRoutes,
-  ...marketingRoutes,
-  ...opsRoutes,
-  ...systemRoutes,
-  ...customerRoutes
-]
+export const asyncRoutes = buildLayoutRoutes([
+  ...userPages,
+  ...businessPages,
+  ...devicePages,
+  ...operationsPages,
+  ...financePages,
+  ...orderPages,
+  ...marketingPages,
+  ...opsPages,
+  ...systemPages,
+  ...customerPages
+])
 
 export const catchAllRoute = {
   path: '*',

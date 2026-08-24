@@ -1,24 +1,12 @@
-import Layout from '@/layout'
-
 /**
- * Menu-aligned route module (scheme A).
+ * 扁平页面表（方案 B）。buildRoutes 按 URL 第一段自动包 Layout。
  * URL prefixes keep historical paths; sidebar/menu tree comes from backend.
  */
 // 数据统计
 
 export default [
 {
-    path: '/business',
-    component: Layout,
-    redirect: '/business/businessStatistics',
-    alwaysShow: true, // will always show the root menu
-    name: 'business',
-    meta: {
-      title: '数据统计',
-      icon: 'peoples',
-    },
-    children: [{
-        path: 'businessStatistics',
+        path: '/business/businessStatistics',
         component: () => import('@/views/business/businessStatistics'),
         name: 'businessStatistics',
         meta: {
@@ -26,8 +14,8 @@ export default [
           icon: 'el-icon-s-check',
         }
       },
-      {
-        path: 'businessStatisticsTwo',
+{
+        path: '/business/businessStatisticsTwo',
         component: () => import('@/views/business/businessStatisticsTwo'),
         name: 'businessStatisticsTwo',
         meta: {
@@ -35,8 +23,8 @@ export default [
           icon: 'el-icon-s-check',
         }
       },
-      {
-        path: 'businessStatisticsThree',
+{
+        path: '/business/businessStatisticsThree',
         component: () => import('@/views/business/businessStatisticsThree'),
         name: 'businessStatisticsThree',
         meta: {
@@ -44,8 +32,8 @@ export default [
           icon: 'el-icon-s-check',
         }
       },
-      {
-        path: 'businessStatisticsFour',
+{
+        path: '/business/businessStatisticsFour',
         component: () => import('@/views/business/businessStatisticsFour'),
         name: 'businessStatisticsFour',
         meta: {
@@ -53,8 +41,8 @@ export default [
           icon: 'el-icon-s-check',
         }
       },
-      {
-        path: 'businessStatisticsFive',
+{
+        path: '/business/businessStatisticsFive',
         component: () => import('@/views/business/businessStatisticsFive'),
         name: 'businessStatisticsFive',
         meta: {
@@ -62,8 +50,8 @@ export default [
           icon: 'el-icon-s-check',
         }
       },
-      {
-        path: 'businessStatisticsSix',
+{
+        path: '/business/businessStatisticsSix',
         component: () => import('@/views/business/businessStatisticsSix'),
         name: 'businessStatisticsSix',
         meta: {
@@ -71,6 +59,4 @@ export default [
           icon: 'el-icon-s-check',
         }
       }
-    ]
-  }
 ]
