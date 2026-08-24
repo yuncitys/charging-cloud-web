@@ -145,7 +145,8 @@ export default [
       meta: {
         title: '电价设置',
         noCache: true,
-        activeMenu: '/netWorkDot/stationPricingList'
+        activeMenu: '/netWorkDot/stationPricingList',
+        authFollow: '/netWorkDot/stationPricingList'
       }
     },
 {
@@ -156,7 +157,8 @@ export default [
       meta: {
         title: '电价详情',
         noCache: true,
-        activeMenu: '/netWorkDot/stationPricingList'
+        activeMenu: '/netWorkDot/stationPricingList',
+        authFollow: '/netWorkDot/stationPricingList'
       }
     },
 {
@@ -166,7 +168,8 @@ export default [
       hidden: true,
       meta: {
         title: '站点设置',
-        noCache: true
+        noCache: true,
+        authFollow: '/netWorkDot/netWorkDotList'
       }
     },
 {
@@ -177,7 +180,8 @@ export default [
       meta: {
         title: '添加站点',
         noCache: true,
-        activeMenu: '/netWorkDot/netWorkDotList'
+        activeMenu: '/netWorkDot/netWorkDotList',
+        authFollow: '/netWorkDot/netWorkDotList'
       }
     }
 ]
