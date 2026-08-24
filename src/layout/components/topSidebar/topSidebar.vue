@@ -38,9 +38,9 @@
     <div class="right-menu" style="display: flex;">
       <div style="display:flex; align-items:center">
         <template v-if="device!=='mobile' && btnAuthen.permsVerifAuthention(':web:largeScreen:openWatch')">
-          <el-tooltip content="大数据" effect="dark" placement="bottom"  class="right-menu-item hover-effect" >
-            <div class="largeScreenBox" @click="largeScreen">
-              <i class="el-icon-s-platform" style="font-size: 28px;color: #5a5e66;"></i>
+          <el-tooltip content="大数据" effect="dark" placement="bottom" class="right-menu-item hover-effect">
+            <div class="largeScreenBox" @click="largeScreen" style="display:flex; align-items:center;">
+              <i class="el-icon-s-platform" style="font-size: 22px;color: #5a5e66;"></i>
             </div>
           </el-tooltip>
         </template>
