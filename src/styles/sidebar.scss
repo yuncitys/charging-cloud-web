@@ -130,7 +130,8 @@
   }
 }
 
-// when menu collapsed
+// when menu collapsed（弹出层挂在 body，不受侧栏 scoped 样式约束）
+// 当前侧栏是白底浅色主题，不能再用深色主题的 $menuHover(#263445)，否则字色同化难辨
 .el-menu--vertical {
   &>.el-menu {
     .svg-icon {
@@ -145,9 +146,25 @@
 
   .nest-menu .el-submenu>.el-submenu__title,
   .el-menu-item {
+    color: $menuText;
+
     &:hover {
-      // you can use $subMenuHover
-      background-color: $menuHover !important;
+      background-color: rgba(81, 197, 59, 0.1) !important;
+      color: $menuActiveText !important;
+
+      i,
+      .sidebar-only-icon {
+        color: $menuActiveText !important;
+      }
+    }
+
+    &.is-active {
+      color: $menuActiveText !important;
+
+      i,
+      .sidebar-only-icon {
+        color: $menuActiveText !important;
+      }
     }
   }
 
@@ -155,6 +172,7 @@
   >.el-menu--popup {
     max-height: 100vh;
     overflow-y: auto;
+    background-color: $menuBg !important;
 
     &::-webkit-scrollbar-track-piece {
       background: #d3dce6;

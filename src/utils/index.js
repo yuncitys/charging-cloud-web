@@ -11,7 +11,10 @@ export function isMobile() {
 去除字符串两边的空白
 */
 export function trim(str) {
-  return str.replace(/(^\s*)|(\s*$)/g, "")
+  if (str == null) {
+    return ''
+  }
+  return String(str).replace(/(^\s*)|(\s*$)/g, '')
 }
 
 /**

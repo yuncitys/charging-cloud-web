@@ -2,6 +2,7 @@
   <div class="divElmenu" :class="{'sidebar-only-mode': menuLayout !== 'mix'}" ref="divElmenu">
     <el-menu
       v-if="menuLayout === 'mix'"
+      :key="'top-menu-' + pActiveMenu"
       :default-active="pActiveMenu"
       :background-color="variables.menuBg"
       :text-color="variables.menuText"
@@ -35,46 +36,46 @@
         </el-dropdown>
       </el-menu-item>
     </el-menu>
-    <div class="right-menu" style="display: flex;">
-      <div style="display:flex; align-items:center">
-        <template v-if="device!=='mobile' && btnAuthen.permsVerifAuthention(':web:largeScreen:openWatch')">
-          <el-tooltip content="大数据" effect="dark" placement="bottom"  class="right-menu-item hover-effect" >
-            <div class="largeScreenBox" @click="largeScreen">
-              <i class="el-icon-s-platform" style="font-size: 28px;color: #5a5e66;"></i>
-            </div>
-          </el-tooltip>
-        </template>
-        <lang-select class="right-menu-item hover-effect" style="display:flex; align-items:center" />
-        <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex; align-items:center" />
-
-        <!-- 布局切换按钮 -->
-        <el-tooltip
-          :content="menuLayout === 'mix' ? '切换到左侧菜单' : '切换到混合菜单'"
-          effect="dark"
-          placement="bottom"
-          class="right-menu-item hover-effect layout-toggle-btn"
-        >
-          <div @click="toggleMenuLayout" style="display:flex; align-items:center; padding: 0 8px; cursor: pointer;">
-            <svg v-if="menuLayout === 'mix'" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#5a5e66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="18" rx="1"/>
-              <rect x="13" y="3" width="8" height="4" rx="1"/>
-              <rect x="13" y="10" width="8" height="4" rx="1"/>
-              <rect x="13" y="17" width="8" height="4" rx="1"/>
-            </svg>
-            <svg v-else viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#5a5e66" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="3" width="7" height="18" rx="1"/>
-              <line x1="13" y1="3" x2="21" y2="3"/>
-              <line x1="13" y1="8" x2="21" y2="8"/>
-              <line x1="13" y1="13" x2="21" y2="13"/>
-              <line x1="13" y1="18" x2="21" y2="18"/>
-              <line x1="13" y1="21" x2="21" y2="21"/>
-            </svg>
+    <div class="right-menu">
+      <template v-if="device!=='mobile' && btnAuthen.permsVerifAuthention(':web:largeScreen:openWatch')">
+        <el-tooltip content="大数据" effect="dark" placement="bottom">
+          <div class="right-menu-item hover-effect" @click="largeScreen">
+            <i class="el-icon-s-platform toolbar-icon" />
           </div>
         </el-tooltip>
-      </div>
+      </template>
+      <header-search id="header-search" class="right-menu-item hover-effect" />
+      <lang-select class="right-menu-item hover-effect" />
+      <screenfull id="screenfull" class="right-menu-item hover-effect" />
+
+      <el-tooltip
+        :content="menuLayout === 'mix' ? '切换到左侧菜单' : '切换到混合菜单'"
+        effect="dark"
+        placement="bottom"
+      >
+        <div class="right-menu-item hover-effect layout-toggle-btn" @click="toggleMenuLayout">
+          <svg v-if="menuLayout === 'mix'" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="18" rx="1"/>
+            <rect x="13" y="3" width="8" height="4" rx="1"/>
+            <rect x="13" y="10" width="8" height="4" rx="1"/>
+            <rect x="13" y="17" width="8" height="4" rx="1"/>
+          </svg>
+          <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="18" rx="1"/>
+            <line x1="13" y1="3" x2="21" y2="3"/>
+            <line x1="13" y1="8" x2="21" y2="8"/>
+            <line x1="13" y1="13" x2="21" y2="13"/>
+            <line x1="13" y1="18" x2="21" y2="18"/>
+            <line x1="13" y1="21" x2="21" y2="21"/>
+          </svg>
+        </div>
+      </el-tooltip>
 
       <el-dropdown class="avatar-container right-menu-item hover-effect" trigger="click">
-        <div class="userName">{{userName}}<i class="el-icon-caret-bottom" style="font-size: 18px;color: #666;" /></div>
+        <div class="userName">
+          <span>{{ userName }}</span>
+          <i class="el-icon-caret-bottom" />
+        </div>
         <el-dropdown-menu slot="dropdown" class="sysInfo">
           <el-dropdown-item divided @click.native="setPwd">
             <span style="display:block;">{{ $t('navbar.changePassword') }}</span>
@@ -91,6 +92,7 @@
 <script>
   import Screenfull from '@/components/Screenfull'
   import LangSelect from '@/components/LangSelect'
+  import HeaderSearch from '@/components/HeaderSearch'
   import {
     mapGetters
   } from 'vuex';
@@ -98,10 +100,12 @@
   import {
     logout
   } from '@/api/user'
+  import { findFirstLeafHref, findTopMenuByPath, getNavChildren } from '@/utils/menuNav'
   export default {
     components: {
       Screenfull,
-      LangSelect
+      LangSelect,
+      HeaderSearch
     },
     data() {
       return {
@@ -139,28 +143,85 @@
         return this.$store.getters.rightMoreMeunList
       },
     },
+    watch: {
+      // 混合模式：顶栏/侧栏由一级菜单状态驱动，路由变化（搜索、标签页、直链）时需同步
+      $route: {
+        immediate: true,
+        handler(route) {
+          this.syncMixMenuByRoute(route)
+        }
+      },
+      menuLayout(val) {
+        if (val === 'mix') {
+          this.syncMixMenuByRoute(this.$route)
+        }
+      },
+      // 菜单异步加载完成后，再按当前路由补一次同步
+      list() {
+        this.syncMixMenuByRoute(this.$route)
+      },
+      rightMoreMeunList() {
+        this.syncMixMenuByRoute(this.$route)
+      }
+    },
     methods: {
-      onClick(item) {
-        window.localStorage.setItem("pActiveMenu", item.title);
-        this.pActiveMenu = item.title;
-        if (item.children.length > 0) {
-          this.$store.commit('permission/setLeftMeunList', item.children);
+      /**
+       * 按当前路由定位一级菜单，同步顶栏高亮与左侧子菜单。
+       * HeaderSearch 只 push 路由，不会走 onClick，必须在这里补齐。
+       */
+      syncMixMenuByRoute(route) {
+        if (this.menuLayout !== 'mix' || !route) {
+          return
+        }
+        if (route.path && route.path.startsWith('/redirect/')) {
+          return
+        }
+        const menus = [].concat(this.list || [], this.rightMoreMeunList || [])
+        if (!menus.length) {
+          return
+        }
+        let top = findTopMenuByPath(menus, route.path)
+        if (!top) {
+          const follow = route.meta && (route.meta.authFollow || route.meta.activeMenu)
+          if (follow) {
+            top = findTopMenuByPath(menus, follow)
+          }
+        }
+        if (!top) {
+          return
+        }
+        this.applyTopMenuState(top)
+        window.localStorage.setItem('activeMenu', route.path)
+      },
+      /** 仅更新混合菜单 UI 状态，不负责跳转 */
+      applyTopMenuState(item) {
+        if (!item) {
+          return
+        }
+        this.pActiveMenu = item.title
+        window.localStorage.setItem('pActiveMenu', item.title)
+        const navChildren = getNavChildren(item)
+        if (navChildren.length > 0) {
+          const children = item.children || navChildren
+          this.$store.commit('permission/setLeftMeunList', children)
+          window.localStorage.setItem('leftMeunList', JSON.stringify(children))
           this.$store.dispatch('app/openSideBar')
-          this.$router.push({
-            path: item.children[0].href
-          });
-          window.localStorage.setItem("activeMenu", item.children[0].href);
-          window.localStorage.setItem("leftMeunList", JSON.stringify(item.children));
         } else {
-          window.localStorage.removeItem("leftMeunList", item.title);
-          this.$store.commit('permission/setLeftMeunList', []);
+          window.localStorage.removeItem('leftMeunList')
+          this.$store.commit('permission/setLeftMeunList', [])
           this.$store.dispatch('app/closeSideBar', {
             withoutAnimation: false
           })
-          this.$router.push({
-            path: item.href
-          })
         }
+      },
+      onClick(item) {
+        this.applyTopMenuState(item)
+        const targetHref = findFirstLeafHref(item) || item.href
+        if (!targetHref) {
+          return
+        }
+        this.$router.push({ path: targetHref })
+        window.localStorage.setItem('activeMenu', targetHref)
       },
       toggleMenuLayout() {
         const next = this.menuLayout === 'mix' ? 'sidebar' : 'mix'
@@ -176,6 +237,7 @@
         }
         logout(logoutFrom).then(res => {
           if (res.code == 200) {
+            this.$store.dispatch('permission/resetPermission')
             this.$store.dispatch('user/resetToken')
             this.$router.push(`/login?redirect=${this.$route.fullPath}`);
             window.localStorage.removeItem("activeMenu");
@@ -221,18 +283,15 @@
   .divElmenu {
     display: flex;
     align-items: center;
+    height: 60px;
     border-bottom: solid 1px #e6e6e6;
 
-    /* 左侧菜单模式：整行高度 60px（与左侧 logo 区等高），去掉底部分割线，右侧操作区靠右 */
+    /* 左侧菜单模式：去掉底部分割线，右侧操作区靠右 */
     &.sidebar-only-mode {
       border-bottom: none;
-      height: 60px;
 
       .right-menu {
         margin-left: auto;
-        height: 100%;
-        display: flex;
-        align-items: center;
       }
     }
   }
@@ -241,21 +300,21 @@
     overflow: hidden;
     display: flex;
     flex: 1;
-    height: 60px;          /* 与整行高度一致 */
+    height: 100%;
     border: none !important;
 
     & .el-menu-item {
       padding: 0;
-      height: 100%;          /* 撑满 60px */
+      height: 100%;
       display: flex;
-      align-items: center;   /* 内层 div 垂直居中 */
+      align-items: center;
       line-height: normal;
       color: $menuText !important;
       font-weight: 600;
 
       &>div {
         padding: 8px 22px;
-        margin: 0 4px;       /* 去掉固定上下 margin，交由 flex 居中 */
+        margin: 0 4px;
         border-radius: 10px;
       }
 
@@ -305,30 +364,30 @@
     }
   }
 
-  .userName {
-    font-size: 25px;
-    color: #3DA2FF;
-    margin: 0 20px;
-  }
-
   .right-menu {
-    float: right;
+    display: flex;
+    align-items: center;
     height: 100%;
+    flex-shrink: 0;
+    padding-right: 8px;
 
     &:focus {
       outline: none;
     }
 
     .right-menu-item {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
       padding: 0 8px;
-      height: 100%;
       font-size: 18px;
       color: #5a5e66;
-      vertical-align: text-bottom;
+      line-height: 1;
 
       &.hover-effect {
         cursor: pointer;
+        border-radius: 4px;
         transition: background .3s;
 
         &:hover {
@@ -337,30 +396,29 @@
       }
     }
 
+    .toolbar-icon {
+      font-size: 20px;
+      color: #5a5e66;
+    }
+
     .avatar-container {
-      display: flex;
-      align-items: center;
+      margin-left: 4px;
 
-      .avatar-wrapper {
-        margin-top: 5px;
-        position: relative;
-
-        .user-avatar {
-          cursor: pointer;
-          width: 40px;
-          height: 40px;
-          border-radius: 10px;
-        }
+      .userName {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #3DA2FF;
+        line-height: 1;
+        white-space: nowrap;
 
         .el-icon-caret-bottom {
-          cursor: pointer;
-          position: absolute;
-          right: -20px;
-          top: 25px;
           font-size: 12px;
+          color: #909399;
         }
       }
-
     }
   }
 

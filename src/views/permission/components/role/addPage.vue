@@ -29,7 +29,13 @@
 					<el-input v-model="filterTextAdd" placeholder="输入关键字进行过滤" />
 					<div style="margin: 20px 0;"></div>
 					<el-tree ref="addTree" :data="treeData" :props="defaultProps" :filter-node-method="filterNode"
-						show-checkbox node-key="id" />
+						show-checkbox node-key="id">
+						<span slot-scope="{ data }" class="menu-tree-node">
+							<i :class="menuTypeIcon(data.menuType)" class="menu-tree-icon"></i>
+							<span>{{ data.title }}</span>
+							<span class="menu-tree-type">{{ menuTypeLabel(data.menuType) }}</span>
+						</span>
+					</el-tree>
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onaddData('addData')" :loading="Loading">确定</el-button>
@@ -49,6 +55,7 @@
 		deleteRole
 	} from '@/api/permission/role.js'
 	import { getRoleTypeOptionsForAdd } from '@/utils/adminRoleTypeOptions.js'
+	import { MENU_TYPE, menuTypeLabel } from '@/views/permission/constants/menuType.js'
 	export default {
 		data(){
 			return {
@@ -118,6 +125,13 @@
 			},
 		},
 		methods:{
+			menuTypeLabel,
+			menuTypeIcon(menuType) {
+				const code = menuType == null ? MENU_TYPE.MENU : Number(menuType)
+				if (code === MENU_TYPE.DIRECTORY) return 'el-icon-folder'
+				if (code === MENU_TYPE.BUTTON) return 'el-icon-thumb'
+				return 'el-icon-document'
+			},
 			syncRoleTypeRadioOptions() {
 				this.roleTypeRadioOptions = getRoleTypeOptionsForAdd(this.$store.getters.adminUser)
 			},
@@ -192,5 +206,18 @@
 	}
 </script>
 
-<style>
+<style scoped>
+.menu-tree-node {
+	display: inline-flex;
+	align-items: center;
+}
+.menu-tree-icon {
+	margin-right: 6px;
+	color: #909399;
+}
+.menu-tree-type {
+	margin-left: 8px;
+	font-size: 12px;
+	color: #c0c4cc;
+}
 </style>

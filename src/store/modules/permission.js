@@ -1,57 +1,20 @@
 import {
   asyncRoutes,
-  constantRoutes
+  constantRoutes,
+  catchAllRoute
 } from '@/router'
+import router, { resetRouter } from '@/router'
 import {
   getRouter
 } from '@/api/user'
 import {
   disassembleArr
 } from '@/utils'
-/* Layout */
-// import Layout from '../../views/layout/Layout.vue'
-import Layout from '@/layout'
-import store from '@/store'
-
-
-/**
- * 通过meta.role判断是否与当前用户权限匹配
- * @param roles
- * @param route
- */
-function hasPermission(roles, route) {
-  if (route.meta && route.meta.roles) {
-    return roles.some(role => route.meta.roles.indexOf(role) >= 0)
-  } else {
-    return true
-  }
-}
-
-/**
- * 递归过滤异步路由表，返回符合用户角色权限的路由表
- * @param asyncRouterMap
- * @param roles
- */
-export function filterAsyncRoutes(routes, roles) {
-  const accessedRouters = constantRoutes.filter(route => {
-    console.log()
-    // if (route.component === 'Layout') {
-    //   route.component = Layout
-    // } else if (typeof route.component === 'string' || route.component instanceof String) {
-    //   var str = route.component
-    //  console.log(str,"123465")
-    //   route.component = () => import(`@/views/${str}`)
-    // }
-    // if (hasPermission(roles, route)) {
-    //   if (route.children && route.children.length) {
-    //     route.children = filterAsyncRouter(route.children, roles)
-    //   }
-    //   return true
-    // }
-    return false
-  })
-  return accessedRouters
-}
+import {
+  collectAllowedHrefs,
+  filterRoutesByHref,
+  buildAccessiblePaths
+} from '@/router/routePermission'
 
 const state = {
   meunList: [],
@@ -59,10 +22,12 @@ const state = {
   rightMoreMeunList: [],
   topOffsetWidth: [],
   authentionList: [],
+  allowedHrefs: [],
   adminUser: [],
   addRoutes: [],
   routes: [],
-  logoData: {}
+  logoData: {},
+  routesLoaded: false
 }
 
 const mutations = {
@@ -85,72 +50,94 @@ const mutations = {
   setAuthentionList(state, authentionList) {
     state.authentionList = authentionList
   },
+  setAllowedHrefs(state, allowedHrefs) {
+    state.allowedHrefs = allowedHrefs
+  },
   setAdminUser(state, adminUser) {
     state.adminUser = adminUser
   },
   setLogoData(state, logoData) {
     state.logoData = logoData
+  },
+  setRoutesLoaded(state, loaded) {
+    state.routesLoaded = loaded
+  },
+  RESET_PERMISSION(state) {
+    state.meunList = []
+    state.leftMeunList = []
+    state.rightMoreMeunList = []
+    state.authentionList = []
+    state.allowedHrefs = []
+    state.adminUser = []
+    state.addRoutes = []
+    state.routes = []
+    state.logoData = {}
+    state.routesLoaded = false
   }
 }
 
 const actions = {
-  generateRoutes({
-    commit
-  }, roles) {
+  generateRoutes({ commit, state }) {
     return new Promise(resolve => {
-      let accessedRoutes
       getRouter().then(res => {
-        if (res.code == 200) {
-          let meunList = res.data.menuList
-          let authentionList = res.data.authorizationList
-          let adminUser = res.data.adminUser
-          let logoData = res.data.sysConfig;
-
-          let arr = disassembleArr(meunList, state.topOffsetWidth);
-          console.log("arr:",arr)
-
-          commit('setMeunList', addRouterInfo(arr[0]))
-          commit('setRightMoreMeunList', arr[1])
-          commit('setAuthentionList', authentionList)
-          commit('setAdminUser', adminUser)
-          commit('setLogoData', logoData)
-        } else {
-
+        if (res.code != 200) {
+          resolve([])
+          return
         }
+
+        const meunList = res.data.menuList
+        const authentionList = res.data.authorizationList
+        const adminUser = res.data.adminUser
+        const logoData = res.data.sysConfig
+        const arr = disassembleArr(meunList, state.topOffsetWidth)
+
+        commit('setMeunList', addRouterInfo(arr[0]))
+        commit('setRightMoreMeunList', addRouterInfo(arr[1]))
+        commit('setAuthentionList', authentionList)
+        commit('setAdminUser', adminUser)
+        commit('setLogoData', logoData)
+
+        const allowedSet = collectAllowedHrefs(authentionList)
+
+        let accessedRoutes = []
+        if (!state.routesLoaded) {
+          resetRouter()
+          accessedRoutes = filterRoutesByHref(asyncRoutes, allowedSet)
+          const accessiblePaths = buildAccessiblePaths(authentionList, accessedRoutes)
+          const routesToAdd = [...accessedRoutes, catchAllRoute]
+          router.addRoutes(routesToAdd)
+          commit('SET_ROUTES', routesToAdd)
+          commit('setAllowedHrefs', Array.from(accessiblePaths))
+          commit('setRoutesLoaded', true)
+        } else {
+          accessedRoutes = state.addRoutes
+          commit('setAllowedHrefs', Array.from(buildAccessiblePaths(authentionList, accessedRoutes)))
+        }
+
+        resolve(accessedRoutes)
+      }).catch(() => {
+        resolve([])
       })
     })
   },
 
-  // 组件挂载后按真实宽度重新分割顶部菜单
   splitMenuByWidth({ state, commit }, offsetWidth) {
     const allMenus = [...(state.meunList || []), ...(state.rightMoreMeunList || [])]
     if (!allMenus.length) return
     const arr = disassembleArr(allMenus, offsetWidth)
     commit('setMeunList', addRouterInfo(arr[0]))
-    commit('setRightMoreMeunList', arr[1])
+    commit('setRightMoreMeunList', addRouterInfo(arr[1]))
   },
+
+  resetPermission({ commit }) {
+    commit('RESET_PERMISSION')
+    resetRouter()
+  }
 }
 
-// 添加指定路由页面后期删除
 function addRouterInfo(arr) {
- let list = JSON.parse(JSON.stringify(arr))
-  // if (list.length > 2) {
-  //   list[2].children.push({
-  //     children: [],
-  //     grade: 2,
-  //     href: "/business/businessStatisticsOther",
-  //     icon: "el-icon-s-check",
-  //     id: 447,
-  //     parentId: list[2].id,
-  //     perms: ":business:businessStatisticsOther",
-  //     sorting: 76,
-  //     title: "其它报表"
-  //   })
-  // }else{
-  //   return []
-  // }
-  return list;
-};
+  return JSON.parse(JSON.stringify(arr || []))
+}
 
 export default {
   namespaced: true,

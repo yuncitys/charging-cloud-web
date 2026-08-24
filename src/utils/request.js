@@ -35,6 +35,7 @@ service.interceptors.response.use(
 		const res = response.data
 		if (res.code === 501) {
 			setTimeout(() => {
+				store.dispatch('permission/resetPermission')
 				store.dispatch('user/resetToken')
 				router.push({
 					path: '/login'

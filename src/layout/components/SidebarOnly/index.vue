@@ -152,36 +152,44 @@ export default {
   .el-submenu > .el-submenu__title {
     height: auto !important;
     line-height: normal !important;
-    /* 上下 3px 是 active 时与 item-inner 的视觉间距，左右 6px 留边 */
     padding: 3px 6px !important;
     color: $menuText !important;
+    display: flex;
+    align-items: center;
 
-    /* icon + text 包裹层，控制视觉区域，避免与展开箭头重叠 */
-    .sidebar-only-submenu-title {
-      display: flex;
-      align-items: center;
-      padding: 12px 8px; /* 上下间距与 item 一致 */
+    .sidebar-only-icon {
+      padding: 12px 8px;
       border-radius: 8px;
-      width: calc(100% - 20px); /* 留出右侧箭头空间 */
-      overflow: hidden;
+    }
+
+    .sidebar-only-title-text {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 8px;
+      border-radius: 8px;
+      margin-right: 20px; /* 留出展开箭头空间 */
     }
 
     &:hover {
       background: none !important;
+      color: $menuActiveText !important;
 
-      .sidebar-only-submenu-title {
+      .sidebar-only-icon {
         color: $menuActiveText !important;
-
-        .sidebar-only-icon {
-          color: $menuActiveText !important;
-        }
       }
     }
   }
 
-  /* 激活子项时，父 submenu 标题高亮 */
+  .el-submenu.is-opened > .el-submenu__title,
   .el-submenu.is-active > .el-submenu__title {
-    .sidebar-only-submenu-title {
+    color: $menuActiveText !important;
+
+    .sidebar-only-icon,
+    .sidebar-only-title-text {
+      color: $menuActiveText !important;
+    }
+
+    .el-submenu__icon-arrow {
       color: $menuActiveText !important;
     }
   }
@@ -276,15 +284,46 @@ export default {
 }
 
 /* ===== 折叠时图标居中，隐藏文字 ===== */
-.el-menu--collapse {
+.sidebar-only-menu.el-menu--collapse {
   .sidebar-only-title-text,
   .sidebar-only-item-text {
     display: none;
   }
 
+  .el-menu-item {
+    display: flex;
+    justify-content: center;
+    padding: 3px 0 !important;
+  }
+
   .sidebar-only-item-inner {
+    flex: 0 0 auto;
+    width: auto;
     padding: 12px 0 !important;
     justify-content: center;
+  }
+
+  .el-submenu > .el-submenu__title {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 3px 0 !important;
+    padding-left: 0 !important;
+    text-align: center;
+
+    .el-submenu__icon-arrow {
+      display: none;
+    }
+
+    .sidebar-only-icon {
+      margin: 0 !important;
+      padding: 12px 0 !important;
+    }
+  }
+
+  /* 折叠态下 Element UI 仍保留 title 内 span 占位，需一并隐藏 */
+  .el-submenu > .el-submenu__title > span:not(.sidebar-only-icon):not(i) {
+    display: none;
   }
 }
 </style>

@@ -25,68 +25,16 @@
           </div>
         </div>
       </div>
-      <!-- <el-menu
-        :default-active="activeMenu"
-        :collapse="isCollapse"
-        :background-color="variables.menuBg"
-        :text-color="variables.menuText"
-        :unique-opened="false"
-        :active-text-color="variables.menuActiveText"
-        :collapse-transition="false"
-        mode="vertical"
-        class="leftElmenuClass">
-        <template v-for="item in leftMeunList">
-          <el-submenu v-if="item.children && item.children.length" :index="item.href || `item-${item.id}`" :key="item.id">
-            <template #title>
-              <div @click="onClick(item.href)">
-                <i :class="item.icon"></i>
-                <span>{{ item.title }}</span>
-              </div>
-            </template>
-            <el-menu-item
-              v-for="subItem in item.children"
-              :key="subItem.id"
-              :index="subItem.href || `subitem-${subItem.id}`" v-if="!subItem.perms.startsWith(':')">
-              <div @click="onClick(subItem.href)">
-                <i :class="subItem.icon"></i>
-                <span>{{ subItem.title }}</span>
-              </div>
-            </el-menu-item>
-          </el-submenu> -->
-          <!-- <el-menu-item v-else :index="item.href" :key="item.title">
-            <div @click="onClick(item.href)">
-              <i :class="item.icon"></i>
-              <span>{{ item.title }}</span>
-            </div>
-          </el-menu-item> -->
-          <!-- <el-submenu v-else :index="item.href || `item-${item.id}`" :key="item.id">
-            <template #title>
-              <div @click="onClick(item.href)">
-                <i :class="item.icon"></i>
-                <span>{{ item.title }}</span>
-              </div>
-            </template> -->
-            <!-- <el-menu-item :index="item.href" :key="item.id">
-              <div @click="onClick(item.href)">
-                <i :class="item.icon"></i>
-                <span>{{ item.title }} (href: {{ item.href }})</span>
-              </div>
-            </el-menu-item> -->
-          <!-- </el-submenu>
-        </template>
-      </el-menu> -->
 
       <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
         :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
-        :collapse-transition="false" mode="vertical" class="leftElmenuClass">
-        <template v-for="item in leftMeunList">
-          <el-menu-item :index="item.href" :key="item.title">
-            <div @click="onClick(item.href)">
-              <i :class="item.icon"></i>
-              <span>{{ item.title }}</span>
-            </div>
-          </el-menu-item>
-        </template>
+        :collapse-transition="false" mode="vertical" class="leftElmenuClass sidebar-only-menu"
+        @select="handleMenuSelect">
+        <sidebar-only-item
+          v-for="item in leftMeunList"
+          :key="String(item.id || item.title)"
+          :item="item"
+        />
       </el-menu>
     </el-scrollbar>
   </div>
@@ -98,6 +46,7 @@
   } from 'vuex'
   import Logo from './Logo'
   import SidebarItem from './SidebarItem'
+  import SidebarOnlyItem from '../SidebarOnly/SidebarOnlyItem'
   import variables from '@/styles/variables.scss'
   import subMenu from "./subMenu";
   export default {
@@ -125,17 +74,22 @@
       this.activeMenu = window.localStorage.getItem("activeMenu") || this.$route.path;
     },
     methods: {
+      handleMenuSelect(index) {
+        if (index && index.startsWith('/')) {
+          if (this.$route.path !== index) {
+            this.$router.push({ path: index })
+          }
+          this.activeMenu = index
+          window.localStorage.setItem("activeMenu", index)
+        }
+      },
       onClick(name) {
-        this.$router.push({
-          path: name
-        })
-        this.activeMenu = name;
-        // window.sessionStorage.setItem("activeMenu", name);
-        window.localStorage.setItem("activeMenu", name);
+        this.handleMenuSelect(name)
       }
     },
     components: {
       SidebarItem,
+      SidebarOnlyItem,
       Logo,
       subMenu
     },
@@ -219,52 +173,150 @@
     color: #FFFFFF;
   }
 
-  // .el-menu-item {
-  // 	padding-left: 40px !important; //二级
-  // }
-
   .leftElmenuClass {
     border: none !important;
 
-    & .el-menu-item {
-      // padding-left: revert !important;
-      padding-left: 20px !important;
-      // padding: 0 3px;
-      line-height: normal;
-      color: $menuText !important;
+    &.sidebar-only-menu {
+      .el-submenu > .el-submenu__title {
+        height: auto !important;
+        line-height: normal !important;
+        padding: 3px 6px !important;
+        display: flex;
+        align-items: center;
 
-      &>div {
-        padding: 14px 22px; //二级
-        // margin: 3px 15px; //三极
-        border-radius: 10px;
+        .sidebar-only-icon {
+          padding: 12px 8px;
+          border-radius: 8px;
+        }
+
+        .sidebar-only-title-text {
+          flex: 1;
+          min-width: 0;
+          padding: 12px 8px;
+          border-radius: 8px;
+          margin-right: 20px;
+        }
+
+        &:hover {
+          background: none !important;
+          color: $menuActiveText !important;
+
+          .sidebar-only-icon {
+            color: $menuActiveText !important;
+          }
+        }
       }
 
-      &:hover {
+      .el-submenu.is-opened > .el-submenu__title,
+      .el-submenu.is-active > .el-submenu__title {
         color: $menuActiveText !important;
+
+        .sidebar-only-icon,
+        .sidebar-only-title-text {
+          color: $menuActiveText !important;
+        }
+
+        .el-submenu__icon-arrow {
+          color: $menuActiveText !important;
+        }
+      }
+
+      .el-submenu .el-submenu > .el-submenu__title {
+        padding-left: 18px !important;
+      }
+
+      .el-submenu .el-submenu .el-submenu > .el-submenu__title {
+        padding-left: 30px !important;
+      }
+
+      .el-menu-item {
+        padding: 3px 6px !important;
+        height: auto !important;
+        line-height: normal !important;
+        color: $menuText !important;
+        font-size: 14px !important;
+        overflow: hidden;
+
+        .sidebar-only-item-inner {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          padding: 12px 8px;
+          border-radius: 8px;
+        }
+
+        &:hover {
+          background: none !important;
+          color: $menuActiveText !important;
+
+          .sidebar-only-item-inner {
+            color: $menuActiveText !important;
+          }
+
+          .sidebar-only-icon {
+            color: $menuActiveText !important;
+          }
+        }
+      }
+
+      .el-menu-item.is-active {
+        padding: 3px 6px !important;
         background: none !important;
+        color: white !important;
+
+        .sidebar-only-item-inner {
+          background: $menuActiveBg !important;
+          color: white !important;
+          font-weight: 600;
+
+          .sidebar-only-icon {
+            color: white !important;
+          }
+        }
+      }
+
+      .el-submenu .el-menu-item {
+        padding: 3px 6px !important;
+
+        .sidebar-only-item-inner {
+          margin-left: 12px;
+          margin-right: 12px;
+        }
+      }
+
+      .sidebar-only-icon {
+        font-size: 15px;
+        margin-right: 6px;
+        flex-shrink: 0;
+      }
+
+      .sidebar-only-title-text,
+      .sidebar-only-item-text {
+        flex: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
       }
     }
-
-    .el-menu-item.is-active {
-      padding: 0 3px;
-
-      &>div {
-        background: $menuActiveBg !important;
-        color: white;
-        font-weight: 600;
-      }
-    }
-
-    // .el-submenu.is-opened{
-    // }
-
   }
 
 
-  .el-menu--collapse {
+  .leftElmenuClass.sidebar-only-menu.el-menu--collapse {
     .el-menu-item {
       display: flex;
       justify-content: center;
+      padding-left: 0 !important;
+    }
+
+    .el-submenu > .el-submenu__title {
+      display: flex !important;
+      justify-content: center !important;
+      padding-left: 0 !important;
+
+      .el-submenu__icon-arrow {
+        display: none;
+      }
     }
   }
 </style>
