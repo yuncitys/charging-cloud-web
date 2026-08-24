@@ -121,3 +121,28 @@ export function findMenuTrailByHref(menus, href, trail = []) {
   }
   return null
 }
+
+/**
+ * 收集可搜索的菜单页面（HeaderSearch 与侧栏同一棵树）。
+ * 只收录有 href 的页面；title 为从一级到当前页的名称数组。
+ */
+export function collectMenuSearchItems(menus, prefixTitle = [], items = []) {
+  if (!Array.isArray(menus)) {
+    return items
+  }
+  menus.forEach(node => {
+    if (!isNavNode(node)) {
+      return
+    }
+    const titles = prefixTitle.concat(node.title || '')
+    const href = getLeafHref(node)
+    if (href) {
+      items.push({
+        path: normalizeHref(href),
+        title: titles
+      })
+    }
+    collectMenuSearchItems(getNavChildren(node), titles, items)
+  })
+  return items
+}

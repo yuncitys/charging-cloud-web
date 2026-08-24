@@ -18,11 +18,13 @@
 </template>
 
 <script>
-// fuse is a lightweight fuzzy-search module
-// make search results more in line with expectations
+/**
+ * 顶栏页面搜索：按菜单树（menuList）生成候选项，与侧栏/面包屑层级一致。
+ * 原逻辑遍历 permission_routes，会缺菜单中间目录、且按 URL 模块分组。
+ */
 import Fuse from 'fuse.js'
-import path from 'path'
-import i18n from '@/lang'
+import { mapGetters } from 'vuex'
+import { collectMenuSearchItems } from '@/utils/menuNav'
 
 export default {
   name: 'HeaderSearch',
@@ -36,9 +38,7 @@ export default {
     }
   },
   computed: {
-    routes() {
-      return this.$store.getters.permission_routes
-    },
+    ...mapGetters(['meunList', 'rightMoreMeunList']),
     lang() {
       return this.$store.getters.language
     },
@@ -48,10 +48,13 @@ export default {
   },
   watch: {
     lang() {
-      this.searchPool = this.generateRoutes(this.routes)
+      this.searchPool = this.buildSearchPool()
     },
-    routes() {
-      this.searchPool = this.generateRoutes(this.routes)
+    meunList() {
+      this.searchPool = this.buildSearchPool()
+    },
+    rightMoreMeunList() {
+      this.searchPool = this.buildSearchPool()
     },
     searchPool(list) {
       // Support pinyin search
@@ -69,7 +72,7 @@ export default {
     }
   },
   mounted() {
-    this.searchPool = this.generateRoutes(this.routes)
+    this.searchPool = this.buildSearchPool()
   },
   methods: {
     async addPinyinField(list) {
@@ -128,39 +131,12 @@ export default {
         }]
       })
     },
-    // Filter out the routes that can be displayed in the sidebar
-    // And generate the internationalized title
-    generateRoutes(routes, basePath = '/', prefixTitle = []) {
-      let res = []
-      for (const router of routes) {
-        // skip hidden router
-        if (router.hidden) { continue }
-        const data = {
-          path: path.resolve(basePath, router.path),
-          title: [...prefixTitle]
-        }
-        if (router.meta && router.meta.title) {
-          // generate internationalized title
-          const i18ntitle = i18n.t(`route.${router.meta.title}`)
-          data.title = [...data.title, i18ntitle]
-          if (router.redirect !== 'noRedirect') {
-            // only push the routes with title
-            // special case: need to exclude parent router without redirect
-            res.push(data)
-          }
-        }
-        // recursive child routes
-        if (router.children) {
-          const tempRoutes = this.generateRoutes(router.children, data.path, data.title)
-          if (tempRoutes.length >= 1) {
-            res = [...res, ...tempRoutes]
-          }
-        }
-      }
-      return res
+    buildSearchPool() {
+      const menus = [].concat(this.meunList || [], this.rightMoreMeunList || [])
+      return collectMenuSearchItems(menus)
     },
     querySearch(query) {
-      if (query !== '') {
+      if (query !== '' && this.fuse) {
         this.options = this.fuse.search(query)
       } else {
         this.options = []
