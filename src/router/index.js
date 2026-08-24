@@ -165,16 +165,6 @@ const routeDefinitions = [{
       }
     ]
   },
-  // 大数据
-  {
-    path: '/largeScreen',
-    component: () => import('@/views/largeScreen/largeScreen'),
-    name:'largeScreen',
-    hidden: true,
-    meta: {
-      title: '',
-    },
-  },
   {
     path: '/device',
     component: Layout,
@@ -1385,8 +1375,20 @@ const routeDefinitions = [{
   }
 ]
 
+/** 独立全屏页：不走 Layout，由按钮权限 :web:largeScreen:openWatch 控制访问 */
+export const largeScreenRoute = {
+  path: '/largeScreen',
+  component: () => import('@/views/largeScreen/largeScreen'),
+  name: 'largeScreen',
+  hidden: true,
+  meta: {
+    title: '',
+    authPerm: ':web:largeScreen:openWatch'
+  }
+}
+
 /** 无需鉴权的基础路由 */
-export const constantRoutes = routeDefinitions.slice(0, 5)
+export const constantRoutes = routeDefinitions.slice(0, 5).concat([largeScreenRoute])
 
 /** 需按菜单 href 过滤的业务路由（不含兜底 *，* 在 addRoutes 时最后追加） */
 export const asyncRoutes = routeDefinitions.slice(5).filter(route => route.path !== '*')

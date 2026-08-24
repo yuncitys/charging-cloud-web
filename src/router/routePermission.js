@@ -2,6 +2,11 @@ import { MENU_TYPE } from '@/views/permission/constants/menuType'
 
 const PUBLIC_PATHS = new Set(['/dashboard', '/404', '/401'])
 
+/** 按钮权限 → 独立 hidden 路由（无菜单 href，靠按钮授权访问） */
+const BUTTON_GATED_PATHS = {
+  ':web:largeScreen:openWatch': '/largeScreen'
+}
+
 export function normalizePath(path) {
   if (!path) {
     return ''
@@ -36,12 +41,20 @@ export function collectAllowedHrefs(authorizationList) {
     return hrefs
   }
   authorizationList.forEach(item => {
-    if (!item || !item.href) {
+    if (!item) {
       return
     }
     const menuType = item.menuType == null ? MENU_TYPE.MENU : Number(item.menuType)
-    if (menuType === MENU_TYPE.MENU) {
+    if (menuType === MENU_TYPE.MENU && item.href) {
       hrefs.add(normalizePath(item.href))
+      return
+    }
+    if (menuType === MENU_TYPE.BUTTON && item.perms) {
+      const perm = String(item.perms).trim()
+      const gatedPath = BUTTON_GATED_PATHS[perm]
+      if (gatedPath) {
+        hrefs.add(normalizePath(gatedPath))
+      }
     }
   })
   return hrefs
