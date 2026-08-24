@@ -62,7 +62,8 @@ export function matchMenuPath(menu, path) {
   if (!menu) {
     return false
   }
-  if (menu.href && menu.href === path) {
+  const target = normalizeHref(path)
+  if (menu.href && normalizeHref(menu.href) === target) {
     return true
   }
   const children = menu.children || []

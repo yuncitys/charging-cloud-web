@@ -2,6 +2,7 @@
   <div class="divElmenu" :class="{'sidebar-only-mode': menuLayout !== 'mix'}" ref="divElmenu">
     <el-menu
       v-if="menuLayout === 'mix'"
+      :key="'top-menu-' + pActiveMenu"
       :default-active="pActiveMenu"
       :background-color="variables.menuBg"
       :text-color="variables.menuText"
@@ -99,7 +100,7 @@
   import {
     logout
   } from '@/api/user'
-  import { findFirstLeafHref, getNavChildren } from '@/utils/menuNav'
+  import { findFirstLeafHref, findTopMenuByPath, getNavChildren } from '@/utils/menuNav'
   export default {
     components: {
       Screenfull,
@@ -142,30 +143,85 @@
         return this.$store.getters.rightMoreMeunList
       },
     },
+    watch: {
+      // 混合模式：顶栏/侧栏由一级菜单状态驱动，路由变化（搜索、标签页、直链）时需同步
+      $route: {
+        immediate: true,
+        handler(route) {
+          this.syncMixMenuByRoute(route)
+        }
+      },
+      menuLayout(val) {
+        if (val === 'mix') {
+          this.syncMixMenuByRoute(this.$route)
+        }
+      },
+      // 菜单异步加载完成后，再按当前路由补一次同步
+      list() {
+        this.syncMixMenuByRoute(this.$route)
+      },
+      rightMoreMeunList() {
+        this.syncMixMenuByRoute(this.$route)
+      }
+    },
     methods: {
-      onClick(item) {
-        window.localStorage.setItem("pActiveMenu", item.title);
-        this.pActiveMenu = item.title;
-        const navChildren = getNavChildren(item)
-        const targetHref = findFirstLeafHref(item) || item.href
-
-        if (navChildren.length > 0) {
-          this.$store.commit('permission/setLeftMeunList', item.children || navChildren);
-          this.$store.dispatch('app/openSideBar')
-          if (targetHref) {
-            this.$router.push({ path: targetHref });
-            window.localStorage.setItem("activeMenu", targetHref);
+      /**
+       * 按当前路由定位一级菜单，同步顶栏高亮与左侧子菜单。
+       * HeaderSearch 只 push 路由，不会走 onClick，必须在这里补齐。
+       */
+      syncMixMenuByRoute(route) {
+        if (this.menuLayout !== 'mix' || !route) {
+          return
+        }
+        if (route.path && route.path.startsWith('/redirect/')) {
+          return
+        }
+        const menus = [].concat(this.list || [], this.rightMoreMeunList || [])
+        if (!menus.length) {
+          return
+        }
+        let top = findTopMenuByPath(menus, route.path)
+        if (!top) {
+          const follow = route.meta && (route.meta.authFollow || route.meta.activeMenu)
+          if (follow) {
+            top = findTopMenuByPath(menus, follow)
           }
-          window.localStorage.setItem("leftMeunList", JSON.stringify(item.children || navChildren));
-        } else if (targetHref) {
-          window.localStorage.removeItem("leftMeunList");
-          this.$store.commit('permission/setLeftMeunList', []);
+        }
+        if (!top) {
+          return
+        }
+        this.applyTopMenuState(top)
+        window.localStorage.setItem('activeMenu', route.path)
+      },
+      /** 仅更新混合菜单 UI 状态，不负责跳转 */
+      applyTopMenuState(item) {
+        if (!item) {
+          return
+        }
+        this.pActiveMenu = item.title
+        window.localStorage.setItem('pActiveMenu', item.title)
+        const navChildren = getNavChildren(item)
+        if (navChildren.length > 0) {
+          const children = item.children || navChildren
+          this.$store.commit('permission/setLeftMeunList', children)
+          window.localStorage.setItem('leftMeunList', JSON.stringify(children))
+          this.$store.dispatch('app/openSideBar')
+        } else {
+          window.localStorage.removeItem('leftMeunList')
+          this.$store.commit('permission/setLeftMeunList', [])
           this.$store.dispatch('app/closeSideBar', {
             withoutAnimation: false
           })
-          this.$router.push({ path: targetHref })
-          window.localStorage.setItem("activeMenu", targetHref);
         }
+      },
+      onClick(item) {
+        this.applyTopMenuState(item)
+        const targetHref = findFirstLeafHref(item) || item.href
+        if (!targetHref) {
+          return
+        }
+        this.$router.push({ path: targetHref })
+        window.localStorage.setItem('activeMenu', targetHref)
       },
       toggleMenuLayout() {
         const next = this.menuLayout === 'mix' ? 'sidebar' : 'mix'
