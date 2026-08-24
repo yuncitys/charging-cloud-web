@@ -180,8 +180,18 @@ export default {
     }
   }
 
+  .el-submenu.is-opened > .el-submenu__title,
   .el-submenu.is-active > .el-submenu__title {
     color: $menuActiveText !important;
+
+    .sidebar-only-icon,
+    .sidebar-only-title-text {
+      color: $menuActiveText !important;
+    }
+
+    .el-submenu__icon-arrow {
+      color: $menuActiveText !important;
+    }
   }
 
   /* 二级 submenu 标题额外左缩进 */
