@@ -60,6 +60,11 @@ export function collectAllowedHrefs(authorizationList) {
   return hrefs
 }
 
+/**
+ * hidden 路由是否可访问。
+ * meta.authFollow：详情/编辑页无菜单 href 时，跟随父列表页的 href 授权；
+ * 同一字段也供 Breadcrumb 拼父级菜单链（见 components/Breadcrumb）。
+ */
 function isHiddenRouteAllowed(route, fullPath, allowedHrefs, moduleHasAccess) {
   if (route.meta && route.meta.authFollow) {
     return allowedHrefs.has(normalizePath(route.meta.authFollow))

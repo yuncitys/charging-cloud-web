@@ -75,3 +75,49 @@ export function findTopMenuByPath(menus, path) {
   }
   return menus.find(menu => matchMenuPath(menu, path)) || null
 }
+
+function normalizeHref(href) {
+  if (!href) {
+    return ''
+  }
+  const value = String(href).trim()
+  if (!value) {
+    return ''
+  }
+  if (value.startsWith('/')) {
+    return value.replace(/\/+$/, '') || '/'
+  }
+  return '/' + value.replace(/\/+$/, '')
+}
+
+/**
+ * 在菜单树中按页面 href 查找祖先链（含自身），供面包屑使用（方案 C 核心）。
+ *
+ * 解决的问题：db_menu 可有任意深度目录，路由只有 URL 前缀 + 页面两级；
+ *             侧栏已用 menuList，面包屑也需同一棵树才能显示「计费策略」等中间级。
+ *
+ * @param {Array} menus  menuList / 授权导航树
+ * @param {string} href  当前页或 authFollow 父页的完整 path，如 /charge/timeCharge
+ * @returns {Array|null} 从一级目录到目标页面的节点数组，未命中返回 null
+ */
+export function findMenuTrailByHref(menus, href, trail = []) {
+  if (!Array.isArray(menus) || !href) {
+    return null
+  }
+  const target = normalizeHref(href)
+  for (let i = 0; i < menus.length; i++) {
+    const node = menus[i]
+    if (!node) {
+      continue
+    }
+    const next = trail.concat(node)
+    if (node.href && normalizeHref(node.href) === target) {
+      return next
+    }
+    const found = findMenuTrailByHref(node.children, href, next)
+    if (found) {
+      return found
+    }
+  }
+  return null
+}
