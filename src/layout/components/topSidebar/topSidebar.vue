@@ -44,6 +44,7 @@
             </div>
           </el-tooltip>
         </template>
+        <header-search id="header-search" class="right-menu-item hover-effect" />
         <lang-select class="right-menu-item hover-effect" style="display:flex; align-items:center" />
         <screenfull id="screenfull" class="right-menu-item hover-effect" style="display:flex; align-items:center" />
 
@@ -91,6 +92,7 @@
 <script>
   import Screenfull from '@/components/Screenfull'
   import LangSelect from '@/components/LangSelect'
+  import HeaderSearch from '@/components/HeaderSearch'
   import {
     mapGetters
   } from 'vuex';
@@ -102,7 +104,8 @@
   export default {
     components: {
       Screenfull,
-      LangSelect
+      LangSelect,
+      HeaderSearch
     },
     data() {
       return {

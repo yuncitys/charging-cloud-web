@@ -20,7 +20,7 @@
  * 解决：优先从后端 menuList 按 href 找祖先链；hidden 页用 meta.authFollow 挂父页。
  * 回退：菜单未加载或找不到时，仍用 $route.matched（vue-element-admin 原逻辑）。
  *
- * 侧栏导航读 menuList，与此处数据源一致；HeaderSearch 仍读 permission_routes，未改。
+ * 侧栏、面包屑、HeaderSearch 均读 menuList。
  */
 import { mapGetters } from 'vuex'
 import { generateTitle } from '@/utils/i18n'
