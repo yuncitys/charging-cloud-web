@@ -32,14 +32,7 @@
 					<el-input v-model="addData.sorting" placeholder="请输入排序" clearable type="number" />
 				</el-form-item>
 				<el-form-item v-if="showIcon" label="图标" prop="icon">
-					<el-select v-model="addData.icon" placeholder="请选择" clearable>
-						<el-option v-for="(item,index) in cities" :key="index" :label="item" :value="item">
-							<div style="text-align: center;">
-								<i :class="item" style="font-size: 26px;"></i>
-							</div>
-						</el-option>
-					</el-select>
-					<i :class="addData.icon" style="font-size: 26px;margin-left: 20px;"></i>
+					<menu-icon-picker v-model="addData.icon" />
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="onaddData('addData')">确定</el-button>
@@ -61,7 +54,10 @@
 		menuTypeLabel
 	} from '@/views/permission/constants/menuType.js'
 
+	import MenuIconPicker from './MenuIconPicker.vue'
+
 	export default {
+		components: { MenuIconPicker },
 		props: {
 			type: {
 				type: String,
@@ -87,54 +83,7 @@
 					perms: '',
 					sorting: '',
 					icon: ''
-				},
-				cities: [
-					'el-icon-platform-eleme',
-					'el-icon-s-custom',
-					'el-icon-user-solid',
-					'el-icon-user',
-					'el-icon-s-goods',
-					'el-icon-goods',
-					'el-icon-sold-out',
-					'el-icon-full-screen',
-					'el-icon-postcard',
-					'el-icon-connection',
-					'el-icon-notebook-1',
-					'el-icon-notebook-2',
-					'el-icon-star-on',
-					'el-icon-star-off',
-					'el-icon-s-help',
-					'el-icon-help',
-					'el-icon-reading',
-					'el-icon-pie-chart',
-					'el-icon-data-line',
-					'el-icon-s-finance',
-					'el-icon-wallet',
-					'el-icon-coin',
-					'el-icon-document',
-					'el-icon-shopping-cart-full',
-					'el-icon-shopping-cart-1',
-					'el-icon-sell',
-					'el-icon-collection',
-					'el-icon-shopping-cart-2',
-					'el-icon-copy-document',
-					'el-icon-set-up',
-					'el-icon-s-fold',
-					'el-icon-s-operation',
-					'el-icon-s-management',
-					'el-icon-eleme',
-					'el-icon-s-tools',
-					'el-icon-setting',
-					'el-icon-s-home',
-					'el-icon-s-data',
-					'el-icon-s-grid',
-					'el-icon-menu',
-					'el-icon-date',
-					'el-icon-edit',
-					'el-icon-edit-outline',
-					'el-icon-s-opportunity',
-					''
-				]
+				}
 			}
 		},
 		computed: {
