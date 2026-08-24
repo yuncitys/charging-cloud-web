@@ -513,6 +513,13 @@ export const constantRoutes = [{
         icon: 'el-icon-help',
       }
     }, {
+      path: 'parallelChargeList',
+      component: () => import('@/views/netWorkDot/parallelChargeList'),
+      name: 'parallelChargeList',
+      meta: {
+        title: '双枪并充配置'
+      }
+    }, {
       path: 'stationPricingList',
       component: () => import('@/views/netWorkDot/stationPricingList'),
       name: 'stationPricingList',
