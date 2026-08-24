@@ -1,7 +1,7 @@
 <template>
-	<div style="display: flex;">
+	<div class="menu-add-page">
 		<div v-if="type == 'parent'">
-			<el-button style="margin-right: 20px ;" type="primary" @click="addPMeun"
+			<el-button type="primary" @click="addPMeun"
 				v-if="btnAuthen.permsVerifAuthention(':permission:menu:add')">新增菜单</el-button>
 		</div>
 		<div v-if="type == 'childern' && canAddChild">
@@ -208,5 +208,9 @@
 	}
 </script>
 
-<style>
+<style scoped>
+.menu-add-page {
+  display: inline-flex;
+  align-items: center;
+}
 </style>

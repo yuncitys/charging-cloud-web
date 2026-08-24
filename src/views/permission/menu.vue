@@ -1,12 +1,12 @@
 <template>
 	<div class="app-container">
-		<div class="filter-container">
-			<div style="margin: 15px 0;">
-				<addPage type="parent" @getLists="getLists"></addPage>
-			</div>
+		<div class="filter-container menu-page">
 			<div class="menu-table-wrapper">
-				<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" :fit="false" style="min-width: 960px"
-					highlight-current-row align="center" row-key="id" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
+				<div class="menu-toolbar">
+					<addPage type="parent" @getLists="getLists" />
+				</div>
+				<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" :fit="false" class="menu-table"
+					highlight-current-row row-key="id" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
 					<el-table-column prop="id" label="id" align="center" :show-overflow-tooltip="isPc" min-width="80">
 					</el-table-column>
 					<el-table-column prop="title" label="菜单名称" align="center" :show-overflow-tooltip="isPc" min-width="180">
@@ -27,7 +27,7 @@
 					</el-table-column>
 					<el-table-column prop="perms" label="权限标识" align="center" :show-overflow-tooltip="isPc" min-width="180">
 					</el-table-column>
-					<el-table-column prop="parentId" label="父级Id" align="center" :show-overflow-tooltip="isPc" min-width="100">
+					<el-table-column prop="parentId" label="父级ID" align="center" :show-overflow-tooltip="isPc" min-width="100">
 					</el-table-column>
 					<el-table-column prop="sorting" label="排序" align="center" sortable :show-overflow-tooltip="isPc" min-width="100">
 					</el-table-column>
@@ -149,15 +149,32 @@
 	}
 </script>
 
-<style scoped="scoped">
+<style scoped lang="scss">
+.menu-page.filter-container {
+  padding-bottom: 0;
+}
+
 .menu-table-wrapper {
   width: 100%;
   overflow-x: auto;
 }
-.el-table {
-  width: auto !important;
+
+.menu-toolbar {
+  min-width: 960px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
 }
-.el-table .fixed-right {
+
+.menu-table {
+  min-width: 960px;
+  width: auto !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  float: none !important;
+}
+
+.menu-table-wrapper ::v-deep .el-table .fixed-right {
   position: sticky;
   position: -webkit-sticky;
   right: 0;
