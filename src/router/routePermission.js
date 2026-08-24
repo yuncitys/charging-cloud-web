@@ -1,6 +1,6 @@
 import { MENU_TYPE } from '@/views/permission/constants/menuType'
 
-const PUBLIC_PATHS = new Set(['/dashboard', '/404', '/401'])
+const PUBLIC_PATHS = new Set(['/dashboard', '/404', '/401', '/permission/setPwd'])
 
 /** 按钮权限 → 独立 hidden 路由（无菜单 href，靠按钮授权访问） */
 const BUTTON_GATED_PATHS = {

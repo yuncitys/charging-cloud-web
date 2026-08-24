@@ -1100,15 +1100,6 @@ const routeDefinitions = [{
           icon: 'el-icon-s-custom',
         }
       },
-      {
-        path: 'setPwd',
-        component: () => import('@/views/permission/setPwd'),
-        name: 'setPwd',
-        meta: {
-          title: '修改密码',
-          icon: 'el-icon-s-management',
-        }
-      },
     ]
   },
   {
@@ -1387,8 +1378,24 @@ export const largeScreenRoute = {
   }
 }
 
+/** 修改密码：顶部用户菜单入口，所有登录用户可访问 */
+export const setPwdRoute = {
+  path: '/permission/setPwd',
+  component: Layout,
+  hidden: true,
+  children: [{
+    path: '',
+    component: () => import('@/views/permission/setPwd'),
+    name: 'setPwd',
+    hidden: true,
+    meta: {
+      title: '修改密码'
+    }
+  }]
+}
+
 /** 无需鉴权的基础路由 */
-export const constantRoutes = routeDefinitions.slice(0, 5).concat([largeScreenRoute])
+export const constantRoutes = routeDefinitions.slice(0, 5).concat([largeScreenRoute, setPwdRoute])
 
 /** 需按菜单 href 过滤的业务路由（不含兜底 *，* 在 addRoutes 时最后追加） */
 export const asyncRoutes = routeDefinitions.slice(5).filter(route => route.path !== '*')
