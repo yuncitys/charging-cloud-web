@@ -170,28 +170,8 @@ export default {
       page: 1,
       limit: 10,
       //字典
-      sys_job_group:
-      [
-        {
-          "label":'默认',
-          "value":"DEFAULT",
-        },
-        {
-          "label":'系统',
-          "value":"SYSTEM",
-        }
-      ],
-      sys_job_status:
-      [
-        {
-          "label":'正常',
-          "value":"0",
-        },
-        {
-          "label":'暂停',
-          "value":"1",
-        }
-      ],
+      sys_job_group: [],
+      sys_job_status: [],
       sys_common_status:[
         {
           "label":'成功',
@@ -233,6 +213,13 @@ export default {
     };
   },
   created() {
+    Promise.all([
+      this.$dict.getSelector('sys_job_group'),
+      this.$dict.getSelector('sys_job_status')
+    ]).then(([group, status]) => {
+      this.sys_job_group = group
+      this.sys_job_status = status
+    })
     // const jobId = this.$route.params && this.$route.params.jobId;
     const jobId = this.$route.query.jobId;
     if (jobId !== undefined && jobId != 0) {

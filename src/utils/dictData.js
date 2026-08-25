@@ -1,6 +1,11 @@
 import { get } from "js-cookie"
+import { getSelector as fetchDictionarySelector } from './dictionary'
 
 class dictData {
+	getSelector(enCode) {
+		return fetchDictionarySelector(enCode)
+	}
+
 	getOrderStatus(val) {
 		switch (val) {
 			case 0:
