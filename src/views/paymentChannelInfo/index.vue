@@ -62,7 +62,7 @@
 <script>
 import edit from './components/edit'
 import {getList, del, update } from '@/api/channelPaymentInfo'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, loadServiceProviderDict } from '@/utils/payChannel'
 export default {
   name: 'channelPaymentInfo', // "渠道支付方式"
   components: { edit },
@@ -115,7 +115,7 @@ export default {
       this.getLists()
     },
     async serviceList () {
-      
+      this.serviceProviderList = await loadServiceProviderDict()
     },
     add () {
       this.param.title = '新增'
