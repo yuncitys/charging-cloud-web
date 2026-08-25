@@ -75,7 +75,7 @@
 
 <script>
 import { getList,del } from '@/api/billRefundInfo'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, loadServiceProviderDict } from '@/utils/payChannel'
 export default {
   name: '退款流水', // "退款流水"
   data() {
@@ -107,26 +107,14 @@ export default {
         { fullName: '已退款', enCode: 31 },
         { fullName: '退款失败', enCode: 32 },
       ],
-      serviceProviderList:[
-        {
-          enCode: 'wxpay',
-          fullName: '微信'
-        },{
-          enCode: 'alipay',
-          fullName: '支付宝'
-        },{
-          enCode: 'tzbank',
-          fullName: '合作银行'
-        },{
-          enCode: 'wxpay_partner',
-          fullName: '微信(服务商)'
-        },
-      ],
+      serviceProviderList: [],
       startTimeAndEndTime: [],
     }
   },
   created() {
-
+    loadServiceProviderDict().then(list => {
+      this.serviceProviderList = list
+    })
   },
   filters: {
     amount(number) {
