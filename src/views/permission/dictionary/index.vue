@@ -42,26 +42,28 @@
 								</el-tag>
 							</template>
 						</el-table-column>
-						<el-table-column label="操作" width="180" align="center">
+						<el-table-column label="操作" width="240" align="center" class-name="table-action-cell">
 							<template slot-scope="scope">
-								<el-button
-									type="primary"
-									size="mini"
-									v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
-									@click.stop="openTypeDialog(scope.row)"
-								>编辑</el-button>
-								<el-button
-									type="warning"
-									size="mini"
-									v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
-									@click.stop="toggleTypeState(scope.row)"
-								>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
-								<el-button
-									type="danger"
-									size="mini"
-									v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:delete')"
-									@click.stop="removeType(scope.row)"
-								>删除</el-button>
+								<div class="table-action-btns">
+									<el-button
+										type="primary"
+										size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
+										@click.stop="openTypeDialog(scope.row)"
+									>编辑</el-button>
+									<el-button
+										type="warning"
+										size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
+										@click.stop="toggleTypeState(scope.row)"
+									>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
+									<el-button
+										type="danger"
+										size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:delete')"
+										@click.stop="removeType(scope.row)"
+									>删除</el-button>
+								</div>
 							</template>
 						</el-table-column>
 					</el-table>
@@ -105,26 +107,28 @@
 								</el-tag>
 							</template>
 						</el-table-column>
-						<el-table-column label="操作" width="200" align="center">
+						<el-table-column label="操作" width="240" align="center" class-name="table-action-cell">
 							<template slot-scope="scope">
-								<el-button
-									type="primary"
-									size="mini"
-									v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
-									@click="openDataDialog(scope.row)"
-								>编辑</el-button>
-								<el-button
-									type="warning"
-									size="mini"
-									v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
-									@click="toggleDataState(scope.row)"
-								>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
-								<el-button
-									type="danger"
-									size="mini"
-									v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:delete')"
-									@click="removeData(scope.row)"
-								>删除</el-button>
+								<div class="table-action-btns">
+									<el-button
+										type="primary"
+										size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
+										@click="openDataDialog(scope.row)"
+									>编辑</el-button>
+									<el-button
+										type="warning"
+										size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
+										@click="toggleDataState(scope.row)"
+									>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
+									<el-button
+										type="danger"
+										size="mini"
+										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:delete')"
+										@click="removeData(scope.row)"
+									>删除</el-button>
+								</div>
 							</template>
 						</el-table-column>
 					</el-table>
@@ -504,9 +508,18 @@ export default {
 </script>
 
 <style scoped lang="scss">
+.dictionary-page {
+	--dict-radius: 8px;
+	--dict-border: #e8ecf1;
+	--dict-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.04);
+	--dict-accent: #409eff;
+	--dict-accent-soft: rgba(64, 158, 255, 0.08);
+}
+
 .dict-row {
 	display: flex;
 	align-items: stretch;
+	min-height: calc(100vh - 140px);
 }
 
 .dict-col {
@@ -519,23 +532,79 @@ export default {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	border: 1px solid var(--dict-border);
+	border-radius: var(--dict-radius);
+	box-shadow: var(--dict-shadow);
+	overflow: hidden;
+}
+
+.dict-card ::v-deep .el-card__header {
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--dict-border);
+	background: #fafbfc;
 }
 
 .dict-card ::v-deep .el-card__body {
 	flex: 1;
+	padding: 16px;
 }
 
 .card-header {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	font-size: 15px;
+	font-weight: 600;
+	color: #1f2937;
 }
 
 .toolbar {
-	margin-bottom: 12px;
+	margin-bottom: 14px;
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.table-action-btns {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex-wrap: nowrap;
+	gap: 6px;
+	white-space: nowrap;
+}
+
+.table-action-btns .el-button + .el-button {
+	margin-left: 0;
+}
+
+.dictionary-page ::v-deep .el-table {
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.dictionary-page ::v-deep .el-table th {
+	background: #f8fafc;
+	color: #475569;
+	font-weight: 600;
+}
+
+.dictionary-page ::v-deep .el-table td,
+.dictionary-page ::v-deep .el-table th {
+	padding: 10px 0;
+}
+
+.dictionary-page ::v-deep .el-table__body tr.current-row > td {
+	background: var(--dict-accent-soft) !important;
+}
+
+.dictionary-page ::v-deep .el-table__body tr.current-row > td:first-child {
+	box-shadow: inset 3px 0 0 var(--dict-accent);
+}
+
+.dictionary-page ::v-deep td.table-action-cell {
+	padding-left: 8px;
+	padding-right: 8px;
 }
 </style>
