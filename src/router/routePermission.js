@@ -1,6 +1,8 @@
+import pathToRegexp from 'path-to-regexp'
 import { MENU_TYPE } from '@/views/permission/constants/menuType'
 
 const PUBLIC_PATHS = new Set(['/dashboard', '/404', '/401', '/permission/setPwd'])
+const patternCache = new Map()
 
 /** 按钮权限 → 独立 hidden 路由（无菜单 href，靠按钮授权访问） */
 const BUTTON_GATED_PATHS = {
@@ -159,6 +161,28 @@ export function buildAccessiblePaths(authorizationList, filteredRoutes) {
   return hrefs
 }
 
+function getPatternRegexp(pattern) {
+  const key = normalizePath(pattern)
+  if (!key || (!key.includes(':') && !key.includes('*'))) {
+    return null
+  }
+  if (patternCache.has(key)) {
+    return patternCache.get(key)
+  }
+  try {
+    const re = pathToRegexp(key, [], { end: true })
+    patternCache.set(key, re)
+    return re
+  } catch (e) {
+    patternCache.set(key, null)
+    return null
+  }
+}
+
+/**
+ * 当前 path 是否在可访问集合中。
+ * 支持动态路由：集合里是 /netWorkDot/setting/:id，实际访问 /netWorkDot/setting/123 也应放行。
+ */
 export function isPathAllowed(path, allowedHrefs) {
   const normalized = normalizePath(path)
   if (PUBLIC_PATHS.has(normalized)) {
@@ -167,5 +191,34 @@ export function isPathAllowed(path, allowedHrefs) {
   if (!allowedHrefs || !allowedHrefs.size) {
     return true
   }
-  return allowedHrefs.has(normalized)
+  if (allowedHrefs.has(normalized)) {
+    return true
+  }
+  for (const pattern of allowedHrefs) {
+    const re = getPatternRegexp(pattern)
+    if (re && re.test(normalized)) {
+      return true
+    }
+  }
+  return false
+}
+
+/**
+ * 路由导航是否放行：先按实际 path，再按 matched 记录上的模式 path（如 /xxx/:id）。
+ */
+export function isRouteAllowed(route, allowedHrefs) {
+  if (!route) {
+    return false
+  }
+  if (isPathAllowed(route.path, allowedHrefs)) {
+    return true
+  }
+  const matched = route.matched || []
+  for (let i = matched.length - 1; i >= 0; i--) {
+    const recordPath = matched[i] && matched[i].path
+    if (recordPath && allowedHrefs && allowedHrefs.has(normalizePath(recordPath))) {
+      return true
+    }
+  }
+  return false
 }
