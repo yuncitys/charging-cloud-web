@@ -3,7 +3,7 @@ import store from './store'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { getToken } from '@/utils/auth'
-import { isPathAllowed, normalizePath } from '@/router/routePermission'
+import { isRouteAllowed, normalizePath } from '@/router/routePermission'
 
 NProgress.configure({
 	showSpinner: false
@@ -54,7 +54,7 @@ router.beforeEach(async(to, from, next) => {
 		}
 
 		const allowedHrefs = new Set(store.getters.allowedHrefs || [])
-		if (isPathAllowed(to.path, allowedHrefs)) {
+		if (isRouteAllowed(to, allowedHrefs)) {
 			store.dispatch('permission/generateRoutes')
 			next()
 		} else {

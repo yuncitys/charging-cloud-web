@@ -98,6 +98,19 @@ export default {
   height: 100%;
   background: $menuBg;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  /* Logo 在滚动区外；滚动区占满剩余高度，否则展开长目录后底部菜单滑不到 */
+  > .el-scrollbar {
+    flex: 1;
+    min-height: 0;
+    height: auto !important;
+  }
+
+  .el-menu {
+    height: auto !important;
+  }
 }
 
 /* ===== Logo ===== */
