@@ -18,9 +18,12 @@
             <el-col :span="12">
               <el-form-item label="渠道代码" prop="serviceProviderId">
                 <el-select v-model="form.serviceProviderId" placeholder="请选择渠道代码" style="width: 100%" :disabled="isEdit">
-                  <el-option label="合作银行 (tzbank)" value="tzbank" />
-                  <el-option label="微信服务商 (wxpay_partner)" value="wxpay_partner" />
-                  <el-option label="默认 (local)" value="local" />
+                  <el-option
+                    v-for="item in serviceProviderList"
+                    :key="item.value"
+                    :label="`${item.label} (${item.value})`"
+                    :value="item.value"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -689,6 +692,7 @@ import { getAreaSelector } from '@/api/area/index'
 import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
+import { loadServiceProviderDict } from '@/utils/payChannel'
 import { WX_SALES_SCENE_OPTIONS, WX_SCENE_ATTACHMENT, defaultWxTradeEntryWx, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
 export default {
@@ -707,6 +711,7 @@ export default {
       busKindOptions: [],
       bankList: [],
       merchantList: [],
+      serviceProviderList: [],
       wxSalesSceneOptions: WX_SALES_SCENE_OPTIONS,
       corIdExaDateForever: false,
       corLegIdExaDateForever: false,
@@ -857,6 +862,9 @@ export default {
   created() {
     this.busKindOptions = dictData.getBusKindData()
     this.bankList = dictData.getBankNo()
+    loadServiceProviderDict().then(list => {
+      this.serviceProviderList = list
+    })
     this.getProvinceList()
     this.getMerchantList()
     const merchantId = this.$route.query && this.$route.query.merchantId

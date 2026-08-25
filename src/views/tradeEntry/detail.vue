@@ -618,7 +618,7 @@
 import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
-import { formatServiceProvider, isLocalChannel } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
 import { formatSalesSceneLabels, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
 export default {
@@ -793,6 +793,7 @@ export default {
   },
   created() {
     this.busKindOptions = dictData.getBusKindData()
+    loadServiceProviderDict().then(() => this.$forceUpdate())
     this.getProvinceList()
     this.getMerchantList()
     const id = this.$route.params.id

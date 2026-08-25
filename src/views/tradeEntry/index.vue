@@ -178,7 +178,7 @@
 
 <script>
 import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
-import { formatServiceProvider, isLocalChannel } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 
 export default {
@@ -280,6 +280,7 @@ export default {
     }
   },
   created() {
+    loadServiceProviderDict().then(() => this.$forceUpdate())
     this.getList()
   },
   methods: {
