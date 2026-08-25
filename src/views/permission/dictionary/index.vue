@@ -25,6 +25,7 @@
 						>新增</el-button>
 					</div>
 					<el-table
+						ref="typeTable"
 						v-loading="typeLoading"
 						:data="typeList"
 						highlight-current-row
@@ -174,7 +175,6 @@
 							:key="item.id"
 							:label="item.fullName"
 							:value="item.id"
-							:disabled="item.id === dataForm.id"
 						/>
 					</el-select>
 				</el-form-item>
@@ -253,6 +253,22 @@ function buildTree(list, parentId = '0') {
 		})
 }
 
+function collectDescendantIds(list, rootId) {
+	const ids = new Set()
+	if (!rootId) return ids
+	ids.add(rootId)
+	const walk = parentId => {
+		list.forEach(item => {
+			if (String(item.parentId || '0') === String(parentId)) {
+				ids.add(item.id)
+				walk(item.id)
+			}
+		})
+	}
+	walk(rootId)
+	return ids
+}
+
 export default {
 	name: 'dictionary',
 	data() {
@@ -295,7 +311,8 @@ export default {
 			return this.dataList
 		},
 		parentOptions() {
-			return this.dataList.filter(item => item.id !== this.dataForm.id)
+			const excluded = collectDescendantIds(this.dataList, this.dataForm.id)
+			return this.dataList.filter(item => !excluded.has(item.id))
 		}
 	},
 	created() {
@@ -322,8 +339,12 @@ export default {
 							this.dataList = []
 						}
 					} else if (this.typeList.length) {
+						const row = this.typeList[0]
 						this.$nextTick(() => {
-							this.handleTypeSelect(this.typeList[0])
+							this.handleTypeSelect(row)
+							if (this.$refs.typeTable) {
+								this.$refs.typeTable.setCurrentRow(row)
+							}
 						})
 					}
 				} else {
