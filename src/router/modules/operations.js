@@ -8,8 +8,18 @@
 // - 市场与渠道: /AD, /join
 // - 平台配置: /configAdmin, /platform
 // - 商品: /goods
+// - 双枪并充: /netWorkDot/parallelChargeList（菜单在运营管理，URL 历史在 /netWorkDot）
 
 export default [
+{
+      path: '/netWorkDot/parallelChargeList',
+      component: () => import('@/views/netWorkDot/parallelChargeList'),
+      name: 'parallelChargeList',
+      meta: {
+        title: '双枪并充配置',
+        icon: 'el-icon-connection',
+      }
+    },
 {
       path: '/join/joinList',
       component: () => import('@/views/join/joinList'),
