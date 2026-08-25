@@ -21,6 +21,9 @@ export function getSelector(enCode) {
 		return Promise.resolve(cached.items)
 	}
 	return getDictionarySelector(enCode).then(res => {
+		if (!res || res.code !== 200) {
+			return []
+		}
 		const items = mapSelectorItems(extractList(res))
 		cache.set(enCode, { items, timestamp: Date.now() })
 		return items

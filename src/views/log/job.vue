@@ -171,7 +171,6 @@ export default {
       limit: 10,
       //字典
       sys_job_group: [],
-      sys_job_status: [],
       sys_common_status:[
         {
           "label":'成功',
@@ -213,12 +212,8 @@ export default {
     };
   },
   created() {
-    Promise.all([
-      this.$dict.getSelector('sys_job_group'),
-      this.$dict.getSelector('sys_job_status')
-    ]).then(([group, status]) => {
+    this.$dict.getSelector('sys_job_group').then(group => {
       this.sys_job_group = group
-      this.sys_job_status = status
     })
     // const jobId = this.$route.params && this.$route.params.jobId;
     const jobId = this.$route.query.jobId;
