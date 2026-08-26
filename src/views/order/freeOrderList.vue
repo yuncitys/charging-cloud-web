@@ -295,23 +295,7 @@ export default {
         title: '已支付'
       }
       ],
-      tags: [{
-        id: 0,
-        title: '故障'
-      },
-      {
-        id: 1,
-        title: '进行中'
-      },
-      {
-        id: 2,
-        title: '已完成'
-      },
-      {
-        id: 3,
-        title: '待结算'
-      }
-      ],
+      tags: [],
       time: ''
     }
   },
@@ -337,6 +321,9 @@ export default {
   },
   created() {
     // 进入页面时读缓存
+    this.$dict.getSelectorOptions('order_status', { numeric: true }).then(list => {
+      this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+    })
     const raw = localStorage.getItem(this.cacheKey)
     if (raw) {
       try {
@@ -402,11 +389,8 @@ export default {
       return this.disp(type)
     },
     orderStatusText(status) {
-      if (status === 0) return '故障'
-      if (status === 1) return '进行中'
-      if (status === 2) return '已完成'
-      if (status === 3) return '待结算'
-      return this.disp(status)
+      const label = this.$dict.getOrderStatus(status)
+      return label === String(status) ? this.disp(status) : label
     },
     payStatusText(status) {
       if (status === 0) return '未支付'

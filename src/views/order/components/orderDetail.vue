@@ -419,6 +419,7 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelector('order_status')
     this.bootstrap()
   },
   methods: {
@@ -451,11 +452,8 @@ export default {
       return this.disp(s)
     },
     orderStatusText(status) {
-      if (status === 0) return '故障'
-      if (status === 1) return '进行中'
-      if (status === 2) return '充电完成'
-      if (status === 3) return '待结算'
-      return this.disp(status)
+      const label = this.$dict.getOrderStatus(status)
+      return label === String(status) ? this.disp(status) : label
     },
     payTypeText(payType) {
       if (!payType) return '—'
