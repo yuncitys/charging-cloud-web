@@ -400,19 +400,8 @@ export default {
         status: '',
         dateRange: []
       },
-      statusOptions: [
-        { value: 0, label: '待执行' },
-        { value: 1, label: '执行中' },
-        { value: 2, label: '执行成功' },
-        { value: 3, label: '执行失败' },
-        { value: 4, label: '已取消' }
-      ],
-      logResultOptions: [
-        { value: 0, label: '待执行' },
-        { value: 1, label: '待响应' },
-        { value: 2, label: '成功' },
-        { value: 3, label: '失败' }
-      ],
+      statusOptions: [],
+      logResultOptions: [],
       templateLoading: false,
       templateOptions: [],
       templateNameMap: {},
@@ -452,14 +441,20 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelectorOptions('station_pricing_schedule_status', { numeric: true }).then(list => {
+      this.statusOptions = list || []
+    })
+    this.$dict.getSelectorOptions('station_pricing_schedule_log_result', { numeric: true }).then(list => {
+      this.logResultOptions = list || []
+    })
     this.loadStationTree()
     this.loadTemplateOptions()
     this.onSearch()
   },
   methods: {
     formatStatus(val) {
-      const map = { 0: '待执行', 1: '执行中', 2: '执行成功', 3: '执行失败', 4: '已取消' }
-      return map[val] || '-'
+      if (val === null || val === undefined || val === '') return '-'
+      return this.$dict.formatDictLabel('station_pricing_schedule_status', val)
     },
     statusTagType(val) {
       if (val === 0) return 'info'
@@ -470,13 +465,8 @@ export default {
       return 'info'
     },
     formatLogResult(val) {
-      const map = {
-        0: '待执行',
-        1: '待响应',
-        2: '成功',
-        3: '失败'
-      }
-      return map[val] || '-'
+      if (val === null || val === undefined || val === '') return '-'
+      return this.$dict.formatDictLabel('station_pricing_schedule_log_result', val)
     },
     formatPeriodTypeLabel(periodTypeId, tiers) {
       const list = Array.isArray(tiers) ? tiers : []
