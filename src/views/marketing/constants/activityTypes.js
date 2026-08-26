@@ -7,6 +7,7 @@ import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
 export const DICT_ACTIVITY_STATUS = 'marketing_activity_status'
 export const DICT_LIMIT_TYPE = 'marketing_limit_type'
 export const DICT_SEND_TYPE = 'marketing_send_type'
+export const DICT_SEND_STATUS = 'marketing_send_status'
 export const DICT_ACTIVITY_USER_SCOPE = 'marketing_activity_user_scope'
 export const DICT_ACTIVITY_STATION_SCOPE = 'marketing_activity_station_scope'
 
@@ -215,4 +216,22 @@ export function getSendTypeLabel(type) {
   if (type == null || type === '') return '—'
   const label = formatDictLabel(DICT_SEND_TYPE, type)
   return label === String(type) ? '—' : label
+}
+
+export function getSendStatusLabel(status) {
+  if (status == null || status === '') return '—'
+  const label = formatDictLabel(DICT_SEND_STATUS, status)
+  return label === String(status) ? '—' : label
+}
+
+export function getActivityUserScopeLabel(scope) {
+  if (scope == null || scope === '') return '—'
+  const label = formatDictLabel(DICT_ACTIVITY_USER_SCOPE, scope)
+  return label === String(scope) ? '—' : label
+}
+
+export function getActivityStationScopeLabel(scope) {
+  if (scope == null || scope === '') return '—'
+  const label = formatDictLabel(DICT_ACTIVITY_STATION_SCOPE, scope)
+  return label === String(scope) ? '—' : label
 }

@@ -261,15 +261,11 @@
 <script>
 import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
-import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getLimitTypeLabel, getSendTypeLabel } from '../constants/activityTypes'
+import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getLimitTypeLabel, getSendTypeLabel, getSendStatusLabel, getActivityUserScopeLabel, getActivityStationScopeLabel } from '../constants/activityTypes'
 import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
-
-const USER_SCOPE_LABELS = { '1': '按客户', '2': '用户分组', '3': '全部用户', '4': '指定用户' }
-const STATION_SCOPE_LABELS = { '1': '按商户', '2': '电站分组', '3': '全部电站' }
-const SEND_STATUS_LABELS = { '1': '已发放', '2': '未发放' }
 
 export default {
   name: 'ActivityDetailDrawer',
@@ -332,18 +328,16 @@ export default {
       return ['2', '3', '4', '5', '6'].includes(this.activityType) && this.subConfig
     },
     userScopeLabel() {
-      const scope = this.subConfig && this.subConfig.userScope
-      return USER_SCOPE_LABELS[scope] || scope || '—'
+      return getActivityUserScopeLabel(this.subConfig && this.subConfig.userScope)
     },
     stationScopeLabel() {
-      const scope = this.subConfig && this.subConfig.stationScope
-      return STATION_SCOPE_LABELS[scope] || scope || '—'
+      return getActivityStationScopeLabel(this.subConfig && this.subConfig.stationScope)
     },
     sendTypeLabel() {
       return getSendTypeLabel(this.subConfig && this.subConfig.sendType)
     },
     sendStatusLabel() {
-      return SEND_STATUS_LABELS[this.subConfig && this.subConfig.sendStatus] || '—'
+      return getSendStatusLabel(this.subConfig && this.subConfig.sendStatus)
     },
     limitTypeLabel() {
       return getLimitTypeLabel(this.subConfig && this.subConfig.limitType)
@@ -381,9 +375,9 @@ export default {
     }
   },
   created() {
-    this.$dict.getSelector('marketing_activity_status')
-    this.$dict.getSelector('marketing_send_type')
-    this.$dict.getSelector('marketing_limit_type')
+    ;['marketing_activity_status', 'marketing_send_type', 'marketing_send_status', 'marketing_limit_type', 'marketing_activity_user_scope', 'marketing_activity_station_scope'].forEach(code => {
+      this.$dict.getSelector(code)
+    })
   },
   methods: {
     onOpen() {

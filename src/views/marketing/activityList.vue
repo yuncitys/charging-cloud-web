@@ -174,7 +174,7 @@
 
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
-import { loadActivityStatusOptions, getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta } from './constants/activityTypes'
+import { loadActivityStatusOptions, getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getSendStatusLabel } from './constants/activityTypes'
 import { hasActivityTypeEdit, hasActivityTypeView, hasActivityEditAction, hasActivityAction, hasMarketingPerm, canEditMarketingActivity } from './utils/marketingActivityAuth'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
@@ -334,7 +334,7 @@ export default {
         return this.activityStatusLabel(row.activityStatus)
       }
       if (String(row.sendStatus) === '1') {
-        return '已发放'
+        return getSendStatusLabel('1')
       }
       if (String(row.sendType) === '2') {
         return '待发放'
