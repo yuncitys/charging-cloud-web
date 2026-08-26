@@ -2,6 +2,8 @@ import { getDictionarySelector } from '@/api/permission/dictionaryData'
 
 const CACHE_TTL_MS = 5 * 60 * 1000
 const cache = new Map()
+/** 进行中的同 code 请求去重，避免并发重复打接口 */
+const inflight = new Map()
 /** @type {Map<string, Record<string, string>>} */
 const labelMaps = new Map()
 
@@ -40,7 +42,11 @@ export function getSelector(enCode) {
 	if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
 		return Promise.resolve(cached.items)
 	}
-	return getDictionarySelector(enCode).then(res => {
+	const pending = inflight.get(enCode)
+	if (pending) {
+		return pending
+	}
+	const req = getDictionarySelector(enCode).then(res => {
 		if (!res || res.code !== 200) {
 			return []
 		}
@@ -48,7 +54,11 @@ export function getSelector(enCode) {
 		cache.set(enCode, { items, timestamp: Date.now() })
 		rememberLabels(enCode, items)
 		return items
-	}).catch(() => [])
+	}).catch(() => []).finally(() => {
+		inflight.delete(enCode)
+	})
+	inflight.set(enCode, req)
+	return req
 }
 
 /**
