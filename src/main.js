@@ -42,7 +42,7 @@ Vue.prototype.$common = common
 import dictData from './utils/dictData.js'
 import { getSelector } from './utils/dictionary'
 Vue.prototype.$dict = dictData
-;['order_status', 'pay_payment_status', 'pay_refund_status', 'finance_user_flow_type', 'invoice_type', 'invoice_state', 'wx_sales_scene', 'pay_service_provider', 'recharge_pay_status', 'recharge_trade_type', 'order_pay_status', 'charging_car_type', 'car_purpose', 'car_property_right', 'invoice_title_type', 'driver_client_channel'].forEach(code => {
+;['order_status', 'pay_payment_status', 'pay_refund_status', 'finance_user_flow_type', 'invoice_type', 'invoice_state', 'wx_sales_scene', 'pay_service_provider', 'recharge_pay_status', 'recharge_trade_type', 'order_pay_status', 'charging_car_type', 'car_purpose', 'car_property_right', 'invoice_title_type', 'driver_client_channel', 'trade_entry_mer_type', 'trade_entry_trade_mer_type', 'trade_entry_mer_cert_type', 'trade_entry_leg_id_type', 'trade_entry_sett_bank_acc_type', 'trade_entry_status', 'trade_entry_audit_status', 'settlement_cycle_type', 'settlement_mode', 'settlement_ledger_status'].forEach(code => {
   getSelector(code)
 })
 
