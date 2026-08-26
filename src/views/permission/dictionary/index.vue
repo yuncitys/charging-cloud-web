@@ -1,7 +1,7 @@
 <template>
 	<div class="app-container dictionary-page">
 		<el-row :gutter="20" type="flex" class="dict-row">
-			<el-col :span="9" class="dict-col">
+			<el-col :span="11" class="dict-col">
 				<el-card shadow="never" class="dict-card">
 					<div slot="header" class="card-header">
 						<span>字典分类</span>
@@ -74,7 +74,7 @@
 				</el-card>
 			</el-col>
 
-			<el-col :span="15" class="dict-col">
+			<el-col :span="13" class="dict-col">
 				<el-card shadow="never" class="dict-card">
 					<div slot="header" class="card-header">
 						<span>{{ selectedType ? selectedType.fullName : '字典数据' }}</span>
