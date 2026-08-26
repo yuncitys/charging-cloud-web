@@ -220,23 +220,9 @@ export default {
         belongToId: '',
         mainOrgId: ''
       },
-      carTypeOptions: [
-        { label: 'C端', value: '1' },
-        { label: '机构', value: '2' },
-        { label: '内部', value: '3' }
-      ],
-      purposeOptions: [
-        { label: '私家车', value: '1' },
-        { label: '网约车', value: '2' },
-        { label: '出租车', value: '3' },
-        { label: '物流车', value: '4' },
-        { label: '通勤大巴', value: '5' },
-        { label: '其他用途', value: '255' }
-      ],
-      propertyRightOptions: [
-        { label: '个人车辆', value: '1' },
-        { label: '机构车辆', value: '2' }
-      ],
+      carTypeOptions: [],
+      purposeOptions: [],
+      propertyRightOptions: [],
       drawerVisible: false,
       drawerMode: 'create',
       form: {
@@ -297,6 +283,15 @@ export default {
   created() {
     this.loadList()
     this.loadOrgOptions()
+    this.$dict.getSelectorOptions('charging_car_type').then(list => {
+      this.carTypeOptions = list || []
+    })
+    this.$dict.getSelectorOptions('car_purpose').then(list => {
+      this.purposeOptions = list || []
+    })
+    this.$dict.getSelectorOptions('car_property_right').then(list => {
+      this.propertyRightOptions = list || []
+    })
   },
   methods: {
     hasPerm(permission) {
