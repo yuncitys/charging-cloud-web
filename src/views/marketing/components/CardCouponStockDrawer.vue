@@ -60,7 +60,7 @@
 
 <script>
 import { increaseCardCouponStock } from '@/api/marketing/marketing'
-import { CARD_COUPON_TYPE } from '../constants/cardCoupon'
+import { getCardCouponTypeLabel } from '../constants/cardCoupon'
 import '../styles/marketing.scss'
 
 export default {
@@ -92,7 +92,7 @@ export default {
       set(val) { this.$emit('update:visible', val) }
     },
     typeLabel() {
-      return CARD_COUPON_TYPE[this.coupon.cardCouponType] || '卡券'
+      return getCardCouponTypeLabel(this.coupon && this.coupon.cardCouponType) || '卡券'
     },
     afterStock() {
       return (this.coupon.currentStock || 0) + (this.form.addCount || 0)

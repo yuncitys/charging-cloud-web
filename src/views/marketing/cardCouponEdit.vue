@@ -33,9 +33,7 @@
         <el-tab-pane label="优惠规则" name="discount">
           <el-form-item label="抵扣类型" prop="deductionType">
             <el-select v-model="form.deductionType" placeholder="请选择">
-              <el-option label="电费" value="1" />
-              <el-option label="服务费" value="2" />
-              <el-option label="总费用" value="3" />
+              <el-option v-for="item in deductionTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item :label="faceValueFieldLabel" prop="faceValue">
@@ -98,9 +96,7 @@
         <el-tab-pane label="可用范围" name="scope">
           <el-form-item label="范围类型" prop="scopeType">
             <el-select v-model="form.scopeType" placeholder="请选择" @change="onScopeTypeChange">
-              <el-option label="全部电站" value="4" />
-              <el-option label="指定电站" value="5" />
-              <el-option label="电站分组" value="3" />
+              <el-option v-for="item in scopeTypeFormOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item v-if="form.scopeType === '5'" label="选择电站">
@@ -122,7 +118,7 @@
 <script>
 import { cardCouponDetail, createCardCoupon, updateCardCoupon } from '@/api/marketing/marketing'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
-import { isThresholdLimitCardType, getFaceValueUnit } from './constants/cardCoupon'
+import { isThresholdLimitCardType, getFaceValueUnit, loadDeductionTypeOptions, loadCouponScopeTypeOptions } from './constants/cardCoupon'
 
 export default {
   name: 'cardCouponEdit',
@@ -134,6 +130,8 @@ export default {
       effectiveRange: [],
       stationIds: [],
       stationOptions: [],
+      deductionTypeOptions: [],
+      couponScopeTypeOptions: [],
       form: {
         cardCouponId: '',
         cardCouponName: '',
@@ -169,6 +167,10 @@ export default {
     isEdit() {
       return !!this.$route.query.id
     },
+    scopeTypeFormOptions() {
+      const allow = ['3', '4', '5']
+      return (this.couponScopeTypeOptions || []).filter(o => allow.includes(String(o.value)))
+    },
     faceValueFieldLabel() {
       if (this.form.cardCouponType === '4') return '折扣值(%)'
       const unit = getFaceValueUnit(this.form.cardCouponType)
@@ -185,6 +187,9 @@ export default {
     }
   },
   created() {
+    loadDeductionTypeOptions().then(list => { this.deductionTypeOptions = list || [] })
+    loadCouponScopeTypeOptions().then(list => { this.couponScopeTypeOptions = list || [] })
+
     this.loadStations()
     if (this.isEdit) {
       this.loadDetail()

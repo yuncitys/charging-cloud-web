@@ -18,9 +18,7 @@
         </el-form-item>
         <el-form-item label="抵扣类型" prop="deductionType">
           <el-radio-group v-model="form.deductionType">
-            <el-radio label="1">电费</el-radio>
-            <el-radio label="2">服务费</el-radio>
-            <el-radio label="3">总费用</el-radio>
+            <el-radio v-for="item in deductionTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item :label="faceValueLabel" prop="faceValue">
@@ -35,9 +33,7 @@
         </el-form-item>
         <el-form-item label="使用门槛" prop="useThresholdType">
           <el-radio-group v-model="form.useThresholdType" @change="onThresholdTypeChange">
-            <el-radio label="0">无门槛</el-radio>
-            <el-radio label="1">满元</el-radio>
-            <el-radio label="2">满度</el-radio>
+            <el-radio v-for="item in useThresholdTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.useThresholdType === '1'" label="满元门槛" prop="useThresholdValue">
@@ -103,8 +99,7 @@
         </el-form-item>
         <el-form-item label="是否优惠共享" prop="discountShareFlag">
           <el-radio-group v-model="form.discountShareFlag">
-            <el-radio label="1">该卡券优惠与折扣活动优惠共享</el-radio>
-            <el-radio label="0">该卡券优惠与折扣活动优惠不共享（互斥券）</el-radio>
+            <el-radio v-for="item in discountShareFlagOptions" :key="'s'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="可用维度" prop="scopeType">
@@ -132,9 +127,7 @@
         <el-form-item label="满减券面额" prop="couponFace">
           <div class="coupon-face-row">
             <el-select v-model="form.deductionType" style="width: 110px;">
-              <el-option label="电费" value="1" />
-              <el-option label="服务费" value="2" />
-              <el-option label="总费用" value="3" />
+              <el-option v-for="item in deductionTypeOptions" :key="'d'+item.value" :label="item.label" :value="item.value" />
             </el-select>
             <span class="coupon-face-row__text">满</span>
             <el-input v-model.number="form.amountLimit" placeholder="金额" style="width: 100px;" type="number" />
@@ -178,8 +171,7 @@
         </el-form-item>
         <el-form-item label="是否优惠共享" prop="discountShareFlag">
           <el-radio-group v-model="form.discountShareFlag">
-            <el-radio label="1">该卡券优惠与折扣活动优惠共享</el-radio>
-            <el-radio label="0">该卡券优惠与折扣活动优惠不共享（互斥券）</el-radio>
+            <el-radio v-for="item in discountShareFlagOptions" :key="'s'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="可用维度" prop="scopeType">
@@ -210,7 +202,7 @@
 <script>
 import { cardCouponDetail, createCardCoupon, updateCardCoupon } from '@/api/marketing/marketing'
 import CardCouponScopePicker from './CardCouponScopePicker'
-import { getCardCouponTypeLabel, isThresholdLimitCardType, isDiscountCardType, getFaceValueUnit } from '../constants/cardCoupon'
+import { getCardCouponTypeLabel, isThresholdLimitCardType, isDiscountCardType, getFaceValueUnit, loadDeductionTypeOptions, loadUseThresholdTypeOptions, loadDiscountShareFlagOptions, loadCouponScopeTypeOptions } from '../constants/cardCoupon'
 import '../styles/marketing.scss'
 
 export default {
@@ -335,6 +327,9 @@ export default {
       loading: false,
       submitting: false,
       form: {},
+      deductionTypeOptions: [],
+      useThresholdTypeOptions: [],
+      discountShareFlagOptions: [],
       thresholdLimitRules,
       fullReductionRules: {
         cardCouponName: [{ required: true, message: '请输入满减券名称', trigger: 'blur' }],
@@ -390,6 +385,10 @@ export default {
   },
   methods: {
     onOpen() {
+      loadDeductionTypeOptions().then(list => { this.deductionTypeOptions = list || [] })
+      loadUseThresholdTypeOptions().then(list => { this.useThresholdTypeOptions = list || [] })
+      loadDiscountShareFlagOptions().then(list => { this.discountShareFlagOptions = list || [] })
+
       if (this.isEdit) {
         this.loadDetail()
       } else {
