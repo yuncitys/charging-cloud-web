@@ -300,7 +300,7 @@
 			},
 		},
 		created() {
-
+			this.$dict.getSelector('order_status')
 		},
 
 	}

@@ -298,6 +298,7 @@ export default {
   },
   created() {
     loadActivityStatusOptions().then(list => { this.activityStatusOptions = list || [] })
+    this.$dict.getSelector('marketing_activity_initiator')
 
     if (!this.ensureTypeAccess()) return
     this.syncTypeFilter()

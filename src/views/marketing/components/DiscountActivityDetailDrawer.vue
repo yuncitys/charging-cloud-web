@@ -314,7 +314,7 @@ export default {
     }
   },
   created() {
-    ;['marketing_activity_status','marketing_discount_fee_type','marketing_rate_type','marketing_rate_setting_type','marketing_discount_value_mode','marketing_discount_station_scope','marketing_discount_user_scope','marketing_participant_type'].forEach(c => this.$dict.getSelector(c))
+    ;['marketing_activity_status','marketing_discount_fee_type','marketing_rate_type','marketing_rate_setting_type','marketing_discount_value_mode','marketing_discount_station_scope','marketing_discount_user_scope','marketing_participant_type','marketing_activity_initiator'].forEach(c => this.$dict.getSelector(c))
   },
   methods: {
     formatRateValue,

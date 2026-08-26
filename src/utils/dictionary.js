@@ -1,3 +1,4 @@
+import Vue from 'vue'
 import { getDictionarySelector } from '@/api/permission/dictionaryData'
 
 const CACHE_TTL_MS = 5 * 60 * 1000
@@ -6,6 +7,14 @@ const cache = new Map()
 const inflight = new Map()
 /** @type {Map<string, Record<string, string>>} */
 const labelMaps = new Map()
+/**
+ * 字典加载完成后递增，供 formatDictLabel 在渲染期建立依赖，避免冷缓存一直显示原始 code。
+ */
+export const dictState = Vue.observable({ version: 0 })
+
+function bumpDictVersion() {
+	dictState.version += 1
+}
 
 function extractList(res) {
 	const data = res && res.data
@@ -53,6 +62,7 @@ export function getSelector(enCode) {
 		const items = mapSelectorItems(extractList(res))
 		cache.set(enCode, { items, timestamp: Date.now() })
 		rememberLabels(enCode, items)
+		bumpDictVersion()
 		return items
 	}).catch(() => []).finally(() => {
 		inflight.delete(enCode)
@@ -144,10 +154,12 @@ export function getBankNoOptions(enCode = 'bank_no') {
 
 /**
  * 同步取标签；未加载到时回显原始 code（不伪造文案）。
+ * 渲染期会读取 dictState.version，加载完成后触发依赖更新。
  * @param {string} typeEnCode
  * @param {string|number} code
  */
 export function formatDictLabel(typeEnCode, code) {
+	void dictState.version
 	if (code === null || code === undefined || code === '') {
 		return '-'
 	}
@@ -166,6 +178,10 @@ export function getOrderStatus(val) {
 
 export function getFinanceUserFlowTypeOptions() {
 	return getSelectorOptions('finance_user_flow_type')
+}
+
+export function getFinanceOrgFlowTypeOptions() {
+	return getSelectorOptions('finance_org_flow_type')
 }
 
 /** @deprecated 使用 getSelectorCascaderOptions('trade_bus_kind') */
@@ -187,6 +203,7 @@ const dictApi = {
 	formatDictLabel,
 	getOrderStatus,
 	getFinanceUserFlowTypeOptions,
+	getFinanceOrgFlowTypeOptions,
 	getBusKindData,
 	getBankNo
 }

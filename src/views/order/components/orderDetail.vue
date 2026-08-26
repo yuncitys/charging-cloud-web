@@ -421,6 +421,7 @@ export default {
   },
   created() {
     this.$dict.getSelector('order_status')
+    this.$dict.getSelector('order_pay_status')
     this.bootstrap()
   },
   methods: {

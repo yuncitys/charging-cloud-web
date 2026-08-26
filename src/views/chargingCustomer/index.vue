@@ -166,7 +166,9 @@
 
           <el-table v-loading="flowLoading" :data="flowList" fit highlight-current-row>
             <el-table-column prop="flowNo" label="流水号" min-width="180" align="center" />
-            <el-table-column prop="flowType" label="流水类型" min-width="120" align="center" />
+            <el-table-column prop="flowType" label="流水类型" min-width="120" align="center">
+              <template slot-scope="scope">{{ formatOrgFlowType(scope.row.flowType) }}</template>
+            </el-table-column>
             <el-table-column prop="flowObject" label="流水对象" min-width="140" align="center" />
             <el-table-column prop="flowTime" label="时间" min-width="160" align="center">
               <template slot-scope="scope">{{ scope.row.flowTime | formatDate }}</template>
@@ -394,16 +396,7 @@ export default {
       },
       allocationUsers: [],
       allocationUserKeyword: '',
-      flowTypeOptions: [
-        { label: '后台充值', value: '1' },
-        { label: '后台扣款', value: '2' },
-        { label: '上级分配', value: '3' },
-        { label: '上级扣回', value: '4' },
-        { label: '分配给用户', value: '5' },
-        { label: '从用户扣回', value: '6' },
-        { label: '分配给下级', value: '7' },
-        { label: '从下级扣回', value: '8' }
-      ],
+      flowTypeOptions: [],
       organizationImg,
       walletImg
     }
@@ -457,12 +450,16 @@ export default {
   created() {
     this.$dict.getSelectorOptions('customer_wallet_adjust_action').then(list => { this.walletAdjustActionOptions = list || [] })
     this.$dict.getSelectorOptions('customer_allocation_mode').then(list => { this.allocationModeOptions = list || [] })
+    this.$dict.getFinanceOrgFlowTypeOptions().then(list => { this.flowTypeOptions = list || [] })
     this.loadList()
     this.loadStationTree()
   },
   methods: {
     hasPerm(permission) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
+    },
+    formatOrgFlowType(code) {
+      return this.$dict.formatDictLabel('finance_org_flow_type', code)
     },
     filterTreeNode(value, data) {
       if (!value) return true

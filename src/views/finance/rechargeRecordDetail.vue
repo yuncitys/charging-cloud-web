@@ -182,6 +182,13 @@
 				immediate: true
 			}
 		},
+		created() {
+			Promise.all([
+				this.$dict.getSelector('recharge_pay_status'),
+				this.$dict.getSelector('recharge_trade_type'),
+				this.$dict.getSelector('common_yes_no')
+			])
+		},
 		methods: {
 			handleBack() {
 				this.$router.back()

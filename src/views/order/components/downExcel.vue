@@ -143,73 +143,75 @@
 								'startTimeAll', 'endTimeAll', 'createTime'
 							]
 							const list = res.data || []
-							if (list.length != 0) {
-								list.forEach((item, index) => {
-									item.eleNum = item.hours
-									let userdTime = ''
-									if (item.orderStatus != 1) {
-										userdTime = numTime(item.endTimeAll, item.startTimeAll,
-											1) || '00:00:00'
-										item.userdTime = numTime(item.endTimeAll, item
-											.startTimeAll, 0)
-									} else {
-										let nowDate = this.getTime()
-										userdTime = numTime(nowDate, item.startTimeAll, 1) ||
-											'00:00:00'
-										item.userdTime = numTime(nowDate, item.startTimeAll, 0)
-									}
-									userdTime = userdTime.split(':')
-									let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(
-											userdTime[1]) *
-										60 + parseFloat(userdTime[2])
-									let num2 = parseFloat(item.hours) * 60
-									let num3 = num2 - num1
-									item.hasTime = formatSeconds(num3)
-									item.hours = formatSeconds(num2)
-
-									if (item.priceType === 0) {
-										item.priceTypeStr = '计时'
-									} else if (item.priceType === 1) {
-										item.priceTypeStr = '电量'
-									} else if (item.priceType === 2) {
-										item.priceTypeStr = '功耗'
-									}
-
-									item.orderStatusStr = this.$dict.getOrderStatus(item
-										.orderStatus)
-
-									if (item.priceType === 0) {
-										item.hoursStr = item.hours
-									} else if (item.priceType === 1) {
-										item.hoursStr = item.eleNum
-									}
-
-									if (item.orderStatus !== 0) {
-										item.userdTimeStr = item.userdTime
-									} else {
-										item.userdTimeStr = '0分钟'
-									}
-
-									if (item.orderStatus !== 0) {
-										if (item.orderStatus === 2) {
-											item.hasTimeStr = '0分钟'
+							this.$dict.getSelector('order_status').then(() => {
+								if (list.length != 0) {
+									list.forEach((item, index) => {
+										item.eleNum = item.hours
+										let userdTime = ''
+										if (item.orderStatus != 1) {
+											userdTime = numTime(item.endTimeAll, item.startTimeAll,
+												1) || '00:00:00'
+											item.userdTime = numTime(item.endTimeAll, item
+												.startTimeAll, 0)
 										} else {
-											item.hasTimeStr = item.hasTime
+											let nowDate = this.getTime()
+											userdTime = numTime(nowDate, item.startTimeAll, 1) ||
+												'00:00:00'
+											item.userdTime = numTime(nowDate, item.startTimeAll, 0)
 										}
-									} else {
-										item.hasTimeStr = item.hours
-									}
+										userdTime = userdTime.split(':')
+										let num1 = parseFloat(userdTime[0]) * 60 * 60 + parseFloat(
+												userdTime[1]) *
+											60 + parseFloat(userdTime[2])
+										let num2 = parseFloat(item.hours) * 60
+										let num3 = num2 - num1
+										item.hasTime = formatSeconds(num3)
+										item.hours = formatSeconds(num2)
 
+										if (item.priceType === 0) {
+											item.priceTypeStr = '计时'
+										} else if (item.priceType === 1) {
+											item.priceTypeStr = '电量'
+										} else if (item.priceType === 2) {
+											item.priceTypeStr = '功耗'
+										}
+
+										item.orderStatusStr = this.$dict.getOrderStatus(item
+											.orderStatus)
+
+										if (item.priceType === 0) {
+											item.hoursStr = item.hours
+										} else if (item.priceType === 1) {
+											item.hoursStr = item.eleNum
+										}
+
+										if (item.orderStatus !== 0) {
+											item.userdTimeStr = item.userdTime
+										} else {
+											item.userdTimeStr = '0分钟'
+										}
+
+										if (item.orderStatus !== 0) {
+											if (item.orderStatus === 2) {
+												item.hasTimeStr = '0分钟'
+											} else {
+												item.hasTimeStr = item.hasTime
+											}
+										} else {
+											item.hasTimeStr = item.hours
+										}
+
+									})
+								}
+								const data = this.formatJson(filterVal, list)
+								let filename = '订单列表' + getNowTime()
+								excel.export_json_to_excel({
+									header: tHeader,
+									data,
+									filename: filename
 								})
-							}
-							const data = this.formatJson(filterVal, list)
-							let filename = '订单列表' + getNowTime()
-							excel.export_json_to_excel({
-								header: tHeader,
-								data,
-								filename: filename
+								this.downloadLoading = false
 							})
-							this.downloadLoading = false
 						})
 					} else {
 						this.$message({

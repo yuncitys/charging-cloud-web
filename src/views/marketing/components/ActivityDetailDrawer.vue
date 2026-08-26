@@ -376,7 +376,7 @@ export default {
     }
   },
   created() {
-    ;['marketing_activity_status', 'marketing_send_type', 'marketing_send_status', 'marketing_limit_type', 'marketing_activity_user_scope', 'marketing_activity_station_scope'].forEach(code => {
+    ;['marketing_activity_status', 'marketing_send_type', 'marketing_send_status', 'marketing_limit_type', 'marketing_activity_user_scope', 'marketing_activity_station_scope', 'marketing_activity_initiator'].forEach(code => {
       this.$dict.getSelector(code)
     })
   },
