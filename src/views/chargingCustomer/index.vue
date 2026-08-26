@@ -374,6 +374,8 @@ export default {
         flowType: '',
         flowObject: ''
       },
+      walletAdjustActionOptions: [],
+      allocationModeOptions: [],
       walletAdjustDrawerVisible: false,
       walletAdjustLoading: false,
       walletAdjustForm: {
