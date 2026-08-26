@@ -40,7 +40,11 @@ import common from './utils/common.js'
 Vue.prototype.$common = common
 
 import dictData from './utils/dictData.js'
+import { getSelector } from './utils/dictionary'
 Vue.prototype.$dict = dictData
+;['order_status', 'pay_payment_status', 'pay_refund_status', 'finance_user_flow_type', 'invoice_type', 'invoice_state', 'wx_sales_scene', 'pay_service_provider'].forEach(code => {
+  getSelector(code)
+})
 
 import * as filters from './filters' // global filters
 import vueSeamlessScroll from 'vue-seamless-scroll'
