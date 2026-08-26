@@ -12,8 +12,7 @@
         </el-form-item>
         <el-form-item label="">
           <el-select v-model="searchForm.collectFlag" clearable placeholder="是否收取通道费" style="width: 180px">
-            <el-option :value="'1'" label="是" />
-            <el-option :value="'0'" label="否" />
+            <el-option v-for="item in yesNoOptions" :key="'cfyn'+item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -54,8 +53,8 @@
         <el-table-column prop="merchantName" label="归属商户" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column prop="collectFlag" label="是否收取通道费" align="center">
           <template slot-scope="scope">
-            <el-tag type="success" v-if="scope.row.collectFlag == '1'">是</el-tag>
-            <el-tag type="info" v-else>否</el-tag>
+            <el-tag type="success" v-if="scope.row.collectFlag == '1'">{{ formatYesNo('1') }}</el-tag>
+            <el-tag type="info" v-else>{{ formatYesNo('0') }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="channelFeeRateText" label="通道费率" align="center" show-overflow-tooltip></el-table-column>
@@ -117,8 +116,7 @@
           />
           <el-form-item label="是否收取通道费" prop="collectFlag" label-width="130px">
             <el-radio-group v-model="editDialog.form.collectFlag">
-              <el-radio :label="'0'">否</el-radio>
-              <el-radio :label="'1'">是</el-radio>
+              <el-radio v-for="item in yesNoOptions" :key="'cfef'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item v-if="editDialog.form.collectFlag == '1'" label="通道费率" prop="channelFeeRate" label-width="130px">
@@ -154,9 +152,8 @@
         <el-form ref="batchForm" :model="batchDialog.form" :rules="editRules" label-position="left" label-width="130px">
           <el-form-item label="是否收取通道费" prop="collectFlag">
             <el-radio-group v-model="batchDialog.form.collectFlag">
-              <el-radio :label="'0'">否</el-radio>
-              <el-radio :label="'1'">是</el-radio>
-            </el-radio-group>
+            <el-radio v-for="item in yesNoOptions" :key="'cfbf'+item.value" :label="item.value">{{ item.label }}</el-radio>
+          </el-radio-group>
           </el-form-item>
           <el-form-item v-if="batchDialog.form.collectFlag == '1'" label="通道费率" prop="channelFeeRate">
             <el-input v-model="batchDialog.form.channelFeeRate" placeholder="默认0.25" type="number">
@@ -184,6 +181,7 @@ import { getList, getByStationId as getInfo, saveOrUpdate, batchSaveOrUpdate } f
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
 import { getRuleIdTabs, getDefaultRuleIdTabName } from '@/utils/ruleIdTabs'
+import { formatDictLabel } from '@/utils/dictionary'
 export default {
   name: 'ChannelFeeRule',
   data() {
@@ -196,6 +194,7 @@ export default {
       total: 0,
       list: [],
       merchantList: [],
+      yesNoOptions: [],
       searchForm: {
         page: 1,
         limit: 10,
@@ -240,10 +239,14 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelectorOptions('common_yes_no').then(list => { this.yesNoOptions = list || [] })
     this.initMerchant()
     this.search()
   },
   methods: {
+    formatYesNo(code) {
+      return formatDictLabel('common_yes_no', code)
+    },
     handleTabClick(tab) {
       this.searchForm.ruleId = tab.name
       this.searchForm.page = 1

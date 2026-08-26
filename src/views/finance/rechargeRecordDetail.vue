@@ -403,8 +403,8 @@
 				return valueMap[val] || val
 			},
 			formatProfitSharing(val) {
-				if (val === true || val === 1) return '是'
-				if (val === false || val === 0) return '否'
+				if (val === true || val === 1 || val === '1') return formatDictLabel('common_yes_no', 1)
+				if (val === false || val === 0 || val === '0') return formatDictLabel('common_yes_no', 0)
 				return '-'
 			},
 			formatNullable(val) {

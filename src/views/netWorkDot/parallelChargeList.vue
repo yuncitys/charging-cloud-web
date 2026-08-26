@@ -18,8 +18,7 @@
         clearable
         @change="handleFilter()"
       >
-        <el-option label="是" :value="true" />
-        <el-option label="否" :value="false" />
+        <el-option v-for="item in yesNoBoolOptions" :key="'ynb'+String(item.value)" :label="item.label" :value="item.value" />
       </el-select>
       <el-button
         class="filter-item"
@@ -133,6 +132,7 @@
 import { pageParallelCharge } from '@/api/netWorkDot/parallelCharge.js'
 import ParallelChargeConfig from './components/parallelChargeConfig.vue'
 import { parseTime } from '@/utils/index'
+import { formatDictLabel } from '@/utils/dictionary'
 
 export default {
   name: 'ParallelChargeList',
@@ -147,17 +147,24 @@ export default {
         limit: 10,
         networkName: '',
         isMoreCharge: null
-      }
+      },
+      yesNoBoolOptions: []
     }
   },
   created() {
+    this.$dict.getSelectorOptions('common_yes_no', { numeric: true }).then(list => {
+      this.yesNoBoolOptions = (list || []).map(item => ({
+        label: item.label,
+        value: Number(item.value) === 1
+      }))
+    })
     this.getLists()
   },
   methods: {
     parseTime,
     formatConfigured(val) {
-      if (val === true || val === 1 || val === '1') return '是'
-      return '否'
+      const code = (val === true || val === 1 || val === '1') ? 1 : 0
+      return formatDictLabel('common_yes_no', code)
     },
     buildParams() {
       const params = {

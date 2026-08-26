@@ -210,8 +210,7 @@
         <el-form ref="walletAdjustRef" :model="walletAdjustForm" label-width="90px">
           <el-form-item label="操作">
             <el-radio-group v-model="walletAdjustForm.action">
-              <el-radio label="RECHARGE">充值</el-radio>
-              <el-radio label="DEDUCT">扣款</el-radio>
+              <el-radio v-for="item in walletAdjustActionOptions" :key="'waa'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="金额">
@@ -247,8 +246,7 @@
           <el-form-item label="操作模式">
             <div class="allocation-mode-wrap">
               <el-radio-group v-model="allocationAdjustForm.operationMode">
-                <el-radio label="EQUAL">等额</el-radio>
-                <el-radio label="REPLENISH">补齐</el-radio>
+                <el-radio v-for="item in allocationModeOptions" :key="'amo'+item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
               <div v-if="allocationAdjustForm.operationMode === 'EQUAL'" class="allocation-mode-tip">
                 <p class="allocation-mode-tip-title">等额：每位选中用户变动相同金额</p>
@@ -455,6 +453,8 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelectorOptions('customer_wallet_adjust_action').then(list => { this.walletAdjustActionOptions = list || [] })
+    this.$dict.getSelectorOptions('customer_allocation_mode').then(list => { this.allocationModeOptions = list || [] })
     this.loadList()
     this.loadStationTree()
   },

@@ -19,8 +19,7 @@
 			</el-select>
 			<el-select v-model="listQuery.isProfitSharing" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="是否分账" clearable @change="handleFilter">
-				<el-option label="是" :value="1" />
-				<el-option label="否" :value="0" />
+				<el-option v-for="item in yesNoOptions" :key="'yn'+item.value" :label="item.label" :value="item.value" />
 			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
@@ -63,8 +62,7 @@
 				</el-table-column>
 				<el-table-column prop="isProfitSharing" label="是否分账" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.isProfitSharing == 1">是</el-tag>
-						<el-tag type="danger" v-if="scope.row.isProfitSharing == 0">否</el-tag>
+						<el-tag v-if="scope.row.isProfitSharing === 0 || scope.row.isProfitSharing === 1 || scope.row.isProfitSharing === '0' || scope.row.isProfitSharing === '1'" :type="scope.row.isProfitSharing == 1 ? 'success' : 'danger'">{{ formatYesNo(scope.row.isProfitSharing) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="type" label="交易类型" align="center" :show-overflow-tooltip="isPc">
@@ -138,6 +136,7 @@
 				tableKey: 0,
 				tags: [],
 				payStatusOptions: [],
+			yesNoOptions: [],
 				time: ''
 			}
 		},
@@ -229,6 +228,9 @@
 			formatTradeType(code) {
 				return formatDictLabel('recharge_trade_type', code)
 			},
+			formatYesNo(code) {
+				return formatDictLabel('common_yes_no', code)
+			},
 			payStatusTagType(code) {
 				const v = Number(code)
 				if (v === 0 || v === 2) return 'danger'
@@ -245,6 +247,9 @@
 			})
 			this.$dict.getSelectorOptions('recharge_trade_type').then(list => {
 				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+			this.$dict.getSelectorOptions('common_yes_no', { numeric: true }).then(list => {
+				this.yesNoOptions = list || []
 			})
 			this.getLists()
 		}
