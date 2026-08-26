@@ -49,6 +49,14 @@ export function loadDiscountShareFlagOptions() {
   return getSelectorOptions(DICT_DISCOUNT_SHARE_FLAG)
 }
 
+export function loadEffectiveTimeTypeOptions() {
+  return getSelectorOptions(DICT_EFFECTIVE_TIME_TYPE)
+}
+
+export function loadUseTypeOptions() {
+  return getSelectorOptions(DICT_USE_TYPE)
+}
+
 export function loadUserCouponStatusOptions() {
   return getSelectorOptions(DICT_USER_COUPON_STATUS).then(list =>
     (list || []).map(item => ({

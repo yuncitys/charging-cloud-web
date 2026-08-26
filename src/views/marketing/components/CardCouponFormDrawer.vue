@@ -49,8 +49,7 @@
         <template v-if="!isDiscountCard">
           <el-form-item label="使用限额" prop="useLimitType">
           <el-radio-group v-model="form.useLimitType" @change="onUseLimitTypeChange">
-            <el-radio label="1">每日限额</el-radio>
-            <el-radio label="2">每笔限额</el-radio>
+            <el-radio v-for="item in useLimitTypeOptions" :key="'ul'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.useLimitType === '1'" label="每日限额" prop="dailyLimitValue">
@@ -71,8 +70,7 @@
         </el-form-item>
         <el-form-item label="有效时间类型" prop="effectiveTimeType">
           <el-radio-group v-model="form.effectiveTimeType">
-            <el-radio label="1">相对时间</el-radio>
-            <el-radio label="2">绝对时间</el-radio>
+            <el-radio v-for="item in effectiveTimeTypeOptions" :key="'et'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.effectiveTimeType === '1'" label="有效时间" prop="afterReceiveDay">
@@ -104,9 +102,7 @@
         </el-form-item>
         <el-form-item label="可用维度" prop="scopeType">
           <el-radio-group v-model="form.scopeType" @change="onScopeTypeChange">
-            <el-radio label="1">按城市选择</el-radio>
-            <el-radio label="2">按商户选择</el-radio>
-            <el-radio label="3">按电站分组</el-radio>
+            <el-radio v-for="item in scopeTypeFormOptions" :key="'sc'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="选择电站" prop="stationIds">
@@ -143,8 +139,7 @@
         </el-form-item>
         <el-form-item label="有效时间类型" prop="effectiveTimeType">
           <el-radio-group v-model="form.effectiveTimeType">
-            <el-radio label="1">相对时间</el-radio>
-            <el-radio label="2">绝对时间</el-radio>
+            <el-radio v-for="item in effectiveTimeTypeOptions" :key="'et'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.effectiveTimeType === '1'" label="有效时间" prop="afterReceiveDay">
@@ -176,9 +171,7 @@
         </el-form-item>
         <el-form-item label="可用维度" prop="scopeType">
           <el-radio-group v-model="form.scopeType" @change="onScopeTypeChange">
-            <el-radio label="1">按城市选择</el-radio>
-            <el-radio label="2">按商户选择</el-radio>
-            <el-radio label="3">按电站分组</el-radio>
+            <el-radio v-for="item in scopeTypeFormOptions" :key="'sc'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="选择电站" prop="stationIds">
@@ -202,7 +195,7 @@
 <script>
 import { cardCouponDetail, createCardCoupon, updateCardCoupon } from '@/api/marketing/marketing'
 import CardCouponScopePicker from './CardCouponScopePicker'
-import { getCardCouponTypeLabel, isThresholdLimitCardType, isDiscountCardType, getFaceValueUnit, loadDeductionTypeOptions, loadUseThresholdTypeOptions, loadDiscountShareFlagOptions, loadCouponScopeTypeOptions } from '../constants/cardCoupon'
+import { getCardCouponTypeLabel, isThresholdLimitCardType, isDiscountCardType, getFaceValueUnit, loadDeductionTypeOptions, loadUseThresholdTypeOptions, loadDiscountShareFlagOptions, loadCouponScopeTypeOptions, loadUseLimitTypeOptions, loadEffectiveTimeTypeOptions } from '../constants/cardCoupon'
 import '../styles/marketing.scss'
 
 export default {
@@ -330,6 +323,9 @@ export default {
       deductionTypeOptions: [],
       useThresholdTypeOptions: [],
       discountShareFlagOptions: [],
+      useLimitTypeOptions: [],
+      effectiveTimeTypeOptions: [],
+      couponScopeTypeOptions: [],
       thresholdLimitRules,
       fullReductionRules: {
         cardCouponName: [{ required: true, message: '请输入满减券名称', trigger: 'blur' }],
@@ -345,6 +341,10 @@ export default {
     }
   },
   computed: {
+    scopeTypeFormOptions() {
+      // 表单原仅开放城市/商户/电站分组
+      return (this.couponScopeTypeOptions || []).filter(o => ['1', '2', '3'].includes(String(o.value)))
+    },
     visibleSync: {
       get() { return this.visible },
       set(val) { this.$emit('update:visible', val) }
@@ -388,6 +388,9 @@ export default {
       loadDeductionTypeOptions().then(list => { this.deductionTypeOptions = list || [] })
       loadUseThresholdTypeOptions().then(list => { this.useThresholdTypeOptions = list || [] })
       loadDiscountShareFlagOptions().then(list => { this.discountShareFlagOptions = list || [] })
+      loadUseLimitTypeOptions().then(list => { this.useLimitTypeOptions = list || [] })
+      loadEffectiveTimeTypeOptions().then(list => { this.effectiveTimeTypeOptions = list || [] })
+      loadCouponScopeTypeOptions().then(list => { this.couponScopeTypeOptions = list || [] })
 
       if (this.isEdit) {
         this.loadDetail()
