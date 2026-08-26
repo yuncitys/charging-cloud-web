@@ -81,6 +81,7 @@
 <script>
 	import { getDetail } from '@/api/finance/rechargeRecord.js'
 	import { tradingRefund } from '@/api/finance/refundCenter.js'
+	import { formatDictLabel } from '@/utils/dictionary'
 
 	const REFUND_STATUS_MAP = Object.freeze({
 		UNTREATED: '未处理',
@@ -412,22 +413,10 @@
 				return val
 			},
 			formatPayStatus(val) {
-				const v = typeof val === 'string' ? Number(val) : val
-				if (v === 0) return '未支付'
-				if (v === 10) return '支付中'
-				if (v === 1) return '已支付'
-				if (v === 2) return '支付失败'
-				if (v === 3) return '已退款'
-				if (v === 30) return '部分退款'
-				return this.formatNullable(val)
+				return formatDictLabel('recharge_pay_status', val)
 			},
 			formatTradeType(val) {
-				const v = typeof val === 'string' ? Number(val) : val
-				if (v === 0) return '充电缴费'
-				if (v === 1) return '充值余额'
-				if (v === 2) return '充值IC卡'
-				if (v === 3) return '充值月卡'
-				return this.formatNullable(val)
+				return formatDictLabel('recharge_trade_type', val)
 			},
 		}
 	}

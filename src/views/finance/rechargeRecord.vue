@@ -15,12 +15,7 @@
 			</el-select>
 			<el-select v-model="listQuery.payStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择交易状态" clearable @change="handleFilter">
-				<el-option label="未支付" :value="0" />
-				<el-option label="支付中" :value="10" />
-				<el-option label="已支付" :value="1" />
-				<el-option label="支付失败" :value="2" />
-				<el-option label="已退款" :value="3" />
-				<el-option label="部分退款" :value="30" />
+				<el-option v-for="item in payStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
 			</el-select>
 			<el-select v-model="listQuery.isProfitSharing" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="是否分账" clearable @change="handleFilter">
@@ -74,20 +69,12 @@
 				</el-table-column>
 				<el-table-column prop="type" label="交易类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.type == 0">充电缴费</span>
-						<span v-if="scope.row.type == 1">充值余额</span>
-						<span v-if="scope.row.type == 2">充值IC卡</span>
-            			<span v-if="scope.row.type == 3">充值月卡</span>
+						<span>{{ formatTradeType(scope.row.type) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="payStatus" label="状态" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.payStatus == 0">未支付</el-tag>
-						<el-tag type="info" v-if="scope.row.payStatus == 10">支付中</el-tag>
-						<el-tag type="success" v-if="scope.row.payStatus == 1">已支付</el-tag>
-            			<el-tag type="danger" v-if="scope.row.payStatus == 2">支付失败</el-tag>
-						<el-tag type="success" v-if="scope.row.payStatus == 3">已退款</el-tag>
-						<el-tag type="warning" v-if="scope.row.payStatus == 30">部分退款</el-tag>
+						<el-tag :type="payStatusTagType(scope.row.payStatus)">{{ formatPayStatus(scope.row.payStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<!-- <el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
@@ -119,6 +106,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
+	import { formatDictLabel } from '@/utils/dictionary'
 	import imgView from '@/components/Common/imgView.vue'
 	import downExcel from './components/downExcel.vue'
 	export default {
@@ -148,23 +136,8 @@
 					createTimeEnd: ''
 				},
 				tableKey: 0,
-				tags: [{
-						id: '0',
-						title: '充电缴费'
-					},
-					{
-						id: '1',
-						title: '充值余额'
-					},
-					{
-						id: '2',
-						title: '充值IC卡'
-					},
-					{
-						id: '3',
-						title: '充值月卡'
-					}
-				],
+				tags: [],
+				payStatusOptions: [],
 				time: ''
 			}
 		},
@@ -248,13 +221,33 @@
 				this.getLists()
 			},
 			resetForm(formName) {
-				this.$refs[formName].resetFields();
+				this.$refs[formName].resetFields()
 			},
+			formatPayStatus(code) {
+				return formatDictLabel('recharge_pay_status', code)
+			},
+			formatTradeType(code) {
+				return formatDictLabel('recharge_trade_type', code)
+			},
+			payStatusTagType(code) {
+				const v = Number(code)
+				if (v === 0 || v === 2) return 'danger'
+				if (v === 10) return 'info'
+				if (v === 1 || v === 3) return 'success'
+				if (v === 30) return 'warning'
+				return ''
+			}
 		},
 		created() {
 			this.initFromRoute()
-			this.getLists();
-		},
+			this.$dict.getSelectorOptions('recharge_pay_status', { numeric: true }).then(list => {
+				this.payStatusOptions = list || []
+			})
+			this.$dict.getSelectorOptions('recharge_trade_type').then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+			this.getLists()
+		}
 	}
 </script>
 

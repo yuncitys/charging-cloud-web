@@ -20,6 +20,7 @@
 		formatSeconds,
 		getNowTime
 	} from '@/utils/index'
+	import { formatDictLabel } from '@/utils/dictionary'
 	export default {
 		name: 'downExcel',
 		props: {
@@ -84,20 +85,8 @@
 							const filterVal = ['payCode','userCode','userName','wxName','payMoeny','giftMoney','typeStr','payStatusStr','createTime']
 							const list = res.data || []
 							list.forEach((item,index)=>{
-								if(item.type === 0){
-									item.typeStr='单次充值'
-								}else if(item.type === 1){
-									item.typeStr='充值套餐'
-								}else if(item.type === 2){
-									item.typeStr='充值IC卡'
-								}else if(item.type === 3){
-									item.typeStr='充值月卡'
-								}
-								if(item.payStatus === 0){
-									item.payStatusStr='未支付'
-								}else if(item.payStatus === 1){
-									item.payStatusStr='已支付'
-								}
+								item.typeStr = formatDictLabel('recharge_trade_type', item.type)
+								item.payStatusStr = formatDictLabel('recharge_pay_status', item.payStatus)
 							})
 							const data = this.formatJson(filterVal, list)
 							let filename = '充值记录' + getNowTime()
