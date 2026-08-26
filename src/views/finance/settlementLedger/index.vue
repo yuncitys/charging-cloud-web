@@ -61,23 +61,18 @@
     <div class="filter-container">
       <el-form :inline="true" :model="searchForm" class="form left" @submit.native.prevent="search">
         <el-form-item label="账期类型">
-          <el-select v-model="searchForm.periodType" clearable placeholder="全部" style="width: 120px">
-            <el-option :value="1" label="日结" />
-            <el-option :value="2" label="周结" />
-            <el-option :value="3" label="月结" />
+          <el-select v-model="searchForm.periodType" clearable placeholder="全部" style="width: 150px">
+            <el-option v-for="item in periodTypeOptions" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
           <el-select v-model="searchForm.status" clearable placeholder="全部" style="width: 130px">
-            <el-option :value="0" label="待关账" />
-            <el-option :value="1" label="已关账" />
-            <el-option :value="2" label="已分账" />
+            <el-option v-for="item in ledgerStatusOptions" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
         <el-form-item label="结算方式">
           <el-select v-model="searchForm.settlementMode" clearable placeholder="全部" style="width: 130px">
-            <el-option :value="1" label="自动" />
-            <el-option :value="2" label="手动" />
+            <el-option v-for="item in settlementModeOptions" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
         <el-form-item label="商户">
@@ -661,6 +656,7 @@ import { getMerchant } from '@/api/merchant/merchant'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { parseTime } from '@/utils/index'
+import { formatDictLabel } from '@/utils/dictionary'
 import SubsidyLedgerPanel from '@/views/marketing/components/SubsidyLedgerPanel'
 import { MARKETING_PERMS } from '@/views/marketing/constants/marketingPermissions'
 import { hasMarketingPerm } from '@/views/marketing/utils/marketingActivityAuth'
@@ -700,6 +696,9 @@ export default {
         deadSamples: [],
         lastRefreshTime: ''
       },
+      periodTypeOptions: [],
+      settlementModeOptions: [],
+      ledgerStatusOptions: [],
       searchForm: {
         page: 1,
         limit: 10,
@@ -772,6 +771,7 @@ export default {
     }
   },
   created() {
+    this.loadDictOptions()
     this.initMerchant()
     this.initStationList()
     if (this.btnAuthen && this.btnAuthen.permsVerifAuthention(':web:settlementLedger:ingestTask:stats')) {
@@ -952,21 +952,30 @@ export default {
       return d
     },
     periodTypeLabel(t) {
-      if (t === 1) return '日结'
-      if (t === 2) return '周结'
-      if (t === 3) return '月结'
-      return '—'
+      if (t === null || t === undefined || t === '') return '—'
+      const label = formatDictLabel('settlement_cycle_type', t)
+      return label === String(t) ? '—' : label
     },
     settlementModeLabel(mode) {
-      if (mode === 1) return '自动'
-      if (mode === 2) return '手动'
-      return '—'
+      if (mode === null || mode === undefined || mode === '') return '—'
+      const label = formatDictLabel('settlement_mode', mode)
+      return label === String(mode) ? '—' : label
     },
     statusLabel(s) {
-      if (s === 0) return '待关账'
-      if (s === 1) return '已关账'
-      if (s === 2) return '已分账'
-      return '—'
+      if (s === null || s === undefined || s === '') return '—'
+      const label = formatDictLabel('settlement_ledger_status', s)
+      return label === String(s) ? '—' : label
+    },
+    loadDictOptions() {
+      this.$dict.getSelectorOptions('settlement_cycle_type', { numeric: true }).then(list => {
+        this.periodTypeOptions = list || []
+      })
+      this.$dict.getSelectorOptions('settlement_mode', { numeric: true }).then(list => {
+        this.settlementModeOptions = list || []
+      })
+      this.$dict.getSelectorOptions('settlement_ledger_status', { numeric: true }).then(list => {
+        this.ledgerStatusOptions = list || []
+      })
     },
     search() {
       this.searchForm.page = 1
