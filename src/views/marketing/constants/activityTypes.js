@@ -1,6 +1,15 @@
 /**
  * 营销活动类型元数据与字段可见性配置
+ * 活动类型标签/权限/图标等富元数据仍维护在此；活动状态标签走字典。
  */
+import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
+
+export const DICT_ACTIVITY_STATUS = 'marketing_activity_status'
+export const DICT_LIMIT_TYPE = 'marketing_limit_type'
+export const DICT_SEND_TYPE = 'marketing_send_type'
+export const DICT_ACTIVITY_USER_SCOPE = 'marketing_activity_user_scope'
+export const DICT_ACTIVITY_STATION_SCOPE = 'marketing_activity_station_scope'
+
 export const ACTIVITY_TYPES = [
   {
     value: '1',
@@ -151,11 +160,59 @@ export function getActivityTypeMeta(type) {
   return ACTIVITY_TYPES.find(item => item.value === String(type)) || null
 }
 
-export const ACTIVITY_STATUS = [
-  { value: '1', label: '进行中', tagType: 'success' },
-  { value: '2', label: '未开始', tagType: 'warning' },
-  { value: '3', label: '已停用', tagType: 'danger' },
-  { value: '4', label: '已到期', tagType: 'info' },
-  { value: '5', label: '卡券不足', tagType: 'danger' },
-  { value: '6', label: '卡券失效', tagType: 'danger' }
-]
+/** Element Tag 类型（非字典） */
+export const ACTIVITY_STATUS_TAG = {
+  '1': 'success',
+  '2': 'warning',
+  '3': 'danger',
+  '4': 'info',
+  '5': 'danger',
+  '6': 'danger'
+}
+
+export function loadActivityStatusOptions() {
+  return getSelectorOptions(DICT_ACTIVITY_STATUS).then(list =>
+    (list || []).map(item => ({
+      ...item,
+      tagType: ACTIVITY_STATUS_TAG[String(item.value)] || 'info'
+    }))
+  )
+}
+
+export function getActivityStatusLabel(status) {
+  if (status == null || status === '') return status
+  const label = formatDictLabel(DICT_ACTIVITY_STATUS, status)
+  return label === String(status) ? String(status) : label
+}
+
+export function getActivityStatusTagType(status) {
+  return ACTIVITY_STATUS_TAG[String(status)] || 'info'
+}
+
+export function loadLimitTypeOptions() {
+  return getSelectorOptions(DICT_LIMIT_TYPE)
+}
+
+export function loadSendTypeOptions() {
+  return getSelectorOptions(DICT_SEND_TYPE)
+}
+
+export function loadActivityUserScopeOptions() {
+  return getSelectorOptions(DICT_ACTIVITY_USER_SCOPE)
+}
+
+export function loadActivityStationScopeOptions() {
+  return getSelectorOptions(DICT_ACTIVITY_STATION_SCOPE)
+}
+
+export function getLimitTypeLabel(type) {
+  if (type == null || type === '') return ''
+  const label = formatDictLabel(DICT_LIMIT_TYPE, type)
+  return label === String(type) ? '' : label
+}
+
+export function getSendTypeLabel(type) {
+  if (type == null || type === '') return '—'
+  const label = formatDictLabel(DICT_SEND_TYPE, type)
+  return label === String(type) ? '—' : label
+}
