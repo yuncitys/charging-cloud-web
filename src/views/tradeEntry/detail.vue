@@ -803,7 +803,7 @@ export default {
     }
   },
   created() {
-    this.busKindOptions = dictData.getBusKindData()
+    dictData.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
     loadServiceProviderDict().then(() => this.$forceUpdate())
     loadWxSalesSceneOptions().then(() => this.$forceUpdate())
     this.$dict.getSelectorOptions('trade_entry_mer_type').then(list => { this.merTypeOptions = list || [] })

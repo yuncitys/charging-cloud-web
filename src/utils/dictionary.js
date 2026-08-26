@@ -12,14 +12,20 @@ function extractList(res) {
 
 function mapSelectorItems(list) {
 	return (list || []).map(item => ({
+		id: item.id,
+		parentId: item.parentId == null || item.parentId === '' ? '0' : String(item.parentId),
 		label: item.fullName,
-		value: item.enCode
+		value: item.enCode,
+		sortCode: item.sortCode,
+		isDefault: item.isDefault
 	}))
 }
 
 function rememberLabels(enCode, items) {
 	const map = {}
 	;(items || []).forEach(item => {
+		// 树形中间节点 en_code 以 node: 开头，不进标签映射，避免污染叶子编码查标
+		if (String(item.value || '').startsWith('node:')) return
 		map[String(item.value)] = item.label
 	})
 	labelMaps.set(enCode, map)
@@ -27,7 +33,7 @@ function rememberLabels(enCode, items) {
 
 /**
  * @param {string} enCode
- * @returns {Promise<Array<{label:string,value:string}>>}
+ * @returns {Promise<Array<{id?:string,parentId?:string,label:string,value:string,sortCode?:number}>>}
  */
 export function getSelector(enCode) {
 	const cached = cache.get(enCode)
@@ -66,6 +72,63 @@ export function getSelectorOptions(enCode, opts = {}) {
 				code: raw
 			}
 		})
+	)
+}
+
+/**
+ * 将 Selector 扁平数据组装为 el-cascader 树。
+ * 叶子节点带 code（=enCode），与进件页 props `{ label:'label', value:'code', emitPath:false }` 对齐。
+ * @param {Array<{id:string,parentId:string,label:string,value:string,sortCode?:number}>} items
+ */
+export function buildSelectorCascaderTree(items) {
+	const byParent = {}
+	;(items || []).forEach(item => {
+		const pid = String(item.parentId || '0')
+		if (!byParent[pid]) byParent[pid] = []
+		byParent[pid].push(item)
+	})
+	Object.keys(byParent).forEach(key => {
+		byParent[key].sort((a, b) => Number(a.sortCode || 0) - Number(b.sortCode || 0))
+	})
+
+	const walk = parentId => {
+		return (byParent[parentId] || []).map(item => {
+			const children = walk(String(item.id))
+			const node = {
+				label: item.label,
+				value: item.value
+			}
+			if (children.length) {
+				node.children = children
+			} else {
+				node.code = item.value
+			}
+			return node
+		})
+	}
+	return walk('0')
+}
+
+/**
+ * 树形字典 cascader 选项（如经营类目 trade_bus_kind）
+ * @param {string} enCode
+ */
+export function getSelectorCascaderOptions(enCode) {
+	return getSelector(enCode).then(items => buildSelectorCascaderTree(items))
+}
+
+/**
+ * 开户行列表：兼容原 { bank_name, bank_code }
+ * @param {string} [enCode='bank_no']
+ */
+export function getBankNoOptions(enCode = 'bank_no') {
+	return getSelectorOptions(enCode).then(list =>
+		(list || []).map(item => ({
+			bank_name: item.label,
+			bank_code: String(item.value),
+			label: item.label,
+			value: item.value
+		}))
 	)
 }
 

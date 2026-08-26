@@ -893,8 +893,8 @@ export default {
     }
   },
   created() {
-    this.busKindOptions = dictData.getBusKindData()
-    this.bankList = dictData.getBankNo()
+    dictData.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
+    dictData.getBankNo().then(list => { this.bankList = list || [] })
     loadServiceProviderDict().then(list => {
       this.serviceProviderList = list
     })
