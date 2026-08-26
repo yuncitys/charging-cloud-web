@@ -6,67 +6,71 @@
 					<div slot="header" class="card-header">
 						<span>字典分类</span>
 					</div>
-					<div class="toolbar">
-						<el-input
-							v-model="typeKeyword"
-							placeholder="搜索名称/编码"
-							clearable
-							size="small"
-							style="width: 180px; margin-right: 8px;"
-							@keyup.enter.native="loadTypes"
-							@clear="loadTypes"
-						/>
-						<el-button type="primary" size="small" @click="loadTypes">查询</el-button>
-						<el-button
-							type="success"
-							size="small"
-							v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:add')"
-							@click="openTypeDialog()"
-						>新增</el-button>
+					<div class="dict-card-body">
+						<div class="toolbar">
+							<el-input
+								v-model="typeKeyword"
+								placeholder="搜索名称/编码"
+								clearable
+								size="small"
+								style="width: 180px; margin-right: 8px;"
+								@keyup.enter.native="loadTypes"
+								@clear="loadTypes"
+							/>
+							<el-button type="primary" size="small" @click="loadTypes">查询</el-button>
+							<el-button
+								type="success"
+								size="small"
+								v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:add')"
+								@click="openTypeDialog()"
+							>新增</el-button>
+						</div>
+						<div class="dict-table-wrap">
+							<el-table
+								ref="typeTable"
+								v-loading="typeLoading"
+								:data="typeList"
+								highlight-current-row
+								size="mini"
+								border
+								@current-change="handleTypeSelect"
+							>
+								<el-table-column prop="fullName" label="名称" min-width="120" show-overflow-tooltip />
+								<el-table-column prop="enCode" label="编码" min-width="100" show-overflow-tooltip />
+								<el-table-column prop="enabledMark" label="状态" width="70" align="center">
+									<template slot-scope="scope">
+										<el-tag :type="scope.row.enabledMark === 1 ? 'success' : 'info'" size="mini">
+											{{ scope.row.enabledMark === 1 ? '启用' : '停用' }}
+										</el-tag>
+									</template>
+								</el-table-column>
+								<el-table-column label="操作" width="240" align="center" class-name="table-action-cell">
+									<template slot-scope="scope">
+										<div class="table-action-btns">
+											<el-button
+												type="primary"
+												size="mini"
+												v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
+												@click.stop="openTypeDialog(scope.row)"
+											>编辑</el-button>
+											<el-button
+												type="warning"
+												size="mini"
+												v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
+												@click.stop="toggleTypeState(scope.row)"
+											>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
+											<el-button
+												type="danger"
+												size="mini"
+												v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:delete')"
+												@click.stop="removeType(scope.row)"
+											>删除</el-button>
+										</div>
+									</template>
+								</el-table-column>
+							</el-table>
+						</div>
 					</div>
-					<el-table
-						ref="typeTable"
-						v-loading="typeLoading"
-						:data="typeList"
-						highlight-current-row
-						size="mini"
-						border
-						@current-change="handleTypeSelect"
-					>
-						<el-table-column prop="fullName" label="名称" min-width="120" show-overflow-tooltip />
-						<el-table-column prop="enCode" label="编码" min-width="100" show-overflow-tooltip />
-						<el-table-column prop="enabledMark" label="状态" width="70" align="center">
-							<template slot-scope="scope">
-								<el-tag :type="scope.row.enabledMark === 1 ? 'success' : 'info'" size="mini">
-									{{ scope.row.enabledMark === 1 ? '启用' : '停用' }}
-								</el-tag>
-							</template>
-						</el-table-column>
-						<el-table-column label="操作" width="240" align="center" class-name="table-action-cell">
-							<template slot-scope="scope">
-								<div class="table-action-btns">
-									<el-button
-										type="primary"
-										size="mini"
-										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
-										@click.stop="openTypeDialog(scope.row)"
-									>编辑</el-button>
-									<el-button
-										type="warning"
-										size="mini"
-										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:edit')"
-										@click.stop="toggleTypeState(scope.row)"
-									>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
-									<el-button
-										type="danger"
-										size="mini"
-										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryType:delete')"
-										@click.stop="removeType(scope.row)"
-									>删除</el-button>
-								</div>
-							</template>
-						</el-table-column>
-					</el-table>
 				</el-card>
 			</el-col>
 
@@ -82,56 +86,60 @@
 							@click="openDataDialog()"
 						>新增数据</el-button>
 					</div>
-					<el-table
-						v-loading="dataLoading"
-						:data="dataTree"
-						size="mini"
-						border
-						row-key="id"
-						:tree-props="isTreeType ? { children: 'children', hasChildren: 'hasChildren' } : undefined"
-						empty-text="请选择左侧字典分类"
-					>
-						<el-table-column prop="fullName" label="名称" min-width="140" show-overflow-tooltip />
-						<el-table-column prop="enCode" label="编码" min-width="100" show-overflow-tooltip />
-						<el-table-column prop="sortCode" label="排序" width="70" align="center" />
-						<el-table-column prop="isDefault" label="默认" width="70" align="center">
-							<template slot-scope="scope">
-								<el-tag v-if="scope.row.isDefault === 1" type="warning" size="mini">是</el-tag>
-								<span v-else>-</span>
-							</template>
-						</el-table-column>
-						<el-table-column prop="enabledMark" label="状态" width="70" align="center">
-							<template slot-scope="scope">
-								<el-tag :type="scope.row.enabledMark === 1 ? 'success' : 'info'" size="mini">
-									{{ scope.row.enabledMark === 1 ? '启用' : '停用' }}
-								</el-tag>
-							</template>
-						</el-table-column>
-						<el-table-column label="操作" width="240" align="center" class-name="table-action-cell">
-							<template slot-scope="scope">
-								<div class="table-action-btns">
-									<el-button
-										type="primary"
-										size="mini"
-										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
-										@click="openDataDialog(scope.row)"
-									>编辑</el-button>
-									<el-button
-										type="warning"
-										size="mini"
-										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
-										@click="toggleDataState(scope.row)"
-									>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
-									<el-button
-										type="danger"
-										size="mini"
-										v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:delete')"
-										@click="removeData(scope.row)"
-									>删除</el-button>
-								</div>
-							</template>
-						</el-table-column>
-					</el-table>
+					<div class="dict-card-body">
+						<div class="dict-table-wrap">
+							<el-table
+								v-loading="dataLoading"
+								:data="dataTree"
+								size="mini"
+								border
+								row-key="id"
+								:tree-props="isTreeType ? { children: 'children', hasChildren: 'hasChildren' } : undefined"
+								empty-text="请选择左侧字典分类"
+							>
+								<el-table-column prop="fullName" label="名称" min-width="140" show-overflow-tooltip />
+								<el-table-column prop="enCode" label="编码" min-width="100" show-overflow-tooltip />
+								<el-table-column prop="sortCode" label="排序" width="70" align="center" />
+								<el-table-column prop="isDefault" label="默认" width="70" align="center">
+									<template slot-scope="scope">
+										<el-tag v-if="scope.row.isDefault === 1" type="warning" size="mini">是</el-tag>
+										<span v-else>-</span>
+									</template>
+								</el-table-column>
+								<el-table-column prop="enabledMark" label="状态" width="70" align="center">
+									<template slot-scope="scope">
+										<el-tag :type="scope.row.enabledMark === 1 ? 'success' : 'info'" size="mini">
+											{{ scope.row.enabledMark === 1 ? '启用' : '停用' }}
+										</el-tag>
+									</template>
+								</el-table-column>
+								<el-table-column label="操作" width="240" align="center" class-name="table-action-cell">
+									<template slot-scope="scope">
+										<div class="table-action-btns">
+											<el-button
+												type="primary"
+												size="mini"
+												v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
+												@click="openDataDialog(scope.row)"
+											>编辑</el-button>
+											<el-button
+												type="warning"
+												size="mini"
+												v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:edit')"
+												@click="toggleDataState(scope.row)"
+											>{{ scope.row.enabledMark === 1 ? '停用' : '启用' }}</el-button>
+											<el-button
+												type="danger"
+												size="mini"
+												v-if="btnAuthen.permsVerifAuthention(':permission:dictionaryData:delete')"
+												@click="removeData(scope.row)"
+											>删除</el-button>
+										</div>
+									</template>
+								</el-table-column>
+							</el-table>
+						</div>
+					</div>
 				</el-card>
 			</el-col>
 		</el-row>
@@ -514,17 +522,29 @@ export default {
 	--dict-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 4px 12px rgba(16, 24, 40, 0.04);
 	--dict-accent: #409eff;
 	--dict-accent-soft: rgba(64, 158, 255, 0.08);
+	/* navbar+tags(84) + app-main padding(30) ≈ 114；本页自带 padding 计入 box */
+	height: calc(100vh - 114px);
+	box-sizing: border-box;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
 }
 
 .dict-row {
+	flex: 1;
+	min-height: 0;
+	height: 100%;
+	margin-left: 0 !important;
+	margin-right: 0 !important;
 	display: flex;
 	align-items: stretch;
-	min-height: calc(100vh - 140px);
 }
 
 .dict-col {
 	display: flex;
 	flex-direction: column;
+	height: 100%;
+	min-height: 0;
 }
 
 .dict-card {
@@ -532,6 +552,8 @@ export default {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
+	height: 100%;
+	min-height: 0;
 	border: 1px solid var(--dict-border);
 	border-radius: var(--dict-radius);
 	box-shadow: var(--dict-shadow);
@@ -539,6 +561,7 @@ export default {
 }
 
 .dict-card ::v-deep .el-card__header {
+	flex-shrink: 0;
 	padding: 14px 16px;
 	border-bottom: 1px solid var(--dict-border);
 	background: #fafbfc;
@@ -546,7 +569,25 @@ export default {
 
 .dict-card ::v-deep .el-card__body {
 	flex: 1;
+	min-height: 0;
 	padding: 16px;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+}
+
+.dict-card-body {
+	flex: 1;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.dict-table-wrap {
+	flex: 1;
+	min-height: 0;
+	overflow: auto;
 }
 
 .card-header {
@@ -559,6 +600,7 @@ export default {
 }
 
 .toolbar {
+	flex-shrink: 0;
 	margin-bottom: 14px;
 	display: flex;
 	align-items: center;
@@ -581,7 +623,6 @@ export default {
 
 .dictionary-page ::v-deep .el-table {
 	border-radius: 6px;
-	overflow: hidden;
 }
 
 .dictionary-page ::v-deep .el-table th {
