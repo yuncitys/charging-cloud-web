@@ -321,7 +321,7 @@
 					flowType: '',
 					flowObject: ''
 				},
-				flowTypeOptions: dictData.getFinanceUserFlowTypeOptions(),
+				flowTypeOptions: [],
 				userImg,
 				walletImg,
 				rechargeDialogVisible: false,
@@ -639,6 +639,9 @@
 		created() {
 			this.getLists()
 			this.isPc = !this.$common.isMobile()
+			dictData.getFinanceUserFlowTypeOptions().then(list => {
+				this.flowTypeOptions = list || []
+			})
 		},
 	}
 </script>

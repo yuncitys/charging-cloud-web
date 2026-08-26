@@ -386,7 +386,7 @@ export default {
         flowType: '',
         flowObject: ''
       },
-      flowTypeOptions: dictData.getFinanceUserFlowTypeOptions(),
+      flowTypeOptions: [],
       userImg,
       walletImg
     }
@@ -415,6 +415,9 @@ export default {
     this.loadList()
     this.loadOrgOptions()
     this.loadProvinces()
+    dictData.getFinanceUserFlowTypeOptions().then(list => {
+      this.flowTypeOptions = list || []
+    })
   },
   methods: {
     hasPerm(permission) {
