@@ -224,6 +224,8 @@ import { createDefaultListQuery, sanitizeOrderListQuery } from './utils/orderLis
 
 const ORDER_TYPE = 0
 
+import { formatDictLabel } from '@/utils/dictionary'
+
 export default {
   name: 'CardOrderList',
   components: {
@@ -286,15 +288,7 @@ export default {
         startCash: true,
         endCash: true
       },
-      payTags: [{
-        id: 0,
-        title: '未支付'
-      },
-      {
-        id: 1,
-        title: '已支付'
-      }
-      ],
+      payTags: [],
       tags: [],
       time: ''
     }
@@ -323,6 +317,9 @@ export default {
     // 进入页面时读缓存
     this.$dict.getSelectorOptions('order_status', { numeric: true }).then(list => {
       this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+    })
+    this.$dict.getSelectorOptions('order_pay_status', { numeric: true }).then(list => {
+      this.payTags = (list || []).map(item => ({ id: item.value, title: item.label }))
     })
     const raw = localStorage.getItem(this.cacheKey)
     if (raw) {
@@ -393,9 +390,11 @@ export default {
       return label === String(status) ? this.disp(status) : label
     },
     payStatusText(status) {
-      if (status === 0) return '未支付'
-      if (status === 1) return '已支付'
-      return this.disp(status)
+      return this.formatOrderPayStatus(status)
+    },
+    formatOrderPayStatus(status) {
+      const label = formatDictLabel('order_pay_status', status)
+      return label === String(status) ? this.disp(status) : label
     },
     payTypeText(payType) {
       if (!payType) return '-'

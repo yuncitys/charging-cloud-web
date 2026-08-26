@@ -301,6 +301,7 @@
 import { findOrderInfoById, findOrderInfoByOrderCode, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
 import { getOrderExpenseInfo } from '@/api/orderExpenseInfo/orderExpenseInfo.js'
 import { parseTime } from '@/utils/index'
+import { formatDictLabel } from '@/utils/dictionary'
 import OrderTrendChart from './OrderTrendChart.vue'
 
 const RULE_BIKE = 1
@@ -445,11 +446,8 @@ export default {
       return this.disp(t)
     },
     payStatusText(s) {
-      if (s === 0) return '未支付'
-      if (s === 1) return '已支付'
-      if (s === 2) return '已退款'
-      if (s === 3) return '部分退款'
-      return this.disp(s)
+      const label = formatDictLabel('order_pay_status', s)
+      return label === String(s) ? this.disp(s) : label
     },
     orderStatusText(status) {
       const label = this.$dict.getOrderStatus(status)
