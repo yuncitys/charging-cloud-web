@@ -29,8 +29,7 @@
           </el-form-item>
           <el-form-item label="发起方" prop="activityInitiator">
             <el-radio-group v-model="activity.activityInitiator">
-              <el-radio label="1">平台</el-radio>
-              <el-radio label="2">商户</el-radio>
+              <el-radio v-for="item in initiatorOptions" :key="'ai'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="活动时间" prop="timeRange">
@@ -196,7 +195,7 @@
           <el-descriptions title="活动预览" :column="1" border>
             <el-descriptions-item label="活动名称">{{ activity.activityName }}</el-descriptions-item>
             <el-descriptions-item label="活动类型">{{ typeMeta ? typeMeta.label : '' }}</el-descriptions-item>
-            <el-descriptions-item label="发起方">{{ activity.activityInitiator === '1' ? '平台' : '商户' }}</el-descriptions-item>
+            <el-descriptions-item label="发起方">{{ getActivityInitiatorLabel(activity.activityInitiator) }}</el-descriptions-item>
             <el-descriptions-item label="活动时间">{{ activity.activityBeginTime }} ~ {{ activity.activityEndTime }}</el-descriptions-item>
             <el-descriptions-item label="奖励项">{{ rewards.length }} 项</el-descriptions-item>
           </el-descriptions>
@@ -223,7 +222,9 @@ import {
   loadLimitTypeOptions,
   loadSendTypeOptions,
   loadActivityUserScopeOptions,
-  loadActivityStationScopeOptions
+  loadActivityStationScopeOptions,
+  loadActivityInitiatorOptions,
+  getActivityInitiatorLabel
 } from './constants/activityTypes'
 import './styles/marketing.scss'
 
@@ -255,6 +256,7 @@ export default {
       limitTypeOptions: [],
       sendTypeOptions: [],
       activityUserScopeOptions: [],
+      initiatorOptions: [],
       stationScopeOptions: [],
       stationGroupOptions: [],
       userGroupOptions: [],
@@ -326,6 +328,7 @@ export default {
   },
   created() {
     loadLimitTypeOptions().then(list => { this.limitTypeOptions = list || [] })
+    loadActivityInitiatorOptions().then(list => { this.initiatorOptions = list || [] })
     loadSendTypeOptions().then(list => { this.sendTypeOptions = list || [] })
     loadActivityUserScopeOptions().then(list => { this.activityUserScopeOptions = list || [] })
     loadActivityStationScopeOptions().then(list => { this.stationScopeOptions = list || [] })
@@ -344,6 +347,8 @@ export default {
     }
   },
   methods: {
+    getActivityInitiatorLabel,
+
     resetSubConfig(type) {
       const defaults = {
         '2': { limitType: '2', limitCount: 1 },

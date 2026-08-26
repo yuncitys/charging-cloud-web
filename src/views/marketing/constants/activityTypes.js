@@ -10,6 +10,7 @@ export const DICT_SEND_TYPE = 'marketing_send_type'
 export const DICT_SEND_STATUS = 'marketing_send_status'
 export const DICT_ACTIVITY_USER_SCOPE = 'marketing_activity_user_scope'
 export const DICT_ACTIVITY_STATION_SCOPE = 'marketing_activity_station_scope'
+export const DICT_ACTIVITY_INITIATOR = 'marketing_activity_initiator'
 
 export const ACTIVITY_TYPES = [
   {
@@ -234,4 +235,14 @@ export function getActivityStationScopeLabel(scope) {
   if (scope == null || scope === '') return '—'
   const label = formatDictLabel(DICT_ACTIVITY_STATION_SCOPE, scope)
   return label === String(scope) ? '—' : label
+}
+
+export function loadActivityInitiatorOptions() {
+  return getSelectorOptions(DICT_ACTIVITY_INITIATOR)
+}
+
+export function getActivityInitiatorLabel(code) {
+  if (code == null || code === '') return '—'
+  const label = formatDictLabel(DICT_ACTIVITY_INITIATOR, code)
+  return label === String(code) ? '—' : label
 }

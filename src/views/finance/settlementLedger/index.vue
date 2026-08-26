@@ -525,9 +525,7 @@
         <el-form-item label="状态筛选">
           <el-select v-model="payoutItemDialog.itemStatus" clearable placeholder="全部" style="width: 130px" @change="loadPayoutItemPage(1)">
             <el-option label="全部" value="" />
-            <el-option label="成功" value="SUCCESS" />
-            <el-option label="跳过" value="SKIPPED" />
-            <el-option label="失败" value="FAILED" />
+            <el-option v-for="item in payoutItemStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -535,10 +533,8 @@
         <el-table-column prop="orderCode" label="订单号" min-width="160" show-overflow-tooltip />
         <el-table-column label="结果" width="96" align="center">
           <template slot-scope="scope">
-            <el-tag v-if="scope.row.itemStatus === 'SUCCESS'" type="success" size="mini">成功</el-tag>
-            <el-tag v-else-if="scope.row.itemStatus === 'SKIPPED'" type="info" size="mini">跳过</el-tag>
-            <el-tag v-else-if="scope.row.itemStatus === 'FAILED'" type="danger" size="mini">失败</el-tag>
-            <span v-else>{{ scope.row.itemStatus }}</span>
+            <el-tag v-if="scope.row.itemStatus" :type="payoutItemStatusTagType(scope.row.itemStatus)" size="mini">{{ payoutItemStatusLabel(scope.row.itemStatus) }}</el-tag>
+            <span v-else>—</span>
           </template>
         </el-table-column>
         <el-table-column prop="skipReason" label="跳过原因" min-width="160" show-overflow-tooltip />
@@ -699,6 +695,7 @@ export default {
       periodTypeOptions: [],
       settlementModeOptions: [],
       ledgerStatusOptions: [],
+      payoutItemStatusOptions: [],
       searchForm: {
         page: 1,
         limit: 10,
@@ -976,6 +973,9 @@ export default {
       this.$dict.getSelectorOptions('settlement_ledger_status', { numeric: true }).then(list => {
         this.ledgerStatusOptions = list || []
       })
+      this.$dict.getSelectorOptions('settlement_payout_item_status').then(list => {
+        this.payoutItemStatusOptions = list || []
+      })
     },
     search() {
       this.searchForm.page = 1
@@ -1128,6 +1128,17 @@ export default {
       if (s === 1) return '成功'
       if (s === 2) return '部分失败'
       return '—'
+    },
+    payoutItemStatusLabel(s) {
+      if (s == null || s === '') return '—'
+      const label = formatDictLabel('settlement_payout_item_status', s)
+      return label === String(s) ? String(s) : label
+    },
+    payoutItemStatusTagType(s) {
+      if (s === 'SUCCESS') return 'success'
+      if (s === 'SKIPPED') return 'info'
+      if (s === 'FAILED') return 'danger'
+      return ''
     },
     openPayoutBatchItemDialog(batchRow) {
       if (!batchRow || !batchRow.id) return

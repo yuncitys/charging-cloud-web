@@ -261,7 +261,7 @@
 <script>
 import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
-import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getLimitTypeLabel, getSendTypeLabel, getSendStatusLabel, getActivityUserScopeLabel, getActivityStationScopeLabel } from '../constants/activityTypes'
+import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getLimitTypeLabel, getSendTypeLabel, getSendStatusLabel, getActivityUserScopeLabel, getActivityStationScopeLabel, getActivityInitiatorLabel } from '../constants/activityTypes'
 import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { parseTime } from '@/utils/index'
@@ -344,12 +344,13 @@ export default {
     },
     initiatorLabel() {
       if (!this.activity) return '—'
-      if (this.activity.activityInitiator === '1') return '平台'
+      const base = getActivityInitiatorLabel(this.activity.activityInitiator)
+      if (String(this.activity.activityInitiator) !== '2') return base
       const id = this.activity.activityInitiatorId
       if (id && this.merchantNameMap[String(id)]) {
-        return `商户 · ${this.merchantNameMap[String(id)]}`
+        return `${base} · ${this.merchantNameMap[String(id)]}`
       }
-      return '商户'
+      return base
     },
     rechargeTiers() {
       if (!this.rewards || !this.rewards.length) return []

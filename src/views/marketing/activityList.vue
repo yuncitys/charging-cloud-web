@@ -67,7 +67,7 @@
         </el-table-column>
         <el-table-column v-if="['1', '2', '3', '4', '5', '6', '7', '8'].includes(fixedType)" prop="activityInitiator" label="发起方" align="center" width="90">
           <template slot-scope="scope">
-            <span>{{ scope.row.activityInitiator === '1' ? '平台' : '商户' }}</span>
+            <span>{{ getActivityInitiatorLabel(scope.row.activityInitiator) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="160" fixed="right">
@@ -174,7 +174,7 @@
 
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
-import { loadActivityStatusOptions, getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getSendStatusLabel } from './constants/activityTypes'
+import { loadActivityStatusOptions, getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getSendStatusLabel, getActivityInitiatorLabel } from './constants/activityTypes'
 import { hasActivityTypeEdit, hasActivityTypeView, hasActivityEditAction, hasActivityAction, hasMarketingPerm, canEditMarketingActivity } from './utils/marketingActivityAuth'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
@@ -304,6 +304,8 @@ export default {
     this.getList()
   },
   methods: {
+    getActivityInitiatorLabel,
+
     ensureTypeAccess() {
       if (!this.fixedType || !this.typeMeta) {
         this.$message.warning('无效的活动类型')
