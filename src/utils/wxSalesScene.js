@@ -1,13 +1,9 @@
-/** 微信进件经营场景（与 API sales_scenes_type 一致） */
-export const WX_SALES_SCENE_OPTIONS = [
-  { value: 'SALES_SCENES_STORE', label: '线下场所' },
-  { value: 'SALES_SCENES_MINI_PROGRAM', label: '小程序' },
-  { value: 'SALES_SCENES_MP', label: '服务号/公众号' },
-  { value: 'SALES_SCENES_WEB', label: '互联网网站' },
-  { value: 'SALES_SCENES_APP', label: 'App' },
-  { value: 'SALES_SCENES_WEWORK', label: '企业微信' }
-]
+import { getSelector, formatDictLabel } from './dictionary'
 
+/** 字典类型：微信进件经营场景 */
+export const WX_SALES_SCENE_DICT = 'wx_sales_scene'
+
+/** 场景附件配置（含 field/multiple，不适合纯字典） */
 export const WX_SCENE_ATTACHMENT = {
   SALES_SCENES_STORE: [
     { type: '05', label: '门头照', field: 'storeEntranceImg' },
@@ -30,13 +26,13 @@ export const WX_SCENE_ATTACHMENT = {
   ]
 }
 
+export function loadWxSalesSceneOptions() {
+  return getSelector(WX_SALES_SCENE_DICT)
+}
+
 export function formatSalesSceneLabels(values) {
   if (!Array.isArray(values) || !values.length) return '-'
-  const map = WX_SALES_SCENE_OPTIONS.reduce((acc, item) => {
-    acc[item.value] = item.label
-    return acc
-  }, {})
-  return values.map(v => map[v] || v).join('、')
+  return values.map(v => formatDictLabel(WX_SALES_SCENE_DICT, v)).join('、')
 }
 
 export function defaultWxTradeEntryWx() {

@@ -693,7 +693,7 @@ import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
 import dictData from '@/utils/dictData'
 import { loadServiceProviderDict } from '@/utils/payChannel'
-import { WX_SALES_SCENE_OPTIONS, WX_SCENE_ATTACHMENT, defaultWxTradeEntryWx, flattenTradeEntryWx } from '@/utils/wxSalesScene'
+import { loadWxSalesSceneOptions, WX_SCENE_ATTACHMENT, defaultWxTradeEntryWx, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
 export default {
   name: 'TradeEntryForm',
@@ -712,7 +712,7 @@ export default {
       bankList: [],
       merchantList: [],
       serviceProviderList: [],
-      wxSalesSceneOptions: WX_SALES_SCENE_OPTIONS,
+      wxSalesSceneOptions: [],
       corIdExaDateForever: false,
       corLegIdExaDateForever: false,
       form: {
@@ -864,6 +864,9 @@ export default {
     this.bankList = dictData.getBankNo()
     loadServiceProviderDict().then(list => {
       this.serviceProviderList = list
+    })
+    loadWxSalesSceneOptions().then(list => {
+      this.wxSalesSceneOptions = list || []
     })
     this.getProvinceList()
     this.getMerchantList()

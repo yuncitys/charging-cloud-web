@@ -619,7 +619,7 @@ import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTrad
 import { getMerchant } from '@/api/merchant/merchant'
 import dictData from '@/utils/dictData'
 import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
-import { formatSalesSceneLabels, flattenTradeEntryWx } from '@/utils/wxSalesScene'
+import { formatSalesSceneLabels, flattenTradeEntryWx, loadWxSalesSceneOptions } from '@/utils/wxSalesScene'
 
 export default {
   name: 'TradeEntryDetail',
@@ -794,6 +794,7 @@ export default {
   created() {
     this.busKindOptions = dictData.getBusKindData()
     loadServiceProviderDict().then(() => this.$forceUpdate())
+    loadWxSalesSceneOptions().then(() => this.$forceUpdate())
     this.getProvinceList()
     this.getMerchantList()
     const id = this.$route.params.id
