@@ -248,21 +248,9 @@ export default {
       },
       timer: 60,
       isFirstRequest: true,
-      // 发票状态：0未开票，2开票完成，20开票中，22开票失败，3发票已冲红，30发票冲红中，32冲红失败
-      invoiceStateOption: [
-        { name: '未开票', value: 0 },
-        { name: '开票完成', value: 2 },
-        { name: '开票中', value: 20 },
-        { name: '开票失败', value: 22 },
-        { name: '已冲红', value: 3 },
-        { name: '待发送', value: 4 },
-        { name: '冲红中', value: 30 },
-        { name: '冲红失败', value: 32 }
-      ],
-      invoiceTypeList: [
-        { label: '蓝票', value: 1 },
-        { label: '红票', value: 2 }
-      ],
+      // 发票状态
+      invoiceStateOption: [],
+      invoiceTypeList: [],
       stat:null,
       page: 1,
       limit: 10,
@@ -273,7 +261,16 @@ export default {
     }
   },
   created() {
-    this.getLists();
+    this.getLists()
+    this.$dict.getSelectorOptions('invoice_state', { numeric: true }).then(list => {
+      this.invoiceStateOption = (list || []).map(item => ({
+        name: item.label,
+        value: item.value
+      }))
+    })
+    this.$dict.getSelectorOptions('invoice_type', { numeric: true }).then(list => {
+      this.invoiceTypeList = list || []
+    })
   },
   methods: {
     handleSizeChange(val) {
