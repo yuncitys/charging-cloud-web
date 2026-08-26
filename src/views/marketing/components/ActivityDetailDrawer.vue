@@ -261,7 +261,7 @@
 <script>
 import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
-import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
+import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getLimitTypeLabel, getSendTypeLabel } from '../constants/activityTypes'
 import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { parseTime } from '@/utils/index'
@@ -269,8 +269,6 @@ import '../styles/marketing.scss'
 
 const USER_SCOPE_LABELS = { '1': '按客户', '2': '用户分组', '3': '全部用户', '4': '指定用户' }
 const STATION_SCOPE_LABELS = { '1': '按商户', '2': '电站分组', '3': '全部电站' }
-const SEND_TYPE_LABELS = { '1': '立即发放', '2': '定时发放' }
-const LIMIT_TYPE_LABELS = { '1': '次/人/天', '2': '次/人/活动周期' }
 const SEND_STATUS_LABELS = { '1': '已发放', '2': '未发放' }
 
 export default {
@@ -310,12 +308,10 @@ export default {
       return this.typeMeta ? this.typeMeta.label : this.activityType
     },
     statusLabel() {
-      const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
-      return item ? item.label : (this.activity && this.activity.activityStatus) || '—'
+      return getActivityStatusLabel(this.activity && this.activity.activityStatus)
     },
     statusTagType() {
-      const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
-      return item ? item.tagType : 'info'
+      return getActivityStatusTagType(this.activity && this.activity.activityStatus)
     },
     canShowEdit() {
       return this.activity &&
@@ -344,13 +340,13 @@ export default {
       return STATION_SCOPE_LABELS[scope] || scope || '—'
     },
     sendTypeLabel() {
-      return SEND_TYPE_LABELS[this.subConfig && this.subConfig.sendType] || '—'
+      return getSendTypeLabel(this.subConfig && this.subConfig.sendType)
     },
     sendStatusLabel() {
       return SEND_STATUS_LABELS[this.subConfig && this.subConfig.sendStatus] || '—'
     },
     limitTypeLabel() {
-      return LIMIT_TYPE_LABELS[this.subConfig && this.subConfig.limitType] || ''
+      return getLimitTypeLabel(this.subConfig && this.subConfig.limitType)
     },
     initiatorLabel() {
       if (!this.activity) return '—'
@@ -383,6 +379,11 @@ export default {
     isAllStations() {
       return this.subConfig && this.subConfig.stationScope === '3'
     }
+  },
+  created() {
+    this.$dict.getSelector('marketing_activity_status')
+    this.$dict.getSelector('marketing_send_type')
+    this.$dict.getSelector('marketing_limit_type')
   },
   methods: {
     onOpen() {

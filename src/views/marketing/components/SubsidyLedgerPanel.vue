@@ -10,9 +10,7 @@
             placeholder="补款状态"
             clearable
           >
-            <el-option label="待补款" value="0" />
-            <el-option label="已补款" value="1" />
-            <el-option label="失败" value="2" />
+            <el-option v-for="item in ledgerStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
           <el-button type="primary" icon="el-icon-search" @click="searchLedger">查询</el-button>
         </div>
@@ -55,9 +53,7 @@
             placeholder="批次状态"
             clearable
           >
-            <el-option label="待确认" value="0" />
-            <el-option label="已确认线下打款" value="1" />
-            <el-option label="失败" value="2" />
+            <el-option v-for="item in batchStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
           <el-button type="primary" icon="el-icon-search" @click="searchBatch">查询</el-button>
         </div>
@@ -108,6 +104,7 @@ import { confirmSubsidyBatch, pageSubsidyBatch, pageSubsidyLedger } from '@/api/
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { hasMarketingPerm } from '../utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
+import { formatDictLabel } from '@/utils/dictionary'
 
 export default {
   name: 'SubsidyLedgerPanel',
@@ -129,6 +126,8 @@ export default {
       batchRows: [],
       ledgerTotal: 0,
       batchTotal: 0,
+      ledgerStatusOptions: [],
+      batchStatusOptions: [],
       ledgerQuery: { page: 1, limit: 10, merchantId: '', status: '' },
       batchQuery: { page: 1, limit: 10, merchantId: '', status: '' }
     }
@@ -137,6 +136,9 @@ export default {
     canLedgerPage() { return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage) },
     canBatchPage() { return hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage) },
     canConfirmOffline() { return hasMarketingPerm(MARKETING_PERMS.subsidyConfirmOffline) }
+  },
+  created() {
+    this.loadDictOptions()
   },
   watch: {
     periodId: {
@@ -223,14 +225,26 @@ export default {
         this.getLedger()
       }).catch(() => {})
     },
+    loadDictOptions() {
+      this.$dict.getSelectorOptions('marketing_subsidy_ledger_status').then(list => {
+        this.ledgerStatusOptions = list || []
+      })
+      this.$dict.getSelectorOptions('marketing_subsidy_batch_status').then(list => {
+        this.batchStatusOptions = list || []
+      })
+    },
     ledgerStatusLabel(status) {
-      return ({ 0: '待补款', 1: '已补款', 2: '失败' })[status] || '未知'
+      if (status === null || status === undefined || status === '') return '未知'
+      const label = formatDictLabel('marketing_subsidy_ledger_status', status)
+      return label === String(status) ? '未知' : label
     },
     ledgerStatusType(status) {
       return ({ 0: 'warning', 1: 'success', 2: 'danger' })[status] || 'info'
     },
     batchStatusLabel(status) {
-      return ({ 0: '待确认', 1: '已确认线下打款', 2: '失败' })[status] || '未知'
+      if (status === null || status === undefined || status === '') return '未知'
+      const label = formatDictLabel('marketing_subsidy_batch_status', status)
+      return label === String(status) ? '未知' : label
     },
     batchStatusType(status) {
       return ({ 0: 'warning', 1: 'success', 2: 'danger' })[status] || 'info'

@@ -21,8 +21,7 @@
         </el-form-item>
         <el-form-item label="状态筛选">
           <el-select v-model="statusFilter" clearable placeholder="全部" @change="handleFilter">
-            <el-option label="未兑换" value="0" />
-            <el-option label="已兑换" value="1" />
+            <el-option v-for="item in exchangeStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -120,6 +119,10 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelectorOptions('marketing_exchange_code_status').then(list => {
+      this.exchangeStatusOptions = list || []
+    })
+
     this.activityId = this.$route.query.activityId || ''
     this.activityName = this.$route.query.activityName || ''
     this.listQuery.activityId = this.activityId

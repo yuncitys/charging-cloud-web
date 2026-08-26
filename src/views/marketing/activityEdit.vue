@@ -58,8 +58,7 @@
           <template v-if="activity.activityType === '2'">
             <el-form-item label="限领周期">
               <el-select v-model="subConfig.limitType">
-                <el-option label="次/人/活动周期" value="2" />
-                <el-option label="次/人/天" value="1" />
+                <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="限领次数">
@@ -70,8 +69,7 @@
           <template v-if="activity.activityType === '3'">
             <el-form-item label="发放方式">
               <el-radio-group v-model="subConfig.sendType">
-                <el-radio label="1">立即发放</el-radio>
-                <el-radio label="2">定时发放</el-radio>
+                <el-radio v-for="item in sendTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item v-if="subConfig.sendType === '2'" label="发放时间">
@@ -79,10 +77,7 @@
             </el-form-item>
             <el-form-item label="用户范围">
               <el-select v-model="subConfig.userScope">
-                <el-option label="按客户发放" value="1" />
-                <el-option label="按用户分组" value="2" />
-                <el-option label="全部用户" value="3" />
-                <el-option label="指定用户" value="4" />
+                <el-option v-for="item in activityUserScopeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </template>
@@ -94,8 +89,7 @@
             </el-form-item>
             <el-form-item label="限领周期">
               <el-select v-model="subConfig.limitType">
-                <el-option label="次/人/活动周期" value="2" />
-                <el-option label="次/人/天" value="1" />
+                <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="限领次数">
@@ -103,16 +97,12 @@
             </el-form-item>
             <el-form-item label="电站范围">
               <el-select v-model="subConfig.stationScope">
-                <el-option label="商户维度" value="1" />
-                <el-option label="电站分组" value="2" />
-                <el-option label="全部电站" value="3" />
+                <el-option v-for="item in stationScopeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="用户范围">
               <el-select v-model="subConfig.userScope">
-                <el-option label="按客户发放" value="1" />
-                <el-option label="按用户分组" value="2" />
-                <el-option label="全部用户" value="3" />
+                <el-option v-for="item in standardUserScopeOptions" :key="'u'+item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </template>
@@ -126,8 +116,7 @@
             </el-form-item>
             <el-form-item label="限领周期">
               <el-select v-model="subConfig.limitType">
-                <el-option label="次/人/活动周期" value="2" />
-                <el-option label="次/人/天" value="1" />
+                <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
             <el-form-item label="限领次数">
@@ -135,8 +124,7 @@
             </el-form-item>
             <el-form-item label="用户范围">
               <el-select v-model="subConfig.userScope">
-                <el-option label="按客户发放" value="1" />
-                <el-option label="按用户分组" value="2" />
+                <el-option v-for="item in pairUserScopeOptions" :key="'p'+item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </template>
@@ -147,9 +135,7 @@
             </el-form-item>
             <el-form-item label="用户范围">
               <el-select v-model="subConfig.userScope">
-                <el-option label="按客户发放" value="1" />
-                <el-option label="按用户分组" value="2" />
-                <el-option label="全部用户" value="3" />
+                <el-option v-for="item in standardUserScopeOptions" :key="'u'+item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </template>
@@ -232,7 +218,13 @@ import {
   activityDetail, saveActivity, updateActivity,
   cardCouponRewardOptions, userGroupOptions, stationGroupOptions
 } from '@/api/marketing/marketing'
-import { getActivityTypeMeta } from './constants/activityTypes'
+import {
+  getActivityTypeMeta,
+  loadLimitTypeOptions,
+  loadSendTypeOptions,
+  loadActivityUserScopeOptions,
+  loadActivityStationScopeOptions
+} from './constants/activityTypes'
 import './styles/marketing.scss'
 
 export default {
@@ -260,6 +252,10 @@ export default {
       selectedUserGroupIds: [],
       specifiedUserPhones: '',
       cardCouponOptions: [],
+      limitTypeOptions: [],
+      sendTypeOptions: [],
+      activityUserScopeOptions: [],
+      stationScopeOptions: [],
       stationGroupOptions: [],
       userGroupOptions: [],
       stationGroupLoaded: false,
@@ -269,6 +265,12 @@ export default {
     }
   },
   computed: {
+    standardUserScopeOptions() {
+      return (this.activityUserScopeOptions || []).filter(o => ['1', '2', '3'].includes(String(o.value)))
+    },
+    pairUserScopeOptions() {
+      return (this.activityUserScopeOptions || []).filter(o => ['1', '2'].includes(String(o.value)))
+    },
     isEdit() {
       return !!this.$route.query.id
     },
@@ -323,6 +325,11 @@ export default {
     }
   },
   created() {
+    loadLimitTypeOptions().then(list => { this.limitTypeOptions = list || [] })
+    loadSendTypeOptions().then(list => { this.sendTypeOptions = list || [] })
+    loadActivityUserScopeOptions().then(list => { this.activityUserScopeOptions = list || [] })
+    loadActivityStationScopeOptions().then(list => { this.stationScopeOptions = list || [] })
+
     const type = this.$route.query.activityType
     if (!type && !this.$route.query.id) {
       this.$router.replace({ name: 'activityHub' })

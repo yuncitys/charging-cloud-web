@@ -176,22 +176,23 @@
 <script>
 import { activityDetail } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
-import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
+import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta } from '../constants/activityTypes'
 import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import {
-  DISCOUNT_TYPE,
-  RATE_TYPE,
-  RATE_SETTING_TYPE,
-  DISCOUNT_VALUE_MODE,
-  STATION_SCOPE_TYPE,
-  USER_SCOPE_TYPE,
+  getDiscountTypeLabel,
+  getRateTypeLabel,
   getRateUnit,
   formatRateValue,
   formatRateValues,
   formatWeekDays,
-  getParticipantTypeLabel
+  getParticipantTypeLabel,
+  DICT_RATE_SETTING_TYPE,
+  DICT_DISCOUNT_VALUE_MODE,
+  DICT_DISCOUNT_STATION_SCOPE,
+  DICT_DISCOUNT_USER_SCOPE
 } from '../constants/discountActivity'
+import { formatDictLabel } from '@/utils/dictionary'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
 
@@ -236,12 +237,10 @@ export default {
       return this.typeMeta ? this.typeMeta.label : this.activityType
     },
     statusLabel() {
-      const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
-      return item ? item.label : (this.activity && this.activity.activityStatus) || '—'
+      return getActivityStatusLabel(this.activity && this.activity.activityStatus)
     },
     statusTagType() {
-      const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
-      return item ? item.tagType : 'info'
+      return getActivityStatusTagType(this.activity && this.activity.activityStatus)
     },
     canShowEdit() {
       return this.activity &&
@@ -259,28 +258,28 @@ export default {
     },
     discountTypeLabel() {
       const key = String(this.subConfig.discountType || '')
-      return DISCOUNT_TYPE[key] || key || '—'
+      return getDiscountTypeLabel(key)
     },
     rateTypeLabel() {
       const key = String(this.subConfig.rateType || '')
-      return RATE_TYPE[key] || key || '—'
+      return getRateTypeLabel(key)
     },
     rateSettingTypeLabel() {
       const key = String(this.subConfig.rateSettingType || '')
-      return RATE_SETTING_TYPE[key] || key || '—'
+      return formatDictLabel(DICT_RATE_SETTING_TYPE, key) === String(key) ? (key || '—') : formatDictLabel(DICT_RATE_SETTING_TYPE, key)
     },
     discountValueModeLabel() {
       const key = String(this.subConfig.discountValueMode || '')
-      return DISCOUNT_VALUE_MODE[key] || key || '—'
+      return formatDictLabel(DICT_DISCOUNT_VALUE_MODE, key) === String(key) ? (key || '—') : formatDictLabel(DICT_DISCOUNT_VALUE_MODE, key)
     },
     stationScopeTypeLabel() {
       const key = String(this.subConfig.stationScopeType || '')
       if (key === '3') return '选择电站'
-      return STATION_SCOPE_TYPE[key] || key || '—'
+      return formatDictLabel(DICT_DISCOUNT_STATION_SCOPE, key) === String(key) ? (key || '—') : formatDictLabel(DICT_DISCOUNT_STATION_SCOPE, key)
     },
     userScopeTypeLabel() {
       const key = String(this.subConfig.userScopeType || '')
-      return USER_SCOPE_TYPE[key] || key || '—'
+      return formatDictLabel(DICT_DISCOUNT_USER_SCOPE, key) === String(key) ? (key || '—') : formatDictLabel(DICT_DISCOUNT_USER_SCOPE, key)
     },
     globalRateText() {
       return formatRateValues(this.subConfig)
@@ -312,6 +311,9 @@ export default {
       const slots = this.subConfig.timeSlots || []
       return [...slots].sort((a, b) => Number(a.sortOrder || 0) - Number(b.sortOrder || 0))
     }
+  },
+  created() {
+    ;['marketing_activity_status','marketing_discount_fee_type','marketing_rate_type','marketing_rate_setting_type','marketing_discount_value_mode','marketing_discount_station_scope','marketing_discount_user_scope','marketing_participant_type'].forEach(c => this.$dict.getSelector(c))
   },
   methods: {
     formatRateValue,

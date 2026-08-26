@@ -174,7 +174,7 @@
 
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
-import { ACTIVITY_STATUS, getActivityTypeMeta } from './constants/activityTypes'
+import { loadActivityStatusOptions, getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta } from './constants/activityTypes'
 import { hasActivityTypeEdit, hasActivityTypeView, hasActivityEditAction, hasActivityAction, hasMarketingPerm, canEditMarketingActivity } from './utils/marketingActivityAuth'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
@@ -205,7 +205,7 @@ export default {
       list: [],
       total: 0,
       listQuery: { page: 1, limit: 10, activityId: '', activityName: '', activityType: '', activityStatus: '' },
-      activityStatusOptions: ACTIVITY_STATUS,
+      activityStatusOptions: [],
       qrcodeVisible: false,
       qrcodeLoading: false,
       qrcodeData: null,
@@ -297,6 +297,8 @@ export default {
     }
   },
   created() {
+    loadActivityStatusOptions().then(list => { this.activityStatusOptions = list || [] })
+
     if (!this.ensureTypeAccess()) return
     this.syncTypeFilter()
     this.getList()
@@ -325,8 +327,7 @@ export default {
       this.listQuery.activityType = this.fixedType
     },
     activityStatusLabel(status) {
-      const item = ACTIVITY_STATUS.find(s => s.value === status)
-      return item ? item.label : status
+      return getActivityStatusLabel(status)
     },
     directionalStatusLabel(row) {
       if (this.fixedType !== '3') {
@@ -359,8 +360,7 @@ export default {
       return this.statusTagType(row.activityStatus)
     },
     statusTagType(status) {
-      const item = ACTIVITY_STATUS.find(s => s.value === status)
-      return item ? item.tagType : 'info'
+      return getActivityStatusTagType(status)
     },
     canStop(row) {
       if (this.fixedType === '3' && String(row.sendStatus) === '1') {
