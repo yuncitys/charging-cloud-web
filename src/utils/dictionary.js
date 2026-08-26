@@ -149,3 +149,36 @@ export function formatDictLabel(typeEnCode, code) {
 	const key = String(code)
 	return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : String(code)
 }
+
+export function getOrderStatus(val) {
+	return formatDictLabel('order_status', val)
+}
+
+export function getFinanceUserFlowTypeOptions() {
+	return getSelectorOptions('finance_user_flow_type')
+}
+
+/** @deprecated 使用 getSelectorCascaderOptions('trade_bus_kind') */
+export function getBusKindData() {
+	return getSelectorCascaderOptions('trade_bus_kind')
+}
+
+/** @deprecated 使用 getBankNoOptions() */
+export function getBankNo() {
+	return getBankNoOptions()
+}
+
+/** Vue.prototype.$dict 挂载对象（兼作默认导出，兼容原 dictData 用法） */
+const dictApi = {
+	getSelector,
+	getSelectorOptions,
+	getSelectorCascaderOptions,
+	getBankNoOptions,
+	formatDictLabel,
+	getOrderStatus,
+	getFinanceUserFlowTypeOptions,
+	getBusKindData,
+	getBankNo
+}
+
+export default dictApi

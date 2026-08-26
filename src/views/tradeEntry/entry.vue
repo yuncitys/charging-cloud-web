@@ -708,7 +708,7 @@ import { addTradeEntry, updateTradeEntry, getTradeEntryDetail, imgInfoDiscern } 
 import { getAreaSelector } from '@/api/area/index'
 import { getMerchant } from '@/api/merchant/merchant'
 import { upload } from '@/api/upload/file'
-import dictData from '@/utils/dictData'
+import dictApi from '@/utils/dictionary'
 import { loadServiceProviderDict } from '@/utils/payChannel'
 import { loadWxSalesSceneOptions, WX_SCENE_ATTACHMENT, defaultWxTradeEntryWx, flattenTradeEntryWx } from '@/utils/wxSalesScene'
 
@@ -893,8 +893,8 @@ export default {
     }
   },
   created() {
-    dictData.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
-    dictData.getBankNo().then(list => { this.bankList = list || [] })
+    dictApi.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
+    dictApi.getBankNo().then(list => { this.bankList = list || [] })
     loadServiceProviderDict().then(list => {
       this.serviceProviderList = list
     })

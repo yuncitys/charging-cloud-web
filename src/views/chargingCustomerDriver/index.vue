@@ -312,7 +312,7 @@ import {
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getCarListByOrgId } from '@/api/chargingCustomer/chargingCustomerCar'
 import { getAreaSelector } from '@/api/area/index'
-import dictData from '@/utils/dictData'
+import dictApi from '@/utils/dictionary'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import userImg from '@/assets/charging-customer/user.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
@@ -415,7 +415,7 @@ export default {
     this.loadList()
     this.loadOrgOptions()
     this.loadProvinces()
-    dictData.getFinanceUserFlowTypeOptions().then(list => {
+    dictApi.getFinanceUserFlowTypeOptions().then(list => {
       this.flowTypeOptions = list || []
     })
   },

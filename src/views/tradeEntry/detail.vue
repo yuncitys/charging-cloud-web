@@ -634,10 +634,9 @@
 <script>
 import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
-import dictData from '@/utils/dictData'
 import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
 import { formatSalesSceneLabels, flattenTradeEntryWx, loadWxSalesSceneOptions } from '@/utils/wxSalesScene'
-import { formatDictLabel } from '@/utils/dictionary'
+import dictApi, { formatDictLabel } from '@/utils/dictionary'
 
 export default {
   name: 'TradeEntryDetail',
@@ -803,7 +802,7 @@ export default {
     }
   },
   created() {
-    dictData.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
+    dictApi.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
     loadServiceProviderDict().then(() => this.$forceUpdate())
     loadWxSalesSceneOptions().then(() => this.$forceUpdate())
     this.$dict.getSelectorOptions('trade_entry_mer_type').then(list => { this.merTypeOptions = list || [] })

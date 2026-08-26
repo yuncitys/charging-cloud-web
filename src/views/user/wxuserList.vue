@@ -251,7 +251,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
-	import dictData from '@/utils/dictData'
+	import dictApi from '@/utils/dictionary'
 	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	import userImg from '@/assets/charging-customer/user.png'
 	import walletImg from '@/assets/charging-customer/wallet.png'
@@ -639,7 +639,7 @@
 		created() {
 			this.getLists()
 			this.isPc = !this.$common.isMobile()
-			dictData.getFinanceUserFlowTypeOptions().then(list => {
+			dictApi.getFinanceUserFlowTypeOptions().then(list => {
 				this.flowTypeOptions = list || []
 			})
 		},
