@@ -217,12 +217,36 @@ export function formatPriceType(val) {
 	return formatDictLabel('price_type', val)
 }
 
+export function formatDeviceRule(val) {
+	return formatDictLabel('device_rule', val)
+}
+
+export function formatDeviceActivateStatus(val) {
+	return formatDictLabel('device_activate_status', val)
+}
+
+export function formatConnectorStatus(val) {
+	return formatDictLabel('connector_status', val)
+}
+
+export function formatOrgType(val) {
+	return formatDictLabel('org_type', val)
+}
+
 export function getDeviceStatusOptions() {
 	return getSelectorOptions('device_status', { numeric: true })
 }
 
 export function getElectricOutTypeOptions() {
 	return getSelectorOptions('electric_out_type', { numeric: true })
+}
+
+export function getDeviceRuleOptions() {
+	return getSelectorOptions('device_rule', { numeric: true })
+}
+
+export function getPriceTypeOptions() {
+	return getSelectorOptions('price_type', { numeric: true })
 }
 
 export function getFinanceUserFlowTypeOptions() {
@@ -258,8 +282,14 @@ const dictApi = {
 	formatOrderPayMethod,
 	formatOrderStartType,
 	formatPriceType,
+	formatDeviceRule,
+	formatDeviceActivateStatus,
+	formatConnectorStatus,
+	formatOrgType,
 	getDeviceStatusOptions,
 	getElectricOutTypeOptions,
+	getDeviceRuleOptions,
+	getPriceTypeOptions,
 	getFinanceUserFlowTypeOptions,
 	getFinanceOrgFlowTypeOptions,
 	getBusKindData,
