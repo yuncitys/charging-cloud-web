@@ -176,6 +176,55 @@ export function getOrderStatus(val) {
 	return formatDictLabel('order_status', val)
 }
 
+export function formatOrderType(val) {
+	return formatDictLabel('order_type', val)
+}
+
+export function formatElectricOutType(val) {
+	return formatDictLabel('electric_out_type', val)
+}
+
+export function formatDeviceStatus(val) {
+	return formatDictLabel('device_status', val)
+}
+
+const ORDER_PAY_METHOD_ALIASES = {
+	BALANCE_PAY: 'BALANCE',
+	WECHAT_PAY: 'WECHAT',
+	ALI_PAY: 'ALIPAY',
+	WECHAT_SCORE_PAY: 'WECHAT_SCORE',
+	COMPANY_BALANC: 'COMPANY_BALANCE',
+	COMPANY_BALANCE_PAY: 'COMPANY_BALANCE'
+}
+
+export function normalizeOrderPayMethodCode(payType) {
+	if (payType == null || payType === '') return ''
+	const text = String(payType).toUpperCase()
+	return ORDER_PAY_METHOD_ALIASES[text] || text
+}
+
+export function formatOrderPayMethod(payType) {
+	const code = normalizeOrderPayMethodCode(payType)
+	if (!code) return '-'
+	return formatDictLabel('order_pay_method', code)
+}
+
+export function formatOrderStartType(val) {
+	return formatDictLabel('order_start_type', val)
+}
+
+export function formatPriceType(val) {
+	return formatDictLabel('price_type', val)
+}
+
+export function getDeviceStatusOptions() {
+	return getSelectorOptions('device_status', { numeric: true })
+}
+
+export function getElectricOutTypeOptions() {
+	return getSelectorOptions('electric_out_type', { numeric: true })
+}
+
 export function getFinanceUserFlowTypeOptions() {
 	return getSelectorOptions('finance_user_flow_type')
 }
@@ -202,6 +251,15 @@ const dictApi = {
 	getBankNoOptions,
 	formatDictLabel,
 	getOrderStatus,
+	formatOrderType,
+	formatElectricOutType,
+	formatDeviceStatus,
+	normalizeOrderPayMethodCode,
+	formatOrderPayMethod,
+	formatOrderStartType,
+	formatPriceType,
+	getDeviceStatusOptions,
+	getElectricOutTypeOptions,
 	getFinanceUserFlowTypeOptions,
 	getFinanceOrgFlowTypeOptions,
 	getBusKindData,
