@@ -28,7 +28,8 @@ function mapSelectorItems(list) {
 		label: item.fullName,
 		value: item.enCode,
 		sortCode: item.sortCode,
-		isDefault: item.isDefault
+		isDefault: item.isDefault,
+		description: item.description || ''
 	}))
 }
 
@@ -89,7 +90,8 @@ export function getSelectorOptions(enCode, opts = {}) {
 				name: item.label,
 				fullName: item.label,
 				enCode: raw,
-				code: raw
+				code: raw,
+				description: item.description || ''
 			}
 		})
 	)
@@ -288,6 +290,38 @@ export function formatSysDataScope(val) {
 	return formatDictLabel('sys_data_scope', val)
 }
 
+export function formatChargeCardStatus(val) {
+	return formatDictLabel('charge_card_status', val)
+}
+
+export function formatAdMediaType(val) {
+	return formatDictLabel('ad_media_type', val)
+}
+
+export function formatRechargeRuleMode(val) {
+	return formatDictLabel('recharge_rule_mode', val)
+}
+
+export function formatTaskExportStatus(val) {
+	return formatDictLabel('task_export_status', val)
+}
+
+export function getChargeCardStatusOptions() {
+	return getSelectorOptions('charge_card_status', { numeric: true })
+}
+
+export function getAdMediaTypeOptions() {
+	return getSelectorOptions('ad_media_type', { numeric: true })
+}
+
+export function getRechargeRuleModeOptions() {
+	return getSelectorOptions('recharge_rule_mode')
+}
+
+export function getTaskExportStatusOptions() {
+	return getSelectorOptions('task_export_status', { numeric: true })
+}
+
 export function getAccountStatusOptions() {
 	return getSelectorOptions('account_status', { numeric: true })
 }
@@ -386,6 +420,14 @@ const dictApi = {
 	formatSysRoleType,
 	formatIotCardStatus,
 	formatSysDataScope,
+	formatChargeCardStatus,
+	formatAdMediaType,
+	formatRechargeRuleMode,
+	formatTaskExportStatus,
+	getChargeCardStatusOptions,
+	getAdMediaTypeOptions,
+	getRechargeRuleModeOptions,
+	getTaskExportStatusOptions,
 	getAccountStatusOptions,
 	getBindStatusOptions,
 	getSysRoleTypeOptions,
