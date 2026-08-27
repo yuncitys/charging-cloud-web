@@ -427,9 +427,7 @@
           <el-table-column prop="payOrderCode" label="支付单号" min-width="160" show-overflow-tooltip />
           <el-table-column label="行类型" width="100" align="center">
             <template slot-scope="scope">
-              <span v-if="scope.row.lineType === 1">正向</span>
-              <span v-else-if="scope.row.lineType === 2">退款调减</span>
-              <span v-else>{{ scope.row.lineType }}</span>
+              {{ $dict.formatSettlementLedgerLineType(scope.row.lineType) }}
             </template>
           </el-table-column>
           <el-table-column label="商户" min-width="120" show-overflow-tooltip>
