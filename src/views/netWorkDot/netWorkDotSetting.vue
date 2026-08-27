@@ -114,19 +114,19 @@
               <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">人员值守</div>
-                  <div class="kv__value">{{ station.isDuty == 1 ? '是' : '否' }}</div>
+                  <div class="kv__value">{{ $dict.formatDictLabel('common_yes_no', station.isDuty) }}</div>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">独立报装</div>
-                  <div class="kv__value">{{ station.isAloneApply == 1 ? '是' : '否' }}</div>
+                  <div class="kv__value">{{ $dict.formatDictLabel('common_yes_no', station.isAloneApply) }}</div>
                 </div>
               </el-col>
               <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">公共停车场</div>
-                  <div class="kv__value">{{ station.isPublicParkingLot == 1 ? '是' : '否' }}</div>
+                  <div class="kv__value">{{ $dict.formatDictLabel('common_yes_no', station.isPublicParkingLot) }}</div>
                 </div>
               </el-col>
             </el-row>
@@ -304,24 +304,21 @@
             <el-col :span="12">
               <el-form-item label="人员值守">
                 <el-radio-group v-model="editStation.isDuty">
-                  <el-radio :label="0">否</el-radio>
-                  <el-radio :label="1">是</el-radio>
+                  <el-radio v-for="item in yesNoList" :key="'duty-' + item.id" :label="item.id">{{ item.name }}</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="独立报装">
                 <el-radio-group v-model="editStation.isAloneApply">
-                  <el-radio :label="0">否</el-radio>
-                  <el-radio :label="1">是</el-radio>
+                  <el-radio v-for="item in yesNoList" :key="'alone-' + item.id" :label="item.id">{{ item.name }}</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="公共停车场">
                 <el-radio-group v-model="editStation.isPublicParkingLot">
-                  <el-radio :label="0">否</el-radio>
-                  <el-radio :label="1">是</el-radio>
+                  <el-radio v-for="item in yesNoList" :key="'park-' + item.id" :label="item.id">{{ item.name }}</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
@@ -691,6 +688,7 @@ export default {
       buildAddressList: [],
       parkFeeType: [],
       stationLocationList: [],
+      yesNoList: [],
       merchantList: [],
       station: {
         id: '',
@@ -833,13 +831,16 @@ export default {
         this.$dict.getSelectorOptions('station_build_address', { numeric: true }),
         this.$dict.getSelectorOptions('station_park_fee', { numeric: true }),
         this.$dict.getSelectorOptions('station_tag', { numeric: true }),
-        this.$dict.getSelectorOptions('station_location', { numeric: true })
-      ]).then(([types, builds, parks, tags, locations]) => {
+        this.$dict.getSelectorOptions('station_location', { numeric: true }),
+        this.$dict.getSelectorOptions('common_yes_no', { numeric: true }),
+        this.$dict.getSelector('trade_entry_sett_bank_acc_type')
+      ]).then(([types, builds, parks, tags, locations, yesNo]) => {
         this.stationTypeList = toOptions(types)
         this.buildAddressList = toOptions(builds)
         this.parkFeeType = toOptions(parks)
         this.stationTagList = toOptions(tags)
         this.stationLocationList = toOptions(locations)
+        this.yesNoList = toOptions(yesNo)
       })
     },
     getNameById(list, id, labelKey = 'name') {
@@ -1214,9 +1215,10 @@ export default {
       return `${value} 元/度`
     },
     formatSettBankAccType(type) {
-      if (type === '0010' || type === 10 || type === '10') return '借记账户'
-      if (type === '0030' || type === 30 || type === '30') return '对公账户'
-      return '-'
+      let code = type
+      if (type === 10 || type === '10') code = '0010'
+      if (type === 30 || type === '30') code = '0030'
+      return this.$dict.formatDictLabel('trade_entry_sett_bank_acc_type', code) || '-'
     },
     initStation() {
       if (!this.stationId) {

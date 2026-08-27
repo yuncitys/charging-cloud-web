@@ -302,13 +302,7 @@
 					adminId: false,
 					deviceChargePattern: true
 				},
-				tags: [{
-					title: '离线',
-					id: 0,
-				}, {
-					title: '在线',
-					id: 1,
-				}]
+				tags: []
 			}
 		},
 		filters: {

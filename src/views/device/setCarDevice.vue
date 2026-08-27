@@ -179,8 +179,7 @@
 					<div style="margin-top: 50px;">
 						<el-card class="box-card">
 							<div slot="header" class="clearfix">
-								<span>设备参数设置，在线状态：<el-tag type="success" v-if="deviceInfo.deviceStatus == 1">在线</el-tag>
-									<el-tag type="danger" v-if="deviceInfo.deviceStatus == 0">离线</el-tag>
+								<span>设备参数设置，在线状态：<el-tag :type="deviceInfo.deviceStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceStatus(deviceInfo.deviceStatus) }}</el-tag>
 								</span>
 							</div>
 							<div>
@@ -810,7 +809,7 @@
 			}
 		},
 		mounted() {
-
+			this.$dict.getSelector('device_status')
 		},
 		created() {
 			let id = this.$route.query.id
