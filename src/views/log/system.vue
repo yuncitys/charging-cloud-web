@@ -26,16 +26,7 @@
 				</el-table-column>
 				<el-table-column prop="businessType" label="业务类型" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<span v-if="scope.row.businessType == 0">其它</span>
-						<span v-if="scope.row.businessType == 1">新增</span>
-						<span v-if="scope.row.businessType == 2">修改</span>
-						<span v-if="scope.row.businessType == 3">删除</span>
-						<span v-if="scope.row.businessType == 4">授权</span>
-						<span v-if="scope.row.businessType == 5">导出</span>
-						<span v-if="scope.row.businessType == 6">导入</span>
-						<span v-if="scope.row.businessType == 7">强退</span>
-						<span v-if="scope.row.businessType == 8">生成代码</span>
-						<span v-if="scope.row.businessType == 9">清空数据</span>
+						{{ $dict.formatSysOperBusinessType(scope.row.businessType) }}
 					</template>
 				</el-table-column>
 				<el-table-column prop="method" label="方法名称" align="center" :show-overflow-tooltip='isPc'>
@@ -44,9 +35,7 @@
 				</el-table-column>
 				<el-table-column prop="operatorType" label="操作类别" align="center" :show-overflow-tooltip='isPc'>
 				<template slot-scope="scope">
-					<span v-if="scope.row.operatorType == 0">其它</span>
-					<span v-if="scope.row.operatorType == 1">后台用户</span>
-					<span v-if="scope.row.operatorType == 2">手机端用户</span>
+					{{ $dict.formatSysOperOperatorType(scope.row.operatorType) }}
 				</template>
 				</el-table-column>
 				<el-table-column prop="operName" label="操作人员" align="center" :show-overflow-tooltip='isPc'>
@@ -65,8 +54,9 @@
 				</el-table-column>
 				<el-table-column prop="status" label="操作状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.status == 0">成功</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 1">失败</el-tag>
+						<el-tag :type="scope.row.status == 0 ? 'success' : 'danger'">
+							{{ $dict.formatSysCommonResult(scope.row.status) }}
+						</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="operTime" label="操作时间" align="center" :show-overflow-tooltip='isPc'>
@@ -107,47 +97,8 @@
 				limit: 10,
 				list: [],
 				total: 10,
-				businessType: [{
-					title: '其它',
-					id: 0,
-				}, {
-					title: '新增',
-					id: 1,
-				}, {
-					title: '修改',
-					id: 2,
-				}, {
-					title: '删除',
-					id: 3,
-				}, {
-					title: '授权',
-					id: 4,
-				}, {
-					title: '导出',
-					id: 5,
-				}, {
-					title: '导入',
-					id: 6,
-				}, {
-					title: '强退',
-					id: 7,
-				}, {
-					title: '生成代码',
-					id: 8,
-				}, {
-					title: '清空数据',
-					id: 9,
-				}],
-				operatorType: [{
-					title: '其它',
-					id: 0,
-				}, {
-					title: '后台用户',
-					id: 1,
-				}, {
-					title: '手机端用户',
-					id: 2,
-				}],
+				businessType: [],
+				operatorType: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
@@ -218,6 +169,12 @@
 			},
 		},
 		created() {
+			this.$dict.getSysOperBusinessTypeOptions().then(list => {
+				this.businessType = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
+			this.$dict.getSysOperOperatorTypeOptions().then(list => {
+				this.operatorType = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 			this.isPc = !this.$common.isMobile()
 		},

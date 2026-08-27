@@ -32,8 +32,9 @@
 				</el-table-column>
 				<el-table-column prop="status" label="登录状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.status == 0">成功</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 1">失败</el-tag>
+						<el-tag :type="scope.row.status == 0 ? 'success' : 'danger'">
+							{{ $dict.formatSysCommonResult(scope.row.status) }}
+						</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="loginTime" label="登录时间" align="center" :show-overflow-tooltip='isPc'>
@@ -74,13 +75,7 @@
 				limit: 10,
 				list: [],
 				total: 10,
-        tags: [{
-        	title: '成功',
-        	id: 0,
-        }, {
-        	title: '失败',
-        	id: 1,
-        }],
+        tags: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
@@ -151,6 +146,9 @@
 			},
 		},
 		created() {
+			this.$dict.getSysCommonResultOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 			this.isPc = !this.$common.isMobile()
 		},

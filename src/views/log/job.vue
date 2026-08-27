@@ -79,8 +79,7 @@
         <el-table-column label="日志信息" align="center" prop="jobMessage" :show-overflow-tooltip="true" />
         <el-table-column label="执行状态" align="center" prop="status">
           <template slot-scope="scope">
-            <span v-if="scope.row.status === '0'">成功</span>
-            <span v-if="scope.row.status === '1'">失败</span>
+            {{ $dict.formatSysCommonResult(scope.row.status) }}
           </template>
         </el-table-column>
         <el-table-column label="执行时间" align="center" prop="createTime" width="180">
@@ -126,8 +125,7 @@
             </el-col>
             <el-col :span="24">
               <el-form-item label="执行状态：">
-                <div v-if="form.status == 0">正常</div>
-                <div v-else-if="form.status == 1">失败</div>
+                <div>{{ $dict.formatSysCommonResult(form.status) }}</div>
               </el-form-item>
             </el-col>
             <el-col :span="24">
@@ -171,16 +169,7 @@ export default {
       limit: 10,
       //字典
       sys_job_group: [],
-      sys_common_status:[
-        {
-          "label":'成功',
-          "value":"0",
-        },
-        {
-          "label":'失败',
-          "value":"1",
-        }
-      ],
+      sys_common_status: [],
       // 遮罩层
       loading: true,
       // 选中数组
@@ -214,6 +203,10 @@ export default {
   created() {
     this.$dict.getSelector('sys_job_group').then(group => {
       this.sys_job_group = group
+    })
+    this.$dict.getSysCommonResultOptions().then(list => {
+      // 任务日志 status 多为字符串 '0'/'1'
+      this.sys_common_status = (list || []).map(i => ({ label: i.label, value: String(i.value) }))
     })
     // const jobId = this.$route.params && this.$route.params.jobId;
     const jobId = this.$route.query.jobId;
