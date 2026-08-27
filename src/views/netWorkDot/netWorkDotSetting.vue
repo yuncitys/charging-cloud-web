@@ -90,7 +90,7 @@
               <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">电站位置</div>
-                  <div class="kv__value">{{ station.locationAddress == 2 ? '地下电站' : '地上电站' }}</div>
+                  <div class="kv__value">{{ $dict.formatDictLabel('station_location', station.locationAddress) }}</div>
                 </div>
               </el-col>
               <el-col :span="12">
@@ -276,8 +276,7 @@
             <el-col :span="12">
               <el-form-item label="电站位置">
                 <el-radio-group v-model="editStation.locationAddress">
-                  <el-radio :label="1">地上电站</el-radio>
-                  <el-radio :label="2">地下电站</el-radio>
+                  <el-radio v-for="item in stationLocationList" :key="item.id" :label="item.id">{{ item.name }}</el-radio>
                 </el-radio-group>
               </el-form-item>
             </el-col>
@@ -687,48 +686,11 @@ export default {
         { sort: 4, label: '电桩特写', url: '' },
         { sort: 5, label: '其它图片', url: '' }
       ],
-      stationTagList: [
-        { id: 1, name: '免费wifi' },
-        { id: 2, name: '空调休息室' },
-        { id: 3, name: '按摩室' },
-        { id: 4, name: '便利店' },
-        { id: 5, name: '洗车' },
-        { id: 6, name: '饮用水' },
-        { id: 7, name: '厕所' },
-        { id: 8, name: '快餐' },
-        { id: 9, name: '自动售货机' },
-        { id: 10, name: '雨蓬' }
-      ],
-      stationTypeList: [
-        { id: 1, name: '公共' },
-        { id: 50, name: '个人' },
-        { id: 100, name: '公交（专用）' },
-        { id: 101, name: '环卫（专用）' },
-        { id: 102, name: '物流（专用）' },
-        { id: 103, name: '出租车（专用） ' },
-        { id: 255, name: '其它 ' }
-      ],
-      buildAddressList: [
-        { id: 1, name: '居民区' },
-        { id: 2, name: '公共机构' },
-        { id: 3, name: '企事业单位' },
-        { id: 4, name: '写字楼' },
-        { id: 5, name: '工业园区' },
-        { id: 6, name: '交通枢纽' },
-        { id: 7, name: '大型文体设施' },
-        { id: 8, name: '城市绿地' },
-        { id: 9, name: '大型建筑配建停车场' },
-        { id: 10, name: '路边停车场' },
-        { id: 11, name: '城际高速服务区' },
-        { id: 255, name: '其它' }
-      ],
-      parkFeeType: [
-        { id: 1, name: '免费停车' },
-        { id: 2, name: '收费停车' },
-        { id: 3, name: '充电减免' },
-        { id: 4, name: '限时免费' },
-        { id: 5, name: '其它' }
-      ],
+      stationTagList: [],
+      stationTypeList: [],
+      buildAddressList: [],
+      parkFeeType: [],
+      stationLocationList: [],
       merchantList: [],
       station: {
         id: '',
@@ -859,10 +821,27 @@ export default {
   },
   created() {
     this.stationId = this.$route.params.id || ''
+    this.loadStationDictOptions()
     this.initStation()
     this.getMerchant()
   },
   methods: {
+    loadStationDictOptions() {
+      const toOptions = list => (list || []).map(item => ({ id: item.value, name: item.label }))
+      Promise.all([
+        this.$dict.getSelectorOptions('station_type', { numeric: true }),
+        this.$dict.getSelectorOptions('station_build_address', { numeric: true }),
+        this.$dict.getSelectorOptions('station_park_fee', { numeric: true }),
+        this.$dict.getSelectorOptions('station_tag', { numeric: true }),
+        this.$dict.getSelectorOptions('station_location', { numeric: true })
+      ]).then(([types, builds, parks, tags, locations]) => {
+        this.stationTypeList = toOptions(types)
+        this.buildAddressList = toOptions(builds)
+        this.parkFeeType = toOptions(parks)
+        this.stationTagList = toOptions(tags)
+        this.stationLocationList = toOptions(locations)
+      })
+    },
     getNameById(list, id, labelKey = 'name') {
       if (!list || !list.length) return ''
       const hit = list.find(i => String(i.id) === String(id))
