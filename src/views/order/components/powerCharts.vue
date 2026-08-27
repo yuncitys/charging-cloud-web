@@ -156,6 +156,7 @@
 		formatSeconds
 	} from '@/utils/index'
 	import LineChart from './LineChart'
+	import { formatDictLabel } from '@/utils/dictionary'
 	const lineChartData = {
 		newVisitis: {
 			expectedData: [],
@@ -238,7 +239,7 @@
               				console.log("方案详情",priceContentList)
 							let details = ''
 							let arr = []
-							let priceTypeText = (priceType === 0 ? '计时' : (priceType === 1 ? '电量' : '功率'))
+							let priceTypeText = formatDictLabel('price_type', priceType)
 							if (priceData.ruleId == 1){
 								priceContentList.forEach((item, index) => {
 									let detail
@@ -301,6 +302,7 @@
 		},
 		created() {
 			this.$dict.getSelector('order_status')
+			this.$dict.getSelector('price_type')
 		},
 
 	}

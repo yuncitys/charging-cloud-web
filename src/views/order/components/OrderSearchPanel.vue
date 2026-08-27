@@ -65,8 +65,7 @@
           <el-col :span="8">
             <el-form-item label="设备类型">
               <el-select v-model="listQuery.electricOut" clearable placeholder="请选择设备类型" style="width: 100%;" @change="$emit('filter')">
-                <el-option :value="0" label="交流" />
-                <el-option :value="1" label="直流" />
+                <el-option v-for="item in electricOutOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
           </el-col>
@@ -152,6 +151,7 @@
 
 <script>
 import downExcel from './downExcel.vue'
+import { getElectricOutTypeOptions } from '@/utils/dictionary'
 
 export default {
   name: 'OrderSearchPanel',
@@ -186,8 +186,14 @@ export default {
   },
   data() {
     return {
-      searchExpanded: true
+      searchExpanded: true,
+      electricOutOptions: []
     }
+  },
+  created() {
+    getElectricOutTypeOptions().then(list => {
+      this.electricOutOptions = list || []
+    })
   },
   computed: {
     timeQueryTypeLabel() {

@@ -21,6 +21,7 @@
 		getNowTime
 	} from '@/utils/index'
   	import downloadProgress from '@/components/Common/downloadProgress.vue'
+	import { formatDictLabel } from '@/utils/dictionary'
 
 	function buildOrderExportData(queryData, extra = {}) {
 		const data = {
@@ -143,7 +144,10 @@
 								'startTimeAll', 'endTimeAll', 'createTime'
 							]
 							const list = res.data || []
-							this.$dict.getSelector('order_status').then(() => {
+							Promise.all([
+								this.$dict.getSelector('order_status'),
+								this.$dict.getSelector('price_type')
+							]).then(() => {
 								if (list.length != 0) {
 									list.forEach((item, index) => {
 										item.eleNum = item.hours
@@ -168,13 +172,7 @@
 										item.hasTime = formatSeconds(num3)
 										item.hours = formatSeconds(num2)
 
-										if (item.priceType === 0) {
-											item.priceTypeStr = '计时'
-										} else if (item.priceType === 1) {
-											item.priceTypeStr = '电量'
-										} else if (item.priceType === 2) {
-											item.priceTypeStr = '功耗'
-										}
+										item.priceTypeStr = formatDictLabel('price_type', item.priceType)
 
 										item.orderStatusStr = this.$dict.getOrderStatus(item
 											.orderStatus)

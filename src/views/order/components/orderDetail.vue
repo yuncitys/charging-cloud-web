@@ -301,7 +301,7 @@
 import { findOrderInfoById, findOrderInfoByOrderCode, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
 import { getOrderExpenseInfo } from '@/api/orderExpenseInfo/orderExpenseInfo.js'
 import { parseTime } from '@/utils/index'
-import { formatDictLabel } from '@/utils/dictionary'
+import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 import OrderTrendChart from './OrderTrendChart.vue'
 
 const RULE_BIKE = 1
@@ -420,8 +420,14 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelector('order_type')
+    this.$dict.getSelector('electric_out_type')
     this.$dict.getSelector('order_status')
     this.$dict.getSelector('order_pay_status')
+    this.$dict.getSelector('order_pay_method')
+    this.$dict.getSelector('order_start_type')
+    this.$dict.getSelector('price_type')
+    this.$dict.getSelector('device_rule')
     this.bootstrap()
   },
   methods: {
@@ -434,17 +440,12 @@ export default {
       return parseTime(t, '{y}-{m}-{d} {h}:{i}:{s}') || '—'
     },
     ruleLabel(ruleId) {
-      if (ruleId === RULE_CAR) return '汽车'
-      if (ruleId === RULE_BIKE) return '单车'
-      return '—'
+      const label = formatDictLabel('device_rule', ruleId)
+      return label === String(ruleId) ? this.disp(ruleId) : label
     },
     orderTypeText(t) {
-      if (t === 0) return '电卡充电'
-      if (t === 1) return '扫码充电'
-      if (t === 2) return '免费充电'
-      if (t === 3) return '包月充电'
-      if (t === 4) return '互联互通'
-      return this.disp(t)
+      const label = formatDictLabel('order_type', t)
+      return label === String(t) ? this.disp(t) : label
     },
     payStatusText(s) {
       const label = formatDictLabel('order_pay_status', s)
@@ -456,37 +457,21 @@ export default {
     },
     payTypeText(payType) {
       if (!payType) return '—'
-      const text = String(payType).toUpperCase()
-      if (text === 'BALANCE_PAY' || text === 'BALANCE') return '个人钱包'
-      if (text === 'WECHAT_PAY' || text === 'WECHAT') return '微信支付'
-      if (text === 'ALI_PAY' || text === 'ALIPAY') return '支付宝支付'
-      if (text === 'WECHAT_SCORE_PAY') return '微信支付分'
-      if (text === 'COMPANY_BALANC' || text === 'COMPANY_BALANCE' || text === 'COMPANY_BALANCE_PAY') return '企业钱包'
-      if (text === 'SWIPE_CARD') return '刷卡支付'
-      if (text === 'MONTH_CARD') return '月卡支付'
-      if (text === 'FREE') return '免费'
-      if (text === 'EVCS') return '互联互通'
-      return payType
+      const code = normalizeOrderPayMethodCode(payType)
+      const label = formatDictLabel('order_pay_method', code)
+      return label === code ? this.disp(payType) : label
     },
     startTypeText(startType) {
-      const value = String(startType || '')
-      if (value === '1') return '扫码启动'
-      if (value === '2') return '电卡启动'
-      if (value === '3') return 'VIN启动'
-      if (value === '4') return '互联互通'
-      if (value === '5') return '命令启动'
-      return this.disp(startType)
+      const label = formatDictLabel('order_start_type', startType)
+      return label === String(startType) ? this.disp(startType) : label
     },
     priceTypeText(p) {
-      if (p === 0) return '时间'
-      if (p === 1) return '电量'
-      if (p === 2) return '功率'
-      return this.disp(p)
+      const label = formatDictLabel('price_type', p)
+      return label === String(p) ? this.disp(p) : label
     },
     electricOutText(type) {
-      if (type === 0) return '交流'
-      if (type === 1) return '直流'
-      return this.disp(type)
+      const label = formatDictLabel('electric_out_type', type)
+      return label === String(type) ? this.disp(type) : label
     },
     durationText(v) {
       if (v == null || v === '') return '—'
