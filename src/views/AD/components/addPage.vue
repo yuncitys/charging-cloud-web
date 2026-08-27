@@ -35,7 +35,7 @@
 						<el-input v-model="addAdData.imageLink" placeholder="请输入跳转链接" clearable />
 					</el-form-item> -->
 				<!-- 图片 -->
-				<el-form-item :label="`${addAdData.types == 1 ? '上传图片' : '上传视频'}`" prop="imageUrl">
+				<el-form-item :label="'上传' + ($dict.formatAdMediaType(addAdData.types) || '')" prop="imageUrl">
 					<uploadFile v-model="addAdData.imageUrl" ref="upload" />
 				</el-form-item>
 				<el-form-item>
@@ -78,13 +78,7 @@
 					sorting: '',
 					types: 1
 				},
-				tags: [{
-					title: '图片',
-					id: 1,
-				}, {
-					title: '视频',
-					id: 2,
-				}],
+				tags: [],
 				loadingAdd: false,
 				Rules: {
 					imageTitle: [{
@@ -156,7 +150,9 @@
 			},
 		},
 		created() {
-
+			this.$dict.getAdMediaTypeOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 		},
 	}
 </script>
