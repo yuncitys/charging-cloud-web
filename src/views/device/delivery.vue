@@ -93,9 +93,7 @@
 				<el-table-column prop="deviceChargePattern" label="是否免费" v-if="formThead.deviceChargePattern" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.deviceChargePattern == 0">否</span>
-						<span v-if="scope.row.deviceChargePattern == 1">否</span>
-						<span v-if="scope.row.deviceChargePattern == 2">是</span>
+						<span>{{ $dict.formatDeviceIsFree(scope.row.deviceChargePattern) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"

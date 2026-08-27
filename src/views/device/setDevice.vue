@@ -164,10 +164,7 @@
 									:model="deviceInfoo">
 									<el-form-item label="收费类型：" prop="deviceChargePattern">
 										<el-radio-group v-model="deviceInfoo.deviceChargePattern" @change="handleSelect">
-											<!-- <el-radio :label="0">按时间收费</el-radio>
-											<el-radio :label="1">按电量收费</el-radio> -->
-											<el-radio :label="1">收费</el-radio>
-											<el-radio :label="2">免费</el-radio>
+											<el-radio v-for="item in deviceChargePatternOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 										</el-radio-group>
 									</el-form-item>
 									<el-row>
@@ -418,6 +415,7 @@
 					warningTemperature: 55,
 					highTemperature: 70,
 				},
+				deviceChargePatternOptions: [],
 				deviceId: '',
 				setInt: null,
 				setTime: null,
@@ -887,6 +885,7 @@
 		mounted() {
 			this.$dict.getSelector('device_status')
 			this.$dict.getSelector('connector_status')
+			this.$dict.getDeviceChargePatternOptions().then(list => { this.deviceChargePatternOptions = list || [] })
 		},
 		created() {
 			let id = this.$route.query.id
