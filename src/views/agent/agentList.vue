@@ -32,10 +32,9 @@
 				</el-table-column>
 				<el-table-column prop="roleName" label="角色" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="freezeStatus" label="账号状态" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column prop="freezeStatus" label="帐户状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.freezeStatus == 0">正常</el-tag>
-						<el-tag type="danger" v-if="scope.row.freezeStatus == 1">冻结</el-tag>
+						<el-tag :type="scope.row.freezeStatus == 1 ? 'danger' : 'success'">{{ $dict.formatAccountStatus(scope.row.freezeStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="totalAmount" label="总收益" align="center" :show-overflow-tooltip='isPc'>
@@ -44,8 +43,7 @@
 				</el-table-column>
 				<el-table-column prop="openId" label="绑定状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.bindingStatus == 0">未绑定</el-tag>
-						<el-tag type="success" v-if="scope.row.bindingStatus == 1">已绑定</el-tag>
+						<el-tag :type="scope.row.bindingStatus == 1 ? 'success' : 'danger'">{{ $dict.formatBindStatus(scope.row.bindingStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="parentName" label="上级名称" align="center" :show-overflow-tooltip='isPc'>
@@ -375,6 +373,8 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('account_status')
+			this.$dict.getSelector('bind_status')
 			this.getLists()
 			this.findRoleAllList()
 			// this.stopF5Refresh()

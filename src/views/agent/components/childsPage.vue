@@ -18,10 +18,9 @@
 				</el-table-column>
 				<el-table-column prop="roleName" label="角色" align="center" :show-overflow-tooltip='true'>
 				</el-table-column>
-				<el-table-column prop="freezeStatus" label="账号状态" align="center" :show-overflow-tooltip='true'>
+				<el-table-column prop="freezeStatus" label="帐户状态" align="center" :show-overflow-tooltip='true'>
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.freezeStatus == 0">正常</el-tag>
-						<el-tag type="danger" v-if="scope.row.freezeStatus == 1">冻结</el-tag>
+						<el-tag :type="scope.row.freezeStatus == 1 ? 'danger' : 'success'">{{ $dict.formatAccountStatus(scope.row.freezeStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="totalAmount" label="总收益" align="center" :show-overflow-tooltip='true'>
@@ -247,7 +246,7 @@
 			},
 		},
 		created() {
-
+			this.$dict.getSelector('account_status')
 		},
 	}
 </script>
