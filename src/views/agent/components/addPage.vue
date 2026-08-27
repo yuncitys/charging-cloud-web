@@ -82,7 +82,7 @@
 	import {
         getOperator
     } from '@/api/operator/operator.js'
-	import { getRoleTypeOptionsForAdd } from '@/utils/adminRoleTypeOptions.js'
+	import { getRoleTypeOptionsForAdd, preloadSysRoleTypeDict } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		name: 'agentAddpage',
 		components: {
@@ -191,7 +191,8 @@
           },
         },
 		methods: {
-			syncRoleTypeRadioOptions() {
+			async syncRoleTypeRadioOptions() {
+				await preloadSysRoleTypeDict()
 				this.roleTypeRadioOptions = getRoleTypeOptionsForAdd(this.$store.getters.adminUser)
 			},
 			filterNode(value, data) {

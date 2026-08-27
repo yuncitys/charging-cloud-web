@@ -56,7 +56,7 @@
 		updateRole,
 		deleteRole
 	} from '@/api/permission/role.js'
-	import { getRoleTypeOptionsForEdit } from '@/utils/adminRoleTypeOptions.js'
+	import { getRoleTypeOptionsForEdit, preloadSysRoleTypeDict } from '@/utils/adminRoleTypeOptions.js'
 	import { MENU_TYPE, menuTypeLabel } from '@/views/permission/constants/menuType.js'
 	export default {
 		props:{
@@ -114,20 +114,7 @@
 				treeData: [],
 				ger_role_id:[],
 				Loading:false,
-				dataScopeList:[
-					// {
-					// 	id:1,
-					// 	title:'全部数据权限'
-					// },
-					{
-						id:2,
-						title:'本人及下级数据权限'
-					},
-					{
-						id:3,
-						title:'仅本人数据权限'
-					},
-				]
+				dataScopeList:[]
 			}
 		},
 		watch: {
@@ -143,8 +130,14 @@
 				if (code === MENU_TYPE.BUTTON) return 'el-icon-thumb'
 				return 'el-icon-document'
 			},
-			syncRoleTypeRadioOptions() {
+			async syncRoleTypeRadioOptions() {
+				await preloadSysRoleTypeDict()
 				this.roleTypeRadioOptions = getRoleTypeOptionsForEdit(this.$store.getters.adminUser, this.editData.roleType)
+			},
+			loadDataScopeOptions() {
+				this.$dict.getSysDataScopeFormOptions().then(list => {
+					this.dataScopeList = (list || []).map(item => ({ id: item.value, title: item.label }))
+				})
 			},
 			onRoleTypeChange() {
 				this.$nextTick(() => this.syncRoleTypeRadioOptions())
@@ -159,6 +152,7 @@
 				this.editData.menuIdArray = item.menuIdArray
 				this.editData.dataScope = item.dataScope ? item.dataScope : ''
 				this.editData.roleType = item.roleType ? item.roleType : ''
+				this.loadDataScopeOptions()
 				let data = {
 					roleId: item.id
 				}

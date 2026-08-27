@@ -13,10 +13,7 @@
 				</el-table-column>
 				<el-table-column prop="roleType" label="角色类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.roleType === 1">平台管理员</span>
-						<span v-if="scope.row.roleType === 2">租户管理员</span>
-						<span v-if="scope.row.roleType === 3">商户管理员</span>
-						<span v-if="scope.row.roleType === 4">站点管理员</span>
+						<span>{{ $dict.formatSysRoleType(scope.row.roleType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
@@ -137,6 +134,7 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('sys_role_type')
 			this.getLists()			
 			this.isPc=!this.$common.isMobile()
 		},
