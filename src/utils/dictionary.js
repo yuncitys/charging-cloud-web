@@ -276,6 +276,17 @@ export function getElectricOutTypeOptions() {
 	return getSelectorOptions('electric_out_type', { numeric: true })
 }
 
+/** 单车业态仅交流；汽车业态交流+直流 */
+export function getElectricOutOptionsForRule(ruleId) {
+	return getElectricOutTypeOptions().then(list => {
+		const all = list || []
+		if (Number(ruleId) === 1) {
+			return all.filter(item => Number(item.value) === 0)
+		}
+		return all
+	})
+}
+
 export function getDeviceRuleOptions() {
 	return getSelectorOptions('device_rule', { numeric: true })
 }
@@ -329,6 +340,7 @@ const dictApi = {
 	formatWithdrawPayType,
 	getDeviceStatusOptions,
 	getElectricOutTypeOptions,
+	getElectricOutOptionsForRule,
 	getDeviceRuleOptions,
 	getPriceTypeOptions,
 	getFinanceUserFlowTypeOptions,
