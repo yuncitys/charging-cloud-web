@@ -68,9 +68,7 @@
 							</div>
 							<div style="margin-left: 30px;">
 								<el-radio-group v-model="unit">
-									<el-radio :label="2">金额</el-radio>
-									<el-radio :label="1">电量</el-radio>
-									<el-radio :label="0">时间</el-radio>
+									<el-radio v-for="item in chargeModeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 								</el-radio-group>
 							</div>
 						</div>
@@ -152,6 +150,7 @@
 			return {
 				preMoney: 50,
 				unit: 0,
+				chargeModeOptions: [],
 				moneyList: [{
 					id: 20
 				}, {
@@ -777,7 +776,7 @@
 			}
 		},
 		created() {
-
+			this.$dict.getChargeModeOptions().then(list => { this.chargeModeOptions = list || [] })
 		}
 	}
 </script>

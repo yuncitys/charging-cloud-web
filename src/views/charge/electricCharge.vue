@@ -22,7 +22,7 @@
 				</el-table-column>
 				<el-table-column prop="realTimeCharging" label="计费周期" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span>{{ scope.row.realTimeCharging==0?'实时1分钟收费':"实时30分钟收费" }}</span>
+						<span>{{ $dict.formatChargeBillingCycle(scope.row.realTimeCharging) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createUser" label="创建用户" align="center" width="150"
