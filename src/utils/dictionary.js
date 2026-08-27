@@ -268,6 +268,49 @@ export function formatWithdrawPayType(val) {
 	return formatDictLabel('withdraw_pay_type', val)
 }
 
+export function formatAccountStatus(val) {
+	return formatDictLabel('account_status', val)
+}
+
+export function formatBindStatus(val) {
+	return formatDictLabel('bind_status', val)
+}
+
+export function formatSysRoleType(val) {
+	return formatDictLabel('sys_role_type', val)
+}
+
+export function formatIotCardStatus(val) {
+	return formatDictLabel('iot_card_status', val)
+}
+
+export function formatSysDataScope(val) {
+	return formatDictLabel('sys_data_scope', val)
+}
+
+export function getAccountStatusOptions() {
+	return getSelectorOptions('account_status', { numeric: true })
+}
+
+export function getBindStatusOptions() {
+	return getSelectorOptions('bind_status', { numeric: true })
+}
+
+export function getSysRoleTypeOptions() {
+	return getSelectorOptions('sys_role_type', { numeric: true })
+}
+
+export function getIotCardStatusOptions() {
+	return getSelectorOptions('iot_card_status', { numeric: true })
+}
+
+/** 角色表单可选数据权限（与历史表单一致：仅本人及下级 / 仅本人） */
+export function getSysDataScopeFormOptions() {
+	return getSelectorOptions('sys_data_scope', { numeric: true }).then(list =>
+		(list || []).filter(item => [2, 3].includes(Number(item.value)))
+	)
+}
+
 export function getDeviceStatusOptions() {
 	return getSelectorOptions('device_status', { numeric: true })
 }
@@ -338,6 +381,16 @@ const dictApi = {
 	formatMerchantRoleType,
 	formatWithdrawCashStatus,
 	formatWithdrawPayType,
+	formatAccountStatus,
+	formatBindStatus,
+	formatSysRoleType,
+	formatIotCardStatus,
+	formatSysDataScope,
+	getAccountStatusOptions,
+	getBindStatusOptions,
+	getSysRoleTypeOptions,
+	getIotCardStatusOptions,
+	getSysDataScopeFormOptions,
 	getDeviceStatusOptions,
 	getElectricOutTypeOptions,
 	getElectricOutOptionsForRule,
