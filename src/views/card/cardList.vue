@@ -48,8 +48,9 @@
 				</el-table-column>
 				<el-table-column prop="cardStatus" label="卡状态" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.cardStatus == 0">正常</el-tag>
-						<el-tag type="danger" v-if="scope.row.cardStatus == 1">挂失</el-tag>
+						<el-tag :type="scope.row.cardStatus == 1 ? 'danger' : 'success'">
+							{{ $dict.formatChargeCardStatus(scope.row.cardStatus) }}
+						</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
@@ -141,13 +142,7 @@
 					createTimeStart: '',
 					createTimeEnd: ''
 				},
-				tags: [{
-					title: '正常',
-					id: 0,
-				}, {
-					title: '已挂失',
-					id: 1,
-				}],
+				tags: [],
 				tableKey: 0,
 				showAddMoney: false,
 				addMoney: {
@@ -277,6 +272,9 @@
 			},
 		},
 		created() {
+			this.$dict.getChargeCardStatusOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 		},
 	}
