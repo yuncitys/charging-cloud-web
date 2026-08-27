@@ -383,7 +383,7 @@
           <div slot="header" class="clearfix">
             <span>抽成规则</span>
             <div style="float: right;">
-              <el-tag :type="commissionExists ? 'success' : 'info'" style="margin-right: 10px;">{{ commissionExists ? (commission.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}</el-tag>
+              <el-tag :type="commissionExists ? 'success' : 'info'" style="margin-right: 10px;">{{ commissionExists ? $dict.formatFeeCollectFlag(commission.collectFlag) : '未配置' }}</el-tag>
               <el-button
                 v-if="btnAuthen.permsVerifAuthention(':web:commissionStrategy:save')"
                 size="mini"
@@ -398,7 +398,7 @@
               <!-- <el-col :span="12">
                 <div class="kv">
                   <div class="kv__label">抽成状态</div>
-                  <div class="kv__value">{{ commissionExists ? (commission.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}</div>
+                  <div class="kv__value">{{ commissionExists ? $dict.formatFeeCollectFlag(commission.collectFlag) : '未配置' }}</div>
                 </div>
               </el-col> -->
               <el-col :span="12">
@@ -436,7 +436,7 @@
             <span>通道费规则</span>
             <div style="float: right;">
               <el-tag :type="channelFeeExists ? 'success' : 'info'" style="margin-right: 10px;">
-                {{ channelFeeExists ? (channelFee.collectFlag == '1' ? '收取' : '不收取') : '未配置' }}
+                {{ channelFeeExists ? $dict.formatFeeCollectFlag(channelFee.collectFlag) : '未配置' }}
               </el-tag>
               <el-button
                 v-if="btnAuthen.permsVerifAuthention(':web:channelFeeRule:save')"
@@ -577,8 +577,7 @@
       <el-form ref="commissionForm" :model="commissionForm" :rules="commissionRules" label-position="left" label-width="120px">
         <el-form-item label="是否收取抽成" prop="collectFlag">
           <el-radio-group v-model="commissionForm.collectFlag">
-            <el-radio :label="'0'">不收取</el-radio>
-            <el-radio :label="'1'">收取</el-radio>
+            <el-radio v-for="item in collectFlagList" :key="'cflag-' + item.id" :label="String(item.id)">{{ item.name }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="commissionForm.collectFlag == '1'" label="电费抽成" prop="powerRate">
@@ -625,8 +624,7 @@
       <el-form ref="channelFeeForm" :model="channelFeeForm" :rules="channelFeeRules" label-position="left" label-width="130px">
         <el-form-item label="是否收取通道费" prop="collectFlag">
           <el-radio-group v-model="channelFeeForm.collectFlag">
-            <el-radio :label="'0'">不收取</el-radio>
-            <el-radio :label="'1'">收取</el-radio>
+            <el-radio v-for="item in collectFlagList" :key="'chflag-' + item.id" :label="String(item.id)">{{ item.name }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="channelFeeForm.collectFlag == '1'" label="通道费率" prop="channelFeeRate">
@@ -689,6 +687,7 @@ export default {
       parkFeeType: [],
       stationLocationList: [],
       yesNoList: [],
+      collectFlagList: [],
       merchantList: [],
       station: {
         id: '',
@@ -833,14 +832,16 @@ export default {
         this.$dict.getSelectorOptions('station_tag', { numeric: true }),
         this.$dict.getSelectorOptions('station_location', { numeric: true }),
         this.$dict.getSelectorOptions('common_yes_no', { numeric: true }),
+        this.$dict.getSelectorOptions('fee_collect_flag'),
         this.$dict.getSelector('trade_entry_sett_bank_acc_type')
-      ]).then(([types, builds, parks, tags, locations, yesNo]) => {
+      ]).then(([types, builds, parks, tags, locations, yesNo, collectFlags]) => {
         this.stationTypeList = toOptions(types)
         this.buildAddressList = toOptions(builds)
         this.parkFeeType = toOptions(parks)
         this.stationTagList = toOptions(tags)
         this.stationLocationList = toOptions(locations)
         this.yesNoList = toOptions(yesNo)
+        this.collectFlagList = toOptions(collectFlags)
       })
     },
     getNameById(list, id, labelKey = 'name') {

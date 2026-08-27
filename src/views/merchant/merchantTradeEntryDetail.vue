@@ -206,6 +206,8 @@ export default {
     this.$dict.getSelector('trade_entry_status')
     this.$dict.getSelector('trade_entry_audit_status')
     this.$dict.getSelector('trade_entry_sett_bank_acc_type')
+    this.$dict.getSelector('merchant_role_type')
+    this.$dict.getSelector('merchant_invoice_type')
   },
   methods: {
     init() {
@@ -247,20 +249,7 @@ export default {
       return String(val)
     },
     formatRoleType(val) {
-      if (!val) return '-'
-      const map = {
-        'OPERATOR': '运营商',
-        'INVESTOR': '投资人',
-        'LANDLORD': '场地方',
-        'SETTLE': '分账主体'
-      }
-      let roles = []
-      if (typeof val === 'string') {
-        roles = val.split(',')
-      } else if (Array.isArray(val)) {
-        roles = val
-      }
-      return roles.map(r => map[r.trim()] || r).join('，') || '-'
+      return this.$dict.formatMerchantRoleType(val)
     },
     formatTime(val) {
       if (val === null || val === undefined || val === '') return '-'
@@ -271,14 +260,7 @@ export default {
       }
     },
     formatInvoiceType(val) {
-      const n = Number(val)
-      const map = {
-        0: '不开票',
-        1: '普票',
-        2: '专票',
-        3: '普票和专票'
-      }
-      return map[n] || this.formatValue(val)
+      return this.$dict.formatMerchantInvoiceType(val) || this.formatValue(val)
     },
     formatSettBankAccType(val) {
       let code = val

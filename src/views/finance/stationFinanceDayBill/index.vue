@@ -36,8 +36,7 @@
         </el-form-item>
         <el-form-item label="业态">
           <el-select v-model="searchForm.ruleId" clearable placeholder="全部" style="width: 130px">
-            <el-option :value="1" label="电单车" />
-            <el-option :value="2" label="新能源汽车" />
+            <el-option v-for="item in ruleIdOptions" :key="'rule-' + item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
         <el-form-item label="商户">
@@ -301,6 +300,7 @@ export default {
       defaultMonthRange: [defaultMonthStart, monthEnd],
       merchantList: [],
       stationList: [],
+      ruleIdOptions: [],
       summary: {
         settledTotalAmount: 0,
         orderTotalAmount: 0,
@@ -405,7 +405,9 @@ export default {
     }
   },
   created() {
-    this.$dict.getSelector('device_rule')
+    this.$dict.getSelectorOptions('device_rule', { numeric: true }).then(list => {
+      this.ruleIdOptions = list || []
+    })
     this.initMerchant()
     this.initStationList()
     this.loadAll()

@@ -71,7 +71,7 @@
 				</el-table-column> -->
 				<el-table-column label="分账类型" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
 				<template slot-scope="scope">
-					<span v-if="scope.row.splitType === 0">充电</span>
+					<span>{{ $dict.formatFinanceSplitType(scope.row.splitType) }}</span>
 				</template>
 				</el-table-column>
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
@@ -257,6 +257,7 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('finance_split_type')
 			this.$dict.getSelectorOptions('finance_split_status').then(list => {
 				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
 			})

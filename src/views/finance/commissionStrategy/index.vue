@@ -286,13 +286,13 @@ export default {
     }
   },
   created() {
-    this.$dict.getSelectorOptions('common_yes_no').then(list => { this.yesNoOptions = list || [] })
+    this.$dict.getSelectorOptions('fee_collect_flag').then(list => { this.yesNoOptions = list || [] })
     this.initMerchant()
     this.search()
   },
   methods: {
     formatYesNo(code) {
-      return formatDictLabel('common_yes_no', code)
+      return formatDictLabel('fee_collect_flag', code)
     },
     handleTabClick(tab) {
       this.searchForm.ruleId = tab.name

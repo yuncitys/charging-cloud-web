@@ -233,6 +233,41 @@ export function formatOrgType(val) {
 	return formatDictLabel('org_type', val)
 }
 
+export function formatFeeCollectFlag(val) {
+	return formatDictLabel('fee_collect_flag', val)
+}
+
+export function formatFinanceSplitType(val) {
+	const code = val === null || val === undefined || val === '' ? val : (String(val) === '0' ? '0' : '1')
+	return formatDictLabel('finance_split_type', code)
+}
+
+export function formatMerchantInvoiceType(val) {
+	return formatDictLabel('merchant_invoice_type', val)
+}
+
+export function formatMerchantRoleType(val) {
+	if (val === null || val === undefined || val === '') return '-'
+	let roles = []
+	if (typeof val === 'string') {
+		roles = val.split(',')
+	} else if (Array.isArray(val)) {
+		roles = val
+	} else {
+		roles = [String(val)]
+	}
+	const labels = roles.map(r => formatDictLabel('merchant_role_type', String(r).trim())).filter(Boolean)
+	return labels.length ? labels.join('，') : '-'
+}
+
+export function formatWithdrawCashStatus(val) {
+	return formatDictLabel('withdraw_cash_status', val)
+}
+
+export function formatWithdrawPayType(val) {
+	return formatDictLabel('withdraw_pay_type', val)
+}
+
 export function getDeviceStatusOptions() {
 	return getSelectorOptions('device_status', { numeric: true })
 }
@@ -286,6 +321,12 @@ const dictApi = {
 	formatDeviceActivateStatus,
 	formatConnectorStatus,
 	formatOrgType,
+	formatFeeCollectFlag,
+	formatFinanceSplitType,
+	formatMerchantInvoiceType,
+	formatMerchantRoleType,
+	formatWithdrawCashStatus,
+	formatWithdrawPayType,
 	getDeviceStatusOptions,
 	getElectricOutTypeOptions,
 	getDeviceRuleOptions,
