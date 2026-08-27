@@ -255,16 +255,6 @@ import { parseTime } from '@/utils/index'
 import { getRuleIdTabs, getDefaultRuleIdTabName } from '@/utils/ruleIdTabs'
 import { formatDictLabel } from '@/utils/dictionary'
 
-const CYCLE_CARD_META = {
-  1: { title: 'T+1', desc: '每天提交前一天的结算' },
-  2: { title: 'T+7', desc: '每周一提交上一周的结算' },
-  3: { title: 'M+1', desc: '每月1号提交上个月的结算' }
-}
-const MODE_CARD_META = {
-  1: { desc: '按周期由系统自动发起结算' },
-  2: { desc: '需人工操作发起结算' }
-}
-
 export default {
   name: 'StationSettlementRule',
   data() {
@@ -364,25 +354,19 @@ export default {
     },
     loadDictOptions() {
       this.$dict.getSelectorOptions('settlement_cycle_type', { numeric: true }).then(list => {
-        this.cycleOptions = (list || []).map(item => {
-          const meta = CYCLE_CARD_META[item.value] || {}
-          return {
-            value: item.value,
-            title: meta.title || item.label,
-            desc: meta.desc || '',
-            filterLabel: item.label
-          }
-        })
+        this.cycleOptions = (list || []).map(item => ({
+          value: item.value,
+          title: item.label,
+          desc: item.description || '',
+          filterLabel: item.label
+        }))
       })
       this.$dict.getSelectorOptions('settlement_mode', { numeric: true }).then(list => {
-        this.modeOptions = (list || []).map(item => {
-          const meta = MODE_CARD_META[item.value] || {}
-          return {
-            value: item.value,
-            title: item.label,
-            desc: meta.desc || ''
-          }
-        })
+        this.modeOptions = (list || []).map(item => ({
+          value: item.value,
+          title: item.label,
+          desc: item.description || ''
+        }))
       })
     },
     handleTabClick(tab) {
