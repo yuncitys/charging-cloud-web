@@ -306,6 +306,68 @@ export function formatTaskExportStatus(val) {
 	return formatDictLabel('task_export_status', val)
 }
 
+export function formatChargeMode(val) {
+	return formatDictLabel('charge_mode', val)
+}
+
+export function formatChargeCollectType(val) {
+	return formatDictLabel('charge_collect_type', val)
+}
+
+export function formatChargeBillingCycle(val) {
+	const code = val === true || val === 'true' ? 1 : val === false || val === 'false' ? 0 : val
+	return formatDictLabel('charge_billing_cycle', code)
+}
+
+export function formatDeviceChargePattern(val) {
+	return formatDictLabel('device_charge_pattern', val)
+}
+
+/** 列表「是否免费」：2=是，其它=否 */
+export function formatDeviceIsFree(val) {
+	return Number(val) === 2 ? '是' : '否'
+}
+
+export function formatInterCheckBillType(val) {
+	return formatDictLabel('inter_check_bill_type', val)
+}
+
+export function formatInterPushPriceType(val) {
+	return formatDictLabel('inter_push_price_type', val)
+}
+
+export function formatElectricDecimalPlaces(val) {
+	return formatDictLabel('electric_decimal_places', val)
+}
+
+export function formatSettlementLedgerLineType(val) {
+	return formatDictLabel('settlement_ledger_line_type', val)
+}
+
+export function formatSysOperBusinessType(val) {
+	return formatDictLabel('sys_oper_business_type', val)
+}
+
+export function formatSysOperOperatorType(val) {
+	return formatDictLabel('sys_oper_operator_type', val)
+}
+
+export function formatSysCommonResult(val) {
+	return formatDictLabel('sys_common_result', val)
+}
+
+export function formatDriverEnableStatus(val) {
+	return formatDictLabel('driver_enable_status', val)
+}
+
+export function formatEnableStatus(val) {
+	return formatDictLabel('enable_status', val)
+}
+
+export function formatDeviceQrcodeSyncType(val) {
+	return formatDictLabel('device_qrcode_sync_type', val)
+}
+
 export function getChargeCardStatusOptions() {
 	return getSelectorOptions('charge_card_status', { numeric: true })
 }
@@ -320,6 +382,62 @@ export function getRechargeRuleModeOptions() {
 
 export function getTaskExportStatusOptions() {
 	return getSelectorOptions('task_export_status', { numeric: true })
+}
+
+export function getChargeModeOptions() {
+	return getSelectorOptions('charge_mode', { numeric: true })
+}
+
+export function getChargeCollectTypeOptions() {
+	return getSelectorOptions('charge_collect_type', { numeric: true })
+}
+
+export function getChargeBillingCycleOptions() {
+	return getSelectorOptions('charge_billing_cycle', { numeric: true })
+}
+
+export function getDeviceChargePatternOptions() {
+	return getSelectorOptions('device_charge_pattern', { numeric: true })
+}
+
+export function getInterCheckBillTypeOptions() {
+	return getSelectorOptions('inter_check_bill_type', { numeric: true })
+}
+
+export function getInterPushPriceTypeOptions() {
+	return getSelectorOptions('inter_push_price_type', { numeric: true })
+}
+
+export function getElectricDecimalPlacesOptions() {
+	return getSelectorOptions('electric_decimal_places', { numeric: true })
+}
+
+export function getSettlementLedgerLineTypeOptions() {
+	return getSelectorOptions('settlement_ledger_line_type', { numeric: true })
+}
+
+export function getSysOperBusinessTypeOptions() {
+	return getSelectorOptions('sys_oper_business_type', { numeric: true })
+}
+
+export function getSysOperOperatorTypeOptions() {
+	return getSelectorOptions('sys_oper_operator_type', { numeric: true })
+}
+
+export function getSysCommonResultOptions() {
+	return getSelectorOptions('sys_common_result', { numeric: true })
+}
+
+export function getDriverEnableStatusOptions() {
+	return getSelectorOptions('driver_enable_status', { numeric: true })
+}
+
+export function getEnableStatusOptions() {
+	return getSelectorOptions('enable_status', { numeric: true })
+}
+
+export function getDeviceQrcodeSyncTypeOptions() {
+	return getSelectorOptions('device_qrcode_sync_type', { numeric: true })
 }
 
 export function getAccountStatusOptions() {
@@ -424,10 +542,39 @@ const dictApi = {
 	formatAdMediaType,
 	formatRechargeRuleMode,
 	formatTaskExportStatus,
+	formatChargeMode,
+	formatChargeCollectType,
+	formatChargeBillingCycle,
+	formatDeviceChargePattern,
+	formatDeviceIsFree,
+	formatInterCheckBillType,
+	formatInterPushPriceType,
+	formatElectricDecimalPlaces,
+	formatSettlementLedgerLineType,
+	formatSysOperBusinessType,
+	formatSysOperOperatorType,
+	formatSysCommonResult,
+	formatDriverEnableStatus,
+	formatEnableStatus,
+	formatDeviceQrcodeSyncType,
 	getChargeCardStatusOptions,
 	getAdMediaTypeOptions,
 	getRechargeRuleModeOptions,
 	getTaskExportStatusOptions,
+	getChargeModeOptions,
+	getChargeCollectTypeOptions,
+	getChargeBillingCycleOptions,
+	getDeviceChargePatternOptions,
+	getInterCheckBillTypeOptions,
+	getInterPushPriceTypeOptions,
+	getElectricDecimalPlacesOptions,
+	getSettlementLedgerLineTypeOptions,
+	getSysOperBusinessTypeOptions,
+	getSysOperOperatorTypeOptions,
+	getSysCommonResultOptions,
+	getDriverEnableStatusOptions,
+	getEnableStatusOptions,
+	getDeviceQrcodeSyncTypeOptions,
 	getAccountStatusOptions,
 	getBindStatusOptions,
 	getSysRoleTypeOptions,
