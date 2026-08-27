@@ -93,8 +93,7 @@
 				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+						<el-tag :type="scope.row.deviceStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
@@ -331,6 +330,10 @@
 			deep: true   // 监听内部任意属性变化
 		},
 		mounted() {
+			this.$dict.getSelectorOptions('device_status', { numeric: true }).then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+
 			getMerchant().then(res => {
 				this.merchantList = (res && res.code == 200) ? (res.data || []) : []
 			}).catch(() => {

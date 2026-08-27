@@ -105,8 +105,7 @@
 				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+						<el-tag :type="scope.row.deviceStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
@@ -442,13 +441,7 @@
 					deviceName: true,
 					adminId: false,
 				},
-				tags: [{
-					title: '离线',
-					id: 0,
-				}, {
-					title: '在线',
-					id: 1,
-				}],
+				tags: [],
 				//分配设备
 				merchantList: [],
         		chargingStationList: [],
@@ -499,6 +492,10 @@
 			}
 		},
 		mounted() {
+			this.$dict.getSelectorOptions('device_status', { numeric: true }).then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {
