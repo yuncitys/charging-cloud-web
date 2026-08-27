@@ -44,7 +44,7 @@
 				</el-table-column>
 				<!-- <el-table-column prop="ruleId" label="充电站类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						{{scope.row.ruleId === 1 ? '单车充电站' : '汽车充电站'}}
+						{{ $dict.formatDeviceRule(scope.row.ruleId) }}充电站
 					</template>
 				</el-table-column> -->
 				<el-table-column prop="merchantName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>

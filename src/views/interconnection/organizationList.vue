@@ -31,8 +31,7 @@
 				</el-table-column>
 				<el-table-column prop="orgType" label="机构类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.orgType == 3">流量平台</span>
-						<span v-if="scope.row.orgType == 4">监管平台</span>
+						{{ $dict.formatOrgType(scope.row.orgType) }}
 					</template>
 				</el-table-column>
 				<el-table-column prop="manageName" label="机构管理员" align="center" :show-overflow-tooltip="isPc">
@@ -177,6 +176,7 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('org_type')
 			this.getOrganizeList()
 		},
 	}

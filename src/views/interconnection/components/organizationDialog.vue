@@ -28,8 +28,7 @@
         </el-form-item>
         <el-form-item label="机构类型" prop="orgType">
           <el-radio-group v-model="form.orgType" :disabled = "isDetail">
-            <el-radio :label="3">流量平台</el-radio>
-            <el-radio :label="4">监管平台</el-radio>
+            <el-radio v-for="item in orgTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -284,8 +283,15 @@
           pushStopCharge: true,
           pushRealTimeData: true,
           pushOrderInfo: true
-        }
+        },
+        orgTypeOptions: []
       };
+    },
+    created() {
+      // 互联机构表单仅开放流量/监管两类
+      this.$dict.getSelectorOptions('org_type', { numeric: true }).then(list => {
+        this.orgTypeOptions = (list || []).filter(item => item.value === 3 || item.value === 4)
+      })
     },
     methods: {
       openDialog(formData,isDetail) {
