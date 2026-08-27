@@ -7,8 +7,7 @@
       </el-form-item>
       <el-form-item label="二维码类型">
         <el-radio-group v-model="qrType">
-          <el-radio :label="0">主界面码</el-radio>
-          <el-radio :label="1">枪二维码</el-radio>
+          <el-radio v-for="item in qrTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
         </el-radio-group>
       </el-form-item>
       <el-form-item label="二维码前缀">
@@ -30,8 +29,14 @@ export default {
       qrType: 0,
       qrPrefix: "",
       deviceCodeList: [],
-      deviceCodes: ""
+      deviceCodes: "",
+      qrTypeOptions: []
     }
+  },
+  created() {
+    this.$dict.getDeviceQrcodeSyncTypeOptions().then(list => {
+      this.qrTypeOptions = list || []
+    })
   },
   methods: {
     init(deviceCodeList) {

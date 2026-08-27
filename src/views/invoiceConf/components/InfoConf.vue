@@ -30,8 +30,9 @@
             <el-table-column prop="regionCode" label="地区编码" width="150"/>
             <el-table-column prop="status" label="状态" width="120">
               <template v-slot="scope">
-                <el-tag effect="dark" type="info" v-if="scope.row.status == 1">禁用</el-tag>
-                <el-tag effect="dark" type="success" v-else>启用</el-tag>
+                <el-tag effect="dark" :type="scope.row.status == 0 || scope.row.status == '0' ? 'success' : 'info'">
+                  {{ $dict.formatEnableStatus(scope.row.status == 1 || scope.row.status == '1' ? 0 : 1) }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间" width="150"/>

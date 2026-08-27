@@ -36,7 +36,7 @@
       <el-table-column label="状态" align="center" width="90">
         <template slot-scope="scope">
           <el-tag :type="scope.row.status === 0 ? 'success' : 'info'">
-            {{ scope.row.status === 0 ? '正常' : '停用' }}
+            {{ $dict.formatDriverEnableStatus(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>

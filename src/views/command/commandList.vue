@@ -18,12 +18,13 @@
 				</el-table-column>
 				<el-table-column prop="command" label="指令标识" align="center" :show-overflow-tooltip="true">
 				</el-table-column>
-			<!-- 	<el-table-column prop="status" label="状态" align="center">
+				<el-table-column prop="status" label="状态" align="center">
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.status == 0">正常</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 1">冻结</el-tag>
+						<el-tag :type="scope.row.status == 0 ? 'success' : 'danger'">
+							{{ $dict.formatAccountStatus(scope.row.status) }}
+						</el-tag>
 					</template>
-				</el-table-column> -->
+				</el-table-column>
 				<el-table-column prop="createTime" label="创建日期" align="center">
 					<template slot-scope="scope">
 					  <span>{{ scope.row.createTime | formatDate }}</span>
@@ -71,13 +72,7 @@
 					page: 1,
 					limit: 10
 				},
-				tags: [{
-					title: '正常',
-					id: 0,
-				}, {
-					title: '禁用',
-					id: 1,
-				}],
+				tags: [],
 				dialogTableVisible: false,
 				editData: {
 					status:''
@@ -146,6 +141,9 @@
 			}
 		},
 		created() {
+			this.$dict.getAccountStatusOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 		},
 
