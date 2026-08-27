@@ -405,6 +405,7 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelector('device_rule')
     this.initMerchant()
     this.initStationList()
     this.loadAll()
@@ -575,9 +576,9 @@ export default {
       this.detailVisible = true
     },
     ruleLabel(ruleId) {
-      if (ruleId === 1) return '单车桩'
-      if (ruleId === 2) return '汽车桩'
-      return '—'
+      if (ruleId == null || ruleId === '') return '—'
+      const label = this.$dict.formatDeviceRule(ruleId)
+      return label === String(ruleId) ? '—' : `${label}桩`
     },
     money(v) {
       if (v === null || v === undefined || v === '') return '—'

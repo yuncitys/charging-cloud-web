@@ -84,8 +84,9 @@
         <el-table-column prop="invoiceNo" label="发票号码" min-width="160" align="center" show-overflow-tooltip></el-table-column>
         <el-table-column prop="invoiceType" label="发票类型" min-width="100" align="center">
           <template v-slot="scope">
-            <el-tag v-if="scope.row.invoiceType === 1">蓝票</el-tag>
-            <el-tag type="danger" v-else>冲红</el-tag>
+            <el-tag :type="scope.row.invoiceType === 1 || scope.row.invoiceType === '1' ? '' : 'danger'">
+              {{ $dict.formatDictLabel('invoice_type', scope.row.invoiceType) }}
+            </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="invoiceState" label="状态" min-width="100" align="center">

@@ -275,7 +275,6 @@ export default {
     },
     stationScopeTypeLabel() {
       const key = String(this.subConfig.stationScopeType || '')
-      if (key === '3') return '选择电站'
       return formatDictLabel(DICT_DISCOUNT_STATION_SCOPE, key) === String(key) ? (key || '—') : formatDictLabel(DICT_DISCOUNT_STATION_SCOPE, key)
     },
     userScopeTypeLabel() {

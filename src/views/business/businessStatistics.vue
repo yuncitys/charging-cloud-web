@@ -62,16 +62,15 @@
 					</el-table-column>
 					<el-table-column prop="ruleId" label="产品类型" align="center" :show-overflow-tooltip="isPc">
 						<template slot-scope="scope">
-							<span v-if="scope.row.ruleId == 1">单车桩</span>
-							<span v-if="scope.row.ruleId == 2">汽车桩</span>
+							<span>{{ $dict.formatDeviceRule(scope.row.ruleId) }}桩</span>
 						</template>
 					</el-table-column>
 					<el-table-column prop="deviceCode" label="设备号" align="center" :show-overflow-tooltip="isPc">
 					</el-table-column>
 					<el-table-column prop="deviceStatus" label="设备状态" align="center" :show-overflow-tooltip="isPc">
 						<template slot-scope="scope">
-							<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-							<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+							<el-tag type="danger" v-if="scope.row.deviceStatus == 0">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
+							<el-tag type="success" v-if="scope.row.deviceStatus == 1">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
 						</template>
 					</el-table-column>
 					<el-table-column prop="deviceName" label="设备名称" align="center" :show-overflow-tooltip="isPc">
@@ -476,6 +475,8 @@
 			}
 		},
 		created() {
+			this.$dict.getSelector('device_rule')
+			this.$dict.getSelector('device_status')
 			// this.getRouters()
 			this.getMerchantList()
 			this.getChargingStationList()

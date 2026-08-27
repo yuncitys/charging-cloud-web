@@ -44,7 +44,7 @@
         <el-table-column prop="conversionStatus" label="状态" align="center" width="100">
           <template slot-scope="scope">
             <el-tag :type="scope.row.conversionStatus === '1' ? 'success' : 'info'" size="mini">
-              {{ scope.row.conversionStatus === '1' ? '已兑换' : '未兑换' }}
+              {{ $dict.formatDictLabel('marketing_exchange_code_status', scope.row.conversionStatus) }}
             </el-tag>
           </template>
         </el-table-column>
