@@ -63,7 +63,7 @@
 												class="flex">
 												<div>
 													<div>{{index+1}}</div>
-													<div>空闲</div>
+													<div>{{ $dict.formatConnectorStatus(0) }}</div>
 												</div>
 											</div>
 										</div>
@@ -74,7 +74,7 @@
 												class="flex">
 												<div>
 													<div style="color: #FCCC40;">{{index+1}}</div>
-													<div style="color: #FCCC40;">占用</div>
+													<div style="color: #FCCC40;">{{ $dict.formatConnectorStatus(1) }}</div>
 												</div>
 											</div>
 										</div>
@@ -263,8 +263,8 @@
 					<div style="margin-top: 50px;">
 						<el-card class="box-card">
 							<div slot="header" class="clearfix">
-								<span>设备详情，在线状态：<el-tag type="success" v-if="deviceInfo.deviceStatus == 1">在线</el-tag>
-									<el-tag type="danger" v-if="deviceInfo.deviceStatus == 0">离线</el-tag>
+								<span>设备详情，在线状态：<el-tag type="success" v-if="deviceInfo.deviceStatus == 1">{{ $dict.formatDeviceStatus(deviceInfo.deviceStatus) }}</el-tag>
+									<el-tag type="danger" v-if="deviceInfo.deviceStatus == 0">{{ $dict.formatDeviceStatus(deviceInfo.deviceStatus) }}</el-tag>
 								</span>
 							</div>
 							<div>
@@ -885,7 +885,8 @@
 			}
 		},
 		mounted() {
-
+			this.$dict.getSelector('device_status')
+			this.$dict.getSelector('connector_status')
 		},
 		created() {
 			let id = this.$route.query.id

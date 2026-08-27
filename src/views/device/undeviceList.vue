@@ -82,7 +82,7 @@
 				</el-table-column>
 				<el-table-column prop="ruleId" label="产品名称" v-if="formThead.ruleId" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
+						{{ $dict.formatDeviceRule(scope.row.ruleId) }}
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceCode" label="设备号" v-if="formThead.deviceCode" align="center"
@@ -120,9 +120,7 @@
 				<el-table-column prop="priceType" label="计费类型" v-if="formThead.priceType" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.priceType == 0">计时</span>
-						<span v-if="scope.row.priceType == 1">电量</span>
-						<span v-if="scope.row.priceType == 2">功率</span>
+						<span>{{ $dict.formatPriceType(scope.row.priceType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="feeName" label="计费标准" v-if="formThead.feeName" align="center"
@@ -131,8 +129,7 @@
 				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+						<el-tag :type="scope.row.activateStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceActivateStatus(scope.row.activateStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
@@ -410,6 +407,9 @@
 			}
 		},
 		mounted() {
+			this.$dict.getSelector('device_rule')
+			this.$dict.getSelector('device_activate_status')
+			this.$dict.getSelector('price_type')
 			this.$dict.getSelectorOptions('device_status', { numeric: true }).then(list => {
 				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
 			})

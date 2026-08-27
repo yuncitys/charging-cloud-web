@@ -26,12 +26,12 @@
 				</el-table-column>
 				<el-table-column prop="ruleId" label="归属系列" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
+						{{ $dict.formatDeviceRule(scope.row.ruleId) }}
 					</template>
 				</el-table-column>
 				<el-table-column prop="electricOut" label="电流输出" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						{{scope.row.electricOut === 1 ? '直流充电桩' : '交流充电桩'}}
+						{{ $dict.formatElectricOutType(scope.row.electricOut) }}充电桩
 					</template>
 				</el-table-column>
 				<el-table-column prop="portCount" label="设备端口数" align="center" :show-overflow-tooltip="isPc">
@@ -86,27 +86,18 @@
 					ruleId: '',
 					electricOut: '',
 				},
-				ruleIds:[
-					{
-						title: '单车',
-						id: 1,
-					}, {
-						title: '汽车',
-						id: 2,
-					}
-				],
-				electricOuts:[
-					{
-						title: '交流',
-						id: 0,
-					}, {
-						title: '直流',
-						id: 1,
-					}
-				]
+				ruleIds: [],
+				electricOuts: []
 			}
 		},
 		mounted() {
+			this.$dict.getSelectorOptions('device_rule', { numeric: true }).then(list => {
+				this.ruleIds = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+			this.$dict.getSelectorOptions('electric_out_type', { numeric: true }).then(list => {
+				this.electricOuts = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+			this.$dict.getSelector('device_rule')
 
 		},
 		methods: {
