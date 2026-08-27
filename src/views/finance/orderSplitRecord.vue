@@ -76,10 +76,7 @@
 				</el-table-column>
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-            			<el-tag type="danger" v-if="scope.row.status == 'UNTREATED'">未处理</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 'PROCESSING'">处理中</el-tag>
-						<el-tag type="success" v-if="scope.row.status == 'FINISH'">已完成</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 'FAIL'">分账失败</el-tag>
+            			<el-tag :type="splitStatusTagType(scope.row.status)">{{ formatSplitStatus(scope.row.status) }}</el-tag>
 					</template>
 				</el-table-column>
 				<!-- <el-table-column prop="billingDetails" label="分账详情" align="center" :show-overflow-tooltip="isPc">
@@ -125,6 +122,7 @@
 		parseTime
 	} from '@/utils/index'
 	import orderSplitDownExcel from './components/orderSplitDownExcel.vue'
+	import { formatDictLabel } from '@/utils/dictionary'
 	export default {
 		name: 'orderSplitRecord',
 		components: {
@@ -150,22 +148,7 @@
 				},
 				tableKey: 0,
 
-				tags: [{
-						id: 'UNTREATED',
-						title: '未处理'
-					},{
-						id: 'RPOCESSED',
-						title: '处理中'
-					},
-					{
-						id: 'FINISH',
-						title: '已完成'
-					},
-					{
-						id: 'FAIL',
-						title: '分成失败'
-					},
-				],
+				tags: [],
 
 				time: '',
         		merchantList: [],
@@ -263,8 +246,20 @@
 				if (Number.isNaN(n)) return '—'
 				return `${n.toFixed(4)}%`
 			},
+			formatSplitStatus(val) {
+				if (val === null || val === undefined || val === '') return '—'
+				return formatDictLabel('finance_split_status', val)
+			},
+			splitStatusTagType(status) {
+				if (status === 'FINISH') return 'success'
+				if (status === 'PROCESSING' || status === 'RPOCESSED') return 'warning'
+				return 'danger'
+			},
 		},
 		created() {
+			this.$dict.getSelectorOptions('finance_split_status').then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
 			const q = this.$route.query || {}
 			this.listQuery.bizOrderCode = q.bizOrderCode || q.orderCode || ''
 			this.getList()

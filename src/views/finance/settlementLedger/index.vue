@@ -976,6 +976,8 @@ export default {
       this.$dict.getSelectorOptions('settlement_payout_item_status').then(list => {
         this.payoutItemStatusOptions = list || []
       })
+      this.$dict.getSelector('settlement_payout_batch_status')
+      this.$dict.getSelector('settlement_payout_trigger_type')
     },
     search() {
       this.searchForm.page = 1
@@ -1120,14 +1122,14 @@ export default {
         })
     },
     payoutTriggerLabel(t) {
-      if (t === 2) return '调度'
-      return '手工'
+      if (t == null || t === '') return '—'
+      const label = formatDictLabel('settlement_payout_trigger_type', t)
+      return label === String(t) ? '—' : label
     },
     payoutBatchStatusLabel(s) {
-      if (s === 0) return '进行中'
-      if (s === 1) return '成功'
-      if (s === 2) return '部分失败'
-      return '—'
+      if (s == null || s === '') return '—'
+      const label = formatDictLabel('settlement_payout_batch_status', s)
+      return label === String(s) ? '—' : label
     },
     payoutItemStatusLabel(s) {
       if (s == null || s === '') return '—'
