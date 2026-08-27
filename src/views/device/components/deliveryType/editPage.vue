@@ -11,8 +11,7 @@
 				</el-form-item>
 				<el-form-item :label="'产品名称'" prop="ruleId">
 					<el-radio-group v-model="formData.ruleId" @change="onchangeEleetricOut($event)">
-						<el-radio :label="1">单车</el-radio>
-						<el-radio :label="2">汽车</el-radio>
+						<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
         <el-form-item :label="'电流输出'" prop="electricOut">
@@ -95,16 +94,8 @@
           	trigger: ['blur', 'change']
           }],
 				},
-        electricOutList:[
-          {
-            value:0,
-            label:'交流充电桩'
-          },
-          {
-            value:1,
-            label:'直流充电桩'
-          }
-        ]
+				deviceRuleOptions: [],
+				electricOutList: []
 			}
 		},
 		mounted() {
@@ -117,6 +108,9 @@
 				this.formData.deviceTypeId = this.row_data.deviceTypeId
 				this.formData.ruleId = this.row_data.ruleId
         this.formData.electricOut = this.row_data.electricOut
+				this.$dict.getElectricOutOptionsForRule(this.formData.ruleId).then(list => {
+					this.electricOutList = list || []
+				})
 				this.showDialog = true
 			},
 			formConfirm(formName) {
@@ -143,30 +137,13 @@
       onchangeEleetricOut(ruleId){
         console.log(ruleId)
         this.formData.electricOut = ''
-        if(ruleId === 1){
-          this.electricOutList =
-          [
-            {
-              value: 0,
-              label: '交流充电桩'
-            }
-          ];
-        }else if(ruleId === 2){
-          this.electricOutList =
-          [
-            {
-              value: 0,
-              label: '交流充电桩'
-            },
-            {
-              value: 1,
-              label: '直流充电桩'
-            },
-          ];
-        }
+        this.$dict.getElectricOutOptionsForRule(ruleId).then(list => {
+          this.electricOutList = list || []
+        })
       }
 		},
 		created() {
+			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
 		},
 	}
 </script>

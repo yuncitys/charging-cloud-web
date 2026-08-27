@@ -23,9 +23,7 @@
 				</el-form-item>
 				<el-form-item label="收费类型" prop="deviceChagePattern" v-if="addDeviceData.ruleId === 1">
 					<el-radio-group v-model="addDeviceData.deviceChagePattern" @change="changeChagePattern">
-						<el-radio :label="0">时间</el-radio>
-						<el-radio :label="1">电量</el-radio>
-						<el-radio :label="2">功率</el-radio>
+						<el-radio v-for="item in priceTypeOptions" :key="'pt-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'收费方案'" prop="devicePriceId">
@@ -149,16 +147,8 @@
 					}],
 				},
 				tags: [],
-				electricOutList:[
-					{
-						value:0,
-						label:'交流充电桩'
-					},
-					{
-						value:1,
-						label:'直流充电桩'
-					}
-				],
+				priceTypeOptions: [],
+				electricOutList: [],
 				fullscreenLoading: false,
 				showExcel: false,
 				uploadFileUrl: this.Global.APIURl + '/api/system/device/Uploader'
@@ -279,27 +269,9 @@
 				this.addDeviceData.electricOut = ''
 				this.addDeviceData.devicePriceId = ''
 				// this.addDeviceData.deviceChagePattern = ''
-				if(ruleId === 1){
-				this.electricOutList =
-				[
-					{
-					value: 0,
-					label: '交流充电桩'
-					}
-				];
-				}else if(ruleId === 2){
-				this.electricOutList =
-				[
-					{
-					value: 0,
-					label: '交流充电桩'
-					},
-					{
-					value: 1,
-					label: '直流充电桩'
-					},
-				];
-				}
+				this.$dict.getElectricOutOptionsForRule(ruleId).then(list => {
+					this.electricOutList = list || []
+				})
 				this.getDeviceTypeList()
 				this.getDevicePriceByPriceType()
 			},
@@ -352,7 +324,9 @@
 			}
 		},
 		created() {
-
+			this.$dict.getPriceTypeOptions().then(list => {
+				this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+			})
 		},
 	}
 </script>

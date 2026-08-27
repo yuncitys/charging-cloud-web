@@ -211,15 +211,12 @@
 					</el-form-item>
 					<el-form-item :label="'归属系列'" prop="ruleId">
 						<el-radio-group v-model="ruleId" @change="ruleIdChange" :disabled="true">
-							<el-radio :label="1">单车</el-radio>
-							<el-radio :label="2">汽车</el-radio>
+							<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item label="收费类型" prop="deviceChagePattern" v-if="ruleId === 1">
 						<el-radio-group v-model="deviceChagePattern" @change="changeChagePattern">
-							<el-radio :label="0">时间</el-radio>
-							<el-radio :label="1">电量</el-radio>
-							<el-radio :label="2">功率</el-radio>
+							<el-radio v-for="item in priceTypeOptions" :key="'pt-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item :label="'计费标准'" prop="devicePriceId">
@@ -246,15 +243,12 @@
 					</el-form-item>
 					<el-form-item :label="'归属系列'" prop="ruleId">
 						<el-radio-group v-model="ruleId" @change="ruleIdChange" :disabled="true">
-							<el-radio :label="1">单车</el-radio>
-							<el-radio :label="2">汽车</el-radio>
+							<el-radio v-for="item in deviceRuleOptions" :key="'rule-b-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item label="计费类型" prop="deviceChagePattern" v-if="ruleId === 1">
 						<el-radio-group v-model="deviceChagePattern" @change="changeChagePattern">
-							<el-radio :label="0">时间</el-radio>
-							<el-radio :label="1">电量</el-radio>
-							<el-radio :label="2">功率</el-radio>
+							<el-radio v-for="item in priceTypeOptions" :key="'pt-b-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item :label="'计费标准'" prop="devicePriceId">
@@ -386,7 +380,9 @@
 				},
 				deviceCodes: '',
 				ruleId: getDefaultRuleIdNumber(),
-				downloadLoading: false
+				downloadLoading: false,
+				deviceRuleOptions: [],
+				priceTypeOptions: []
 			}
 		},
 		filters: {
@@ -410,6 +406,10 @@
 			this.$dict.getSelector('device_rule')
 			this.$dict.getSelector('device_activate_status')
 			this.$dict.getSelector('price_type')
+			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
+			this.$dict.getPriceTypeOptions().then(list => {
+				this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+			})
 			this.$dict.getSelectorOptions('device_status', { numeric: true }).then(list => {
 				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
 			})

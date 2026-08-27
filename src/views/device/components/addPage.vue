@@ -8,8 +8,7 @@
 				label-width="100px" style="width: 600px; margin-left:50px;">
 				<el-form-item v-if="!syncRuleIdFromList" :label="'归属系列'" prop="ruleId">
 					<el-radio-group v-model="addDeviceData.ruleId" @change="ruleIdChange($event)">
-						<el-radio :label="1">单车</el-radio>
-						<el-radio :label="2">汽车</el-radio>
+						<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'电流输出'" prop="electricOut">
@@ -37,9 +36,7 @@
 				</el-form-item>
 				<el-form-item label="收费类型" prop="deviceChagePattern" v-if="addDeviceData.ruleId === 1">
 					<el-radio-group v-model="addDeviceData.deviceChagePattern" @change="changeChagePattern">
-						<el-radio :label="0">时间</el-radio>
-						<el-radio :label="1">电量</el-radio>
-						<el-radio :label="2">功率</el-radio>
+						<el-radio v-for="item in priceTypeOptions" :key="'pt-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'收费方案'" prop="devicePriceId">
@@ -164,16 +161,9 @@
 					}],
 				},
 				tags: [],
-				electricOutList:[
-					{
-						value:0,
-						label:'交流充电桩'
-					},
-					{
-						value:1,
-						label:'直流充电桩'
-					}
-				]
+				deviceRuleOptions: [],
+				priceTypeOptions: [],
+				electricOutList: []
 			}
 		},
 		computed: {
@@ -229,27 +219,9 @@
 				this.addDeviceData.electricOut = ''
 				this.addDeviceData.devicePriceId = ''
 				// this.addDeviceData.deviceChagePattern = ''
-				if(ruleId === 1){
-					this.electricOutList =
-					[
-						{
-						value: 0,
-						label: '交流充电桩'
-						}
-					];
-				}else if(ruleId === 2){
-					this.electricOutList =
-					[
-						{
-						value: 0,
-						label: '交流充电桩'
-						},
-						{
-						value: 1,
-						label: '直流充电桩'
-						},
-					];
-				}
+				this.$dict.getElectricOutOptionsForRule(ruleId).then(list => {
+					this.electricOutList = list || []
+				})
 				this.getDeviceTypeList()
 				this.getDevicePriceByPriceType()
 			},
@@ -300,9 +272,12 @@
 				this.getDeviceTypeList()
 			}
 		},
-    created() {
-
-    },
+		created() {
+			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
+			this.$dict.getPriceTypeOptions().then(list => {
+				this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+			})
+		},
 	}
 </script>
 
