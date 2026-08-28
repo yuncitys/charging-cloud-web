@@ -368,6 +368,54 @@ export function formatDeviceQrcodeSyncType(val) {
 	return formatDictLabel('device_qrcode_sync_type', val)
 }
 
+export function formatInvoiceChannelType(val) {
+	return formatDictLabel('invoice_channel_type', val)
+}
+
+export function formatInvoiceChannelFlag(val) {
+	return formatDictLabel('invoice_channel_flag', val)
+}
+
+export function formatInvoiceRoleTypePt(val) {
+	return formatDictLabel('invoice_role_type_pt', val)
+}
+
+export function formatInvoiceRoleTypeWq(val) {
+	return formatDictLabel('invoice_role_type_wq', val)
+}
+
+export function formatInvoiceRoleType(channelType, val) {
+	return Number(channelType) === 4 ? formatInvoiceRoleTypePt(val) : formatInvoiceRoleTypeWq(val)
+}
+
+export function formatPowerChargeType(val) {
+	return formatDictLabel('power_charge_type', val)
+}
+
+export function getInvoiceChannelTypeOptions() {
+	return getSelectorOptions('invoice_channel_type')
+}
+
+export function getInvoiceChannelFlagOptions() {
+	return getSelectorOptions('invoice_channel_flag')
+}
+
+export function getInvoiceRoleTypePtOptions() {
+	return getSelectorOptions('invoice_role_type_pt')
+}
+
+export function getInvoiceRoleTypeWqOptions() {
+	return getSelectorOptions('invoice_role_type_wq')
+}
+
+export function getPowerChargeTypeOptions() {
+	return getSelectorOptions('power_charge_type', { numeric: true })
+}
+
+export function getStationLocationOptions() {
+	return getSelectorOptions('station_location', { numeric: true })
+}
+
 export function getChargeCardStatusOptions() {
 	return getSelectorOptions('charge_card_status', { numeric: true })
 }
@@ -557,6 +605,18 @@ const dictApi = {
 	formatDriverEnableStatus,
 	formatEnableStatus,
 	formatDeviceQrcodeSyncType,
+	formatInvoiceChannelType,
+	formatInvoiceChannelFlag,
+	formatInvoiceRoleTypePt,
+	formatInvoiceRoleTypeWq,
+	formatInvoiceRoleType,
+	formatPowerChargeType,
+	getInvoiceChannelTypeOptions,
+	getInvoiceChannelFlagOptions,
+	getInvoiceRoleTypePtOptions,
+	getInvoiceRoleTypeWqOptions,
+	getPowerChargeTypeOptions,
+	getStationLocationOptions,
 	getChargeCardStatusOptions,
 	getAdMediaTypeOptions,
 	getRechargeRuleModeOptions,
