@@ -98,8 +98,7 @@
 					<el-col :xs="24" :sm="12">
 						<el-form-item :label="'电站位置'" prop="locationAddress">
 							<el-radio-group v-model="formData.locationAddress" :disabled = "isDetail">
-								<el-radio :label="1">地上电站</el-radio>
-								<el-radio :label="2">地下电站</el-radio>
+								<el-radio v-for="item in locationOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 							</el-radio-group>
 						</el-form-item>
 					</el-col>
@@ -320,6 +319,7 @@
 				stationTypeList: [],
 				buildAddressList: [],
 				parkFeeType: [],
+				locationOptions: [],
 				auxiliaryDeviceList: [
 					{
 						id: 'isBarrierGate',
@@ -1046,12 +1046,14 @@
 						this.$dict.getSelectorOptions('station_type', { numeric: true }),
 						this.$dict.getSelectorOptions('station_build_address', { numeric: true }),
 						this.$dict.getSelectorOptions('station_park_fee', { numeric: true }),
-						this.$dict.getSelectorOptions('station_tag', { numeric: true })
-					]).then(([types, builds, parks, tags]) => {
+						this.$dict.getSelectorOptions('station_tag', { numeric: true }),
+						this.$dict.getStationLocationOptions()
+					]).then(([types, builds, parks, tags, locations]) => {
 						this.stationTypeList = toOptions(types)
 						this.buildAddressList = toOptions(builds)
 						this.parkFeeType = toOptions(parks)
 						this.stationTagList = toOptions(tags)
+						this.locationOptions = locations || []
 					})
 				}
 			},
