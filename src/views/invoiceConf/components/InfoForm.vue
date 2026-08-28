@@ -108,15 +108,8 @@ export default {
         status:'1'
       },
       roleTypeList:[],
-      roleClassList:[
-        { 'fullName': '旺企数电', 'enCode': '3' }, 
-        { 'fullName': '票通', 'enCode': '4' }
-      ],
-      channelFlagList:[
-        { 'fullName': '线路一', 'enCode': '1' }, 
-        { 'fullName': '线路二', 'enCode': '2' }, 
-        { 'fullName': '线路三', 'enCode': '3' }
-      ],
+      roleClassList: [],
+      channelFlagList: [],
       isViewFlag: false,
 
       rules: {
@@ -146,7 +139,13 @@ export default {
     }
   },
   created() {
-    
+    const toFullNameEnCode = list => (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+    this.$dict.getInvoiceChannelTypeOptions().then(list => {
+      this.roleClassList = toFullNameEnCode(list)
+    })
+    this.$dict.getInvoiceChannelFlagOptions().then(list => {
+      this.channelFlagList = toFullNameEnCode(list)
+    })
   },
   methods: {
     changeClass(){
@@ -158,28 +157,14 @@ export default {
       this.dataForm.roleType = '';
     },
     getPtRoleList(){
-      this.roleTypeList = [
-        { 'fullName': '法定代表人', 'enCode': '01' }, 
-        { 'fullName': '财务负责人', 'enCode': '02' },
-        { 'fullName': '办税员', 'enCode': '03' }, 
-        { 'fullName': '涉税服务人员', 'enCode': '04' }, 
-        { 'fullName': '管理员', 'enCode': '05' }, 
-        { 'fullName': '领票人', 'enCode': '07' }, 
-        { 'fullName': '开票员', 'enCode': '09' }, 
-        { 'fullName': '其他人员', 'enCode': '99' },
-      ]
+      this.$dict.getInvoiceRoleTypePtOptions().then(list => {
+        this.roleTypeList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+      })
     },
     getWqRoleList(){
-      this.roleTypeList = [
-        { 'fullName': '法定代表人', 'enCode': '2' }, 
-        { 'fullName': '财务负责人', 'enCode': '1' },
-        { 'fullName': '办税员', 'enCode': '3' }, 
-        { 'fullName': '购票员', 'enCode': '4' }, 
-        { 'fullName': '普通管理员', 'enCode': '5' }, 
-        { 'fullName': '社保经办人', 'enCode': '8' }, 
-        { 'fullName': '开票员', 'enCode': '7' }, 
-        { 'fullName': '销售人员', 'enCode': '10' },
-      ]
+      this.$dict.getInvoiceRoleTypeWqOptions().then(list => {
+        this.roleTypeList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+      })
     },
     goBack() {
       this.isViewFlag = false
