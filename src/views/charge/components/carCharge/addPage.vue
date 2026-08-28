@@ -19,7 +19,7 @@
 						<el-input v-model="addData.name" placeholder="请输入方案名称" clearable />
 					</el-form-item>
 					<el-form-item :label="'价格类别'" prop="realTimeCharging">
-						<div class="price-item" v-for="(item,index) in  addData.priceTier">
+						<div class="price-item" v-for="(item,index) in addData.priceTier" :key="index">
 							<el-input disabled :placeholder="item.periodTypeName" v-model="item.periodTypeName" size="medium" style="width: 100px">
 								<!-- <template slot="prepend">时段</template> -->
 							</el-input>

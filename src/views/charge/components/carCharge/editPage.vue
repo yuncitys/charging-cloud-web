@@ -45,7 +45,7 @@
 								@onSelectedTime="onEditSelectedTime" :enTime="_item.enTime"
 								:disabled-items="editData.disabledItems"></select-time>
 							<el-select class="select-priod-type" v-model="_item.periodTypeId">
-								<el-option v-for="(item,index) in  editData.priceTier" :value="item.periodTypeId"
+								<el-option v-for="(item,index) in editData.priceTier" :key="item.periodTypeId || index" :value="item.periodTypeId"
 									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元】 服务费 【'+item.serviceFee+' 元】' ">
 								</el-option>
 							</el-select>

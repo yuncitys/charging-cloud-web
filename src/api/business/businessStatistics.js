@@ -65,6 +65,10 @@ export function exportDeviceReport(data) {
 	})
 }
 
+// 兼容老页面导入别名
+export const findReportsAndStatisticsByDevice = getDeviceStatistics
+export const getList = getReportsStatistics
+
 // 查询经销商列表信息
 export function findDealerList(data) {
 	return request({
