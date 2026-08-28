@@ -29,8 +29,8 @@
 				<el-form-item :label="'功率类型'" prop="chargeType">
 					<div id="">
 						<el-radio-group v-model="formData.chargeType">
-							<el-radio v-for="(item,index) in chargeTypeList" :key="index" :label="index">
-								{{item.title}}
+							<el-radio v-for="item in chargeTypeList" :key="item.value" :label="item.value">
+								{{ item.label }}
 							</el-radio>
 						</el-radio-group>
 					</div>
@@ -242,15 +242,7 @@
 				chargeBillingCycleOptions: [],
 				chargeCollectOptions: [],
 				chargeModeOptions: [],
-				chargeTypeList: [{
-					id: 1,
-					realTimeCharging: 0,
-					title: "平均功率"
-				}, {
-					id: 2,
-					realTimeCharging: 1,
-					title: "最高功率"
-				}],
+				chargeTypeList: [],
 
 				pageType: 0,
 				moneyList: [
@@ -543,6 +535,7 @@
 			this.$dict.getChargeBillingCycleOptions().then(list => { this.chargeBillingCycleOptions = list || [] })
 			this.$dict.getChargeCollectTypeOptions().then(list => { this.chargeCollectOptions = list || [] })
 			this.$dict.getChargeModeOptions().then(list => { this.chargeModeOptions = list || [] })
+			this.$dict.getPowerChargeTypeOptions().then(list => { this.chargeTypeList = list || [] })
 		},
 	}
 </script>
