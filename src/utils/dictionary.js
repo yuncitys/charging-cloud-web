@@ -16,6 +16,29 @@ function bumpDictVersion() {
 	dictState.version += 1
 }
 
+/**
+ * 清除所有前端字典本地缓存
+ */
+export function clearAllDictCache() {
+	cache.clear()
+	inflight.clear()
+	labelMaps.clear()
+	bumpDictVersion()
+}
+
+/**
+ * 清除指定字典编码的前端本地缓存
+ * @param {string} enCode
+ */
+export function clearDictCache(enCode) {
+	if (!enCode) return
+	cache.delete(enCode)
+	inflight.delete(enCode)
+	labelMaps.delete(enCode)
+	bumpDictVersion()
+}
+
+
 function extractList(res) {
 	const data = res && res.data
 	return Array.isArray(data) ? data : (data && Array.isArray(data.list) ? data.list : [])
@@ -648,7 +671,9 @@ const dictApi = {
 	getFinanceUserFlowTypeOptions,
 	getFinanceOrgFlowTypeOptions,
 	getBusKindData,
-	getBankNo
+	getBankNo,
+	clearAllDictCache,
+	clearDictCache
 }
 
 export default dictApi

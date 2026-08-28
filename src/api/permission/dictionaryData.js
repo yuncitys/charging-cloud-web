@@ -60,3 +60,11 @@ export function getDictionarySelector(enCode) {
 		method: 'get'
 	})
 }
+
+export function refreshDictionaryCache() {
+	return request({
+		url: `${BASE}/refreshCache`,
+		method: 'post'
+	})
+}
+

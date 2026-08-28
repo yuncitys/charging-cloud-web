@@ -5,6 +5,13 @@
 				<el-card shadow="never" class="dict-card">
 					<div slot="header" class="card-header">
 						<span>字典分类</span>
+						<el-button
+							type="primary"
+							size="mini"
+							icon="el-icon-refresh"
+							:loading="refreshLoading"
+							@click="handleRefreshCache"
+						>刷新缓存</el-button>
 					</div>
 					<div class="dict-card-body">
 						<div class="toolbar">
@@ -224,8 +231,10 @@ import {
 	createDictionaryData,
 	updateDictionaryData,
 	deleteDictionaryData,
-	updateDictionaryDataState
+	updateDictionaryDataState,
+	refreshDictionaryCache
 } from '@/api/permission/dictionaryData.js'
+import { clearAllDictCache } from '@/utils/dictionary.js'
 
 function defaultTypeForm() {
 	return {
@@ -285,6 +294,7 @@ export default {
 	name: 'dictionary',
 	data() {
 		return {
+			refreshLoading: false,
 			typeKeyword: '',
 			typeLoading: false,
 			typeList: [],
@@ -336,6 +346,22 @@ export default {
 		},
 		defaultDataForm() {
 			return defaultDataForm()
+		},
+		handleRefreshCache() {
+			this.refreshLoading = true
+			refreshDictionaryCache().then(res => {
+				if (res.code === 200) {
+					clearAllDictCache()
+					this.$message.success('字典缓存刷新成功')
+					this.loadTypes()
+				} else {
+					this.$message.error(res.msg || '刷新缓存失败')
+				}
+			}).catch(() => {
+				this.$message.error('刷新缓存失败')
+			}).finally(() => {
+				this.refreshLoading = false
+			})
 		},
 		loadTypes() {
 			this.typeLoading = true
@@ -412,6 +438,7 @@ export default {
 					: createDictionaryType(payload)
 				req.then(res => {
 					if (res.code === 200) {
+						clearAllDictCache()
 						this.$message.success(res.msg || '保存成功')
 						this.typeDialogVisible = false
 						this.loadTypes()
@@ -425,6 +452,7 @@ export default {
 			const enabledMark = row.enabledMark === 1 ? 0 : 1
 			updateDictionaryTypeState(row.id, enabledMark).then(res => {
 				if (res.code === 200) {
+					clearAllDictCache()
 					this.$message.success(res.msg || '更新成功')
 					this.loadTypes()
 				} else {
@@ -436,6 +464,7 @@ export default {
 			this.$confirm('删除后不可恢复，是否继续？', '警告', { type: 'warning' }).then(() => {
 				deleteDictionaryType(row.id).then(res => {
 					if (res.code === 200) {
+						clearAllDictCache()
 						this.$message.success(res.msg || '删除成功')
 						if (this.selectedType && this.selectedType.id === row.id) {
 							this.selectedType = null
@@ -479,6 +508,7 @@ export default {
 					: createDictionaryData(payload)
 				req.then(res => {
 					if (res.code === 200) {
+						clearAllDictCache()
 						this.$message.success(res.msg || '保存成功')
 						this.dataDialogVisible = false
 						this.loadData()
@@ -492,6 +522,7 @@ export default {
 			const enabledMark = row.enabledMark === 1 ? 0 : 1
 			updateDictionaryDataState(row.id, enabledMark).then(res => {
 				if (res.code === 200) {
+					clearAllDictCache()
 					this.$message.success(res.msg || '更新成功')
 					this.loadData()
 				} else {
@@ -503,6 +534,7 @@ export default {
 			this.$confirm('删除后不可恢复，是否继续？', '警告', { type: 'warning' }).then(() => {
 				deleteDictionaryData(row.id).then(res => {
 					if (res.code === 200) {
+						clearAllDictCache()
 						this.$message.success(res.msg || '删除成功')
 						this.loadData()
 					} else {
