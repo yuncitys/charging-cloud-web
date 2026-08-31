@@ -1,91 +1,104 @@
 <template>
-	<div style="display: inline-block;"	>
-		<el-button type="primary" @click="onShowDeviceInfo" size='mini' >
-      详情
+	<div style="display: inline-block;">
+		<el-button type="primary" @click="onShowDeviceInfo" size="mini">
+			详情
 		</el-button>
-		<el-dialog :visible.sync="showDeviceInfo" title="设备详情" @close="showDeviceInfo = false" :append-to-body="true">
-			<div style="display: flex;">
-				<el-row>
-					<el-col :xs="24"  :lg="12">
-						<div>
-							<el-form ref="deviceInfo" :model="deviceInfo" label-position="left" label-width="100px"
-								style="width: 300px; margin-left:50px;">
-								<el-form-item :label="'设备号'" prop="deviceCode">
-									<el-input v-model="deviceInfo.deviceCode" disabled=""></el-input>
+		<el-dialog :visible.sync="showDeviceInfo" title="设备详情" @close="showDeviceInfo = false" :append-to-body="true" width="900px">
+			<el-tabs v-model="activeTab">
+				<el-tab-pane label="基本信息" name="base">
+					<el-row :gutter="20">
+						<el-col :xs="24" :lg="12">
+							<el-form ref="deviceInfo" :model="deviceInfo" label-position="left" label-width="110px">
+								<el-form-item label="设备号" prop="deviceCode">
+									<el-input v-model="deviceInfo.deviceCode" disabled></el-input>
 								</el-form-item>
-								<el-form-item :label="'实时总功率'" prop="deviceTotalPower">
-									<el-input v-model="deviceInfo.deviceTotalPower" disabled="">
+								<el-form-item label="设备名称" prop="deviceName">
+									<el-input v-model="deviceInfo.deviceName" disabled></el-input>
+								</el-form-item>
+								<el-form-item label="实时总功率" prop="deviceTotalPower">
+									<el-input v-model="deviceInfo.deviceTotalPower" disabled>
 										<template slot="append">W</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'功率下限'" prop="powerLower">
-									<el-input v-model="deviceInfo.powerLower" disabled="">
+								<el-form-item label="功率下限" prop="powerLower">
+									<el-input v-model="deviceInfo.powerLower" disabled>
 										<template slot="append">W</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'功率上限'" prop="powerUpper">
-									<el-input v-model="deviceInfo.powerUpper" disabled="">
+								<el-form-item label="功率上限" prop="powerUpper">
+									<el-input v-model="deviceInfo.powerUpper" disabled>
 										<template slot="append">W</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'总功率上限'" prop="totalPowerUpper">
-									<el-input v-model="deviceInfo.totalPowerUpper" disabled="">
+								<el-form-item label="总功率上限" prop="totalPowerUpper">
+									<el-input v-model="deviceInfo.totalPowerUpper" disabled>
 										<template slot="append">W</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'警告温度'" prop="warningTemperature">
-									<el-input v-model="deviceInfo.warningTemperature" disabled="">
+							</el-form>
+						</el-col>
+						<el-col :xs="24" :lg="12">
+							<el-form ref="deviceInfo" :model="deviceInfo" label-position="left" label-width="110px">
+								<el-form-item label="警告温度" prop="warningTemperature">
+									<el-input v-model="deviceInfo.warningTemperature" disabled>
 										<template slot="append">℃</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'低温'" prop="lowTemperature">
-									<el-input v-model="deviceInfo.lowTemperature" disabled="">
+								<el-form-item label="机箱温度" prop="deviceTemperature">
+									<el-input v-model="deviceInfo.deviceTemperature" disabled>
 										<template slot="append">℃</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'高温'" prop="highTemperature">
-									<el-input v-model="deviceInfo.highTemperature" disabled="">
-										<template slot="append">℃</template>
-									</el-input>
-								</el-form-item>
-								<el-form-item :label="'设备机箱温度'" prop="deviceTemperature">
-									<el-input v-model="deviceInfo.deviceTemperature" disabled="">
-										<template slot="append">℃</template>
-									</el-input>
-								</el-form-item>
-								<el-form-item :label="'设备等待时间'" prop="deviceChargePattern">
-									<el-input v-model="deviceInfo.deviceChargePattern" disabled="">
+								<el-form-item label="设备心跳时间" prop="deviceHeartbeatTime">
+									<el-input v-model="deviceInfo.deviceHeartbeatTime" disabled>
 										<template slot="append">S</template>
 									</el-input>
 								</el-form-item>
-								<el-form-item :label="'设备心跳时间'" prop="deviceHeartbeatTime">
-									<el-input v-model="deviceInfo.deviceHeartbeatTime" disabled="">
-										<template slot="append">S</template>
-									</el-input>
+								<el-form-item label="设备信号" prop="deviceSignal">
+									<el-input v-model="deviceInfo.deviceSignal" disabled />
 								</el-form-item>
-								<el-form-item :label="'设备信号'" prop="deviceSignal">
-									<el-input v-model="deviceInfo.deviceSignal" disabled="" />
-								</el-form-item>
-								<el-form-item :label="'二维码规则'" prop="deviceQrcodeLink" style="width: 520px;">
-									<el-input v-model="deviceInfo.deviceQrcodeLink" disabled="" />
+								<el-form-item label="二维码规则" prop="deviceQrcodeLink">
+									<el-input v-model="deviceInfo.deviceQrcodeLink" disabled />
 								</el-form-item>
 							</el-form>
-						</div>
-					</el-col>
-					<el-col :xs="24"  :lg="12">
-						<div class="left10">
-							<el-form ref="deviceInfo" :model="deviceInfo" label-position="left" label-width="100px"
-								style="width: 200px; margin-left:220px;">
-								<div v-for="(item,index) in ports" :key="index">
-									<el-form-item :label="`端口${index+1}`">
-										<el-tag :type="item == 0 || item == 2 ? 'success' : 'danger'">{{ $dict.formatConnectorStatus(item) }}</el-tag>
-									</el-form-item>
-								</div>
-							</el-form>
-						</div>
-					</el-col>
-				</el-row>
-			</div>
+						</el-col>
+					</el-row>
+				</el-tab-pane>
+
+				<el-tab-pane label="充电枪/端口列表" name="guns">
+					<el-table :data="gunList" border size="small" style="width: 100%;" max-height="400">
+						<el-table-column prop="gunNumber" label="序号" width="70" align="center" />
+						<el-table-column prop="gunName" label="枪/插座名称" min-width="140" />
+						<el-table-column prop="gunCode" label="枪编码" min-width="150" />
+						<el-table-column prop="power" label="额定功率" width="100" align="center">
+							<template slot-scope="scope">
+								<span>{{ scope.row.power ? scope.row.power + ' W' : '-' }}</span>
+							</template>
+						</el-table-column>
+						<el-table-column prop="electricOutType" label="输出类型" width="90" align="center">
+							<template slot-scope="scope">
+								<el-tag size="mini" :type="scope.row.electricOutType === 1 ? 'warning' : 'info'">
+									{{ scope.row.electricOutType === 1 ? '直流' : '交流' }}
+								</el-tag>
+							</template>
+						</el-table-column>
+						<el-table-column prop="chargingType" label="充电类型" width="90" align="center">
+							<template slot-scope="scope">
+								<el-tag size="mini" :type="scope.row.chargingType === 2 ? 'danger' : (scope.row.chargingType === 1 ? 'primary' : 'info')">
+									{{ formatChargingType(scope.row.chargingType) }}
+								</el-tag>
+							</template>
+						</el-table-column>
+						<el-table-column prop="status" label="状态" width="100" align="center">
+							<template slot-scope="scope">
+								<el-tag size="mini" :type="scope.row.status === 0 ? 'success' : (scope.row.status === 1 ? 'warning' : 'danger')">
+									{{ formatGunStatus(scope.row.status) }}
+								</el-tag>
+							</template>
+						</el-table-column>
+					</el-table>
+				</el-tab-pane>
+			</el-tabs>
 		</el-dialog>
 	</div>
 </template>
@@ -93,7 +106,9 @@
 <script>
 	import {
 		findDeviceInfoById,
+		listGuns
 	} from '@/api/device/deviceList.js'
+
 	export default {
 		props: {
 			row_data: {
@@ -106,45 +121,85 @@
 		data() {
 			return {
 				showDeviceInfo: false,
+				activeTab: 'base',
 				deviceInfo: {},
-				ports:[]
+				gunList: [],
+				ports: []
 			}
 		},
 		mounted() {
 			this.$dict.getSelector('connector_status')
+			this.$dict.getSelector('electric_out_type')
+			this.$dict.getSelector('charging_type')
 		},
 		methods: {
-			onShowDeviceInfo(){
-				this.onfindDeviceInfoById()
+			formatGunStatus(status) {
+				const map = {
+					0: '空闲',
+					1: '充电中',
+					2: '离线',
+					3: '故障',
+					4: '占位',
+					5: '预约占位'
+				}
+				return map[status] || this.$dict.formatConnectorStatus(status) || '未知'
 			},
-			//查询设备详情
+			formatChargingType(type) {
+				const map = {
+					0: '慢充',
+					1: '快充',
+					2: '超充'
+				}
+				return map[type] || '慢充'
+			},
+			onShowDeviceInfo() {
+				this.onfindDeviceInfoById()
+				this.loadGuns()
+			},
+			// 查询设备详情
 			onfindDeviceInfoById() {
 				let data = {
 					deviceId: this.row_data.id
 				}
 				findDeviceInfoById(data).then(res => {
 					if (res.code == 200) {
-						let deviceInfo= res.data
+						let deviceInfo = res.data
 						this.deviceInfo = deviceInfo
-						let ports=[]
-						let portCount=res.data.portCount || 10
-						for(let i=0;i<portCount;i++){
-						  let value=deviceInfo[`port${i+1}`]
-						  ports.push(value)
-						}
-						this.ports=ports
 						this.showDeviceInfo = true
 					} else {
 						this.$message.error(res.msg)
 					}
 				})
 			},
-		},
-		created() {
-
-		},
+			loadGuns() {
+				listGuns({ deviceId: this.row_data.id }).then(res => {
+					if (res.code === 200 && res.data && res.data.length > 0) {
+						this.gunList = res.data
+					} else {
+						// 兜底基于端口构建
+						let portCount = this.row_data.portCount || 10
+						let isCar = this.row_data.ruleId === 2
+						let fallbackList = []
+						for (let i = 1; i <= portCount; i++) {
+							fallbackList.push({
+								gunNumber: i,
+								gunName: (this.row_data.deviceName || this.row_data.deviceCode) + '#' + i + '号枪',
+								gunCode: this.row_data.deviceCode + String(i).padStart(2, '0'),
+								power: this.row_data.deviceTotalPower ? Math.floor(this.row_data.deviceTotalPower / portCount) : 0,
+								electricOutType: isCar ? 1 : 0,
+								chargingType: isCar ? 1 : 0,
+								status: this.row_data[`port${i}`] || 0
+							})
+						}
+						this.gunList = fallbackList
+					}
+				}).catch(() => {
+					this.gunList = []
+				})
+			}
+		}
 	}
 </script>
 
-<style>
+<style scoped>
 </style>

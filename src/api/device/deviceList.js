@@ -65,6 +65,15 @@ export function findDeviceCommand(data) {
 	})
 }
 
+// 查询设备所属充电枪/端口列表
+export function listGuns(data) {
+	return request({
+		url: '/api/web/device/listGuns',
+		method: 'get',
+		params: data
+	})
+}
+
 // 删除设备
 export function deleteDevice(data) {
 	return request({
