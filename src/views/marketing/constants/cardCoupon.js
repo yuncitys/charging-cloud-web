@@ -1,62 +1,81 @@
-/** 卡券相关枚举与文案 */
-export const DEDUCTION_TYPE = {
-  '1': '电费',
-  '2': '服务费',
-  '3': '总费用'
+/** 卡券相关枚举与文案（标签来自字典 Selector） */
+import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
+
+export const DICT_CARD_COUPON_TYPE = 'marketing_card_coupon_type'
+export const DICT_DEDUCTION_TYPE = 'marketing_deduction_type'
+export const DICT_COUPON_SCOPE_TYPE = 'marketing_coupon_scope_type'
+export const DICT_USE_THRESHOLD_TYPE = 'marketing_use_threshold_type'
+export const DICT_USE_LIMIT_TYPE = 'marketing_use_limit_type'
+export const DICT_USER_COUPON_STATUS = 'marketing_user_coupon_status'
+export const DICT_CARD_COUPON_STATUS = 'marketing_card_coupon_status'
+export const DICT_EFFECTIVE_TIME_TYPE = 'marketing_effective_time_type'
+export const DICT_USE_TYPE = 'marketing_use_type'
+export const DICT_DISCOUNT_SHARE_FLAG = 'marketing_discount_share_flag'
+
+/** Element Tag 类型（非字典） */
+export const USER_COUPON_STATUS_TAG = {
+  '0': 'info',
+  '1': 'warning',
+  '2': 'success',
+  '3': 'info',
+  '4': 'danger'
 }
 
-export const CARD_COUPON_TYPE = {
-  '1': '抵用卡',
-  '2': '满减券',
-  '3': '电量卡',
-  '4': '折扣券'
+export function loadCardCouponTypeOptions() {
+  return getSelectorOptions(DICT_CARD_COUPON_TYPE)
 }
 
-export const USE_TYPE = {
-  '1': '普通',
-  '2': '会员'
+export function loadDeductionTypeOptions() {
+  return getSelectorOptions(DICT_DEDUCTION_TYPE)
 }
 
-/** 是否优惠共享（1:共享，0:互斥） */
-export const DISCOUNT_SHARE_FLAG = {
-  '1': '该卡券优惠与折扣活动优惠共享',
-  '0': '该卡券优惠与折扣活动优惠不共享（互斥券）'
+export function loadCouponScopeTypeOptions() {
+  return getSelectorOptions(DICT_COUPON_SCOPE_TYPE)
+}
+
+export function loadUseThresholdTypeOptions() {
+  return getSelectorOptions(DICT_USE_THRESHOLD_TYPE)
+}
+
+export function loadUseLimitTypeOptions() {
+  return getSelectorOptions(DICT_USE_LIMIT_TYPE)
+}
+
+export function loadCardCouponStatusOptions() {
+  return getSelectorOptions(DICT_CARD_COUPON_STATUS)
+}
+
+export function loadDiscountShareFlagOptions() {
+  return getSelectorOptions(DICT_DISCOUNT_SHARE_FLAG)
+}
+
+export function loadEffectiveTimeTypeOptions() {
+  return getSelectorOptions(DICT_EFFECTIVE_TIME_TYPE)
+}
+
+export function loadUseTypeOptions() {
+  return getSelectorOptions(DICT_USE_TYPE)
+}
+
+export function loadUserCouponStatusOptions() {
+  return getSelectorOptions(DICT_USER_COUPON_STATUS).then(list =>
+    (list || []).map(item => ({
+      ...item,
+      tagType: USER_COUPON_STATUS_TAG[String(item.value)] || 'info'
+    }))
+  )
 }
 
 export function getDiscountShareFlagLabel(flag) {
   if (flag == null || flag === '') return '—'
-  return DISCOUNT_SHARE_FLAG[String(flag)] || flag
-}
-
-export const EFFECTIVE_TIME_TYPE = {
-  '1': '相对时间',
-  '2': '绝对时间'
-}
-
-export const SCOPE_TYPE = {
-  '1': '按城市选择',
-  '2': '按商户选择',
-  '3': '按电站分组',
-  '4': '全部电站',
-  '5': '按电站'
-}
-
-/** 抵用卡/电量卡/折扣券使用门槛 */
-export const USE_THRESHOLD_TYPE = {
-  '0': '无门槛',
-  '1': '满元',
-  '2': '满度'
-}
-
-/** 抵用卡/电量卡/折扣券使用限额类型 */
-export const USE_LIMIT_TYPE = {
-  '1': '每日限额',
-  '2': '每笔限额'
+  const label = formatDictLabel(DICT_DISCOUNT_SHARE_FLAG, flag)
+  return label === String(flag) ? String(flag) : label
 }
 
 export function getCardCouponTypeLabel(type) {
   if (!type) return '—'
-  return CARD_COUPON_TYPE[String(type)] || type
+  const label = formatDictLabel(DICT_CARD_COUPON_TYPE, type)
+  return label === String(type) ? String(type) : label
 }
 
 /** 面额按金额/度数计量的卡券（抵用卡、电量卡） */
@@ -86,17 +105,20 @@ export function getFaceValueUnit(type) {
 
 export function getDeductionTypeLabel(type) {
   if (!type) return '—'
-  return DEDUCTION_TYPE[String(type)] || type
+  const label = formatDictLabel(DICT_DEDUCTION_TYPE, type)
+  return label === String(type) ? String(type) : label
 }
 
 export function getScopeTypeLabel(type) {
   if (!type) return '—'
-  return SCOPE_TYPE[String(type)] || type
+  const label = formatDictLabel(DICT_COUPON_SCOPE_TYPE, type)
+  return label === String(type) ? String(type) : label
 }
 
 export function getUseThresholdTypeLabel(type) {
   if (type == null || type === '') return '—'
-  return USE_THRESHOLD_TYPE[String(type)] || type
+  const label = formatDictLabel(DICT_USE_THRESHOLD_TYPE, type)
+  return label === String(type) ? String(type) : label
 }
 
 export function formatFaceValue(coupon) {
@@ -110,7 +132,7 @@ export function formatFaceValue(coupon) {
 export function formatUseThreshold(coupon) {
   if (!coupon || !isThresholdLimitCardType(coupon.cardCouponType)) return '—'
   const type = String(coupon.useThresholdType || '0')
-  if (type === '0') return '无门槛'
+  if (type === '0') return getUseThresholdTypeLabel('0')
   const value = coupon.useThresholdValue
   if (value == null || value === '') return '—'
   return type === '2' ? `满 ${value} 度` : `满 ${value} 元`
@@ -142,20 +164,24 @@ export function formatDiscountCap(coupon) {
   return `${value} 元`
 }
 
-export const USER_COUPON_STATUS = [
-  { value: '0', label: '未使用', tagType: 'info' },
-  { value: '1', label: '使用中', tagType: 'warning' },
-  { value: '2', label: '已使用', tagType: 'success' },
-  { value: '3', label: '已过期', tagType: 'info' },
-  { value: '4', label: '已作废', tagType: 'danger' }
-]
+export function getUseTypeLabel(type) {
+  if (type == null || type === '') return ''
+  const label = formatDictLabel(DICT_USE_TYPE, type)
+  return label === String(type) ? String(type) : label
+}
+
+export function getEffectiveTimeTypeLabel(type) {
+  if (type == null || type === '') return ''
+  const label = formatDictLabel(DICT_EFFECTIVE_TIME_TYPE, type)
+  return label === String(type) ? String(type) : label
+}
 
 export function getUserCouponStatusLabel(status) {
-  const item = USER_COUPON_STATUS.find(s => s.value === String(status))
-  return item ? item.label : status
+  if (status == null || status === '') return status
+  const label = formatDictLabel(DICT_USER_COUPON_STATUS, status)
+  return label === String(status) ? String(status) : label
 }
 
 export function getUserCouponStatusTagType(status) {
-  const item = USER_COUPON_STATUS.find(s => s.value === String(status))
-  return item ? item.tagType : 'info'
+  return USER_COUPON_STATUS_TAG[String(status)] || 'info'
 }

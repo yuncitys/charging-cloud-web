@@ -58,10 +58,7 @@
           <el-form v-show="currentStep === 2" :model="form" :rules="rules" label-width="120px" label-position="left" style="width: 680px; margin-left:80px;">
             <el-form-item label="开票种类" prop="invoiceType">
               <el-radio-group v-model="form.invoiceType" :disabled="isDetail">
-                <el-radio :label="0">不开票</el-radio>
-                <el-radio :label="1">普票</el-radio>
-                <el-radio :label="2">专票</el-radio>
-                <el-radio :label="3">普票和专票</el-radio>
+                <el-radio v-for="item in invoiceTypeOptions" :key="'inv-' + item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item label="营业执照" prop="businessLicence">
@@ -214,19 +211,8 @@
             this.loadAreaChildren(node, resolve)
           }
         },
-        roleTypeOptions: [{
-          label: '运营商',
-          value: 'OPERATOR'
-        }, {
-          label: '投资人',
-          value: 'INVESTOR'
-        }, {
-          label: '场地方',
-          value: 'LANDLORD'
-        }, {
-          label: '分账主体',
-          value: 'SETTLE'
-        }],
+        roleTypeOptions: [],
+        invoiceTypeOptions: [],
         form: {
           id: '',
           typq: 1,
@@ -262,6 +248,14 @@
       },
       prevStep() {
         this.currentStep = 1
+      },
+      loadDictOptions() {
+        this.$dict.getSelectorOptions('merchant_role_type').then(list => {
+          this.roleTypeOptions = list || []
+        })
+        this.$dict.getSelectorOptions('merchant_invoice_type', { numeric: true }).then(list => {
+          this.invoiceTypeOptions = list || []
+        })
       },
       handleBusinessUpload(params) {
         const file = params.file
@@ -358,6 +352,7 @@
         return []
       },
       openDialog(formData,isDetail) {
+        this.loadDictOptions()
         this.dialogVisible = true;
         this.areaOptions = []
         

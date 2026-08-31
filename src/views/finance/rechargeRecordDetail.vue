@@ -81,39 +81,7 @@
 <script>
 	import { getDetail } from '@/api/finance/rechargeRecord.js'
 	import { tradingRefund } from '@/api/finance/refundCenter.js'
-
-	const REFUND_STATUS_MAP = Object.freeze({
-		UNTREATED: '未处理',
-		PROCESSING: '处理中',
-		SUCCESS: '退款成功',
-		FAILED: '退款失败',
-		ABNORMAL: '退款失败',
-		CLOSED: '退款关闭'
-	})
-
-	const REFUND_SOURCE_MAP = Object.freeze({
-		CHARGING_ORDER: '订单退款',
-		WALLET_BALANCE: '余额退款'
-	})
-
-	const REFUND_CHANNEL_MAP = Object.freeze({
-		ORIGINAL: '原路退款',
-		BALANCE: '退回到余额',
-		OTHER_BALANCE: '原账户异常退到其他余额账户',
-		OTHER_BANKCARD: '原银行卡异常退到其他银行卡'
-	})
-
-	const SPLIT_STATUS_MAP = Object.freeze({
-		UNTREATED: '未处理',
-		FINISH: '已完成',
-		RPOCESSED: '处理中',
-		FAIL: '分账失败'
-	})
-
-	const SPLIT_PAY_TYPE_MAP = Object.freeze({
-		BALANCE: '余额',
-		CARD: '卡支付'
-	})
+	import { formatDictLabel } from '@/utils/dictionary'
 
 	export default {
 		name: 'rechargeRecordDetail',
@@ -180,6 +148,18 @@
 				},
 				immediate: true
 			}
+		},
+		created() {
+			Promise.all([
+				this.$dict.getSelector('recharge_pay_status'),
+				this.$dict.getSelector('recharge_trade_type'),
+				this.$dict.getSelector('common_yes_no'),
+				this.$dict.getSelector('finance_refund_status'),
+				this.$dict.getSelector('finance_refund_source'),
+				this.$dict.getSelector('finance_refund_channel'),
+				this.$dict.getSelector('finance_split_status'),
+				this.$dict.getSelector('finance_split_pay_type')
+			])
 		},
 		methods: {
 			handleBack() {
@@ -378,32 +358,32 @@
 			},
 			getRefundColumnFormatter(prop) {
 				if (prop === 'status') {
-					return row => this.formatMagicValue(row && row.status, REFUND_STATUS_MAP)
+					return row => this.formatDictOrRaw('finance_refund_status', row && row.status)
 				}
 				if (prop === 'refundSource') {
-					return row => this.formatMagicValue(row && row.refundSource, REFUND_SOURCE_MAP)
+					return row => this.formatDictOrRaw('finance_refund_source', row && row.refundSource)
 				}
 				if (prop === 'channel') {
-					return row => this.formatMagicValue(row && row.channel, REFUND_CHANNEL_MAP)
+					return row => this.formatDictOrRaw('finance_refund_channel', row && row.channel)
 				}
 				return null
 			},
 			getSplitColumnFormatter(prop) {
 				if (prop === 'status') {
-					return row => this.formatMagicValue(row && row.status, SPLIT_STATUS_MAP)
+					return row => this.formatDictOrRaw('finance_split_status', row && row.status)
 				}
 				if (prop === 'payType') {
-					return row => this.formatMagicValue(row && row.payType, SPLIT_PAY_TYPE_MAP)
+					return row => this.formatDictOrRaw('finance_split_pay_type', row && row.payType)
 				}
 				return null
 			},
-			formatMagicValue(val, valueMap) {
+			formatDictOrRaw(dictCode, val) {
 				if (val === null || val === undefined || val === '') return '-'
-				return valueMap[val] || val
+				return formatDictLabel(dictCode, val)
 			},
 			formatProfitSharing(val) {
-				if (val === true || val === 1) return '是'
-				if (val === false || val === 0) return '否'
+				if (val === true || val === 1 || val === '1') return formatDictLabel('common_yes_no', 1)
+				if (val === false || val === 0 || val === '0') return formatDictLabel('common_yes_no', 0)
 				return '-'
 			},
 			formatNullable(val) {
@@ -412,22 +392,10 @@
 				return val
 			},
 			formatPayStatus(val) {
-				const v = typeof val === 'string' ? Number(val) : val
-				if (v === 0) return '未支付'
-				if (v === 10) return '支付中'
-				if (v === 1) return '已支付'
-				if (v === 2) return '支付失败'
-				if (v === 3) return '已退款'
-				if (v === 30) return '部分退款'
-				return this.formatNullable(val)
+				return formatDictLabel('recharge_pay_status', val)
 			},
 			formatTradeType(val) {
-				const v = typeof val === 'string' ? Number(val) : val
-				if (v === 0) return '充电缴费'
-				if (v === 1) return '充值余额'
-				if (v === 2) return '充值IC卡'
-				if (v === 3) return '充值月卡'
-				return this.formatNullable(val)
+				return formatDictLabel('recharge_trade_type', val)
 			},
 		}
 	}

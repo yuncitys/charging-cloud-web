@@ -10,16 +10,12 @@
           </el-form-item>
           <el-form-item label="卡券类型" prop="cardCouponType">
             <el-radio-group v-model="form.cardCouponType" :disabled="isEdit">
-              <el-radio label="1">抵用卡</el-radio>
-              <el-radio label="2">满减券</el-radio>
-              <el-radio label="3">电量卡</el-radio>
-              <el-radio label="4">折扣券</el-radio>
+              <el-radio v-for="item in cardCouponTypeOptions" :key="'ct'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="是否优惠共享" prop="discountShareFlag">
             <el-radio-group v-model="form.discountShareFlag">
-              <el-radio label="1">该卡券优惠与折扣活动优惠共享</el-radio>
-              <el-radio label="0">该卡券优惠与折扣活动优惠不共享（互斥券）</el-radio>
+              <el-radio v-for="item in discountShareFlagOptions" :key="'sf'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="库存数量" prop="stockNum">
@@ -33,9 +29,7 @@
         <el-tab-pane label="优惠规则" name="discount">
           <el-form-item label="抵扣类型" prop="deductionType">
             <el-select v-model="form.deductionType" placeholder="请选择">
-              <el-option label="电费" value="1" />
-              <el-option label="服务费" value="2" />
-              <el-option label="总费用" value="3" />
+              <el-option v-for="item in deductionTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item :label="faceValueFieldLabel" prop="faceValue">
@@ -47,9 +41,7 @@
           <template v-if="isThresholdLimitCardType(form.cardCouponType)">
             <el-form-item label="使用门槛" prop="useThresholdType">
               <el-radio-group v-model="form.useThresholdType" @change="form.useThresholdValue = null">
-                <el-radio label="0">无门槛</el-radio>
-                <el-radio label="1">满元</el-radio>
-                <el-radio label="2">满度</el-radio>
+                <el-radio v-for="item in useThresholdTypeOptions" :key="'ut'+item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item v-if="form.useThresholdType === '1'" label="满元门槛">
@@ -61,8 +53,7 @@
             <template v-if="form.cardCouponType !== '4'">
               <el-form-item label="使用限额" prop="useLimitType">
               <el-radio-group v-model="form.useLimitType" @change="onUseLimitTypeChange">
-                <el-radio label="1">每日限额</el-radio>
-                <el-radio label="2">每笔限额</el-radio>
+                <el-radio v-for="item in useLimitTypeOptions" :key="'ul'+item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
             <el-form-item v-if="form.useLimitType === '1'" :label="'每日限额(' + dailyLimitUnit + ')'">
@@ -81,8 +72,7 @@
         <el-tab-pane label="有效期" name="validity">
           <el-form-item label="有效期类型" prop="effectiveTimeType">
             <el-radio-group v-model="form.effectiveTimeType">
-              <el-radio label="1">领取后N天</el-radio>
-              <el-radio label="2">固定日期</el-radio>
+              <el-radio v-for="item in effectiveTimeTypeOptions" :key="'et'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item v-if="form.effectiveTimeType === '1'" label="有效天数">
@@ -98,9 +88,7 @@
         <el-tab-pane label="可用范围" name="scope">
           <el-form-item label="范围类型" prop="scopeType">
             <el-select v-model="form.scopeType" placeholder="请选择" @change="onScopeTypeChange">
-              <el-option label="全部电站" value="4" />
-              <el-option label="指定电站" value="5" />
-              <el-option label="电站分组" value="3" />
+              <el-option v-for="item in scopeTypeFormOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </el-form-item>
           <el-form-item v-if="form.scopeType === '5'" label="选择电站">
@@ -122,7 +110,17 @@
 <script>
 import { cardCouponDetail, createCardCoupon, updateCardCoupon } from '@/api/marketing/marketing'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
-import { isThresholdLimitCardType, getFaceValueUnit } from './constants/cardCoupon'
+import {
+  isThresholdLimitCardType,
+  getFaceValueUnit,
+  loadDeductionTypeOptions,
+  loadCouponScopeTypeOptions,
+  loadCardCouponTypeOptions,
+  loadDiscountShareFlagOptions,
+  loadUseThresholdTypeOptions,
+  loadUseLimitTypeOptions,
+  loadEffectiveTimeTypeOptions
+} from './constants/cardCoupon'
 
 export default {
   name: 'cardCouponEdit',
@@ -134,6 +132,13 @@ export default {
       effectiveRange: [],
       stationIds: [],
       stationOptions: [],
+      deductionTypeOptions: [],
+      couponScopeTypeOptions: [],
+      cardCouponTypeOptions: [],
+      discountShareFlagOptions: [],
+      useThresholdTypeOptions: [],
+      useLimitTypeOptions: [],
+      effectiveTimeTypeOptions: [],
       form: {
         cardCouponId: '',
         cardCouponName: '',
@@ -169,6 +174,10 @@ export default {
     isEdit() {
       return !!this.$route.query.id
     },
+    scopeTypeFormOptions() {
+      const allow = ['3', '4', '5']
+      return (this.couponScopeTypeOptions || []).filter(o => allow.includes(String(o.value)))
+    },
     faceValueFieldLabel() {
       if (this.form.cardCouponType === '4') return '折扣值(%)'
       const unit = getFaceValueUnit(this.form.cardCouponType)
@@ -185,6 +194,14 @@ export default {
     }
   },
   created() {
+    loadDeductionTypeOptions().then(list => { this.deductionTypeOptions = list || [] })
+    loadCouponScopeTypeOptions().then(list => { this.couponScopeTypeOptions = list || [] })
+    loadCardCouponTypeOptions().then(list => { this.cardCouponTypeOptions = list || [] })
+    loadDiscountShareFlagOptions().then(list => { this.discountShareFlagOptions = list || [] })
+    loadUseThresholdTypeOptions().then(list => { this.useThresholdTypeOptions = list || [] })
+    loadUseLimitTypeOptions().then(list => { this.useLimitTypeOptions = list || [] })
+    loadEffectiveTimeTypeOptions().then(list => { this.effectiveTimeTypeOptions = list || [] })
+
     this.loadStations()
     if (this.isEdit) {
       this.loadDetail()

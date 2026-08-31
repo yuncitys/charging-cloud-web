@@ -5,8 +5,9 @@
 				<el-form ref="form" :model="formData" label-width="80px">
 					<el-form-item label="充值规则">
 					<el-radio-group v-model="formData.IS_PRESTORE">
-						<el-radio :label="'0'">预存充值</el-radio>
-						<el-radio :label="'1'">单次充值</el-radio>
+						<el-radio v-for="item in rechargeModeOptions" :key="item.value" :label="String(item.value)">
+							{{ item.label }}
+						</el-radio>
 					</el-radio-group>
 					</el-form-item>
 				</el-form>
@@ -102,7 +103,8 @@
 					WECHAT_ACCESS_TOKEN: '',
 					TEMPLATE_KSCD_ID: '',
 					TEMPLATE_JSCD_ID: ''
-				}
+				},
+				rechargeModeOptions: []
 			}
 		},
 		methods:{
@@ -194,6 +196,9 @@
 			},
 		},
 		created() {
+			this.$dict.getRechargeRuleModeOptions().then(list => {
+				this.rechargeModeOptions = list || []
+			})
 			this.getLists()
 		}
 	}

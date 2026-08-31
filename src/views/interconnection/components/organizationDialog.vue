@@ -28,8 +28,7 @@
         </el-form-item>
         <el-form-item label="机构类型" prop="orgType">
           <el-radio-group v-model="form.orgType" :disabled = "isDetail">
-            <el-radio :label="3">流量平台</el-radio>
-            <el-radio :label="4">监管平台</el-radio>
+            <el-radio v-for="item in orgTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -61,16 +60,14 @@
           <el-col :span="12">
             <el-form-item label="对账选择" prop="checkBillType">
               <el-radio-group v-model="interconnectionOrganizationConf.checkBillType" :disabled = "isDetail">
-                <el-radio :label="0">线下手动</el-radio>
-                <el-radio :label="1">线上推送</el-radio>
+                <el-radio v-for="item in checkBillTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="价格推送" prop="pushPriceType">
               <el-radio-group v-model="interconnectionOrganizationConf.pushPriceType" :disabled = "isDetail">
-                <el-radio :label="0">标准价</el-radio>
-                <el-radio :label="1">优惠价</el-radio>
+                <el-radio v-for="item in pushPriceTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -79,9 +76,7 @@
           <el-col :span="12">
             <el-form-item label="电量小数位" prop="electricDecimal">
               <el-radio-group v-model="interconnectionOrganizationConf.electricDecimal" :disabled = "isDetail">
-                <el-radio :label="2">两位</el-radio>
-                <el-radio :label="3">三位</el-radio>
-                <el-radio :label="4">四位</el-radio>
+                <el-radio v-for="item in electricDecimalOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -284,8 +279,27 @@
           pushStopCharge: true,
           pushRealTimeData: true,
           pushOrderInfo: true
-        }
+        },
+        orgTypeOptions: [],
+        checkBillTypeOptions: [],
+        pushPriceTypeOptions: [],
+        electricDecimalOptions: []
       };
+    },
+    created() {
+      // 互联机构表单仅开放流量/监管两类
+      this.$dict.getSelectorOptions('org_type', { numeric: true }).then(list => {
+        this.orgTypeOptions = (list || []).filter(item => item.value === 3 || item.value === 4)
+      })
+      this.$dict.getInterCheckBillTypeOptions().then(list => {
+        this.checkBillTypeOptions = list || []
+      })
+      this.$dict.getInterPushPriceTypeOptions().then(list => {
+        this.pushPriceTypeOptions = list || []
+      })
+      this.$dict.getElectricDecimalPlacesOptions().then(list => {
+        this.electricDecimalOptions = list || []
+      })
     },
     methods: {
       openDialog(formData,isDetail) {

@@ -18,7 +18,7 @@
 					<el-col :span="12"><el-form-item label="通道费基数(元)"><span>{{ formatMoney(splitRecord.channelFeeBaseAmount) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="通道费率(%)"><span>{{ formatChannelFeeRate(splitRecord.channelFeeRate) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="分账比例(%)"><span>{{ formatNullable(splitRecord.splitRate) }}</span></el-form-item></el-col>
-					<el-col :span="12"><el-form-item label="状态"><span>{{ formatNullable(splitRecord.status) }}</span></el-form-item></el-col>
+					<el-col :span="12"><el-form-item label="状态"><span>{{ formatSplitStatus(splitRecord.status) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="分账时间"><span>{{ formatNullable(splitRecord.createTime) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="更新时间"><span>{{ formatNullable(splitRecord.updateTime) }}</span></el-form-item></el-col>
 					<el-col :span="12"><el-form-item label="失败原因"><span>{{ formatNullable(splitRecord.failReason) }}</span></el-form-item></el-col>
@@ -44,14 +44,14 @@
 
 <script>
 import { getDetail } from '@/api/finance/orderSplitRecord.js'
-
-const SETT_BANK_ACC_TYPE_MAP = Object.freeze({
-	'0010': '借记帐户',
-	'0030': '对公账户'
-})
+import { formatDictLabel } from '@/utils/dictionary'
 
 export default {
 	name: 'orderSplitRecordDetail',
+	created() {
+		this.$dict.getSelector('trade_entry_sett_bank_acc_type')
+		this.$dict.getSelector('finance_split_status')
+	},
 	data() {
 		return {
 			loading: false,
@@ -338,16 +338,20 @@ export default {
 		},
 		getSettBankAccTypeFormatter(prop) {
 			if (prop !== 'settBankAccType') return null
-			return row => this.formatMagicValue(row && row.settBankAccType, SETT_BANK_ACC_TYPE_MAP)
-		},
-		formatMagicValue(val, valueMap) {
-			if (val === null || val === undefined || val === '') return '-'
-			return valueMap[val] || val
+			return row => {
+				const val = row && row.settBankAccType
+				if (val === null || val === undefined || val === '') return '-'
+				return formatDictLabel('trade_entry_sett_bank_acc_type', val)
+			}
 		},
 		formatNullable(val) {
 			if (val === 0 || val === '0') return val
 			if (val === null || val === undefined || val === '') return '-'
 			return val
+		},
+		formatSplitStatus(val) {
+			if (val === null || val === undefined || val === '') return '-'
+			return formatDictLabel('finance_split_status', val)
 		},
 		formatMoney(val) {
 			if (val === null || val === undefined || val === '') return '-'

@@ -162,24 +162,36 @@
             <el-col :span="12">
               <el-form-item label="商户类型">
                 <el-select v-model="form.merType" style="width: 100%">
-                  <el-option label="交易商户" value="0" />
+                  <el-option
+                    v-for="item in merTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="交易商户类型">
                 <el-select v-model="form.tradeMerType" style="width: 100%">
-                  <el-option label="个体工商户" value="0" />
-                  <el-option label="企业" value="1" />
-                  <el-option label="小微商户(自然人)" value="2" />
+                  <el-option
+                    v-for="item in tradeMerTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="证件类型">
                 <el-select v-model="form.merCertType" style="width: 100%">
-                  <el-option label="营业执照" value="11" />
-                  <el-option label="身份证" value="22" />
+                  <el-option
+                    v-for="item in merCertTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -467,11 +479,12 @@
             <el-col :span="12">
               <el-form-item label="证件类型">
                 <el-select v-model="form.corLegIdType" style="width: 100%">
-                  <el-option label="身份证" value="11" />
-                  <el-option label="军人或武警证件号" value="12" />
-                  <el-option label="港澳台通行证" value="13" />
-                  <el-option label="护照" value="14" />
-                  <el-option label="户口本" value="15" />
+                  <el-option
+                    v-for="item in legIdTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -568,8 +581,12 @@
             <el-col :span="12">
               <el-form-item label="结算账户类型">
                 <el-select v-model="form.settBankAccType" style="width: 100%">
-                  <el-option label="借记账户" value="0010" />
-                  <el-option label="对公账户" value="0030" />
+                  <el-option
+                    v-for="item in settBankAccTypeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                  />
                 </el-select>
               </el-form-item>
             </el-col>
@@ -617,27 +634,15 @@
 <script>
 import { getTradeEntryDetail, getAreaSelector, queryTradeEntryStatus, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
 import { getMerchant } from '@/api/merchant/merchant'
-import dictData from '@/utils/dictData'
-import { formatServiceProvider, isLocalChannel } from '@/utils/payChannel'
-import { formatSalesSceneLabels, flattenTradeEntryWx } from '@/utils/wxSalesScene'
+import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
+import { formatSalesSceneLabels, flattenTradeEntryWx, loadWxSalesSceneOptions } from '@/utils/wxSalesScene'
+import dictApi, { formatDictLabel } from '@/utils/dictionary'
 
 export default {
   name: 'TradeEntryDetail',
   filters: {
     statusFilter(status) {
-      const statusMap = {
-        0: '待提交',
-        10: '入网中',
-        20: '认证中',
-        21: '待签署协议',
-        30: '正常',
-        31: '修改中',
-        32: '修改失败',
-        40: '冻结',
-        50: '注销',
-        60: '入网失败'
-      }
-      return statusMap[status] || status
+      return formatDictLabel('trade_entry_status', status)
     },
     statusTypeFilter(status) {
       const statusMap = {
@@ -667,6 +672,11 @@ export default {
       legAreaList: [],
       busKindOptions: [],
       merchantList: [],
+      merTypeOptions: [],
+      tradeMerTypeOptions: [],
+      merCertTypeOptions: [],
+      legIdTypeOptions: [],
+      settBankAccTypeOptions: [],
       wxExt: {},
       form: {
         id: undefined,
@@ -792,7 +802,15 @@ export default {
     }
   },
   created() {
-    this.busKindOptions = dictData.getBusKindData()
+    dictApi.getSelectorCascaderOptions('trade_bus_kind').then(list => { this.busKindOptions = list || [] })
+    loadServiceProviderDict().then(() => this.$forceUpdate())
+    loadWxSalesSceneOptions().then(() => this.$forceUpdate())
+    this.$dict.getSelectorOptions('trade_entry_mer_type').then(list => { this.merTypeOptions = list || [] })
+    this.$dict.getSelectorOptions('trade_entry_trade_mer_type').then(list => { this.tradeMerTypeOptions = list || [] })
+    this.$dict.getSelectorOptions('trade_entry_mer_cert_type').then(list => { this.merCertTypeOptions = list || [] })
+    this.$dict.getSelectorOptions('trade_entry_leg_id_type').then(list => { this.legIdTypeOptions = list || [] })
+    this.$dict.getSelectorOptions('trade_entry_sett_bank_acc_type').then(list => { this.settBankAccTypeOptions = list || [] })
+    this.$dict.getSelector('trade_entry_status')
     this.getProvinceList()
     this.getMerchantList()
     const id = this.$route.params.id

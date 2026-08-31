@@ -52,16 +52,7 @@
 				</el-table-column>
 				<el-table-column label="状态" prop="cardStatus"  align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag v-if="scope.row.cardStatus == 0">未开卡</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 2">沉默期</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 4">已停机</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 5">已断网</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 8">待激活</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 9">正常使用</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 20">期满,关停</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 21">已回收状态</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 80">未知</el-tag>
-						<el-tag v-if="scope.row.cardStatus == 99">已删除</el-tag>
+						<el-tag>{{ $dict.formatIotCardStatus(scope.row.cardStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="remark" label="备注" align="center" :show-overflow-tooltip="isPc">
@@ -145,40 +136,7 @@
 				},
 				tableKey: 0,
         		time: '',
-				tags: [{
-						id: '0',
-						title: '未开卡'
-					},{
-						id: '2',
-						title: '沉默期'
-					},{
-						id: '4',
-						title: '已停机'
-					},
-					{
-						id: '5',
-						title: '已断网'
-					},
-					{
-						id: '8',
-						title: '待激活'
-					},
-					{
-						id: '9',
-						title: '正常使用'
-					},
-					{
-						id: '20',
-						title: '期满,关停'
-					},
-					{
-						id: '21',
-						title: '已回收状态'
-					},
-					{
-						id: '80',
-						title: '未知'
-					}]
+				tags: [],
 			}
 		},
 		filters: {
@@ -284,6 +242,10 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('iot_card_status')
+			this.$dict.getIotCardStatusOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 		},
 	}

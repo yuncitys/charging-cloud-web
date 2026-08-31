@@ -83,7 +83,7 @@
 	import {
         getOperator
     } from '@/api/operator/operator.js'
-	import { getRoleTypeOptionsForEdit } from '@/utils/adminRoleTypeOptions.js'
+	import { getRoleTypeOptionsForEdit, preloadSysRoleTypeDict } from '@/utils/adminRoleTypeOptions.js'
 	export default {
 		name: 'agentEditpage',
 		components: {
@@ -197,7 +197,8 @@
           },
         },
 		methods: {
-			syncRoleTypeRadioOptions() {
+			async syncRoleTypeRadioOptions() {
+				await preloadSysRoleTypeDict()
 				this.roleTypeRadioOptions = getRoleTypeOptionsForEdit(this.$store.getters.adminUser, this.editData.roleType)
 			},
 			getDataPermissionsIdList(adminId){

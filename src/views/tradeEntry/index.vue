@@ -8,10 +8,10 @@
       <el-input v-model="listQuery.managerMobile" placeholder="管理员手机号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-input v-model="listQuery.merCertNo" placeholder="证件号" style="width: 200px;" class="filter-item" @keyup.enter.native="handleFilter" />
       <el-select v-model="listQuery.status" placeholder="入驻状态" clearable class="filter-item" style="width: 130px">
-        <el-option v-for="(item, key) in statusMap" :key="key" :label="item" :value="key" />
+        <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-select v-model="listQuery.auditStatus" placeholder="审核状态" clearable class="filter-item" style="width: 130px">
-        <el-option v-for="(item, key) in auditStatusMap" :key="key" :label="item" :value="key" />
+        <el-option v-for="item in auditStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-date-picker
         v-model="dateRange"
@@ -178,34 +178,19 @@
 
 <script>
 import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
-import { formatServiceProvider, isLocalChannel } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
+import { formatDictLabel } from '@/utils/dictionary'
 
 export default {
   name: 'TradeEntryList',
   components: { Pagination },
   filters: {
     typeFilter(status) {
-      const statusMap = {
-        '0': '交易商户',
-        '1': '普通商户'
-      }
-      return statusMap[status] || status
+      return formatDictLabel('trade_entry_mer_type', status)
     },
     statusFilter(status) {
-      const statusMap = {
-        0: '待提交',
-        10: '入网中',
-        20: '认证中',
-        21: '待签署协议',
-        30: '正常',
-        31: '修改中',
-        32: '修改失败',
-        40: '冻结',
-        50: '注销',
-        60: '入网失败'
-      }
-      return statusMap[status] || status
+      return formatDictLabel('trade_entry_status', status)
     },
     statusTypeFilter(status) {
       const statusMap = {
@@ -223,12 +208,7 @@ export default {
       return statusMap[status] || ''
     },
     auditStatusFilter(status) {
-      const statusMap = {
-        10: '待平台审核',
-        20: '平台驳回',
-        30: '平台已通过'
-      }
-      return statusMap[status] || status
+      return formatDictLabel('trade_entry_audit_status', status)
     },
     auditStatusTypeFilter(status) {
       const statusMap = {
@@ -246,23 +226,8 @@ export default {
       total: 0,
       listLoading: true,
       dateRange: [],
-      statusMap: {
-        0: '待提交',
-        10: '入网中',
-        20: '认证中',
-        21: '待签署协议',
-        30: '正常',
-        31: '修改中',
-        32: '修改失败',
-        40: '冻结',
-        50: '注销',
-        60: '入网失败'
-      },
-      auditStatusMap: {
-        10: '待平台审核',
-        20: '平台驳回',
-        30: '平台已通过'
-      },
+      statusOptions: [],
+      auditStatusOptions: [],
       listQuery: {
         page: 1,
         limit: 20,
@@ -280,6 +245,15 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelectorOptions('trade_entry_status').then(list => {
+      this.statusOptions = list || []
+    })
+    this.$dict.getSelectorOptions('trade_entry_audit_status').then(list => {
+      this.auditStatusOptions = list || []
+    })
+    this.$dict.getSelector('trade_entry_mer_type')
+
+    loadServiceProviderDict().then(() => this.$forceUpdate())
     this.getList()
   },
   methods: {

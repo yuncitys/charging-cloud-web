@@ -24,6 +24,15 @@ export default [
         }
       },
 {
+        path: '/permission/dictionary',
+        component: () => import('@/views/permission/dictionary/index'),
+        name: 'dictionary',
+        meta: {
+          title: '字典管理',
+          icon: 'el-icon-notebook-2',
+        }
+      },
+{
       path: '/interconnection/organizationList',
       component: () => import('@/views/interconnection/organizationList'),
       name: 'organizationList',

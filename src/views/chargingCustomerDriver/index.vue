@@ -36,7 +36,7 @@
       <el-table-column label="状态" align="center" width="90">
         <template slot-scope="scope">
           <el-tag :type="scope.row.status === 0 ? 'success' : 'info'">
-            {{ scope.row.status === 0 ? '正常' : '停用' }}
+            {{ $dict.formatDriverEnableStatus(scope.row.status) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -312,7 +312,7 @@ import {
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getCarListByOrgId } from '@/api/chargingCustomer/chargingCustomerCar'
 import { getAreaSelector } from '@/api/area/index'
-import dictData from '@/utils/dictData'
+import dictApi from '@/utils/dictionary'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import userImg from '@/assets/charging-customer/user.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
@@ -386,7 +386,7 @@ export default {
         flowType: '',
         flowObject: ''
       },
-      flowTypeOptions: dictData.getFinanceUserFlowTypeOptions(),
+      flowTypeOptions: [],
       userImg,
       walletImg
     }
@@ -415,6 +415,9 @@ export default {
     this.loadList()
     this.loadOrgOptions()
     this.loadProvinces()
+    dictApi.getFinanceUserFlowTypeOptions().then(list => {
+      this.flowTypeOptions = list || []
+    })
   },
   methods: {
     hasPerm(permission) {

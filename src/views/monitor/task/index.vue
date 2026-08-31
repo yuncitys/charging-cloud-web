@@ -5,6 +5,10 @@
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
 				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
 			</el-date-picker>
+			<el-select v-model="listQuery.status" style="width: 160px;margin-right: 20px ;" class="filter-item"
+				placeholder="任务状态" clearable @change="handleFilter">
+				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
+			</el-select>
 			<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter"
 				icon="el-icon-search">
 				查询
@@ -16,6 +20,13 @@
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
 				<el-table-column prop="taskName" label="下载任务" align="center" :show-overflow-tooltip='isPc'>
+				</el-table-column>
+				<el-table-column prop="status" label="任务状态" align="center" :show-overflow-tooltip='isPc'>
+					<template slot-scope="scope">
+						<el-tag :type="scope.row.status === 1 ? 'success' : 'warning'">
+							{{ $dict.formatTaskExportStatus(scope.row.status) }}
+						</el-tag>
+					</template>
 				</el-table-column>
 				<el-table-column prop="percentage" label="下载进度" align="center" :show-overflow-tooltip='isPc'>
 				<template slot-scope="scope">
@@ -79,13 +90,7 @@
 				limit: 10,
 				total: 10,
 				list: [],
-				tags: [{
-					title: '下载中',
-					id: 0,
-				}, {
-					title: '已完成',
-					id: 1,
-				}],
+				tags: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
@@ -157,6 +162,9 @@
 			},
 		},
 		created() {
+			this.$dict.getTaskExportStatusOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getList()
 			this.isPc = !this.$common.isMobile()
 		},

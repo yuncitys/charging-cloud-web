@@ -58,9 +58,7 @@
         <el-table-column prop="refundTime" label="退款时间"></el-table-column>
         <el-table-column prop="refundStatus" label="退款状态">
           <template v-slot="scope">
-            <span v-if="scope.row.refundStatus == 30">退款中</span>
-            <span v-if="scope.row.refundStatus == 31">已退款</span>
-            <span v-if="scope.row.refundStatus == 32">退款失败</span>
+            <span>{{ formatRefundStatus(scope.row.refundStatus) }}</span>
           </template>
         </el-table-column>    
       </el-table>
@@ -75,7 +73,8 @@
 
 <script>
 import { getList,del } from '@/api/billRefundInfo'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, loadServiceProviderDict } from '@/utils/payChannel'
+import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
 export default {
   name: '退款流水', // "退款流水"
   data() {
@@ -102,31 +101,21 @@ export default {
         title: '新增',
         id: ''
       },
-      refundStatusList: [
-        { fullName: '退款中', enCode: 30 },
-        { fullName: '已退款', enCode: 31 },
-        { fullName: '退款失败', enCode: 32 },
-      ],
-      serviceProviderList:[
-        {
-          enCode: 'wxpay',
-          fullName: '微信'
-        },{
-          enCode: 'alipay',
-          fullName: '支付宝'
-        },{
-          enCode: 'tzbank',
-          fullName: '合作银行'
-        },{
-          enCode: 'wxpay_partner',
-          fullName: '微信(服务商)'
-        },
-      ],
+      refundStatusList: [],
+      serviceProviderList: [],
       startTimeAndEndTime: [],
     }
   },
   created() {
-
+    loadServiceProviderDict().then(list => {
+      this.serviceProviderList = list
+    })
+    getSelectorOptions('pay_refund_status', { numeric: true }).then(list => {
+      this.refundStatusList = list.map(item => ({
+        enCode: item.value,
+        fullName: item.label
+      }))
+    })
   },
   filters: {
     amount(number) {
@@ -135,6 +124,9 @@ export default {
   },
   methods: {
     formatServiceProvider,
+    formatRefundStatus(code) {
+      return formatDictLabel('pay_refund_status', code)
+    },
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()

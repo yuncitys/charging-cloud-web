@@ -9,7 +9,7 @@
 				placeholder="请输入支付编号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请选择状态" clearable @change="handleFilter">
-				<el-option v-for="item in tags" :key="item.id" :label="item.title" :value="item.id" />
+				<el-option v-for="item in tags" :key="item.value" :label="item.label" :value="item.value" />
 			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
@@ -102,24 +102,7 @@
 	} from '@/utils/index'
 	import imgView from '@/components/Common/imgView.vue'
 	import downloadProgress from '@/components/Common/downloadProgress.vue'
-
-	const REFUND_SOURCE_MAP = {
-		CHARGING_ORDER: '订单退款',
-		WALLET_BALANCE: '余额退款'
-	}
-	const REFUND_CHANNEL_MAP = {
-		ORIGINAL: '原路退回',
-		BALANCE: '退回余额',
-		OTHER_BALANCE: '原账户异常退到其他余额账户',
-		OTHER_BANKCARD: '原银行卡异常退到其他银行卡'
-	}
-	const REFUND_STATUS_MAP = {
-		UNTREATED: '未处理',
-		PROCESSING: '处理中',
-		SUCCESS: '退款成功',
-		ABNORMAL: '退款失败',
-		CLOSED: '退款关闭'
-	}
+	import { formatDictLabel } from '@/utils/dictionary'
 
 	export default {
 		name: 'refundRecord',
@@ -147,26 +130,7 @@
 				},
 				tableKey: 0,
 
-				tags: [{
-						id: 'UNTREATED',
-						title: '未处理'
-					},{
-						id: 'PROCESSING',
-						title: '处理中'
-					},
-					{
-						id: 'SUCCESS',
-						title: '退款成功'
-					},
-					{
-						id: 'ABNORMAL',
-						title: '退款失败'
-					},
-					{
-						id: 'CLOSED',
-						title: '退款关闭'
-					}
-				],
+				tags: [],
 
 				time: ''
 			}
@@ -183,20 +147,17 @@
 
 		},
 		methods: {
-			labelOrRaw(map, value) {
-				if (value == null || value === '') {
-					return '—'
-				}
-				return map[value] != null ? map[value] : value
-			},
 			refundSourceLabel(value) {
-				return this.labelOrRaw(REFUND_SOURCE_MAP, value)
+				if (value == null || value === '') return '—'
+				return formatDictLabel('finance_refund_source', value)
 			},
 			refundChannelLabel(value) {
-				return this.labelOrRaw(REFUND_CHANNEL_MAP, value)
+				if (value == null || value === '') return '—'
+				return formatDictLabel('finance_refund_channel', value)
 			},
 			refundStatusLabel(value) {
-				return this.labelOrRaw(REFUND_STATUS_MAP, value)
+				if (value == null || value === '') return '—'
+				return formatDictLabel('finance_refund_status', value)
 			},
 			getLists() {
 				this.listLoading = true
@@ -266,13 +227,19 @@
 			},
 		},
 		created() {
-      const payCode = this.$route.query.payCode;
-      if (payCode !== undefined && payCode != '') {
-        this.listQuery.payCode = payCode;
-        this.getLists();
-      } else {
-        this.getLists();
-      }
+			this.$dict.getSelectorOptions('finance_refund_status').then(list => {
+				// 筛选沿用原列表：不含 FAILED（与 ABNORMAL 文案相同）
+				this.tags = (list || []).filter(item => item.value !== 'FAILED')
+			})
+			this.$dict.getSelector('finance_refund_source')
+			this.$dict.getSelector('finance_refund_channel')
+			const payCode = this.$route.query.payCode
+			if (payCode !== undefined && payCode != '') {
+				this.listQuery.payCode = payCode
+				this.getLists()
+			} else {
+				this.getLists()
+			}
 		},
 	}
 </script>

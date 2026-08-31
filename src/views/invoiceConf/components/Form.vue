@@ -219,10 +219,7 @@ export default {
         url:''
       },
       isViewFlag: false,
-      typeList:[
-        {fullName:'旺起数电',enCode:'3'},
-        {fullName:'票通',enCode:'4'}
-      ],
+      typeList: [],
       merchantList:[
         {fullName:'默认商户',enCode:'0'}
       ],
@@ -277,6 +274,9 @@ export default {
   },
   created() {
     this.getOperator()
+    this.$dict.getInvoiceChannelTypeOptions().then(list => {
+      this.typeList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+    })
   },
   methods: {
     goBack() {

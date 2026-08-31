@@ -113,10 +113,7 @@ export default {
         taxNum: '',
         userId: ''
       },
-      property: [
-        { label: '个人', value: "1" },
-        { label: '企业', value: "2" }
-      ],
+      property: [],
       customerList: [],
       rules: {
         taxname: [{ required: true, message: '请输入发票抬头' }],
@@ -129,6 +126,9 @@ export default {
     }
   },
   created() {
+    this.$dict.getSelectorOptions('invoice_title_type').then(list => {
+      this.property = list || []
+    })
     if (this.param.id) {
       get(this.param.id).then((res) => {
         this.form = res.data

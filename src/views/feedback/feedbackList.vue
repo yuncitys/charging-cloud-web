@@ -5,7 +5,7 @@
 				placeholder="请输入联系方式" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-select v-model="listQuery.status" style="width: 200px;margin-right: 20px;" class="filter-item"
 				placeholder="处理状态" clearable @change="handleFilter">
-				<el-option v-for="item in statusOptions" :key="item.id" :label="item.title" :value="item.id" />
+				<el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
 			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item" style="margin-right: 20px;"
 				start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange" format="yyyy-MM-dd"
@@ -29,8 +29,7 @@
 							<el-table-column prop="description" label="问题描述" align="center" min-width="220" show-overflow-tooltip />
 							<el-table-column prop="status" label="状态" align="center" width="90">
 								<template slot-scope="childScope">
-									<el-tag type="danger" v-if="childScope.row.status == 0">未处理</el-tag>
-									<el-tag type="success" v-else>已处理</el-tag>
+									<el-tag :type="feedbackStatusTagType(childScope.row.status)">{{ formatFeedbackStatus(childScope.row.status) }}</el-tag>
 								</template>
 							</el-table-column>
 							<el-table-column prop="handleRemark" label="处理备注" align="center" min-width="160" show-overflow-tooltip />
@@ -47,8 +46,7 @@
 				<el-table-column prop="descriptionSummary" label="问题摘要" align="center" show-overflow-tooltip />
 				<el-table-column prop="status" label="状态" align="center">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.status == 0">未处理</el-tag>
-						<el-tag type="success" v-else>已处理</el-tag>
+						<el-tag :type="feedbackStatusTagType(scope.row.status)">{{ formatFeedbackStatus(scope.row.status) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createTime" label="提交时间" align="center">
@@ -84,8 +82,7 @@
 							<div class="summary-card__sub">批次号：{{ currentRow.batchId || '-' }}</div>
 						</div>
 						<div class="status-wrap">
-							<el-tag type="danger" v-if="currentRow.status == 0">未处理</el-tag>
-							<el-tag type="success" v-else>已处理</el-tag>
+							<el-tag :type="feedbackStatusTagType(currentRow.status)">{{ formatFeedbackStatus(currentRow.status) }}</el-tag>
 						</div>
 					</div>
 					<div class="summary-grid">
@@ -126,8 +123,7 @@
 								<span>{{ item.subTypeName }}</span>
 							</div>
 							<div class="status-wrap">
-								<el-tag size="mini" type="danger" v-if="item.status == 0">未处理</el-tag>
-								<el-tag size="mini" type="success" v-else>已处理</el-tag>
+								<el-tag size="mini" :type="feedbackStatusTagType(item.status)">{{ formatFeedbackStatus(item.status) }}</el-tag>
 							</div>
 						</div>
 						<div class="detail-block">
@@ -209,7 +205,7 @@ export default {
 				createTimeStart: '',
 				createTimeEnd: ''
 			},
-			statusOptions: [{ title: '未处理', id: 0 }, { title: '已处理', id: 1 }],
+			statusOptions: [],
 			extraFieldLabels: {
 				deviceCode: '充电枪号',
 				port: '枪号/端口',
@@ -230,9 +226,18 @@ export default {
 		}
 	},
 	created() {
+		this.$dict.getSelectorOptions('feedback_handle_status', { numeric: true }).then(list => {
+			this.statusOptions = list || []
+		})
 		this.getList()
 	},
 	methods: {
+		formatFeedbackStatus(code) {
+			return this.$dict.formatDictLabel('feedback_handle_status', code)
+		},
+		feedbackStatusTagType(code) {
+			return Number(code) === 0 ? 'danger' : 'success'
+		},
 		getList() {
 			this.listLoading = true
 			getFeedbackPage(this.listQuery).then(res => {

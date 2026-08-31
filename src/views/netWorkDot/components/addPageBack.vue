@@ -25,8 +25,7 @@
 				</el-form-item>
 				<el-form-item :label="'充电站类型'" prop="ruleId">
 					<el-radio-group v-model="formData.ruleId">
-						<el-radio :label="1">单车充电站</el-radio>
-						<el-radio :label="2">汽车充电站</el-radio>
+						<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'充电站名称'" prop="networkName">
@@ -129,6 +128,7 @@
 				},
 				showAdd: false,
         		operatorList: [],
+				deviceRuleOptions: [],
 				formData: {
 					networkAddress: '',
 					networkName: '',
@@ -365,7 +365,7 @@
 			},
 		},
 		created() {
-
+			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
 		},
 	}
 </script>

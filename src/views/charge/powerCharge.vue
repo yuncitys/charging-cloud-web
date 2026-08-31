@@ -21,12 +21,12 @@
 				</el-table-column>
 				<el-table-column prop="realTimeCharging" label="计费周期" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span>{{scope.row.realTimeCharging ? '按30分钟收费' : '实时1分钟收费'}}</span>
+						<span>{{ $dict.formatChargeBillingCycle(scope.row.realTimeCharging) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="chargeType" label="计费功耗类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span>{{scope.row.chargeType ? '最高功率' : '平均功率'}}</span>
+						<span>{{ $dict.formatPowerChargeType(scope.row.chargeType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="config.AutostopConfig.isAutostop" label="充满自停" align="center" :show-overflow-tooltip="isPc">

@@ -19,7 +19,7 @@
 						<el-input v-model="addData.name" placeholder="请输入方案名称" clearable />
 					</el-form-item>
 					<el-form-item :label="'价格类别'" prop="realTimeCharging">
-						<div class="price-item" v-for="(item,index) in  addData.priceTier">
+						<div class="price-item" v-for="(item,index) in addData.priceTier" :key="index">
 							<el-input disabled :placeholder="item.periodTypeName" v-model="item.periodTypeName" size="medium" style="width: 100px">
 								<!-- <template slot="prepend">时段</template> -->
 							</el-input>
@@ -66,9 +66,7 @@
 							</div>
 							<div style="margin-left: 30px;">
 								<el-radio-group v-model="unit">
-									<el-radio :label="2">金额</el-radio>
-									<el-radio :label="1">电量</el-radio>
-									<el-radio :label="0">时间</el-radio>
+									<el-radio v-for="item in chargeModeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 								</el-radio-group>
 							</div>
 						</div>
@@ -142,6 +140,7 @@
 		data() {
 			return {
 				unit: 2,
+				chargeModeOptions: [],
 				preMoney: 50,
 				moneyList: [{
 					id: 20
@@ -728,7 +727,7 @@
 			}
 		},
 		created() {
-
+			this.$dict.getChargeModeOptions().then(list => { this.chargeModeOptions = list || [] })
 		}
 	}
 </script>

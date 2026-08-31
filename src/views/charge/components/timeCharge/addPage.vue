@@ -22,8 +22,7 @@
 				<el-form-item :label="'计费周期'" prop="realTimeCharging">
 					<div id="">
 						<el-radio-group v-model="addData.realTimeCharging">
-							<el-radio v-for="(item,index) in payType" :key="index" :label="index">{{item.title}}
-							</el-radio>
+							<el-radio v-for="item in chargeBillingCycleOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</div>
 				</el-form-item>
@@ -167,8 +166,7 @@
 								<div class="charge-scheme-settings__label">收费方式</div>
 								<div class="charge-scheme-settings__control">
 									<el-radio-group v-model="chco" class="charge-scheme-settings__radio">
-										<el-radio :label="0">预收费</el-radio>
-										<el-radio :label="1">固定金额</el-radio>
+										<el-radio v-for="item in chargeCollectOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 									</el-radio-group>
 									<div v-if="chco===0" class="charge-scheme-settings__hint">
 										<i class="el-icon-warning"></i>充满后剩余金额将退回车主
@@ -180,8 +178,7 @@
 							</div>
 							<div class="charge-scheme-settings__row">
 								<div class="charge-scheme-settings__label">
-									<span v-if="chco===0">预收金额</span>
-									<span v-if="chco===1">固定金额</span>
+									<span>{{ $dict.formatChargeCollectType(chco) }}</span>
 								</div>
 								<div class="charge-scheme-settings__control">
 									<el-input class="charge-scheme-settings__input" placeholder="请输入金额" v-model="fixedMoney" type="number">
@@ -240,15 +237,8 @@
 				},
 				formArr: [""],
 				tags: [],
-				payType: [{
-					id: 1,
-					realTimeCharging: 0,
-					title: "按1分钟收费"
-				}, {
-					id: 2,
-					realTimeCharging: 1,
-					title: "按30分钟收费"
-				}],
+				chargeBillingCycleOptions: [],
+				chargeCollectOptions: [],
 				pageType: 0,
 				moneyList: [
 				{
@@ -366,7 +356,7 @@
 					return false
 				}
 				if (this.isAutostop && Number(this.fixedMoney) <= 0){
-					this.$message.error(this.chco === 0 ? '预收金额必须大于0' : '固定金额必须大于0')
+					this.$message.error((this.$dict.formatChargeCollectType(this.chco) || '金额') + '必须大于0')
 					return false
 				}
 				if (this.isAutostop && Number(this.maxChargeTime) <= 0){
@@ -478,6 +468,8 @@
 				tags.push(obj)
 			}
 			this.tags = tags
+			this.$dict.getChargeBillingCycleOptions().then(list => { this.chargeBillingCycleOptions = list || [] })
+			this.$dict.getChargeCollectTypeOptions().then(list => { this.chargeCollectOptions = list || [] })
 		},
 		mounted() {
 

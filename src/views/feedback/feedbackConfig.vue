@@ -13,7 +13,9 @@
 					<el-menu class="type-menu" :default-active="String(activeTypeId)" @select="selectType">
 						<el-menu-item v-for="item in typeTree" :key="item.id" :index="String(item.id)">
 							<span>{{ item.name }}</span>
-							<el-tag size="mini" style="margin-left: 8px;" v-if="item.enabled === 0">停用</el-tag>
+							<el-tag size="mini" style="margin-left: 8px;" v-if="item.enabled === 0">
+								{{ $dict.formatEnableStatus(item.enabled) }}
+							</el-tag>
 						</el-menu-item>
 					</el-menu>
 				</el-card>
@@ -53,8 +55,9 @@
 						<el-table-column prop="sort" label="排序" width="100" align="center" />
 						<el-table-column prop="enabled" label="状态" width="100" align="center">
 							<template slot-scope="scope">
-								<el-tag type="success" v-if="scope.row.enabled === 1">启用</el-tag>
-								<el-tag type="info" v-else>停用</el-tag>
+								<el-tag :type="scope.row.enabled === 1 ? 'success' : 'info'">
+									{{ $dict.formatEnableStatus(scope.row.enabled) }}
+								</el-tag>
 							</template>
 						</el-table-column>
 						<el-table-column label="操作" width="180" align="center">

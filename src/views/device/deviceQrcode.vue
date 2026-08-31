@@ -29,8 +29,7 @@
 				</el-table-column>
 				<el-table-column prop="status" label="是否绑定" align="center" :show-overflow-tooltip="isPc">
 				<template slot-scope="scope">
-					<el-tag type="danger" v-if="scope.row.status == 0">未绑定</el-tag>
-					<el-tag type="success" v-if="scope.row.status == 1">已绑定</el-tag>
+					<el-tag :type="scope.row.status == 1 ? 'success' : 'danger'">{{ $dict.formatBindStatus(scope.row.status) }}</el-tag>
 				</template>
 				</el-table-column>
 				<el-table-column prop="deviceCode" label="设备编号" align="center" :show-overflow-tooltip='isPc'>
@@ -197,13 +196,7 @@
           			status: '',
 				},
 				tableKey: 0,
-				bindingTags: [{
-					title: '未绑定',
-					id: 0,
-				}, {
-					title: '已绑定',
-					id: 1,
-				}],
+				bindingTags: [],
 
 				showProgress: false,
 				getProgress: null,
@@ -450,6 +443,10 @@
 			}
 		},
 		created() {
+			this.$dict.getSelector('bind_status')
+			this.$dict.getBindStatusOptions().then(list => {
+				this.bindingTags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 		},
 		destroyed() {

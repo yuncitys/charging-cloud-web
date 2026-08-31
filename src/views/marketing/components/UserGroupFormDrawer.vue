@@ -28,24 +28,20 @@
             </el-tooltip>
           </template>
           <el-radio-group v-model="form.groupDimension" @change="onGroupDimensionChange">
-            <el-radio label="0">按充电数据</el-radio>
-            <el-radio label="1">批量导入</el-radio>
+            <el-radio v-for="item in groupDimensionOptions" :key="'gd'+item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
 
         <template v-if="form.groupDimension === '0'">
           <el-form-item label="数据维度" prop="dataDimension">
             <el-radio-group v-model="form.dataDimension" @change="onDataDimensionChange">
-              <el-radio label="0">充电量</el-radio>
-              <el-radio label="1">充电次数</el-radio>
-              <el-radio label="2">充电金额</el-radio>
+              <el-radio v-for="item in dataDimensionOptions" :key="'dd'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
 
           <el-form-item label="电站范围" prop="stationDimension">
             <el-radio-group v-model="form.stationDimension" @change="onStationDimensionChange">
-              <el-radio label="0">按电站</el-radio>
-              <el-radio label="1">按电站分组</el-radio>
+              <el-radio v-for="item in stationDimensionOptions" :key="'sd'+item.value" :label="item.value">{{ item.label }}</el-radio>
             </el-radio-group>
           </el-form-item>
 
@@ -137,6 +133,13 @@
 import XLSX from 'xlsx'
 import { saveUserGroup, updateUserGroup, userGroupDetail } from '@/api/marketing/marketing'
 import StationScopePicker from './StationScopePicker'
+import {
+  loadUserGroupDimensionOptions,
+  loadUserGroupDataDimensionOptions,
+  loadUserGroupStationDimensionOptions,
+  getUserGroupDataDimensionLabel,
+  DATA_DIMENSION_META
+} from '../constants/userGroup'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
 
@@ -169,6 +172,9 @@ export default {
       loading: false,
       submitting: false,
       importFileName: '',
+      groupDimensionOptions: [],
+      dataDimensionOptions: [],
+      stationDimensionOptions: [],
       form: createDefaultForm()
     }
   },
@@ -181,24 +187,19 @@ export default {
       return this.form.id ? '编辑用户分组' : '新增用户分组'
     },
     conditionLabel() {
-      const map = { '0': '充电量', '1': '充电次数', '2': '充电金额' }
-      return map[this.form.dataDimension] || '充电量'
+      return getUserGroupDataDimensionLabel(this.form.dataDimension) || '充电量'
     },
     conditionUnit() {
-      const map = { '0': '度', '1': '次', '2': '元' }
-      return map[this.form.dataDimension] || '度'
+      const meta = DATA_DIMENSION_META[String(this.form.dataDimension)] || DATA_DIMENSION_META['0']
+      return meta.unit
     },
     conditionPlaceholder() {
-      const map = { '0': '最小度数', '1': '最小次数', '2': '最小金额' }
-      return map[this.form.dataDimension] || '最小度数'
+      const meta = DATA_DIMENSION_META[String(this.form.dataDimension)] || DATA_DIMENSION_META['0']
+      return meta.placeholder
     },
     conditionHintText() {
-      const map = {
-        '0': '单位：度（kWh）。示例：统计时间内累计充电量 100—500 度之间的用户将被纳入分组。',
-        '1': '单位：次。示例：统计时间内充电 3—10 次的用户将被纳入分组。',
-        '2': '单位：元。示例：统计时间内充电消费 100—1000 元的用户将被纳入分组。'
-      }
-      return map[this.form.dataDimension] || map['0']
+      const meta = DATA_DIMENSION_META[String(this.form.dataDimension)] || DATA_DIMENSION_META['0']
+      return meta.hint
     },
     rules() {
       const validateConditionRange = (rule, value, callback) => {
@@ -291,6 +292,10 @@ export default {
       this.importFileName = ''
     },
     onOpen() {
+      loadUserGroupDimensionOptions().then(list => { this.groupDimensionOptions = list || [] })
+      loadUserGroupDataDimensionOptions().then(list => { this.dataDimensionOptions = list || [] })
+      loadUserGroupStationDimensionOptions().then(list => { this.stationDimensionOptions = list || [] })
+
       this.loading = true
       const tasks = [this.loadOptions()]
       if (this.group && this.group.id) {

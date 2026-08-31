@@ -93,7 +93,7 @@
 				</el-table-column>
 				<el-table-column prop="ruleId" label="产品名称" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
+						{{ $dict.formatDeviceRule(scope.row.ruleId) }}
 					</template>
 				</el-table-column>
 				<el-table-column label="设备号" prop="deviceCode" v-if="formThead.deviceCode" align="center"
@@ -105,8 +105,7 @@
 				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+						<el-tag :type="scope.row.deviceStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
@@ -143,9 +142,7 @@
 				<el-table-column prop="priceType" label="计费类型" v-if="formThead.priceType" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.priceType == 0">计时</span>
-						<span v-if="scope.row.priceType == 1">电量</span>
-						<span v-if="scope.row.priceType == 2">功率</span>
+						<span>{{ $dict.formatPriceType(scope.row.priceType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="feeName" label="计费标准" v-if="formThead.feeName" align="center"
@@ -154,8 +151,7 @@
 				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+						<el-tag :type="scope.row.activateStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceActivateStatus(scope.row.activateStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
@@ -278,15 +274,12 @@
 					</el-form-item>
 					<el-form-item :label="'产品名称'" prop="ruleId">
 						<el-radio-group v-model="ruleId" @change="ruleIdChange" :disabled="true">
-							<el-radio :label="1">单车</el-radio>
-							<el-radio :label="2">汽车</el-radio>
+							<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item label="收费类型" prop="deviceChagePattern" v-if="ruleId === 1">
 						<el-radio-group v-model="deviceChagePattern" @change="changeChagePattern">
-							<el-radio :label="0">时间</el-radio>
-							<el-radio :label="1">电量</el-radio>
-							<el-radio :label="2">功率</el-radio>
+							<el-radio v-for="item in priceTypeOptions" :key="'pt-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item :label="'收费方案'" prop="devicePriceId">
@@ -312,15 +305,12 @@
 					</el-form-item>
 					<el-form-item :label="'产品名称'" prop="ruleId">
 						<el-radio-group v-model="ruleId" @change="ruleIdChange" :disabled="true">
-							<el-radio :label="1">单车</el-radio>
-							<el-radio :label="2">汽车</el-radio>
+							<el-radio v-for="item in deviceRuleOptions" :key="'rule-b-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item label="收费类型" prop="deviceChagePattern" v-if="ruleId === 1">
 						<el-radio-group v-model="deviceChagePattern" @change="changeChagePattern">
-							<el-radio :label="0">时间</el-radio>
-							<el-radio :label="1">电量</el-radio>
-							<el-radio :label="2">功率</el-radio>
+							<el-radio v-for="item in priceTypeOptions" :key="'pt-b-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 						</el-radio-group>
 					</el-form-item>
 					<el-form-item :label="'收费方案'" prop="devicePriceId">
@@ -442,13 +432,7 @@
 					deviceName: true,
 					adminId: false,
 				},
-				tags: [{
-					title: '离线',
-					id: 0,
-				}, {
-					title: '在线',
-					id: 1,
-				}],
+				tags: [],
 				//分配设备
 				merchantList: [],
         		chargingStationList: [],
@@ -477,7 +461,9 @@
 				deviceCodes: '',
 				deviceChagePattern: 0,
 				ruleId: getDefaultRuleIdNumber('2'),
-				priceTypeDialog: ''
+				priceTypeDialog: '',
+				deviceRuleOptions: [],
+				priceTypeOptions: []
 			}
 		},
 		filters: {
@@ -499,6 +485,17 @@
 			}
 		},
 		mounted() {
+			this.$dict.getSelector('device_rule')
+			this.$dict.getSelector('device_activate_status')
+			this.$dict.getSelector('price_type')
+			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
+			this.$dict.getPriceTypeOptions().then(list => {
+				this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+			})
+			this.$dict.getSelectorOptions('device_status', { numeric: true }).then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+
 			this.getChargingStationList(this.activeName)
 		},
 		computed: {

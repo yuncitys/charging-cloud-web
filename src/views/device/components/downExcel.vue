@@ -97,19 +97,8 @@
 						import('@/vendor/Export2Excel').then(excel => {
 							const list = res.data || []
 							list.forEach((item, index) => {
-								if (item.deviceStatus == 0) {
-									item.deviceStatusText = '离线'
-								} else if (item.deviceStatus == 1) {
-									item.deviceStatusText = '在线'
-								}
-
-								if (item.priceType === 0) {
-									item.priceTypeText = '时间'
-								} else if (item.priceType === 1) {
-									item.priceTypeText = '电量'
-								} else if (item.priceType === 2) {
-									item.priceTypeText = '功率'
-								}
+								item.deviceStatusText = this.$dict.formatDeviceStatus(item.deviceStatus)
+								item.priceTypeText = this.$dict.formatPriceType(item.priceType)
 								item.onLineTimeStr = this.$common.setSeconds(item.onLineTime)
 							})
 							const data = this.formatJson(filterVal, list)

@@ -21,8 +21,7 @@
         <el-table-column prop="taxNum" label="税号" />
         <el-table-column prop="property" label="发票性质">
             <template v-slot="scope">
-                <el-tag type="" v-if="scope.row.property == 1">个人</el-tag>
-                <el-tag type="success" v-else>企业</el-tag>
+                <el-tag :type="scope.row.property == 1 ? '' : 'success'">{{ formatInvoiceTitleType(scope.row.property) }}</el-tag>
             </template>
         </el-table-column>
         <el-table-column prop="bank" label="银行开户行" />
@@ -65,6 +64,7 @@
 <script>
 import edit from './components/edit'
 import {page as  getList, del, get } from '@/api/customerInvoice/invoice'
+import { formatDictLabel } from '@/utils/dictionary'
 export default {
   name: 'customerInvoice', // "用户发票抬头"
   components: { edit },
@@ -90,9 +90,13 @@ export default {
     }
   },
   created () {
+    this.$dict.getSelector('invoice_title_type')
     this.search()
   },
   methods: {
+    formatInvoiceTitleType(code) {
+      return formatDictLabel('invoice_title_type', code)
+    },
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()

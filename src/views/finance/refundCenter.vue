@@ -43,10 +43,7 @@
 				</el-table-column>
 				<el-table-column prop="payType" label="充值类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.payType == 0">充电缴费</span>
-						<span v-if="scope.row.payType == 1">充值余额</span>
-						<span v-if="scope.row.payType == 2">充值IC卡</span>
-            			<span v-if="scope.row.payType == 3">充值月卡</span>
+						<span>{{ $dict.formatDictLabel('recharge_trade_type', scope.row.payType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createTime" label="支付时间" align="center" sortable :show-overflow-tooltip='isPc'>
@@ -108,23 +105,7 @@
 					createTimeEnd: ''
 				},
 				tableKey: 0,
-				tags: [{
-						id: '0',
-						title: '充电缴费'
-					},
-					{
-						id: '1',
-						title: '充值余额'
-					},
-					{
-						id: '2',
-						title: '充值IC卡'
-					},
-					{
-						id: '3',
-						title: '充值月卡'
-					}
-				],
+				tags: [],
 				time: ''
 			}
 		},
@@ -137,7 +118,9 @@
 			},
 		},
 		mounted() {
-
+			this.$dict.getSelectorOptions('recharge_trade_type', { numeric: true }).then(list => {
+				this.tags = (list || []).map(item => ({ id: String(item.value), title: item.label }))
+			})
 		},
 		methods: {
 			getLists() {

@@ -3,13 +3,14 @@
     <el-form class="dialog-form" ref="form" :model="form" :rules="channelRule" :inline="true" label-width="auto">
       <el-row>
         <el-col :span="12">
-          <el-form-item label="渠道名称" prop="channelName">
-            <el-select v-model="form.channelName" clearable placeholder="支付方式">
-              <el-option v-for="(item,index) in channelList" 
-                :key="index" 
-                :label="item.name" 
-                :value="item.name"
-              ></el-option>
+          <el-form-item label="渠道名称" prop="channelCode">
+            <el-select v-model="form.channelCode" clearable placeholder="支付方式" @change="onChannelCodeChange">
+              <el-option
+                v-for="item in serviceProviderList"
+                :key="item.code"
+                :label="item.name"
+                :value="item.code"
+              />
             </el-select>
           </el-form-item>
         </el-col>
@@ -44,9 +45,9 @@
           </el-form-item>
         </el-col>
       </el-row>
-      <div class="box-config" v-if="form.channelName">
-        <el-divider><i class="el-icon-setting"></i>{{ form.channelName }}渠道配置</el-divider>
-        <div class="wxConfig" v-if="form.channelName === '微信'">
+      <div class="box-config" v-if="form.channelCode">
+        <el-divider><i class="el-icon-setting"></i>{{ channelTypeLabel }}渠道配置</el-divider>
+        <div class="wxConfig" v-if="form.channelCode === 'wxpay'">
           <el-row>
             <el-col :span="12">
               <el-form-item label="小程序id">
@@ -149,7 +150,7 @@
           </el-col> -->
         </el-row>
         </div>
-        <div class="wxPartnerConfig" v-else-if="form.channelName === '微信服务商'">
+        <div class="wxPartnerConfig" v-else-if="form.channelCode === 'wxpay_partner'">
           <el-row>
             <el-col :span="12">
               <el-form-item label="服务商商户号">
@@ -223,7 +224,7 @@
             </el-col>
           </el-row>
         </div>
-        <div class="aliConfig" v-else-if="form.channelName === '支付宝'">
+        <div class="aliConfig" v-else-if="form.channelCode === 'alipay'">
           <el-row>
             <el-col :span="12">
               <el-form-item label="公众号id">
@@ -273,7 +274,7 @@
             </el-col>
           </el-row>
         </div>
-        <div class="tzbankConfig" v-else-if="form.channelName === '合作银行'">
+        <div class="tzbankConfig" v-else-if="form.channelCode === 'tzbank'">
           <el-row>
             <el-col :span="12">
               <el-form-item label="平台商户号">
@@ -341,6 +342,7 @@
 
 import { getInfo, update, save } from '@/api/channelConfigInfo'
 import { upload } from '@/api/upload/file.js'
+import { loadServiceProviderDict } from '@/utils/payChannel'
 
 export default {
   name: 'channelConfigInfo',
@@ -362,6 +364,10 @@ export default {
       },
       set() {
       }
+    },
+    channelTypeLabel() {
+      const item = this.serviceProviderList.find(i => i.code === this.form.channelCode)
+      return (item && item.name) || this.form.channelName || this.form.channelCode || ''
     }
   },
   data() {
@@ -427,21 +433,10 @@ export default {
         callbackDomain: '',
         requestDomain: '',
       },
-      channelList: [
-        { name: '合作银行', code: 'tzbank' },
-        { name: '微信', code: 'wxpay' },
-        { name: '微信服务商', code: 'wxpay_partner' },
-        { name: '支付宝', code: 'alipay' }
-      ],
-      serviceProviderList: [
-        { name: '合作银行', code: 'tzbank' },
-        { name: '微信(直连)', code: 'wxpay' },
-        { name: '微信(服务商)', code: 'wxpay_partner' },
-        { name: '支付宝', code: 'alipay' }
-      ],
+      serviceProviderList: [],
       channelRule: {
-        channelName: [
-          { required: true, message: '请选择支付方式', trigger: 'blur' }
+        channelCode: [
+          { required: true, message: '请选择支付方式', trigger: 'change' }
         ],
         serviceProviderId: [
           { required: true, message: '请选择渠道商', trigger: 'blur' }
@@ -470,23 +465,40 @@ export default {
   },
   created() {
     this.init()
+    loadServiceProviderDict().then(list => {
+      this.serviceProviderList = list
+      this.syncChannelNameFromCode()
+    })
     console.log("param:",this.param)
     if (this.param.id) {
       getInfo(this.param.id).then(res => {
-        this.form = res.data
-        if (this.form.channelName === '微信') {
+        this.form = res.data || this.form
+        this.syncChannelNameFromCode()
+        const code = this.form.channelCode
+        if (code === 'wxpay') {
           this.wxConfig = JSON.parse(this.form.configStr)
-        } else if (this.form.channelName === '微信服务商') {
+        } else if (code === 'wxpay_partner') {
           this.wxPartnerConfig = JSON.parse(this.form.configStr)
-        } else if (this.form.channelName === '支付宝') {
+        } else if (code === 'alipay') {
           this.aliConfig = JSON.parse(this.form.configStr)
-        } else if (this.form.channelName === '合作银行') {
+        } else if (code === 'tzbank') {
           this.tzbankConfig = JSON.parse(this.form.configStr)
         }
       })
     }
   },
   methods: {
+    syncChannelNameFromCode() {
+      const item = this.serviceProviderList.find(i => i.code === this.form.channelCode)
+      if (item) {
+        this.form.channelName = item.name
+      }
+    },
+    onChannelCodeChange(code) {
+      this.form.channelCode = code || ''
+      const item = this.serviceProviderList.find(i => i.code === code)
+      this.form.channelName = item ? item.name : ''
+    },
     //选择文件
     uploadCertificateFile(files) {
       console.log(files)
@@ -554,19 +566,17 @@ export default {
     },
     confirm() {
       this.$refs.form.validate(valid => {
-        if (this.form.channelName === '微信') {
-          this.form.channelCode = 'wxpay'
+        const code = this.form.channelCode
+        this.syncChannelNameFromCode()
+        if (code === 'wxpay') {
           this.form.configStr = JSON.stringify(this.wxConfig)
-        } else if (this.form.channelName === '微信服务商') {
-          this.form.channelCode = 'wxpay_partner'
+        } else if (code === 'wxpay_partner') {
           this.form.serviceProviderId = 'wxpay_partner'
           this.wxPartnerConfig.merchantMode = 'PARTNER'
           this.form.configStr = JSON.stringify(this.wxPartnerConfig)
-        } else if (this.form.channelName === '支付宝') {
-          this.form.channelCode = 'alipay'
+        } else if (code === 'alipay') {
           this.form.configStr = JSON.stringify(this.aliConfig)
-        } else if (this.form.channelName === '合作银行') {
-          this.form.channelCode = 'tzbank'
+        } else if (code === 'tzbank') {
           this.form.configStr = JSON.stringify(this.tzbankConfig)
         }
         if (valid) {

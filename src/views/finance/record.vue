@@ -41,21 +41,12 @@
 				</el-table-column>
 				<el-table-column prop="status" label="状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<span type="success" v-if="scope.row.status === 'APPLYING'">申请打款中</span>
-						<span type="success" v-if="scope.row.status === 'WAIT_PAY'">待付款确认</span>
-						<span type="success" v-if="scope.row.status === 'ACCEPTED'">申请已受理</span>
-						<span type="success" v-if="scope.row.status === 'PROCESSING'">打款中</span>
-						<span type="success" v-if="scope.row.status === 'FINISHED'">打款完成</span>
-						<span type="success" v-if="scope.row.status === 'CLOSED'">打款关闭</span>
-						<span type="success" v-if="scope.row.status === 'REJECT'">打款驳回</span>
+						<span>{{ $dict.formatWithdrawCashStatus(scope.row.status) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="payType" label="打款方式" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-            			<span type="success" v-if="scope.row.payType == 0">未付款</span>
-						<span type="success" v-if="scope.row.payType == 1">付款到微信零钱</span>
-						<span type="success" v-if="scope.row.payType == 2">线下付款</span>
-            			<span type="success"  v-if="scope.row.payType == 3">付款到银行卡</span>
+            			<span>{{ $dict.formatWithdrawPayType(scope.row.payType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="payTime" label="打款时间" align="center" :show-overflow-tooltip='isPc'>
@@ -136,9 +127,11 @@
 				</el-form-item>
 				<el-form-item :label="'付款方式'" prop="payType">
 					<el-radio-group v-model="payData.payType">
-						<el-radio :label="1">付款到微信零钱</el-radio>
-						<el-radio :label="2">线下付款</el-radio>
-					<el-radio :label="3">付款到银行卡</el-radio>
+						<el-radio
+							v-for="item in withdrawPayTypeOptions.filter(i => String(i.value) !== '0')"
+							:key="'wpt-' + item.value"
+							:label="item.value"
+						>{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 					<el-form-item :label="'付款备注'" prop="remarks">
@@ -200,28 +193,8 @@
 					withdrawCode: '',
 				},
 				tableKey: 0,
-				tags: [{
-					title: '申请中',
-					id: 'APPLYING',
-				}, {
-					title: '待付款确认',
-					id: 'WAIT_PAY',
-				}, {
-					title: '申请已受理',
-					id: 'ACCEPTED',
-				}, {
-					title: '打款中',
-					id: 'PROCESSING',
-				}, {
-					title: '打款完成',
-					id: 'FINISHED',
-				}, {
-					title: '打款关闭',
-					id: 'CLOSED',
-				}, {
-					title: '打款驳回',
-					id: 'REJECT',
-				}],
+				tags: [],
+				withdrawPayTypeOptions: [],
 				totalAmount: 0,
 				balanceAmount: 0,
 				Rules: {
@@ -414,6 +387,12 @@
 			},
 		},
 		created() {
+			this.$dict.getSelectorOptions('withdraw_cash_status').then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+			this.$dict.getSelectorOptions('withdraw_pay_type', { numeric: true }).then(list => {
+				this.withdrawPayTypeOptions = list || []
+			})
 			this.getLists()
 			this.getAdminInfo()
 			this.isPc = !this.$common.isMobile()

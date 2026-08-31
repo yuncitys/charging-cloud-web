@@ -21,7 +21,7 @@
         <el-table-column prop="groupName" label="分组名称" align="center" min-width="160" />
         <el-table-column prop="groupDimension" label="分组维度" align="center" width="110">
           <template slot-scope="scope">
-            <span>{{ scope.row.groupDimension === '1' ? '批量导入' : '按充电数据' }}</span>
+            <span>{{ groupDimensionLabel(scope.row.groupDimension) }}</span>
           </template>
         </el-table-column>
         <el-table-column prop="userCount" label="用户数" align="center" width="100" />
@@ -97,6 +97,7 @@ import UserGroupFormDrawer from './components/UserGroupFormDrawer'
 import UserGroupMoveDrawer from './components/UserGroupMoveDrawer'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
+import { getUserGroupDimensionLabel } from './constants/userGroup'
 import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
@@ -133,9 +134,13 @@ export default {
     canLabelStatus() { return hasMarketingPerm(MARKETING_PERMS.userGroupLabelStatus) }
   },
   created() {
+    this.$dict.getSelector('marketing_user_group_dimension')
     this.getList()
   },
   methods: {
+    groupDimensionLabel(code) {
+      return getUserGroupDimensionLabel(code)
+    },
     canMoveMembers(row) {
       return row.groupDimension === '1'
     },

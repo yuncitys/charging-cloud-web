@@ -1,36 +1,35 @@
-export const DISCOUNT_TYPE = {
-  '1': '电费',
-  '2': '服务费'
+import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
+
+export const DICT_DISCOUNT_FEE_TYPE = 'marketing_discount_fee_type'
+export const DICT_RATE_TYPE = 'marketing_rate_type'
+export const DICT_RATE_SETTING_TYPE = 'marketing_rate_setting_type'
+export const DICT_DISCOUNT_VALUE_MODE = 'marketing_discount_value_mode'
+export const DICT_DISCOUNT_STATION_SCOPE = 'marketing_discount_station_scope'
+export const DICT_DISCOUNT_USER_SCOPE = 'marketing_discount_user_scope'
+export const DICT_PARTICIPANT_TYPE = 'marketing_participant_type'
+
+export function loadDiscountFeeTypeOptions() {
+  return getSelectorOptions(DICT_DISCOUNT_FEE_TYPE)
 }
 
-export const RATE_TYPE = {
-  '1': '固定价',
-  '2': '折扣'
+export function loadRateTypeOptions() {
+  return getSelectorOptions(DICT_RATE_TYPE)
 }
 
-export const RATE_SETTING_TYPE = {
-  '1': '统一',
-  '2': '尖峰平谷'
+export function loadRateSettingTypeOptions() {
+  return getSelectorOptions(DICT_RATE_SETTING_TYPE)
 }
 
-export const DISCOUNT_VALUE_MODE = {
-  '1': '设置同一优惠',
-  '2': '根据不同电站区分优惠值'
+export function loadDiscountValueModeOptions() {
+  return getSelectorOptions(DICT_DISCOUNT_VALUE_MODE)
 }
 
-export const STATION_SCOPE_TYPE = {
-  '1': '选择电站',
-  '2': '批量添加'
+export function loadDiscountStationScopeOptions() {
+  return getSelectorOptions(DICT_DISCOUNT_STATION_SCOPE)
 }
 
-export const USER_SCOPE_TYPE = {
-  '1': '用户分组',
-  '2': '选择客户'
-}
-
-export const PARTICIPANT_TYPE = {
-  '1': '用户分组',
-  '2': '客户'
+export function loadDiscountUserScopeOptions() {
+  return getSelectorOptions(DICT_DISCOUNT_USER_SCOPE)
 }
 
 export function userScopesToParticipants(userScopes, userScopeType) {
@@ -60,17 +59,23 @@ export function participantsToUserScopes(participants, userScopeType) {
 }
 
 export function getParticipantTypeLabel(type) {
-  return PARTICIPANT_TYPE[String(type)] || type || '—'
+  if (type == null || type === '') return '—'
+  const label = formatDictLabel(DICT_PARTICIPANT_TYPE, type)
+  return label === String(type) ? '—' : label
 }
 
 export const WEEK_DAY_LABELS = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
 
 export function getDiscountTypeLabel(type) {
-  return DISCOUNT_TYPE[String(type)] || type || '—'
+  if (type == null || type === '') return '—'
+  const label = formatDictLabel(DICT_DISCOUNT_FEE_TYPE, type)
+  return label === String(type) ? '—' : label
 }
 
 export function getRateTypeLabel(type) {
-  return RATE_TYPE[String(type)] || type || '—'
+  if (type == null || type === '') return '—'
+  const label = formatDictLabel(DICT_RATE_TYPE, type)
+  return label === String(type) ? '—' : label
 }
 
 export function getRateUnit(rateType) {

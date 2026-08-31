@@ -14,8 +14,7 @@
   
         <el-form-item label="机构类型" prop="orgType">
           <el-radio-group v-model="formData.orgType" disabled>
-            <el-radio :label="3">流量平台</el-radio>
-            <el-radio :label="4">监管平台</el-radio>
+            <el-radio v-for="item in orgTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
   
@@ -103,6 +102,7 @@
                 },
                 organizeList: [],
                 chargeStationList: [],
+                orgTypeOptions: [],
 
                 label: '',
                 searchKey: '',
@@ -112,6 +112,11 @@
                 },
                 filteredData: [],
             };
+        },
+        created() {
+          this.$dict.getSelectorOptions('org_type', { numeric: true }).then(list => {
+            this.orgTypeOptions = (list || []).filter(item => item.value === 3 || item.value === 4)
+          })
         },
         watch: {
           searchKey() {

@@ -15,8 +15,7 @@
 				</el-table-column>
 				<el-table-column prop="types" label="广告类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.types == 1">图片</el-tag>
-						<el-tag type="success" v-if="scope.row.types == 2">视频</el-tag>
+						<el-tag type="success">{{ $dict.formatAdMediaType(scope.row.types) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="imageUrl" label="预览" align="center" :show-overflow-tooltip="isPc">

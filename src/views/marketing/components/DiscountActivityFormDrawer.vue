@@ -252,25 +252,21 @@ import { applyCopyFormAdjustments } from '../utils/marketingActivityCopy'
 import { mapGetters } from 'vuex'
 import { getActivityTypeMeta } from '../constants/activityTypes'
 import {
-  DISCOUNT_TYPE,
-  RATE_TYPE,
-  RATE_SETTING_TYPE,
-  DISCOUNT_VALUE_MODE,
-  STATION_SCOPE_TYPE,
-  USER_SCOPE_TYPE,
   WEEK_DAY_LABELS,
   defaultWeekDays,
   defaultTimeSlots,
   emptyRateValues,
   getRateUnit,
   userScopesToParticipants,
-  participantsToUserScopes
+  participantsToUserScopes,
+  loadDiscountFeeTypeOptions,
+  loadRateTypeOptions,
+  loadRateSettingTypeOptions,
+  loadDiscountValueModeOptions,
+  loadDiscountStationScopeOptions,
+  loadDiscountUserScopeOptions
 } from '../constants/discountActivity'
 import '../styles/marketing.scss'
-
-function toOptionList(mapObj) {
-  return Object.keys(mapObj).map(key => ({ value: String(key), label: mapObj[key] }))
-}
 
 function parseNumberLike(value) {
   if (value === '' || value == null) return null
@@ -451,6 +447,12 @@ export default {
       loading: false,
       submitting: false,
       form: this.createDefaultForm(),
+      discountTypeOptions: [],
+      rateTypeOptions: [],
+      rateSettingTypeOptions: [],
+      discountValueModeOptions: [],
+      stationScopeTypeOptions: [],
+      userScopeTypeOptions: [],
       selectedStationIds: [],
       batchStationText: '',
       stationOptions: [],
@@ -508,24 +510,6 @@ export default {
       const typeLabel = this.typeMeta ? this.typeMeta.label : '折扣活动'
       if (this.isCopy) return `复制${typeLabel}`
       return `${this.isEdit ? '编辑' : '新增'}${typeLabel}`
-    },
-    discountTypeOptions() {
-      return toOptionList(DISCOUNT_TYPE)
-    },
-    rateTypeOptions() {
-      return toOptionList(RATE_TYPE)
-    },
-    rateSettingTypeOptions() {
-      return toOptionList(RATE_SETTING_TYPE)
-    },
-    discountValueModeOptions() {
-      return toOptionList(DISCOUNT_VALUE_MODE)
-    },
-    stationScopeTypeOptions() {
-      return toOptionList(STATION_SCOPE_TYPE)
-    },
-    userScopeTypeOptions() {
-      return toOptionList(USER_SCOPE_TYPE)
     },
     pickerUserScope() {
       return String(this.form.userScopeType) === '1' ? '2' : '1'
@@ -664,7 +648,16 @@ export default {
       this.selectedStationIds = []
       this.batchStationText = ''
     },
+    loadDictOptions() {
+      loadDiscountFeeTypeOptions().then(list => { this.discountTypeOptions = list || [] })
+      loadRateTypeOptions().then(list => { this.rateTypeOptions = list || [] })
+      loadRateSettingTypeOptions().then(list => { this.rateSettingTypeOptions = list || [] })
+      loadDiscountValueModeOptions().then(list => { this.discountValueModeOptions = list || [] })
+      loadDiscountStationScopeOptions().then(list => { this.stationScopeTypeOptions = list || [] })
+      loadDiscountUserScopeOptions().then(list => { this.userScopeTypeOptions = list || [] })
+    },
     onOpen() {
+      this.loadDictOptions()
       this.loadMerchantOptions()
       if (this.isCopy) {
         this.loadDetail(this.copySourceId)

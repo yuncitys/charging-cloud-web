@@ -206,8 +206,8 @@
 import { cardCouponDetail, stationGroupOptions } from '@/api/marketing/marketing'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import {
-  USE_TYPE,
-  EFFECTIVE_TIME_TYPE,
+  getUseTypeLabel,
+  getEffectiveTimeTypeLabel,
   getDeductionTypeLabel,
   getScopeTypeLabel,
   formatUseThreshold,
@@ -273,7 +273,7 @@ export default {
     useTypeLabel() {
       if (!this.coupon) return '—'
       const typeName = getCardCouponTypeLabel(this.coupon.cardCouponType)
-      const t = USE_TYPE[this.coupon.useType] || ''
+      const t = getUseTypeLabel(this.coupon && this.coupon.useType) || ''
       return t ? `${t}${typeName}` : '—'
     },
     faceValueLabel() {
@@ -291,7 +291,7 @@ export default {
     },
     effectiveTimeTypeLabel() {
       if (!this.coupon) return '—'
-      return EFFECTIVE_TIME_TYPE[this.coupon.effectiveTimeType] || this.coupon.effectiveTimeType
+      return getEffectiveTimeTypeLabel(this.coupon && this.coupon.effectiveTimeType) || (this.coupon && this.coupon.effectiveTimeType)
     },
     scopeTypeLabel() {
       return getScopeTypeLabel(this.coupon && this.coupon.scopeType)

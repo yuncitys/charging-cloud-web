@@ -38,10 +38,7 @@
 				</el-table-column>
 				<el-table-column prop="contactInfo" label="开票类型" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.invoiceType === 0">不开票</span>
-						<span v-if="scope.row.invoiceType === 1">普票</span>
-						<span v-if="scope.row.invoiceType === 2">专票</span>
-						<span v-if="scope.row.invoiceType === 3">普票和专票</span>
+						<span>{{ $dict.formatMerchantInvoiceType(scope.row.invoiceType) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip="isPc">
@@ -230,6 +227,7 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('merchant_invoice_type')
 			this.getLists()
 			// this.stopF5Refresh()
 		},

@@ -78,10 +78,7 @@
 								style="width: 200px; margin-left:220px;">
 								<div v-for="(item,index) in ports" :key="index">
 									<el-form-item :label="`端口${index+1}`">
-										<el-tag type="success" v-if="item == 0">空闲</el-tag>
-										<el-tag type="danger" v-if="item == 1">占用</el-tag>
-										<el-tag type="success" v-if="item == 2">离线</el-tag>
-										<el-tag type="danger" v-if="item == 3">故障</el-tag>
+										<el-tag :type="item == 0 || item == 2 ? 'success' : 'danger'">{{ $dict.formatConnectorStatus(item) }}</el-tag>
 									</el-form-item>
 								</div>
 							</el-form>
@@ -114,7 +111,7 @@
 			}
 		},
 		mounted() {
-            
+			this.$dict.getSelector('connector_status')
 		},
 		methods: {
 			onShowDeviceInfo(){

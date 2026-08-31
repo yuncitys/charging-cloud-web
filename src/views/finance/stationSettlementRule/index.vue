@@ -17,8 +17,7 @@
         </el-form-item>
         <el-form-item label="">
           <el-select v-model="searchForm.settlementMode" clearable placeholder="结算方式" style="width: 140px">
-            <el-option :value="1" label="自动" />
-            <el-option :value="2" label="手动" />
+            <el-option v-for="m in modeOptions" :key="m.value" :value="m.value" :label="m.title" />
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -254,6 +253,7 @@ import { getList, getByStationId as getInfo, saveOrUpdate, batchSaveOrUpdate } f
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
 import { getRuleIdTabs, getDefaultRuleIdTabName } from '@/utils/ruleIdTabs'
+import { formatDictLabel } from '@/utils/dictionary'
 
 export default {
   name: 'StationSettlementRule',
@@ -275,15 +275,8 @@ export default {
         ruleId: getDefaultRuleIdTabName()
       },
       selectedStationIds: [],
-      cycleOptions: [
-        { value: 1, title: 'T+1', desc: '每天提交前一天的结算', filterLabel: 'T+1（日结）' },
-        { value: 2, title: 'T+7', desc: '每周一提交上一周的结算', filterLabel: 'T+7（周结）' },
-        { value: 3, title: 'M+1', desc: '每月1号提交上个月的结算', filterLabel: 'M+1（月结）' }
-      ],
-      modeOptions: [
-        { value: 1, title: '自动', desc: '按周期由系统自动发起结算' },
-        { value: 2, title: '手动', desc: '需人工操作发起结算' }
-      ],
+      cycleOptions: [],
+      modeOptions: [],
       editDialog: {
         visible: false,
         form: {
@@ -319,6 +312,7 @@ export default {
     }
   },
   created() {
+    this.loadDictOptions()
     this.initMerchant()
     this.search()
   },
@@ -354,9 +348,26 @@ export default {
       }
     },
     modeLabel(v) {
-      if (v === 1) return '自动'
-      if (v === 2) return '手动'
-      return '—'
+      if (v === null || v === undefined || v === '') return '—'
+      const label = formatDictLabel('settlement_mode', v)
+      return label === String(v) ? '—' : label
+    },
+    loadDictOptions() {
+      this.$dict.getSelectorOptions('settlement_cycle_type', { numeric: true }).then(list => {
+        this.cycleOptions = (list || []).map(item => ({
+          value: item.value,
+          title: item.label,
+          desc: item.description || '',
+          filterLabel: item.label
+        }))
+      })
+      this.$dict.getSelectorOptions('settlement_mode', { numeric: true }).then(list => {
+        this.modeOptions = (list || []).map(item => ({
+          value: item.value,
+          title: item.label,
+          desc: item.description || ''
+        }))
+      })
     },
     handleTabClick(tab) {
       this.searchForm.ruleId = tab.name

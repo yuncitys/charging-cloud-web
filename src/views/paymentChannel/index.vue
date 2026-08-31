@@ -57,7 +57,7 @@
 <script>
 import edit from './components/edit'
 import { getList, del, update } from '@/api/channelConfigInfo'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, loadServiceProviderDict } from '@/utils/payChannel'
 export default {
   name: 'channelConfigInfo', // "渠道信息"
   components: { edit },
@@ -84,6 +84,7 @@ export default {
     }
   },
   created () {
+    loadServiceProviderDict().then(() => this.$forceUpdate())
     this.search()
   },
   methods: {

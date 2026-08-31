@@ -95,7 +95,7 @@
 
 <script>
 import { userCouponPage, cancelUserCoupon } from '@/api/marketing/marketing'
-import { USER_COUPON_STATUS, getUserCouponStatusLabel, getUserCouponStatusTagType } from './constants/cardCoupon'
+import { loadUserCouponStatusOptions, getUserCouponStatusLabel, getUserCouponStatusTagType } from './constants/cardCoupon'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
@@ -118,7 +118,7 @@ export default {
       total: 0,
       issueTimeRange: [],
       useTimeRange: [],
-      usedStatusOptions: USER_COUPON_STATUS,
+      usedStatusOptions: [],
       listQuery: {
         page: 1,
         limit: 10,
@@ -141,6 +141,8 @@ export default {
     }
   },
   created() {
+    loadUserCouponStatusOptions().then(list => { this.usedStatusOptions = list || [] })
+
     this.listQuery.cardCouponId = this.$route.query.cardCouponId || ''
     if (!this.listQuery.cardCouponId) {
       this.goBack()

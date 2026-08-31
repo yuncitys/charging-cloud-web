@@ -67,7 +67,7 @@
         </el-table-column>
         <el-table-column v-if="['1', '2', '3', '4', '5', '6', '7', '8'].includes(fixedType)" prop="activityInitiator" label="发起方" align="center" width="90">
           <template slot-scope="scope">
-            <span>{{ scope.row.activityInitiator === '1' ? '平台' : '商户' }}</span>
+            <span>{{ getActivityInitiatorLabel(scope.row.activityInitiator) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="160" fixed="right">
@@ -174,7 +174,7 @@
 
 <script>
 import { activityPage, stopActivity, directionalSend, activityQrcode } from '@/api/marketing/marketing'
-import { ACTIVITY_STATUS, getActivityTypeMeta } from './constants/activityTypes'
+import { loadActivityStatusOptions, getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getSendStatusLabel, getActivityInitiatorLabel } from './constants/activityTypes'
 import { hasActivityTypeEdit, hasActivityTypeView, hasActivityEditAction, hasActivityAction, hasMarketingPerm, canEditMarketingActivity } from './utils/marketingActivityAuth'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { getLoginUserRoleTypeMin } from '@/utils/adminRoleTypeOptions'
@@ -205,7 +205,7 @@ export default {
       list: [],
       total: 0,
       listQuery: { page: 1, limit: 10, activityId: '', activityName: '', activityType: '', activityStatus: '' },
-      activityStatusOptions: ACTIVITY_STATUS,
+      activityStatusOptions: [],
       qrcodeVisible: false,
       qrcodeLoading: false,
       qrcodeData: null,
@@ -297,11 +297,16 @@ export default {
     }
   },
   created() {
+    loadActivityStatusOptions().then(list => { this.activityStatusOptions = list || [] })
+    this.$dict.getSelector('marketing_activity_initiator')
+
     if (!this.ensureTypeAccess()) return
     this.syncTypeFilter()
     this.getList()
   },
   methods: {
+    getActivityInitiatorLabel,
+
     ensureTypeAccess() {
       if (!this.fixedType || !this.typeMeta) {
         this.$message.warning('无效的活动类型')
@@ -325,15 +330,14 @@ export default {
       this.listQuery.activityType = this.fixedType
     },
     activityStatusLabel(status) {
-      const item = ACTIVITY_STATUS.find(s => s.value === status)
-      return item ? item.label : status
+      return getActivityStatusLabel(status)
     },
     directionalStatusLabel(row) {
       if (this.fixedType !== '3') {
         return this.activityStatusLabel(row.activityStatus)
       }
       if (String(row.sendStatus) === '1') {
-        return '已发放'
+        return getSendStatusLabel('1')
       }
       if (String(row.sendType) === '2') {
         return '待发放'
@@ -359,8 +363,7 @@ export default {
       return this.statusTagType(row.activityStatus)
     },
     statusTagType(status) {
-      const item = ACTIVITY_STATUS.find(s => s.value === status)
-      return item ? item.tagType : 'info'
+      return getActivityStatusTagType(status)
     },
     canStop(row) {
       if (this.fixedType === '3' && String(row.sendStatus) === '1') {

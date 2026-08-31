@@ -87,11 +87,7 @@ export default {
         page: 1,
 				limit: 10,
       },
-      channelFlagList:[
-        { 'fullName': '线路一', 'enCode': '1' }, 
-        { 'fullName': '线路二', 'enCode': '2' }, 
-        { 'fullName': '线路三', 'enCode': '3' }
-      ],
+      channelFlagList: [],
       page: 1,
       limit: 10,
       total: 10,
@@ -102,6 +98,9 @@ export default {
   },
   created() {
     this.getLists()
+    this.$dict.getInvoiceChannelFlagOptions().then(list => {
+      this.channelFlagList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+    })
   },
   methods: {
     handleSizeChange(val) {
@@ -130,13 +129,7 @@ export default {
       })
     },
     getChannelLabel(encode){
-      let label = '';
-      this.channelFlagList.forEach(item => {
-        if(item.enCode == encode){
-          label = item.fullName;
-        }
-      });
-      return label;
+      return this.$dict.formatInvoiceChannelFlag(encode)
     },
     search() {
       this.getLists()

@@ -261,17 +261,11 @@
 <script>
 import { activityDetail, cardCouponRewardOptions } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
-import { ACTIVITY_STATUS, getActivityTypeMeta } from '../constants/activityTypes'
+import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getLimitTypeLabel, getSendTypeLabel, getSendStatusLabel, getActivityUserScopeLabel, getActivityStationScopeLabel, getActivityInitiatorLabel } from '../constants/activityTypes'
 import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { parseTime } from '@/utils/index'
 import '../styles/marketing.scss'
-
-const USER_SCOPE_LABELS = { '1': '按客户', '2': '用户分组', '3': '全部用户', '4': '指定用户' }
-const STATION_SCOPE_LABELS = { '1': '按商户', '2': '电站分组', '3': '全部电站' }
-const SEND_TYPE_LABELS = { '1': '立即发放', '2': '定时发放' }
-const LIMIT_TYPE_LABELS = { '1': '次/人/天', '2': '次/人/活动周期' }
-const SEND_STATUS_LABELS = { '1': '已发放', '2': '未发放' }
 
 export default {
   name: 'ActivityDetailDrawer',
@@ -310,12 +304,10 @@ export default {
       return this.typeMeta ? this.typeMeta.label : this.activityType
     },
     statusLabel() {
-      const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
-      return item ? item.label : (this.activity && this.activity.activityStatus) || '—'
+      return getActivityStatusLabel(this.activity && this.activity.activityStatus)
     },
     statusTagType() {
-      const item = ACTIVITY_STATUS.find(s => s.value === (this.activity && this.activity.activityStatus))
-      return item ? item.tagType : 'info'
+      return getActivityStatusTagType(this.activity && this.activity.activityStatus)
     },
     canShowEdit() {
       return this.activity &&
@@ -336,30 +328,29 @@ export default {
       return ['2', '3', '4', '5', '6'].includes(this.activityType) && this.subConfig
     },
     userScopeLabel() {
-      const scope = this.subConfig && this.subConfig.userScope
-      return USER_SCOPE_LABELS[scope] || scope || '—'
+      return getActivityUserScopeLabel(this.subConfig && this.subConfig.userScope)
     },
     stationScopeLabel() {
-      const scope = this.subConfig && this.subConfig.stationScope
-      return STATION_SCOPE_LABELS[scope] || scope || '—'
+      return getActivityStationScopeLabel(this.subConfig && this.subConfig.stationScope)
     },
     sendTypeLabel() {
-      return SEND_TYPE_LABELS[this.subConfig && this.subConfig.sendType] || '—'
+      return getSendTypeLabel(this.subConfig && this.subConfig.sendType)
     },
     sendStatusLabel() {
-      return SEND_STATUS_LABELS[this.subConfig && this.subConfig.sendStatus] || '—'
+      return getSendStatusLabel(this.subConfig && this.subConfig.sendStatus)
     },
     limitTypeLabel() {
-      return LIMIT_TYPE_LABELS[this.subConfig && this.subConfig.limitType] || ''
+      return getLimitTypeLabel(this.subConfig && this.subConfig.limitType)
     },
     initiatorLabel() {
       if (!this.activity) return '—'
-      if (this.activity.activityInitiator === '1') return '平台'
+      const base = getActivityInitiatorLabel(this.activity.activityInitiator)
+      if (String(this.activity.activityInitiator) !== '2') return base
       const id = this.activity.activityInitiatorId
       if (id && this.merchantNameMap[String(id)]) {
-        return `商户 · ${this.merchantNameMap[String(id)]}`
+        return `${base} · ${this.merchantNameMap[String(id)]}`
       }
-      return '商户'
+      return base
     },
     rechargeTiers() {
       if (!this.rewards || !this.rewards.length) return []
@@ -383,6 +374,11 @@ export default {
     isAllStations() {
       return this.subConfig && this.subConfig.stationScope === '3'
     }
+  },
+  created() {
+    ;['marketing_activity_status', 'marketing_send_type', 'marketing_send_status', 'marketing_limit_type', 'marketing_activity_user_scope', 'marketing_activity_station_scope', 'marketing_activity_initiator'].forEach(code => {
+      this.$dict.getSelector(code)
+    })
   },
   methods: {
     onOpen() {

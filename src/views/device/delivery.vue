@@ -81,7 +81,7 @@
 				</el-table-column>
 				<el-table-column prop="ruleId" label="产品名称" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						{{scope.row.ruleId === 1 ? '单车' : '汽车'}}
+						{{ $dict.formatDeviceRule(scope.row.ruleId) }}
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceName" label="设备名称" v-if="formThead.deviceName" align="center"
@@ -93,9 +93,7 @@
 				<el-table-column prop="deviceChargePattern" label="是否免费" v-if="formThead.deviceChargePattern" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.deviceChargePattern == 0">否</span>
-						<span v-if="scope.row.deviceChargePattern == 1">否</span>
-						<span v-if="scope.row.deviceChargePattern == 2">是</span>
+						<span>{{ $dict.formatDeviceIsFree(scope.row.deviceChargePattern) }}</span>
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
@@ -104,8 +102,7 @@
 				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.deviceStatus == 0">离线</el-tag>
-						<el-tag type="success" v-if="scope.row.deviceStatus == 1">在线</el-tag>
+						<el-tag :type="scope.row.deviceStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="deviceSignal" label="设备信号" v-if="formThead.deviceSignal" align="center"
@@ -133,8 +130,7 @@
 				<el-table-column prop="activateStatus" label="激活状态" v-if="formThead.activateStatus" align="center"
 					:show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.activateStatus == 0">未入网</el-tag>
-						<el-tag type="success" v-if="scope.row.activateStatus == 1">已激活</el-tag>
+						<el-tag :type="scope.row.activateStatus == 1 ? 'success' : 'danger'">{{ $dict.formatDeviceActivateStatus(scope.row.activateStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="activateTime" label="激活时间" v-if="formThead.activateTime" align="center"
@@ -298,13 +294,7 @@
 					adminId: false,
 					deviceChargePattern: true,
 				},
-				tags: [{
-					title: '离线',
-					id: 0,
-				}, {
-					title: '在线',
-					id: 1,
-				}]
+				tags: []
 			}
 		},
 		filters: {
@@ -325,6 +315,13 @@
 			}
 		},
 		mounted() {
+			this.$dict.getSelector('device_rule')
+			this.$dict.getSelector('device_activate_status')
+			this.$dict.getSelector('price_type')
+			this.$dict.getSelectorOptions('device_status', { numeric: true }).then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+
 			getMerchant().then(res => {
 				this.merchantList = (res && res.code == 200) ? (res.data || []) : []
 			}).catch(() => {

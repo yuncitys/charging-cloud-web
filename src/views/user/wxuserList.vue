@@ -38,8 +38,7 @@
 				</el-table-column>
 				<el-table-column label="状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<el-tag type="success" v-if="scope.row.status == 0">正常</el-tag>
-						<el-tag type="danger" v-if="scope.row.status == 1">冻结</el-tag>
+						<el-tag :type="scope.row.status == 1 ? 'danger' : 'success'">{{ $dict.formatAccountStatus(scope.row.status) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column label="注册日期" prop="createTime" align="center" sortable :show-overflow-tooltip="isPc">
@@ -251,7 +250,7 @@
 	import {
 		parseTime
 	} from '@/utils/index'
-	import dictData from '@/utils/dictData'
+	import dictApi from '@/utils/dictionary'
 	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	import userImg from '@/assets/charging-customer/user.png'
 	import walletImg from '@/assets/charging-customer/wallet.png'
@@ -284,13 +283,7 @@
 					page: 1,
 					limit: 10
 				},
-				tags: [{
-					title: '正常',
-					id: 0,
-				}, {
-					title: '禁用',
-					id: 1,
-				}],
+				tags: [],
 				numberType: [{
 					title: '手机号查询',
 					id: 1,
@@ -321,7 +314,7 @@
 					flowType: '',
 					flowObject: ''
 				},
-				flowTypeOptions: dictData.getFinanceUserFlowTypeOptions(),
+				flowTypeOptions: [],
 				userImg,
 				walletImg,
 				rechargeDialogVisible: false,
@@ -637,8 +630,15 @@
 			},
 		},
 		created() {
+			this.$dict.getSelector('account_status')
+			this.$dict.getAccountStatusOptions().then(list => {
+				this.tags = (list || []).map(i => ({ id: i.value, title: i.label }))
+			})
 			this.getLists()
 			this.isPc = !this.$common.isMobile()
+			dictApi.getFinanceUserFlowTypeOptions().then(list => {
+				this.flowTypeOptions = list || []
+			})
 		},
 	}
 </script>

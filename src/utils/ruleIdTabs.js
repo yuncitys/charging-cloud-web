@@ -4,8 +4,8 @@
  */
 
 const DEFAULT_ITEMS = [
-  { id: '1', title: '单车', visible: true },
-  { id: '2', title: '汽车', visible: true },
+  { id: '1', title: '电动单车', visible: true },
+  { id: '2', title: '新能源汽车', visible: true },
 ]
 
 function getBaseConfig() {

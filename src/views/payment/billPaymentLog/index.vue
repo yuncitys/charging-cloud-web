@@ -36,15 +36,7 @@
         </el-table-column>
         <el-table-column prop="paymentStatus" label="支付状态">
           <template v-slot="scope">
-            <span v-if="scope.row.paymentStatus == 10">支付中</span>
-            <span v-if="scope.row.paymentStatus == 11">支付成功</span>
-            <span v-if="scope.row.paymentStatus == 12">支付状态未知</span>
-            <span v-if="scope.row.paymentStatus == 13">支付失败</span>
-            <span v-if="scope.row.paymentStatus == 20">订单关闭</span>
-            <span v-if="scope.row.paymentStatus == 30">退款中</span>
-            <span v-if="scope.row.paymentStatus == 31">已退款</span>
-            <span v-if="scope.row.paymentStatus == 32">未知状态</span>
-            <span v-if="scope.row.paymentStatus == 33">退款失败</span>
+            <span>{{ formatPaymentStatus(scope.row.paymentStatus) }}</span>
           </template>
         </el-table-column>  
         <el-table-column prop="request" label="请求第三方数据">
@@ -71,7 +63,8 @@
 </template>
 <script>
 import { getList,del } from '@/api/billPaymentLog'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, loadServiceProviderDict } from '@/utils/payChannel'
+import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
 import ReqAndRes from './ReqAndRes'
 export default {
   name: '支付日志', // "支付日志"
@@ -100,36 +93,18 @@ export default {
         title: '新增',
         id: ''
       },
-      serviceProviderList:[
-        {
-          enCode: 'wxpay',
-          fullName: '微信'
-        },{
-          enCode: 'alipay',
-          fullName: '支付宝'
-        },{
-          enCode: 'tzbank',
-          fullName: '合作银行'
-        },{
-          enCode: 'wxpay_partner',
-          fullName: '微信(服务商)'
-        },
-      ],
-      payStatusList:[
-        { label: '支付中', value: 10 },
-        { label: '支付成功', value: 11 },
-        { label: '支付状态未知', value: 12 },
-        { label: '支付失败', value: 13 },
-        { label: '已撤销', value: 20 },
-        { label: '退款中', value: 30 },
-        { label: '已退款', value: 31 },
-        { label: '退款状态未知', value: 32 },
-        { label: '退款失败', value: 33 },
-      ],
+      serviceProviderList: [],
+      payStatusList: [],
     }
   },
   created() {
-    this.getLists();
+    loadServiceProviderDict().then(list => {
+      this.serviceProviderList = list
+    })
+    getSelectorOptions('pay_payment_status', { numeric: true }).then(list => {
+      this.payStatusList = list
+    })
+    this.getLists()
   },
   filters: {
     amount(number) {
@@ -138,6 +113,9 @@ export default {
   },
   methods: {
     formatServiceProvider,
+    formatPaymentStatus(code) {
+      return formatDictLabel('pay_payment_status', code)
+    },
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()

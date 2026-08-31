@@ -30,8 +30,9 @@
             <el-table-column prop="regionCode" label="地区编码" width="150"/>
             <el-table-column prop="status" label="状态" width="120">
               <template v-slot="scope">
-                <el-tag effect="dark" type="info" v-if="scope.row.status == 1">禁用</el-tag>
-                <el-tag effect="dark" type="success" v-else>启用</el-tag>
+                <el-tag effect="dark" :type="scope.row.status == 0 || scope.row.status == '0' ? 'success' : 'info'">
+                  {{ $dict.formatEnableStatus(scope.row.status == 1 || scope.row.status == '1' ? 0 : 1) }}
+                </el-tag>
               </template>
             </el-table-column>
             <el-table-column prop="createTime" label="创建时间" width="150"/>
@@ -80,11 +81,7 @@ export default {
         taxNumber:''
       },
       roleTypeList:[],
-      channelFlagList:[
-        { 'fullName': '线路一', 'enCode': '1' }, 
-        { 'fullName': '线路二', 'enCode': '2' }, 
-        { 'fullName': '线路三', 'enCode': '3' }
-      ],
+      channelFlagList: [],
       query:null,
 
       page: 1,
@@ -96,6 +93,9 @@ export default {
     }
   },
   created() {
+    this.$dict.getInvoiceChannelFlagOptions().then(list => {
+      this.channelFlagList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+    })
   },
   methods: {
     handleSizeChange(val) {
@@ -140,46 +140,21 @@ export default {
       this.$parent.isShowInfoConf = true;
     },
     getRoleLabel(encode){
-      let label = '';
-      this.roleTypeList.forEach(item => {
-        if(item.enCode == encode){
-          label = item.fullName;
-        }
-      });
-      return label;
+      const channelType = this.query && this.query.type
+      return this.$dict.formatInvoiceRoleType(channelType, encode)
     },
     getChannelLabel(encode){
-      let label = '';
-      this.channelFlagList.forEach(item => {
-        if(item.enCode == encode){
-          label = item.fullName;
-        }
-      });
-      return label;
+      return this.$dict.formatInvoiceChannelFlag(encode)
     },
     getPtRoleList(){
-      this.roleTypeList = [
-        { 'fullName': '法定代表人', 'enCode': '01' }, 
-        { 'fullName': '财务负责人', 'enCode': '02' },
-        { 'fullName': '办税员', 'enCode': '03' }, 
-        { 'fullName': '涉税服务人员', 'enCode': '04' }, 
-        { 'fullName': '管理员', 'enCode': '05' }, 
-        { 'fullName': '领票人', 'enCode': '07' }, 
-        { 'fullName': '开票员', 'enCode': '09' }, 
-        { 'fullName': '其他人员', 'enCode': '99' },
-      ]
+      this.$dict.getInvoiceRoleTypePtOptions().then(list => {
+        this.roleTypeList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+      })
     },
     getWqRoleList(){
-      this.roleTypeList = [
-        { 'fullName': '法定代表人', 'enCode': '2' }, 
-        { 'fullName': '财务负责人', 'enCode': '1' },
-        { 'fullName': '办税员', 'enCode': '3' }, 
-        { 'fullName': '购票员', 'enCode': '4' }, 
-        { 'fullName': '普通管理员', 'enCode': '5' }, 
-        { 'fullName': '社保经办人', 'enCode': '8' }, 
-        { 'fullName': '开票员', 'enCode': '7' }, 
-        { 'fullName': '销售人员', 'enCode': '10' },
-      ]
+      this.$dict.getInvoiceRoleTypeWqOptions().then(list => {
+        this.roleTypeList = (list || []).map(item => ({ fullName: item.label, enCode: item.value }))
+      })
     },
     search() {
       this.getLists()

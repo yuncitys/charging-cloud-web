@@ -12,14 +12,10 @@
     <div class="filter-container">
       <el-input v-model="listQuery.cardCouponName" class="filter-item" placeholder="卡券名称" clearable style="width: 200px;margin-right: 20px;" @keyup.enter.native="handleFilter" @clear="handleFilter" />
       <el-select v-model="listQuery.cardCouponType" class="filter-item" placeholder="卡券类型" clearable style="width: 140px;margin-right: 20px;" @change="handleFilter">
-        <el-option label="抵用卡" value="1" />
-        <el-option label="满减券" value="2" />
-        <el-option label="电量卡" value="3" />
-        <el-option label="折扣券" value="4" />
+        <el-option v-for="item in cardCouponTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-select v-model="listQuery.cancelFlag" class="filter-item" placeholder="状态" clearable style="width: 120px;margin-right: 20px;" @change="handleFilter">
-        <el-option label="正常" value="0" />
-        <el-option label="已作废" value="1" />
+        <el-option v-for="item in cardCouponStatusOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
       <el-button class="filter-item" type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button v-if="canCreate" class="filter-item" type="primary" icon="el-icon-plus" @click="handleCreate">新增卡券</el-button>
@@ -140,7 +136,7 @@ import { cardCouponPage, cancelCardCoupon } from '@/api/marketing/marketing'
 import CardCouponFormDrawer from './components/CardCouponFormDrawer'
 import CardCouponDetailDrawer from './components/CardCouponDetailDrawer'
 import CardCouponStockDrawer from './components/CardCouponStockDrawer'
-import { getDeductionTypeLabel, getCardCouponTypeLabel } from './constants/cardCoupon'
+import { getDeductionTypeLabel, getCardCouponTypeLabel, loadCardCouponTypeOptions, loadCardCouponStatusOptions } from './constants/cardCoupon'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
@@ -157,6 +153,8 @@ export default {
   },
   data() {
     return {
+      cardCouponTypeOptions: [],
+      cardCouponStatusOptions: [],
       listLoading: false,
       page: 1,
       limit: 10,
@@ -193,6 +191,9 @@ export default {
     canUserCouponPage() { return hasMarketingPerm(MARKETING_PERMS.userCouponPage) }
   },
   created() {
+    loadCardCouponTypeOptions().then(list => { this.cardCouponTypeOptions = list || [] })
+    loadCardCouponStatusOptions().then(list => { this.cardCouponStatusOptions = list || [] })
+
     this.getList()
   },
   methods: {

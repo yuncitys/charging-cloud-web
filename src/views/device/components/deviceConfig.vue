@@ -9,8 +9,7 @@
 				style="width: 600px; margin-left:50px;">
 				<el-form-item v-if="!syncRuleIdFromList" :label="'产品类型'" prop="ruleId">
 					<el-radio-group v-model="configData.ruleId" @change="ruleIdChange">
-						<el-radio :label="1">单车</el-radio>
-						<el-radio :label="2">汽车</el-radio>
+						<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'导出条数'" prop="number">
@@ -40,9 +39,7 @@
 				</el-form-item>
 				<el-form-item label="计费规则" prop="deviceChagePattern" v-if="configData.ruleId === 1">
 					<el-radio-group v-model="configData.deviceChagePattern" @change="changeChagePattern">
-						<el-radio :label="0">时间</el-radio>
-						<el-radio :label="1">电量</el-radio>
-						<el-radio :label="2">功率</el-radio>
+						<el-radio v-for="item in priceTypeOptions" :key="'pt-'+item.value" :label="item.value">{{ item.label }}</el-radio>
 					</el-radio-group>
 				</el-form-item>
 				<el-form-item :label="'收费方案'" prop="devicePriceId">
@@ -158,6 +155,8 @@
 				dectinoType: [],
 				operatorList: [],
 				devicePriceList: [],
+				deviceRuleOptions: [],
+				priceTypeOptions: [],
 				digitData:[
 					// {
 					// 	id: 1,
@@ -370,7 +369,10 @@
 			},
 		},
 		created() {
-
+			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
+			this.$dict.getPriceTypeOptions().then(list => {
+				this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+			})
 		},
 	}
 </script>

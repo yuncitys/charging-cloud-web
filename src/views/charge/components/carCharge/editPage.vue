@@ -45,7 +45,7 @@
 								@onSelectedTime="onEditSelectedTime" :enTime="_item.enTime"
 								:disabled-items="editData.disabledItems"></select-time>
 							<el-select class="select-priod-type" v-model="_item.periodTypeId">
-								<el-option v-for="(item,index) in  editData.priceTier" :value="item.periodTypeId"
+								<el-option v-for="(item,index) in editData.priceTier" :key="item.periodTypeId || index" :value="item.periodTypeId"
 									:label="item.periodTypeName +': 电费 【'+item.powerPrice+'元】 服务费 【'+item.serviceFee+' 元】' ">
 								</el-option>
 							</el-select>
@@ -68,9 +68,7 @@
 							</div>
 							<div style="margin-left: 30px;">
 								<el-radio-group v-model="unit">
-									<el-radio :label="2">金额</el-radio>
-									<el-radio :label="1">电量</el-radio>
-									<el-radio :label="0">时间</el-radio>
+									<el-radio v-for="item in chargeModeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 								</el-radio-group>
 							</div>
 						</div>
@@ -152,6 +150,7 @@
 			return {
 				preMoney: 50,
 				unit: 0,
+				chargeModeOptions: [],
 				moneyList: [{
 					id: 20
 				}, {
@@ -777,7 +776,7 @@
 			}
 		},
 		created() {
-
+			this.$dict.getChargeModeOptions().then(list => { this.chargeModeOptions = list || [] })
 		}
 	}
 </script>

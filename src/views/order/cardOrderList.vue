@@ -224,6 +224,8 @@ import { createDefaultListQuery, sanitizeOrderListQuery } from './utils/orderLis
 
 const ORDER_TYPE = 0
 
+import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
+
 export default {
   name: 'CardOrderList',
   components: {
@@ -286,32 +288,8 @@ export default {
         startCash: true,
         endCash: true
       },
-      payTags: [{
-        id: 0,
-        title: '未支付'
-      },
-      {
-        id: 1,
-        title: '已支付'
-      }
-      ],
-      tags: [{
-        id: 0,
-        title: '故障'
-      },
-      {
-        id: 1,
-        title: '进行中'
-      },
-      {
-        id: 2,
-        title: '已完成'
-      },
-      {
-        id: 3,
-        title: '待结算'
-      }
-      ],
+      payTags: [],
+      tags: [],
       time: ''
     }
   },
@@ -333,10 +311,21 @@ export default {
     }
   },
   mounted() {
+      this.$dict.getSelector('order_type')
+      this.$dict.getSelector('electric_out_type')
+      this.$dict.getSelector('order_pay_method')
+      this.$dict.getSelector('order_start_type')
+      this.$dict.getSelector('price_type')
     this.getChargingStationList(this.activeName)
   },
   created() {
     // 进入页面时读缓存
+    this.$dict.getSelectorOptions('order_status', { numeric: true }).then(list => {
+      this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+    })
+    this.$dict.getSelectorOptions('order_pay_status', { numeric: true }).then(list => {
+      this.payTags = (list || []).map(item => ({ id: item.value, title: item.label }))
+    })
     const raw = localStorage.getItem(this.cacheKey)
     if (raw) {
       try {
@@ -361,17 +350,12 @@ export default {
       return v
     },
     orderTypeText(type) {
-      if (type === 0) return '刷卡'
-      if (type === 1) return '扫码'
-      if (type === 2) return '免费'
-      if (type === 3) return '包月'
-      if (type === 4) return '互联互通'
-      return this.disp(type)
+      const label = formatDictLabel('order_type', type)
+      return label === String(type) ? this.disp(type) : label
     },
     electricOutText(type) {
-      if (type === 0) return '交流'
-      if (type === 1) return '直流'
-      return this.disp(type)
+      const label = formatDictLabel('electric_out_type', type)
+      return label === String(type) ? this.disp(type) : label
     },
     hoursWithUnit(hours, chargeMod) {
       const value = this.disp(hours)
@@ -387,45 +371,29 @@ export default {
       return `${value} 分钟`
     },
     startTypeText(startType) {
-      const value = String(startType || '')
-      if (value === '1') return '扫码启动'
-      if (value === '2') return '电卡启动'
-      if (value === '3') return 'VIN启动'
-      if (value === '4') return '互联互通'
-      if (value === '5') return '命令启动'
-      return this.disp(startType)
+      const label = formatDictLabel('order_start_type', startType)
+      return label === String(startType) ? this.disp(startType) : label
     },
     priceTypeText(type) {
-      if (type === 0) return '时间'
-      if (type === 1) return '电量'
-      if (type === 2) return '功率'
-      return this.disp(type)
+      const label = formatDictLabel('price_type', type)
+      return label === String(type) ? this.disp(type) : label
     },
     orderStatusText(status) {
-      if (status === 0) return '故障'
-      if (status === 1) return '进行中'
-      if (status === 2) return '已完成'
-      if (status === 3) return '待结算'
-      return this.disp(status)
+      const label = this.$dict.getOrderStatus(status)
+      return label === String(status) ? this.disp(status) : label
     },
     payStatusText(status) {
-      if (status === 0) return '未支付'
-      if (status === 1) return '已支付'
-      return this.disp(status)
+      return this.formatOrderPayStatus(status)
+    },
+    formatOrderPayStatus(status) {
+      const label = formatDictLabel('order_pay_status', status)
+      return label === String(status) ? this.disp(status) : label
     },
     payTypeText(payType) {
       if (!payType) return '-'
-      const text = String(payType).toUpperCase()
-      if (text === 'BALANCE_PAY' || text === 'BALANCE') return '个人钱包'
-      if (text === 'WECHAT_PAY' || text === 'WECHAT') return '微信支付'
-      if (text === 'ALI_PAY' || text === 'ALIPAY') return '支付宝支付'
-      if (text === 'WECHAT_SCORE_PAY') return '微信支付分'
-      if (text === 'COMPANY_BALANC' || text === 'COMPANY_BALANCE' || text === 'COMPANY_BALANCE_PAY') return '企业钱包'
-      if (text === 'SWIPE_CARD') return '刷卡支付'
-      if (text === 'MONTH_CARD') return '月卡支付'
-      if (text === 'FREE') return '免费'
-      if (text === 'EVCS') return '互联互通'
-      return payType
+      const code = normalizeOrderPayMethodCode(payType)
+      const label = formatDictLabel('order_pay_method', code)
+      return label === code ? this.disp(payType) : label
     },
     goOrderDetail(row) {
       if (!row || row.id == null) {

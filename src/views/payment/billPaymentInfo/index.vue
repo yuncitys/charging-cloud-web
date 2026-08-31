@@ -61,10 +61,7 @@
         <el-table-column prop="paymentTime" label="支付时间"></el-table-column>
         <el-table-column prop="paymentStatus" label="支付状态" width="100px">
           <template slot-scope="scope">
-            <span v-if="scope.row.paymentStatus == 10">支付中</span>
-            <span v-if="scope.row.paymentStatus == 11">支付成功</span>
-            <span v-if="scope.row.paymentStatus == 13">支付失败</span>
-            <span v-if="scope.row.paymentStatus == 20">已撤销</span>
+            <span>{{ formatPaymentStatus(scope.row.paymentStatus) }}</span>
           </template>
         </el-table-column>
         <el-table-column label="支付机构" header-align="center" v-if="searchForm.paymentstatus == 13">
@@ -85,7 +82,8 @@
 
 <script>
 import { getList, del } from '@/api/billPaymentInfo'
-import { formatServiceProvider } from '@/utils/payChannel'
+import { formatServiceProvider, loadServiceProviderDict } from '@/utils/payChannel'
+import { formatDictLabel, getSelectorOptions } from '@/utils/dictionary'
 export default {
   name: '支付流水信息', // "支付流水信息"
   data() {
@@ -106,32 +104,13 @@ export default {
         serviceProviderId: '',
         paymentMethodCode: ''
       },
-      payStatus: [
-        { label: '支付中', value: 10 },
-        { label: '支付成功', value: 11 },
-        { label: '支付失败', value: 13 },
-        { label: '已撤销', value: 20 }
-      ],
+      payStatus: [],
       param: {
         visible: false,
         title: '新增',
         id: ''
       },
-      serviceProviderList:[
-        {
-          enCode: 'wxpay',
-          fullName: '微信'
-        },{
-          enCode: 'alipay',
-          fullName: '支付宝'
-        },{
-          enCode: 'tzbank',
-          fullName: '合作银行'
-        },{
-          enCode: 'wxpay_partner',
-          fullName: '微信(服务商)'
-        },
-      ],
+      serviceProviderList: [],
       startTimeAndEndTime: []
     }
   },
@@ -141,10 +120,19 @@ export default {
     }
   },
   created() {
-    this.getLists();
+    loadServiceProviderDict().then(list => {
+      this.serviceProviderList = list
+    })
+    getSelectorOptions('pay_payment_status', { numeric: true }).then(list => {
+      this.payStatus = list
+    })
+    this.getLists()
   },
   methods: {
     formatServiceProvider,
+    formatPaymentStatus(code) {
+      return formatDictLabel('pay_payment_status', code)
+    },
     handleSizeChange(val) {
       this.searchForm.limit = val
       this.getLists()

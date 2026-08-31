@@ -11,16 +11,7 @@
 							<el-form ref="cardInfo" :model="cardInfo" label-position="left" label-width="100px"
 								style="width: 300px; margin-left:50px;">
 								<el-form-item :label="'卡状态：'" prop="cardStatus">
-								<el-tag v-if="cardInfo.cardStatus == 0">未开卡</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 2">沉默期</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 4">已停机</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 5">已断网</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 8">待激活</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 9">正常使用</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 20">期满,关停</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 21">已回收状态</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 80">未知</el-tag>
-								<el-tag v-if="cardInfo.cardStatus == 99">已删除</el-tag>
+								<el-tag>{{ $dict.formatIotCardStatus(cardInfo.cardStatus) }}</el-tag>
 								</el-form-item>
 								<el-form-item :label="'卡 ICCID 号'" prop="iccid">
 									<el-input v-model="cardInfo.iccid" disabled=""></el-input>
@@ -103,6 +94,7 @@
 		},
 		methods: {
 			onShowInfo(){
+				this.$dict.getSelector('iot_card_status')
         		this.getInfo()
 			},
 			//获取卡详情

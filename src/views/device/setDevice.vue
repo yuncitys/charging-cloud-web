@@ -63,7 +63,7 @@
 												class="flex">
 												<div>
 													<div>{{index+1}}</div>
-													<div>空闲</div>
+													<div>{{ $dict.formatConnectorStatus(0) }}</div>
 												</div>
 											</div>
 										</div>
@@ -74,7 +74,7 @@
 												class="flex">
 												<div>
 													<div style="color: #FCCC40;">{{index+1}}</div>
-													<div style="color: #FCCC40;">占用</div>
+													<div style="color: #FCCC40;">{{ $dict.formatConnectorStatus(1) }}</div>
 												</div>
 											</div>
 										</div>
@@ -164,10 +164,7 @@
 									:model="deviceInfoo">
 									<el-form-item label="收费类型：" prop="deviceChargePattern">
 										<el-radio-group v-model="deviceInfoo.deviceChargePattern" @change="handleSelect">
-											<!-- <el-radio :label="0">按时间收费</el-radio>
-											<el-radio :label="1">按电量收费</el-radio> -->
-											<el-radio :label="1">收费</el-radio>
-											<el-radio :label="2">免费</el-radio>
+											<el-radio v-for="item in deviceChargePatternOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
 										</el-radio-group>
 									</el-form-item>
 									<el-row>
@@ -263,8 +260,8 @@
 					<div style="margin-top: 50px;">
 						<el-card class="box-card">
 							<div slot="header" class="clearfix">
-								<span>设备详情，在线状态：<el-tag type="success" v-if="deviceInfo.deviceStatus == 1">在线</el-tag>
-									<el-tag type="danger" v-if="deviceInfo.deviceStatus == 0">离线</el-tag>
+								<span>设备详情，在线状态：<el-tag type="success" v-if="deviceInfo.deviceStatus == 1">{{ $dict.formatDeviceStatus(deviceInfo.deviceStatus) }}</el-tag>
+									<el-tag type="danger" v-if="deviceInfo.deviceStatus == 0">{{ $dict.formatDeviceStatus(deviceInfo.deviceStatus) }}</el-tag>
 								</span>
 							</div>
 							<div>
@@ -418,6 +415,7 @@
 					warningTemperature: 55,
 					highTemperature: 70,
 				},
+				deviceChargePatternOptions: [],
 				deviceId: '',
 				setInt: null,
 				setTime: null,
@@ -885,7 +883,9 @@
 			}
 		},
 		mounted() {
-
+			this.$dict.getSelector('device_status')
+			this.$dict.getSelector('connector_status')
+			this.$dict.getDeviceChargePatternOptions().then(list => { this.deviceChargePatternOptions = list || [] })
 		},
 		created() {
 			let id = this.$route.query.id

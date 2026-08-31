@@ -76,8 +76,7 @@
           <div class="limit-row limit-row--full">
             <el-input v-model.number="form.limitCount" placeholder="请输入次数" class="limit-row__count" />
             <el-select v-model="form.limitType" class="limit-row__type">
-              <el-option label="次/人/天" value="1" />
-              <el-option label="次/人/活动周期" value="2" />
+              <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </div>
         </el-form-item>
@@ -102,8 +101,7 @@
         </el-form-item>
         <el-form-item label="发放时间" prop="sendType">
           <el-radio-group v-model="form.sendType">
-            <el-radio label="1">立即发放</el-radio>
-            <el-radio label="2">定时发放</el-radio>
+            <el-radio v-for="item in sendTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.sendType === '2'" label="定时时间" prop="sendTime">
@@ -111,9 +109,7 @@
         </el-form-item>
         <el-form-item label="用户维度" prop="userScope">
           <el-radio-group v-model="form.userScope" @change="onUserScopeChange">
-            <el-radio label="1">按客户发送</el-radio>
-            <el-radio label="2">用户分组</el-radio>
-            <el-radio label="4">指定用户</el-radio>
+            <el-radio v-for="item in directionalUserScopeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="发放用户" prop="userScopes">
@@ -163,16 +159,13 @@
           <div class="limit-row limit-row--full">
             <el-input v-model.number="form.limitCount" placeholder="请输入次数" class="limit-row__count" />
             <el-select v-model="form.limitType" class="limit-row__type">
-              <el-option label="次/人/天" value="1" />
-              <el-option label="次/人/活动周期" value="2" />
+              <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </div>
         </el-form-item>
         <el-form-item label="电站维度" prop="stationScope">
           <el-radio-group v-model="form.stationScope" @change="onStationScopeChange">
-            <el-radio label="1">按商户</el-radio>
-            <el-radio label="2">按电站分组</el-radio>
-            <el-radio label="3">全部电站</el-radio>
+            <el-radio v-for="item in stationScopeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.stationScope !== '3'" label="选择电站" prop="stationScopes">
@@ -186,9 +179,7 @@
         </el-form-item>
         <el-form-item label="用户维度" prop="userScope">
           <el-radio-group v-model="form.userScope" @change="onUserScopeChange">
-            <el-radio label="1">按客户发放</el-radio>
-            <el-radio label="2">用户分组</el-radio>
-            <el-radio label="3">全部用户</el-radio>
+            <el-radio v-for="item in standardUserScopeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.userScope !== '3'" label="发放用户" prop="userScopes">
@@ -238,16 +229,13 @@
           <div class="limit-row limit-row--full">
             <el-input v-model.number="form.limitCount" placeholder="请输入次数" class="limit-row__count" />
             <el-select v-model="form.limitType" class="limit-row__type">
-              <el-option label="次/人/天" value="1" />
-              <el-option label="次/人/活动周期" value="2" />
+              <el-option v-for="item in limitTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
             </el-select>
           </div>
         </el-form-item>
         <el-form-item label="用户维度" prop="userScope">
           <el-radio-group v-model="form.userScope" @change="onUserScopeChange">
-            <el-radio label="1">按客户发放</el-radio>
-            <el-radio label="2">用户分组</el-radio>
-            <el-radio label="3">全部用户</el-radio>
+            <el-radio v-for="item in standardUserScopeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.userScope !== '3'" label="适用用户范围设置" prop="userScopes">
@@ -288,9 +276,7 @@
         </el-form-item>
         <el-form-item label="用户维度" prop="userScope">
           <el-radio-group v-model="form.userScope" @change="onUserScopeChange">
-            <el-radio label="1">按客户发放</el-radio>
-            <el-radio label="2">用户分组</el-radio>
-            <el-radio label="3">全部用户</el-radio>
+            <el-radio v-for="item in standardUserScopeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item v-if="form.userScope !== '3'" label="适用用户范围设置" prop="userScopes">
@@ -308,7 +294,13 @@
 
 <script>
 import { activityDetail, saveActivity, updateActivity } from '@/api/marketing/marketing'
-import { getActivityTypeMeta } from '../constants/activityTypes'
+import {
+  getActivityTypeMeta,
+  loadLimitTypeOptions,
+  loadSendTypeOptions,
+  loadActivityUserScopeOptions,
+  loadActivityStationScopeOptions
+} from '../constants/activityTypes'
 import RewardEditor from './RewardEditor'
 import RechargeTierEditor from './RechargeTierEditor'
 import UserScopePicker from './UserScopePicker'
@@ -440,6 +432,10 @@ export default {
       loading: false,
       submitting: false,
       form: {},
+      limitTypeOptions: [],
+      sendTypeOptions: [],
+      activityUserScopeOptions: [],
+      stationScopeOptions: [],
       registerRules: {
         activityName: [{ required: true, message: '请输入活动名称', trigger: 'blur' }],
         timeRange: [{ required: true, message: '请选择活动时间', trigger: 'change' }],
@@ -501,6 +497,12 @@ export default {
   },
   computed: {
     ...mapGetters(['adminUser']),
+    directionalUserScopeOptions() {
+      return (this.activityUserScopeOptions || []).filter(o => ['1', '2', '4'].includes(String(o.value)))
+    },
+    standardUserScopeOptions() {
+      return (this.activityUserScopeOptions || []).filter(o => ['1', '2', '3'].includes(String(o.value)))
+    },
     visibleSync: {
       get() { return this.visible },
       set(val) { this.$emit('update:visible', val) }
@@ -566,7 +568,14 @@ export default {
         }
       })
     },
+        loadDictOptions() {
+      loadLimitTypeOptions().then(list => { this.limitTypeOptions = list || [] })
+      loadSendTypeOptions().then(list => { this.sendTypeOptions = list || [] })
+      loadActivityUserScopeOptions().then(list => { this.activityUserScopeOptions = list || [] })
+      loadActivityStationScopeOptions().then(list => { this.stationScopeOptions = list || [] })
+    },
     onOpen() {
+      this.loadDictOptions()
       this.loadMerchantOptions()
       if (this.isCopy) {
         this.loadDetail(this.copySourceId)

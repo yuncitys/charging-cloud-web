@@ -39,8 +39,8 @@ Vue.prototype.Global = Global
 import common from './utils/common.js'
 Vue.prototype.$common = common
 
-import dictData from './utils/dictData.js'
-Vue.prototype.$dict = dictData
+import dictApi from './utils/dictionary'
+Vue.prototype.$dict = dictApi
 
 import * as filters from './filters' // global filters
 import vueSeamlessScroll from 'vue-seamless-scroll'

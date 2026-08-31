@@ -6,10 +6,10 @@ var BaseConfig = {
   VUE_MAP_KEY: 'd9f3969bc9d54afb5b8fbf6f82885a77',
   VUE_LARGE_SCREEN_DATA_SOURCE: 'mock',//real 或 mock
   /**
-   * 订单列表、设备列表等页的「单车 / 汽车」Tab：按顺序展示；visible: false 可隐藏某项；id 对应接口 ruleId。
+   * 订单列表、设备列表等页的「电动单车 / 新能源汽车」Tab：按顺序展示；visible: false 可隐藏某项；id 对应接口 ruleId。
    */
   VUE_RULE_ID_TABS: [
-    { id: '2', title: '汽车', visible: true },
-    { id: '1', title: '单车', visible: true },
+    { id: '2', title: '新能源汽车', visible: true },
+    { id: '1', title: '电动单车', visible: true },
   ],
 }

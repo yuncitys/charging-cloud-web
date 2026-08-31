@@ -20,6 +20,7 @@
 		formatSeconds,
 		getNowTime
 	} from '@/utils/index'
+	import { formatDictLabel, getSelector } from '@/utils/dictionary'
 	export default {
 		name: 'downExcel',
 		props: {
@@ -83,30 +84,23 @@
 							const tHeader = ['付款编号','用户id','用户昵称','主体','付款金额','赠送金额','充值类型','状态','创建时间']
 							const filterVal = ['payCode','userCode','userName','wxName','payMoeny','giftMoney','typeStr','payStatusStr','createTime']
 							const list = res.data || []
-							list.forEach((item,index)=>{
-								if(item.type === 0){
-									item.typeStr='单次充值'
-								}else if(item.type === 1){
-									item.typeStr='充值套餐'
-								}else if(item.type === 2){
-									item.typeStr='充值IC卡'
-								}else if(item.type === 3){
-									item.typeStr='充值月卡'
-								}
-								if(item.payStatus === 0){
-									item.payStatusStr='未支付'
-								}else if(item.payStatus === 1){
-									item.payStatusStr='已支付'
-								}
+							Promise.all([
+								getSelector('recharge_trade_type'),
+								getSelector('recharge_pay_status')
+							]).then(() => {
+								list.forEach((item) => {
+									item.typeStr = formatDictLabel('recharge_trade_type', item.type)
+									item.payStatusStr = formatDictLabel('recharge_pay_status', item.payStatus)
+								})
+								const data = this.formatJson(filterVal, list)
+								let filename = '充值记录' + getNowTime()
+								excel.export_json_to_excel({
+									header: tHeader,
+									data,
+									filename: filename
+								})
+								this.downloadLoading = false
 							})
-							const data = this.formatJson(filterVal, list)
-							let filename = '充值记录' + getNowTime()
-							excel.export_json_to_excel({
-								header: tHeader,
-								data,
-								filename: filename
-							})
-							this.downloadLoading = false
 						})
 					} else {
 						this.$message({

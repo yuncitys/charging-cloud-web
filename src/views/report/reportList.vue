@@ -34,8 +34,7 @@
 				</el-table-column>
 				<el-table-column prop="status" label="故障处理状态" align="center" :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
-						<el-tag type="danger" v-if="scope.row.status == 0">未处理</el-tag>
-						<el-tag type="success" v-if="scope.row.status == 1">已处理</el-tag>
+						<el-tag :type="scope.row.status == 1 ? 'success' : 'danger'">{{ formatFeedbackStatus(scope.row.status) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="feebackContent" label="反馈内容" align="center"  :show-overflow-tooltip='isPc'>
@@ -68,6 +67,7 @@
 		updateDeviceFeeBackList
 	} from '@/api/report/reportList.js'
 	import { parseTime } from '@/utils/index'
+	import { formatDictLabel } from '@/utils/dictionary'
 	import imgView from '@/components/Common/imgView.vue'
 	export default {
 		name:'reportList',
@@ -90,13 +90,7 @@
 					createTimeEnd:''
 				},
 				tableKey:0,
-				tags: [{
-					title: '未处理',
-					id: 0,
-				}, {
-					title: '已处理',
-					id: 1,
-				}],
+				tags: [],
 				time:''
 			}
 		},
@@ -109,9 +103,15 @@
 			},
 		},
 		mounted() {
-			
+			this.$dict.getSelectorOptions('feedback_handle_status', { numeric: true }).then(list => {
+				this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+			})
+			this.getLists()
 		},
 		methods: {
+			formatFeedbackStatus(val) {
+				return formatDictLabel('feedback_handle_status', val)
+			},
 			dateChange(e){
 				if(e){
 					this.listQuery.createTimeStart=e[0]
@@ -182,8 +182,6 @@
 			},
 		},
 		created() {
-			this.getLists()
-			
 			this.isPc=!this.$common.isMobile()
 		},
 	}

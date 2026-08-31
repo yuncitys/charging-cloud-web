@@ -202,6 +202,13 @@ export default {
       immediate: true
     }
   },
+  created() {
+    this.$dict.getSelector('trade_entry_status')
+    this.$dict.getSelector('trade_entry_audit_status')
+    this.$dict.getSelector('trade_entry_sett_bank_acc_type')
+    this.$dict.getSelector('merchant_role_type')
+    this.$dict.getSelector('merchant_invoice_type')
+  },
   methods: {
     init() {
       this.merchantId = (this.$route.query && this.$route.query.merchantId) || ''
@@ -242,20 +249,7 @@ export default {
       return String(val)
     },
     formatRoleType(val) {
-      if (!val) return '-'
-      const map = {
-        'OPERATOR': '运营商',
-        'INVESTOR': '投资人',
-        'LANDLORD': '场地方',
-        'SETTLE': '分账主体'
-      }
-      let roles = []
-      if (typeof val === 'string') {
-        roles = val.split(',')
-      } else if (Array.isArray(val)) {
-        roles = val
-      }
-      return roles.map(r => map[r.trim()] || r).join('，') || '-'
+      return this.$dict.formatMerchantRoleType(val)
     },
     formatTime(val) {
       if (val === null || val === undefined || val === '') return '-'
@@ -266,44 +260,19 @@ export default {
       }
     },
     formatInvoiceType(val) {
-      const n = Number(val)
-      const map = {
-        0: '不开票',
-        1: '普票',
-        2: '专票',
-        3: '普票和专票'
-      }
-      return map[n] || this.formatValue(val)
+      return this.$dict.formatMerchantInvoiceType(val) || this.formatValue(val)
     },
     formatSettBankAccType(val) {
-      if (val === '0010' || val === 10 || val === '10') return '借记账户'
-      if (val === '0030' || val === 30 || val === '30') return '对公账户'
-      return this.formatValue(val)
+      let code = val
+      if (val === 10 || val === '10') code = '0010'
+      if (val === 30 || val === '30') code = '0030'
+      return this.$dict.formatDictLabel('trade_entry_sett_bank_acc_type', code) || this.formatValue(val)
     },
     formatStatus(val) {
-      const n = Number(val)
-      const map = {
-        0: '待提交',
-        10: '入网中',
-        20: '认证中',
-        21: '待签署协议',
-        30: '正常',
-        31: '修改中',
-        32: '修改失败',
-        40: '冻结',
-        50: '注销',
-        60: '入网失败'
-      }
-      return map[n] || this.formatValue(val)
+      return this.$dict.formatDictLabel('trade_entry_status', val) || this.formatValue(val)
     },
     formatAuditStatus(val) {
-      const n = Number(val)
-      const map = {
-        10: '待审核',
-        20: '审核拒绝',
-        30: '审核通过'
-      }
-      return map[n] || this.formatValue(val)
+      return this.$dict.formatDictLabel('trade_entry_audit_status', val) || this.formatValue(val)
     }
   }
 }
