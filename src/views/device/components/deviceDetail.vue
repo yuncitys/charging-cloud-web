@@ -75,24 +75,24 @@
 								<span>{{ scope.row.power ? scope.row.power + ' W' : '-' }}</span>
 							</template>
 						</el-table-column>
-						<el-table-column prop="electricOutType" label="输出类型" width="90" align="center">
+						<el-table-column prop="electricOutTypeText" label="输出类型" width="90" align="center">
 							<template slot-scope="scope">
 								<el-tag size="mini" :type="scope.row.electricOutType === 1 ? 'warning' : 'info'">
-									{{ scope.row.electricOutType === 1 ? '直流' : '交流' }}
+									{{ scope.row.electricOutTypeText || (scope.row.electricOutType === 1 ? '直流' : '交流') }}
 								</el-tag>
 							</template>
 						</el-table-column>
-						<el-table-column prop="chargingType" label="充电类型" width="90" align="center">
+						<el-table-column prop="chargingTypeText" label="充电类型" width="90" align="center">
 							<template slot-scope="scope">
 								<el-tag size="mini" :type="scope.row.chargingType === 2 ? 'danger' : (scope.row.chargingType === 1 ? 'primary' : 'info')">
-									{{ formatChargingType(scope.row.chargingType) }}
+									{{ scope.row.chargingTypeText || formatChargingType(scope.row.chargingType) }}
 								</el-tag>
 							</template>
 						</el-table-column>
-						<el-table-column prop="status" label="状态" width="100" align="center">
+						<el-table-column prop="statusText" label="状态" width="100" align="center">
 							<template slot-scope="scope">
 								<el-tag size="mini" :type="scope.row.status === 0 ? 'success' : (scope.row.status === 1 ? 'warning' : 'danger')">
-									{{ formatGunStatus(scope.row.status) }}
+									{{ scope.row.statusText || formatGunStatus(scope.row.status) }}
 								</el-tag>
 							</template>
 						</el-table-column>
