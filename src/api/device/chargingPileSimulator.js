@@ -52,3 +52,14 @@ export function trigger(data) {
   	data
   })
 }
+
+export function syncGunStatus(data) {
+  return request({
+  	url: '/api/message/chargePileSimulator/syncGunStatus',
+  	method: 'post',
+  	headers: {
+  		"Content-Type": "application/json; charset=UTF-8",
+  	},
+  	data
+  })
+}
