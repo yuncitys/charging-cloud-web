@@ -390,7 +390,7 @@
 			},
 			//显示二维码
 			showWXQrcode(item) {
-				this.$refs.wxCodes.showQrcode(item.deviceCode, item.appId, item.portCount, item.networkDotId, item.domainName, item.ruleId)
+				this.$refs.wxCodes.showQrcode(item.deviceCode, item.portCount, item.networkDotId, item.domainName, item.ruleId)
 			},
 			handleSizeChange(val) {
 				this.listQuery.limit = val
