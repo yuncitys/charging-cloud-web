@@ -310,9 +310,13 @@
 											obj.upTopic = upTopic[index]
 											let baseUrl = this.configData.deviceQrLink
 											let urls = deviceCode[index]
+											const ruleId = this.configData.ruleId
 											for (let i = 0; i <= port; i++) {
 												if (i == 0) {
 													obj.deviceCodeCom = baseUrl + urls
+												} else if (ruleId === 2) {
+													let str = 'port' + i
+													obj[str] = baseUrl + urls + String(i).padStart(2, '0')
 												} else {
 													let str = 'port' + i
 													obj[str] = baseUrl + urls + '&port=' + i
