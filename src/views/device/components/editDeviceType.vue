@@ -24,8 +24,8 @@
 				<el-form-item :label="'设备类型'" prop="deviceTypeId">
 					<el-select v-model="formData.deviceTypeId" style="margin-right: 20px ;width: 100%;"
 						class="filter-item" placeholder="请选择设备类型" clearable>
-						<el-option v-for="item in tags" :key="item.deviceTypeId" :label="item.deviceTypeName" :value="item.deviceTypeId">
-							<!--:disabled="showDeviceType"-->
+						<el-option v-for="item in tags" :key="item.deviceTypeId" :label="deviceTypeOptionLabel(item)" :value="item.deviceTypeId"
+							:disabled="isDeviceTypePortMismatch(item)">
 						</el-option>
 					</el-select>
 				</el-form-item>
@@ -151,13 +151,14 @@
 				},
 				tags: [],
 				deviceRuleOptions: [],
-				electricOutList: []
+				electricOutList: [],
+				currentPortCount: 0
 			}
 		},
 		methods: {
 			onShowDevice() {
-        		console.log(this.row_data)
 				this.showDevice = true
+				this.currentPortCount = Number(this.row_data.portCount) || 0
 				this.formData.deviceCode = this.row_data.deviceCode
 				this.formData.id = this.row_data.id
 				this.formData.ruleId = this.row_data.ruleId ?? 1
@@ -218,16 +219,37 @@
 				findDeviceType(data).then(res => {
 					if (res.code == 200) {
 						this.tags = res.data || []
+						const selected = this.tags.find(item => item.deviceTypeId === this.formData.deviceTypeId)
+						if (selected && this.isDeviceTypePortMismatch(selected)) {
+							this.formData.deviceTypeId = this.row_data.deviceTypeId ? Number(this.row_data.deviceTypeId) : ''
+						}
 					} else {
 						this.$message.error(res.msg)
 					}
 				})
+			},
+			isDeviceTypePortMismatch(item) {
+				if (!this.currentPortCount || !item || item.portCount == null) {
+					return false
+				}
+				return Number(item.portCount) !== Number(this.currentPortCount)
+			},
+			deviceTypeOptionLabel(item) {
+				if (this.isDeviceTypePortMismatch(item)) {
+					return `${item.deviceTypeName}（${item.portCount}口，与当前设备不一致）`
+				}
+				return item.deviceTypeName
 			},
 			confirm(formName) {
 				console.log(this.formData)
 				this.$refs[formName].validate(valid => {
 					console.log(valid)
 					if (valid) {
+						const selectedType = this.tags.find(item => item.deviceTypeId === this.formData.deviceTypeId)
+						if (selectedType && this.isDeviceTypePortMismatch(selectedType)) {
+							this.$message.error('所选设备类型端口数与当前设备不一致')
+							return false
+						}
 						console.log("通过")
 						updateDevice(this.formData).then(res => {
 							if (res.code == 200) {
