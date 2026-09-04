@@ -68,56 +68,66 @@
 										</div>
 									</div>
 								</div>
-								<div style="margin: 28px auto;display: flex;width: 98%;align-items: center;flex-wrap: wrap;">
-									<el-row :gutter="20">
-										<el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
-											<div style="text-align: right;line-height: 36px;">
-												测试时间
+								<div class="port-control-panel">
+									<div class="port-control-time">
+										<span class="port-control-time__label">测试时间</span>
+										<el-input-number
+											v-model="time"
+											class="port-control-time__input"
+											size="small"
+											controls-position="right"
+											:min="1"
+											:max="65535"
+											@change="handleChangeTime"
+										/>
+										<span class="port-control-time__hint">单位：分钟（正整数，如 20 表示 20 分钟）</span>
+									</div>
+									<div class="port-control-actions">
+										<div class="port-control-group">
+											<div class="port-control-group__title">充电控制</div>
+											<div class="port-control-group__buttons">
+												<el-button
+													type="primary"
+													size="small"
+													icon="el-icon-video-play"
+													@click="onOpenDevice"
+													v-if="btnAuthen.permsVerifAuthention(':device:controller:openPort')"
+												>启动充电</el-button>
+												<el-button
+													type="warning"
+													size="small"
+													plain
+													icon="el-icon-video-pause"
+													@click="onCloseDevice"
+													v-if="btnAuthen.permsVerifAuthention(':device:controller:closePort')"
+												>停止充电</el-button>
 											</div>
-										</el-col>
-										<el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
-											<div>
-												<el-input-number v-model="time" @change="handleChangeTime" :min="1"
-													:max="65535" style="width: 100%">
-												</el-input-number>
+										</div>
+										<div class="port-control-group">
+											<div class="port-control-group__title">检测与维护</div>
+											<div class="port-control-group__buttons">
+												<el-button
+													size="small"
+													icon="el-icon-search"
+													@click="onPortDetect"
+													v-if="btnAuthen.permsVerifAuthention(':device:controller:query')"
+												>端口检测</el-button>
+												<el-button
+													size="small"
+													icon="el-icon-refresh-right"
+													@click="onRestartDevice"
+													v-if="btnAuthen.permsVerifAuthention(':device:controller:restart')"
+												>远程重启</el-button>
 											</div>
-										</el-col>
-										<el-col :xs="24" :sm="8" :md="8" :lg="8" :xl="8">
-											<div>
-												<div style="margin-left: 20px;">
-													单位：分钟，输入数值需为正整数，例如20，代表20分钟
-												</div>
+										</div>
+										<div class="port-control-group">
+											<div class="port-control-group__title">参数查询</div>
+											<div class="port-control-group__buttons">
+												<el-button size="small" icon="el-icon-money" @click="onQueryRate">查询费率</el-button>
+												<el-button size="small" icon="el-icon-bank-card" @click="onQuerySwipeCard">查询刷卡模式</el-button>
+												<el-button size="small" icon="el-icon-setting" @click="onQueryDevice">查询设备参数</el-button>
 											</div>
-										</el-col>
-									</el-row>
-								</div>
-								<div class="control_btn_box flex">
-									<div>
-										<el-button type="primary" @click='onOpenDevice' size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
-											v-if="btnAuthen.permsVerifAuthention(':device:controller:openPort')">启动充电
-										</el-button>
-										<el-button type="primary" @click='onCloseDevice' size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
-											v-if="btnAuthen.permsVerifAuthention(':device:controller:closePort')">停止充电
-										</el-button>
-										<el-button type="primary" @click="onPortDetect" size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
-											v-if="btnAuthen.permsVerifAuthention(':device:controller:query')">端口检测
-										</el-button>
-										<el-button type="primary" @click='onRestartDevice' size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;"
-											v-if="btnAuthen.permsVerifAuthention(':device:controller:restart')">远程重启
-										</el-button>
-										<el-button type="primary" @click='onQueryRate' size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询费率
-										</el-button>
-										<el-button type="primary" @click='onQuerySwipeCard' size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询刷卡模式
-										</el-button>
-										<el-button type="primary" @click="onQueryDevice" size="mini"
-											style="margin-left: 0;margin-right: 10px;margin-top: 10px;">查询设备参数
-										</el-button>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -173,7 +183,7 @@
 		restartDevice,
 		findDevicePriceByPriceType
 	} from '@/api/device/deviceList.js'
-	import devicePortControlMixin from './devicePortControlMixin'
+	import devicePortControlMixin from '@/components/DevicePortControl/mixin'
 	import { parseTime } from '@/utils/index'
 	import SockJS from 'sockjs-client'
 	import Stomp from 'stompjs'
@@ -478,16 +488,8 @@
 		border: 1px solid #13CE66 !important;
 		color: #13CE66;
 	}
+</style>
 
-	.control_btn_box {
-		width: 100%;
-		margin: 22px auto;
-		/* margin-top: 10px; */
-		justify-content: space-between;
-		flex-wrap: wrap;
-	}
-
-	.control_btn_box div {
-		margin-top: 15px;
-	}
+<style scoped lang="scss">
+	@import '~@/components/DevicePortControl/port-control.scss';
 </style>

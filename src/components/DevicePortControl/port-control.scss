@@ -1,0 +1,61 @@
+.port-control-panel {
+	margin-top: 8px;
+	padding: 0 4%;
+}
+
+.port-control-time {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 0;
+	border-bottom: 1px solid #ebeef5;
+}
+
+.port-control-time__label {
+	font-size: 14px;
+	color: #606266;
+	white-space: nowrap;
+}
+
+.port-control-time__input {
+	width: 140px;
+}
+
+.port-control-time__hint {
+	font-size: 12px;
+	color: #909399;
+	line-height: 1.5;
+}
+
+.port-control-actions {
+	padding: 16px 0 8px;
+}
+
+.port-control-group + .port-control-group {
+	margin-top: 14px;
+	padding-top: 14px;
+	border-top: 1px dashed #ebeef5;
+}
+
+.port-control-group__title {
+	font-size: 12px;
+	color: #909399;
+	margin-bottom: 10px;
+	line-height: 1;
+}
+
+.port-control-group__buttons {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.port-control-group__buttons .el-button + .el-button {
+	margin-left: 0;
+}
+
+.port-control-group__buttons .el-dropdown {
+	vertical-align: middle;
+}
