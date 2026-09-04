@@ -608,8 +608,12 @@
             const guns = Array.isArray(res.data.guns) ? res.data.guns : []
             const gun1 = guns.find(g => Number(g.gunNumber) === 1)
             const gun2 = guns.find(g => Number(g.gunNumber) === 2)
-            this.connector1From.connectorStatus = gun1 && gun1.status != null ? gun1.status : 0
-            this.connector2From.connectorStatus = gun2 && gun2.status != null ? gun2.status : 0
+            if (gun1 && gun1.status != null) {
+              this.connector1From.connectorStatus = gun1.status
+            }
+            if (gun2 && gun2.status != null) {
+              this.connector2From.connectorStatus = gun2.status
+            }
         	} else {
         		this.$message.error(res.msg)
         	}

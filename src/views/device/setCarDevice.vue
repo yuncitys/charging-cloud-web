@@ -286,6 +286,7 @@
 <script>
 	import {
 		findDeviceInfoById,
+		listGuns,
     queryParams,
     readData,
 		readDevice,
@@ -692,15 +693,24 @@
 					if (res.code == 200) {
 						this.deviceInfo = res.data
             			this.devicePriceId = this.deviceInfo.devicePriceId
-						let portList = []
-						for (let i = 0; i < this.deviceInfo.portCount; i++) {
-							let str = "port" + (i + 1)
-							portList[i] = this.deviceInfo[str]
-						}
-						this.portList = portList
+						this.loadPortList()
 					} else {
 						this.$message.error(res.msg)
 					}
+				})
+			},
+			loadPortList() {
+				listGuns({ deviceId: this.deviceId }).then(res => {
+					if (res.code === 200 && Array.isArray(res.data)) {
+						this.portList = res.data
+							.slice()
+							.sort((a, b) => (Number(a.gunNumber) || 0) - (Number(b.gunNumber) || 0))
+							.map(g => g.status)
+					} else {
+						this.portList = []
+					}
+				}).catch(() => {
+					this.portList = []
 				})
 			},
 			//返回当前时间

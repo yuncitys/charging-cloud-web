@@ -78,21 +78,21 @@
 						<el-table-column prop="electricOutTypeText" label="输出类型" width="90" align="center">
 							<template slot-scope="scope">
 								<el-tag size="mini" :type="scope.row.electricOutType === 1 ? 'warning' : 'info'">
-									{{ scope.row.electricOutTypeText || (scope.row.electricOutType === 1 ? '直流' : '交流') }}
+									{{ scope.row.electricOutTypeText || '—' }}
 								</el-tag>
 							</template>
 						</el-table-column>
 						<el-table-column prop="chargingTypeText" label="充电类型" width="90" align="center">
 							<template slot-scope="scope">
 								<el-tag size="mini" :type="scope.row.chargingType === 2 ? 'danger' : (scope.row.chargingType === 1 ? 'primary' : 'info')">
-									{{ scope.row.chargingTypeText || formatChargingType(scope.row.chargingType) }}
+									{{ scope.row.chargingTypeText || '—' }}
 								</el-tag>
 							</template>
 						</el-table-column>
 						<el-table-column prop="statusText" label="状态" width="100" align="center">
 							<template slot-scope="scope">
 								<el-tag size="mini" :type="scope.row.status === 0 ? 'success' : (scope.row.status === 1 ? 'warning' : 'danger')">
-									{{ scope.row.statusText || formatGunStatus(scope.row.status) }}
+									{{ scope.row.statusText || '—' }}
 								</el-tag>
 							</template>
 						</el-table-column>
@@ -123,35 +123,10 @@
 				showDeviceInfo: false,
 				activeTab: 'base',
 				deviceInfo: {},
-				gunList: [],
-				ports: []
+				gunList: []
 			}
 		},
-		mounted() {
-			this.$dict.getSelector('connector_status')
-			this.$dict.getSelector('electric_out_type')
-			this.$dict.getSelector('charging_type')
-		},
 		methods: {
-			formatGunStatus(status) {
-				const map = {
-					0: '空闲',
-					1: '充电中',
-					2: '离线',
-					3: '故障',
-					4: '占位',
-					5: '预约占位'
-				}
-				return map[status] || this.$dict.formatConnectorStatus(status) || '未知'
-			},
-			formatChargingType(type) {
-				const map = {
-					0: '慢充',
-					1: '快充',
-					2: '超充'
-				}
-				return map[type] || '慢充'
-			},
 			onShowDeviceInfo() {
 				this.onfindDeviceInfoById()
 				this.loadGuns()
@@ -173,25 +148,10 @@
 			},
 			loadGuns() {
 				listGuns({ deviceId: this.row_data.id }).then(res => {
-					if (res.code === 200 && res.data && res.data.length > 0) {
+					if (res.code === 200 && Array.isArray(res.data)) {
 						this.gunList = res.data
 					} else {
-						// 兜底基于端口构建
-						let portCount = this.row_data.portCount || 10
-						let isCar = this.row_data.ruleId === 2
-						let fallbackList = []
-						for (let i = 1; i <= portCount; i++) {
-							fallbackList.push({
-								gunNumber: i,
-								gunName: (this.row_data.deviceName || this.row_data.deviceCode) + '#' + i + '号枪',
-								gunCode: this.row_data.deviceCode + String(i).padStart(2, '0'),
-								power: this.row_data.deviceTotalPower ? Math.floor(this.row_data.deviceTotalPower / portCount) : 0,
-								electricOutType: isCar ? 1 : 0,
-								chargingType: isCar ? 1 : 0,
-								status: this.row_data[`port${i}`] || 0
-							})
-						}
-						this.gunList = fallbackList
+						this.gunList = []
 					}
 				}).catch(() => {
 					this.gunList = []
