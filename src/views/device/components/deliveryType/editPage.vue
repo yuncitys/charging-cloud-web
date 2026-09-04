@@ -25,7 +25,8 @@
 					<el-input v-model="formData.deviceTypeName" clearable />
 				</el-form-item>
 				<el-form-item :label="'端口数'" prop="portCount">
-					<el-input type="number" v-model="formData.portCount" clearable />
+					<el-input type="number" v-model="formData.portCount" disabled />
+					<div class="form-tip">创建后不可修改</div>
 				</el-form-item>
         <el-form-item>
           <el-button type="primary" @click="formConfirm('formData')">确定</el-button>
@@ -153,5 +154,12 @@
 		font-weight: bold;
 		color: #000000;
 		margin-top: 20px;
+	}
+
+	.form-tip {
+		font-size: 12px;
+		color: #909399;
+		line-height: 1.5;
+		margin-top: 4px;
 	}
 </style>
