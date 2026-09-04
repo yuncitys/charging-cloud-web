@@ -67,7 +67,7 @@
 				codeUrl: '',
 				deviceCode: '',
 				networkDotId: '',
-				domainName: '',
+				deviceQrcodeLink: '',
 				ruleId: null,
 				base64Arr: []
 			}
@@ -112,12 +112,8 @@
 				this.base64Arr = []
 			},
 			qrCodeCreate() {},
-			resolveGunNumbers(portCount) {
-				const count = Number(portCount) || 10
-				return Array.from({ length: count }, (_, i) => i + 1)
-			},
 			buildPortQrList(gunNumbers, ruleId) {
-				const baseUrl = this.domainName || ''
+				const baseUrl = this.deviceQrcodeLink || ''
 				this.codeUrl = baseUrl + this.deviceCode + '&networkDotId=' + this.networkDotId
 				this.portQrList = gunNumbers.map(gunNumber => {
 					let url = ''
@@ -129,7 +125,7 @@
 					return { gunNumber, url }
 				})
 			},
-			loadGunNumbers(deviceCode, portCount) {
+			loadGunNumbers(deviceCode) {
 				return listGuns({ deviceCode }).then(res => {
 					if (res.code === 200 && Array.isArray(res.data) && res.data.length) {
 						return res.data
@@ -138,20 +134,22 @@
 							.map(g => Number(g.gunNumber))
 							.filter(n => n > 0)
 					}
-					return this.resolveGunNumbers(portCount)
-				}).catch(() => this.resolveGunNumbers(portCount))
+					return Promise.reject(new Error(res.msg || '未查询到枪口数据'))
+				})
 			},
-			showQrcode(deviceCode, portCount, networkDotId, domainName, ruleId) {
-				this.showqrCode = true
+			showQrcode(deviceCode, portCount, networkDotId, deviceQrcodeLink, ruleId) {
 				this.deviceCode = deviceCode
 				this.networkDotId = networkDotId || ''
-				this.domainName = domainName || ''
+				this.deviceQrcodeLink = deviceQrcodeLink || ''
 				this.ruleId = ruleId
 				this.titleStr = '设备号:' + deviceCode
 				this.portQrList = []
 				this.codeUrl = ''
-				this.loadGunNumbers(deviceCode, portCount).then(gunNumbers => {
+				this.loadGunNumbers(deviceCode).then(gunNumbers => {
 					this.buildPortQrList(gunNumbers, ruleId)
+					this.showqrCode = true
+				}).catch(err => {
+					this.$message.error(err.message || '加载枪口列表失败')
 				})
 			},
 			print(str) {

@@ -60,11 +60,7 @@
 					deviceEl.innerHTML = ''
 				}
 			},
-			resolveGunNumbers(portCount) {
-				const count = Number(portCount) || 10
-				return Array.from({ length: count }, (_, i) => i + 1)
-			},
-			loadGunNumbers(deviceCode, portCount) {
+			loadGunNumbers(deviceCode) {
 				return listGuns({ deviceCode }).then(res => {
 					if (res.code === 200 && Array.isArray(res.data) && res.data.length) {
 						return res.data
@@ -73,15 +69,17 @@
 							.map(g => Number(g.gunNumber))
 							.filter(n => n > 0)
 					}
-					return this.resolveGunNumbers(portCount)
-				}).catch(() => this.resolveGunNumbers(portCount))
+					return Promise.reject(new Error(res.msg || '未查询到枪口数据'))
+				})
 			},
-			showQrcode(deviceCode, portCount) {
+			showQrcode(deviceCode) {
 				this.codeUrl = deviceCode
 				this.titleStr = '设备号:' + deviceCode
-				this.loadGunNumbers(deviceCode, portCount).then(gunNumbers => {
+				this.loadGunNumbers(deviceCode).then(gunNumbers => {
 					this.gunNumbers = gunNumbers
 					this.showqrCode = true
+				}).catch(err => {
+					this.$message.error(err.message || '加载枪口列表失败')
 				})
 			},
 			qrcode(url) {
