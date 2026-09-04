@@ -254,6 +254,20 @@ export function formatConnectorStatus(val) {
 	return formatDictLabel('connector_status', val)
 }
 
+/** 设备控制页枪口状态颜色：0空闲 1占用 2离线 3故障 4占位 5预约占位 */
+export function getConnectorStatusColor(status) {
+	const colors = {
+		0: '',
+		1: '#FCCC40',
+		2: '#909399',
+		3: '#F56C6C',
+		4: '#E6A23C',
+		5: '#409EFF'
+	}
+	if (status === null || status === undefined || status === '') return '#606266'
+	return colors[Number(status)] !== undefined ? colors[Number(status)] : '#606266'
+}
+
 export function formatOrgType(val) {
 	return formatDictLabel('org_type', val)
 }
@@ -597,6 +611,7 @@ const dictApi = {
 	formatDeviceRule,
 	formatDeviceActivateStatus,
 	formatConnectorStatus,
+	getConnectorStatusColor,
 	formatOrgType,
 	formatFeeCollectFlag,
 	formatFinanceSplitType,
