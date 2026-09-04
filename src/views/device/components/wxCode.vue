@@ -7,7 +7,6 @@
 				<div style="text-align: center;">{{titleStr}}</div>
 				<div style="text-align: center;width: 150px;">
 					<div style="width: 150px;height: 150px;">
-						<!-- :logoSrc="logoSrc"  -->
 						<vue-qr :size="150" :text="codeUrl" :margin="0" :logoScale="0.3" :callback="codeCallback"
 							:correctLevel="3" id="qrCode0" ref="qrCode0" qid="0" v-if="codeUrl" :title="codeUrl">
 						</vue-qr>
@@ -26,15 +25,14 @@
 					</div>
 				</div>
 				<div style="flex-wrap: wrap;display: flex;text-align: center;">
-					<div style="margin-right: 20px;width: 150px;margin-top: 10px;" v-for="(item,index) in urls"
-						:key="index">
+					<div style="margin-right: 20px;width: 150px;margin-top: 10px;" v-for="(item, index) in portQrList"
+						:key="item.gunNumber">
 						<div style="width: 150px;height: 150px;">
-							<!-- :logoSrc="logoSrc" -->
-							<vue-qr :size="150" :text="item" :margin="0" :logoScale="0.3" :callback="codeCallback"
-								:correctLevel="3" :id="`qrCode${index+1}`" ref="`qrCode${index+1}`" :qid="`${index+1}`"
-								v-if="item" :title="item"></vue-qr>
+							<vue-qr :size="150" :text="item.url" :margin="0" :logoScale="0.3" :callback="codeCallback"
+								:correctLevel="3" :id="`qrCode${index+1}`" :ref="`qrCode${index+1}`" :qid="`${index+1}`"
+								v-if="item.url" :title="item.url"></vue-qr>
 						</div>
-						<div class="portText">端口{{index+1}}</div>
+						<div class="portText">{{ item.gunNumber }}号端口</div>
 						<div style="justify-content: space-between;display: flex;margin-top: 20px;">
 							<div style="margin-top: 0px;">
 								<el-button @click="print(`trueBtn${index+1}`)" type="primary">打印</el-button>
@@ -54,136 +52,112 @@
 </template>
 
 <script>
-	import QRCode from 'qrcodejs2'
 	import vueQr from 'vue-qr'
+	import { listGuns } from '@/api/device/deviceList.js'
+
 	export default {
 		components: {
 			vueQr
 		},
-		props: {
-
-		},
 		data() {
 			return {
-				codeWidth: 150,
-				codeHeight: 150,
 				showqrCode: false,
 				titleStr: '',
-				portCount: 10,
-
-				urls: [],
+				portQrList: [],
 				codeUrl: '',
-				// logoSrc:logoSrc,
+				deviceCode: '',
+				networkDotId: '',
+				domainName: '',
+				ruleId: null,
 				base64Arr: []
 			}
 		},
-		mounted() {
-
-		},
 		methods: {
 			codeCallback(dataUrl, qid) {
-				// console.log(dataUrl, qid)
 				this.base64Arr[qid] = dataUrl
 			},
 			loadImg(index) {
-				let deviceCode = this.deviceCode
+				const deviceCode = this.deviceCode
 				let imgName = `${deviceCode}.png`
-				let base64Url = this.base64Arr[index]
-				if (parseInt(index) == 0) {
+				const base64Url = this.base64Arr[index]
+				if (parseInt(index) === 0) {
 					imgName = `小程序${deviceCode}.png`
 				} else {
-					imgName = `小程序${deviceCode}端口${index}.png`
+					const gunNumber = this.portQrList[index - 1] ? this.portQrList[index - 1].gunNumber : index
+					imgName = `小程序${deviceCode}端口${gunNumber}.png`
 				}
 				this.loadBase64Img(base64Url, imgName)
 			},
 			loadBase64Img(url, imgName) {
-				let canvas = document.createElement('canvas')
-				let ctx = canvas.getContext('2d')
-				let img = new Image()
-				img.crossOrigin = 'Anonymous' //允许跨域
+				const canvas = document.createElement('canvas')
+				const ctx = canvas.getContext('2d')
+				const img = new Image()
+				img.crossOrigin = 'Anonymous'
 				img.src = url
 				img.onload = () => {
 					canvas.height = 150
 					canvas.width = 150
 					ctx.drawImage(img, 0, 0, 150, 150)
-					let dataURL = canvas.toDataURL('image/png')
-					canvas = null
-					let elink = document.createElement('a')
+					const dataURL = canvas.toDataURL('image/png')
+					const elink = document.createElement('a')
 					elink.href = dataURL
 					elink.download = imgName
 					elink.click()
 				}
 			},
-			//关闭弹窗回调
 			qrCodeHandleClose() {
 				this.showqrCode = false
-				this.urls = []
+				this.portQrList = []
 				this.codeUrl = ''
+				this.base64Arr = []
 			},
-			//打开弹窗回调
-			qrCodeCreate() {
-
+			qrCodeCreate() {},
+			resolveGunNumbers(portCount) {
+				const count = Number(portCount) || 10
+				return Array.from({ length: count }, (_, i) => i + 1)
 			},
-			//显示二维码
-			showQrcode(deviceCode, portCount, networkDotId, domainName, ruleId) {
-				console.log(portCount)
-				this.showqrCode = true
-				this.codeUrl = deviceCode
-				this.networkDotId = networkDotId || ''
-				this.portCount = portCount || 10
-				this.domainName = domainName || ''
-				this.ruleId = ruleId
-				this.titleStr = "设备号:" + deviceCode
-				this.deviceCode = deviceCode
-				this.$nextTick(() => {
-					this.getCodeUrl(this.ruleId)
+			buildPortQrList(gunNumbers, ruleId) {
+				const baseUrl = this.domainName || ''
+				this.codeUrl = baseUrl + this.deviceCode + '&networkDotId=' + this.networkDotId
+				this.portQrList = gunNumbers.map(gunNumber => {
+					let url = ''
+					if (ruleId === 1) {
+						url = baseUrl + this.deviceCode + '&port=' + gunNumber + '&networkDotId=' + this.networkDotId
+					} else {
+						url = baseUrl + this.deviceCode + String(gunNumber).padStart(2, '0') + '&networkDotId=' + this.networkDotId
+					}
+					return { gunNumber, url }
 				})
 			},
-			getCodeUrl(ruleId) {
-				for (let i = 0; i < this.portCount + 1; i++) {
-					let domainName = this.domainName
-					let baseUrl = domainName
-					let url = ''
-					if (i == 0) {
-						url = baseUrl + this.deviceCode + '&networkDotId=' + this.networkDotId
-						this.codeUrl = url
-					} else {
-						if (ruleId === 1){
-							url = baseUrl + this.deviceCode + '&port=' + i + '&networkDotId=' + this.networkDotId
-							this.urls.push(url)
-						} else {
-							url = baseUrl + this.deviceCode + (i.toString().padStart(2, '0')) + '&networkDotId=' + this.networkDotId
-							this.urls.push(url)
-						}
+			loadGunNumbers(deviceCode, portCount) {
+				return listGuns({ deviceCode }).then(res => {
+					if (res.code === 200 && Array.isArray(res.data) && res.data.length) {
+						return res.data
+							.slice()
+							.sort((a, b) => (Number(a.gunNumber) || 0) - (Number(b.gunNumber) || 0))
+							.map(g => Number(g.gunNumber))
+							.filter(n => n > 0)
 					}
-					// if (i == 0) {
-					// 	url = baseUrl + '?qrcode=' + this.deviceCode + '&networkDotId=' + this.networkDotId
-					// 	this.codeUrl = url
-					// } else {
-					// 	url = baseUrl + '?qrcode=' + this.deviceCode + '&port=' + i + '&networkDotId=' + this.networkDotId
-					// 	this.urls.push(url)
-					// }
-				}
+					return this.resolveGunNumbers(portCount)
+				}).catch(() => this.resolveGunNumbers(portCount))
 			},
-			getFormat(str) {
-				let url = ''
-				let lastStr = str.substr(-1)
-				if (lastStr !== '/') {
-					url = str + '/'
-				} else {
-					url = str
-				}
-				return url
+			showQrcode(deviceCode, portCount, networkDotId, domainName, ruleId) {
+				this.showqrCode = true
+				this.deviceCode = deviceCode
+				this.networkDotId = networkDotId || ''
+				this.domainName = domainName || ''
+				this.ruleId = ruleId
+				this.titleStr = '设备号:' + deviceCode
+				this.portQrList = []
+				this.codeUrl = ''
+				this.loadGunNumbers(deviceCode, portCount).then(gunNumbers => {
+					this.buildPortQrList(gunNumbers, ruleId)
+				})
 			},
-			//打印
 			print(str) {
-				console.log(str)
-				document.getElementById(str).click();
-			},
-		},
-		created() {
-
-		},
+				document.getElementById(str).click()
+			}
+		}
 	}
 </script>
 
