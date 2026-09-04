@@ -235,7 +235,6 @@
 	import QRCode from 'qrcodejs2'
 	import wxCode from './components/wxCode.vue'
 	import deviceDetail from './components/deviceDetail.vue'
-	import miniCode from './components/miniAppCode.vue'
 	import deviceConfig from './components/deviceConfig.vue'
 	import downExcel from './components/downExcel.vue'
 	import allocation from './components/allocation.vue'
@@ -247,7 +246,6 @@
 		components: {
 			wxCode,
 			deviceDetail,
-			miniCode,
 			deviceConfig,
 			downExcel,
 			allocation,

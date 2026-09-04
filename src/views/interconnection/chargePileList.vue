@@ -328,7 +328,6 @@
 	import addPage from '../device/components/addPage.vue'
 	import wxCode from '../device/components/wxCode.vue'
 	import deviceDetail from '../device/components/deviceDetail.vue'
-	import miniCode from '../device/components/miniAppCode.vue'
 	import deviceConfig from '../device/components/deviceConfig.vue'
 	import downExcel from '../device/components/downExcel.vue'
 	import allocation from '../device/components/allocation.vue'
@@ -341,7 +340,6 @@
 			addPage,
 			wxCode,
 			deviceDetail,
-			miniCode,
 			deviceConfig,
 			downExcel,
 			allocation,
