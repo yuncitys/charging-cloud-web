@@ -466,19 +466,6 @@ export function saveDeviceType(data) {
 	return request({
 		url: '/api/web/device/saveDeviceType',
 		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
 	})
 }
@@ -505,25 +492,30 @@ export function deleteDeviceType(data) {
 	})
 }
 
-// 编辑设备
+// 编辑设备类型
 export function updateDeviceType(data) {
 	return request({
 		url: '/api/web/device/updateDeviceType',
 		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
+	})
+}
+
+// 查询设备类型枪模板
+export function findDeviceTypeGunTemplates(params) {
+	return request({
+		url: '/api/web/device/findDeviceTypeGunTemplates',
+		method: 'get',
+		params
+	})
+}
+
+// 统计绑定某设备类型的设备数量（P5-C C2 同步确认）
+export function countDevicesByDeviceType(params) {
+	return request({
+		url: '/api/web/device/countDevicesByDeviceType',
+		method: 'get',
+		params
 	})
 }
 
