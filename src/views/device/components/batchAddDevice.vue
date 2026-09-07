@@ -7,19 +7,13 @@
 		<el-dialog :visible.sync="showDevice" title="批量导入设备" @close="closeDialog()" :append-to-body="true">
 			<el-form ref="addDeviceData" :model="addDeviceData" :rules="deviceRules" label-position="left"
 				label-width="100px" style="width: 600px; margin-left:50px;">
-				<el-form-item :label="'电流输出'" prop="electricOut">
-					<el-select v-model="addDeviceData.electricOut" placeholder="请选择电流输出类型" style="width: 100%;" @change="currElectricOutChange">
-						<el-option v-for="item in electricOutList" :key="item.value" :label="item.label" :value="item.value"
-							:disabled="item.disabled">
-						</el-option>
-					</el-select>
-				</el-form-item>
 				<el-form-item :label="'设备类型'" prop="deviceTypeId">
-					<el-select v-model="addDeviceData.deviceTypeId" style="margin-right: 20px ;width: 100%;"
-						class="filter-item" placeholder="请选择设备类型" clearable>
-						<el-option v-for="item in tags" :key="item.deviceTypeId" :label="item.deviceTypeName"
-							:value="item.deviceTypeId" :disabled="showDeviceType"/>
+					<el-select v-model="addDeviceData.deviceTypeId" style="width: 100%;" class="filter-item"
+						placeholder="请选择设备类型" clearable filterable @change="onDeviceTypeIdChange">
+						<el-option v-for="item in deviceTypeOptions" :key="item.deviceTypeId"
+							:label="formatDeviceTypeOptionLabel(item)" :value="item.deviceTypeId" />
 					</el-select>
+					<div v-if="selectedDeviceType" class="form-tip">{{ typeSummaryText }}</div>
 				</el-form-item>
 				<el-form-item label="收费类型" prop="deviceChagePattern" v-if="addDeviceData.ruleId === 1">
 					<el-radio-group v-model="addDeviceData.deviceChagePattern" @change="changeChagePattern">
@@ -37,11 +31,10 @@
 					<el-switch v-model="addDeviceData.isVirtual" active-color="#13ce66" inactive-color="#ff4949"></el-switch>
 				</el-form-item>
 				<el-form-item :label="'设备数据'" prop="deviceData" required>
-					<!-- :multiple="false" :show-file-list="false"  -->
 					<el-upload drag multiple ref="myUpload"
 						:http-request="upload"
 						:limit="1"
-						:before-upload="beforeUpload" 
+						:before-upload="beforeUpload"
 						:action="uploadFileUrl" accept=".xls,.xlsx" v-loading.fullscreen.lock="fullscreenLoading">
 						<i class="el-icon-upload"></i>
 						<div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
@@ -58,279 +51,173 @@
 </template>
 
 <script>
-	import {
-		getList,
-		addDevice,
-		findDeviceType,
-    	findDevicePriceByPriceType,
-		uploadExcel,
-		importPreview,
-		importData
-	} from '@/api/device/deviceList.js'
-	export default {
-		props: {
-			listRuleId: {
-				type: Number,
-				default: 1
-			}
+import {
+	findDevicePriceByPriceType,
+	uploadExcel,
+	importPreview,
+	importData
+} from '@/api/device/deviceList.js'
+import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+
+export default {
+	mixins: [deviceTypePickerMixin],
+	props: {
+		listRuleId: {
+			type: Number,
+			default: 1
+		}
+	},
+	data() {
+		return {
+			showDevice: false,
+			addDeviceData: {
+				deviceData: null,
+				isVirtual: false,
+				devicePurpose: '',
+				deviceTypeId: '',
+				deviceChagePattern: 0,
+				devicePriceId: '',
+				ruleId: 1
+			},
+			priceTypeList: [],
+			deviceRules: {
+				deviceTypeId: [{ required: true, message: '请选择设备类型', trigger: 'change' }],
+				devicePriceId: [{ required: true, message: '请选择计费方案', trigger: 'blur' }],
+				deviceChagePattern: [{ required: true, message: '请选择计费类型', trigger: 'blur' }],
+				isVirtual: [{ required: true, message: '请选择设备用途', trigger: 'blur' }]
+			},
+			priceTypeOptions: [],
+			fullscreenLoading: false,
+			showExcel: false,
+			uploadFileUrl: this.Global.APIURl + '/api/system/device/Uploader'
+		}
+	},
+	computed: {
+		typeSummaryText() {
+			const t = this.selectedDeviceType
+			if (!t) return ''
+			return this.formatDeviceTypeOptionLabel(t)
+		}
+	},
+	methods: {
+		closeDialog() {
+			this.showDevice = false
+			this.resetForm('addDeviceData')
 		},
-		data() {
-			let checkNum = (rule, value, callback) => {
-				if (!value) {
-					return new Error('必填信息')
+		beforeUpload(file) {
+			const isRightSize = file.size / 1024 < 500
+			if (!isRightSize) this.$message.error('文件大小不能超过500KB')
+			return isRightSize
+		},
+		upload(file) {
+			const param = new FormData()
+			param.append('file', file.file)
+			this.fullscreenLoading = true
+			uploadExcel(param).then(res => {
+				this.fullscreenLoading = false
+				if (res.code == 200) {
+					this.$message.success('上传成功')
+					this.showExcel = false
+					this.importPreview(res.data.name)
 				} else {
-					let regx = /(^[1-9]\d*$)/;
-					if (!regx.test(value)) {
-						callback(new Error('请输入正整数'))
-					} else {
-						callback()
-					}
+					this.$message.error('上传失败，原因' + res.msg)
 				}
-			}
-			return {
-				showDevice: false,
-        		showDeviceType: true,
-				addDeviceData: {
-					deviceData: null,
-					isVirtual: false,
-					devicePurpose: '',
-					electricOut: '',
-					deviceTypeId: '',
-					deviceChagePattern: 0,
-					devicePriceId: '',
-					ruleId: 1
-				},
-        		priceTypeList: [],
-				deviceRules: {
-					deviceCode: [{
-						required: true,
-						message: '请输入设备号',
-						trigger: 'blur'
-					}],
-					deviceTypeId: [{
-						required: true,
-						message: '请选择设备类型',
-						trigger: 'change'
-					}],
-					deviceImei: [{
-						required: true,
-						message: '请输入设备Imei号',
-						trigger: 'blur'
-					}],
-					electricOut: [{
-						required: true,
-						message: '请选择电流输出类型',
-						trigger: 'blur'
-					}],
-					deviceTotalPower: [{
-						required: true,
-						message: '请输入设备总功率',
-						trigger: 'blur'
-					}, {
-						validator: checkNum,
-						trigger: 'blur'
-					}],
-					devicePriceId: [{
-						required: true,
-						message: '请选择计费方案',
-						trigger: 'blur'
-					}],
-					deviceChagePattern: [{
-						required: true,
-						message: '请选择计费类型',
-						trigger: 'blur'
-					}],
-					isVirtual: [{
-						required: true,
-						message: '请选择设备用途',
-						trigger: 'blur'
-					}],
-				},
-				tags: [],
-				priceTypeOptions: [],
-				electricOutList: [],
-				fullscreenLoading: false,
-				showExcel: false,
-				uploadFileUrl: this.Global.APIURl + '/api/system/device/Uploader'
-			}
-		},
-		methods: {
-			closeDialog(){
-				this.showDevice = false
-				this.resetForm('addDeviceData')
-			},
-			beforeUpload(file) {
-				const isRightSize = file.size / 1024 < 500
-				if (!isRightSize) this.$message.error('文件大小不能超过500KB')
-				return isRightSize
-			},
-			//导入
-			upload(file) {
-				// 创建FormData对象
-				let param = new FormData()
-				param.append('file', file.file)
-				// 将得到的文件流添加到FormData对象
-				console.log(param, "11111")
-				this.fullscreenLoading = true
-				uploadExcel(param).then(res => {
-					this.fullscreenLoading = false
-					if (res.code == 200) {
-						this.$message.success('上传成功')
-						this.showExcel = false
-						this.importPreview(res.data.name)
-					} else {
-						this.$message.error('上传失败，原因' + res.msg)
-					}
-				}).catch((err) => {
-					this.$message.error('上传失败，请重试')
-					this.fullscreenLoading = false
-				})
-			},
-			importPreview(fileName){
-				const params = { 'fileName': fileName }
-				importPreview(params).then(res => {
-					if (res.code == 200) {
-						this.addDeviceData.deviceData = res.data
-					} else {
-						this.$message.error(res.msg);
-					}
-				}).catch((err) => {
-					this.$message.error('上传失败，请重试')
-				})
-			},
-			importData(formName){
-				let data = this.addDeviceData
-				console.log("批量导入数据:",data)
-				if (data.devicePriceId == '' || data.devicePriceId == null){
-					this.$message.error('计费规则不能为空')
-					return false
-				}
-				if (data.deviceTypeId == '' || data.deviceTypeId == null){
-					this.$message.error('设备类型不能为空')
-					return false
-				}
-				if (data.deviceData == '' || data.deviceData == null){
-					this.$message.error('设备数据不能为空')
-					return false
-				}
-				if (data.isVirtual){
-					data.devicePurpose = 'VIRTUAL_CONNECTION'
-				} else {
-					data.devicePurpose = 'DIRECT_CONNECTION'
-				}
-				importData(data).then(res => {
-					if (res.code == 200) {
-						this.showDevice = false
-						this.resetForm(formName)
-						this.$message.success(res.msg)
-						this.$emit('getLists')
-					} else {
-						this.$message.error(res.msg);
-					}
-				}).catch((err) => {
-					this.$message.error('导入失败，请重试')
-				})
-			},
-			//选择收费类型
-			changeChagePattern(e) {
-				console.log(e)
-				this.addDeviceData.deviceChagePattern = e
-				this.addDeviceData.devicePriceId = ''
-				this.getDevicePriceByPriceType()
-			},
-			//获取方案列表
-			getDevicePriceByPriceType() {
-				let ruleId = this.addDeviceData.ruleId
-				let deviceChagePattern = this.addDeviceData.deviceChagePattern
-				if (parseInt(deviceChagePattern) == 3) {
-					deviceChagePattern = 2
-				}
-				if (this.addDeviceData.ruleId === 2) {
-					deviceChagePattern = 1
-				}
-				let data = {
-					priceType: deviceChagePattern,
-					ruleId: ruleId
-				}
-				findDevicePriceByPriceType(data).then(res => {
-					if (res.code == 200) {
-						this.priceTypeList = res.data || []
-					}
-				})
-			},
-			onShowDevice() {
-				this.fileList = []
-				this.addDeviceData.ruleId = this.listRuleId
-				this.showDevice = true
-				this.ruleIdChange(this.addDeviceData.ruleId)
-			},
-			ruleIdChange(ruleId) {
-				this.addDeviceData.deviceTypeId = ''
-				this.addDeviceData.electricOut = ''
-				this.addDeviceData.devicePriceId = ''
-				// this.addDeviceData.deviceChagePattern = ''
-				this.$dict.getElectricOutOptionsForRule(ruleId).then(list => {
-					this.electricOutList = list || []
-				})
-				this.getDeviceTypeList()
-				this.getDevicePriceByPriceType()
-			},
-			getDeviceTypeList() {
-				let ruleId = this.addDeviceData.ruleId
-        		let electricOut = this.addDeviceData.electricOut
-				let data = {
-					ruleId,
-          			electricOut
-				}
-				findDeviceType(data).then(res => {
-					if (res.code == 200) {
-						this.tags = res.data || []
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
-			},
-			addDevices(formName) {
-				console.log(this.addDeviceData)
-				this.$refs[formName].validate(valid => {
-					console.log(valid)
-					if (valid) {
-						console.log("通过")
-						addDevice(this.addDeviceData).then(res => {
-							if (res.code == 200) {
-								this.showDevice = false
-								this.resetForm(formName)
-								this.$message.success(res.msg)
-								this.$emit('getLists')
-							} else {
-								this.$message.error(res.msg)
-							}
-						})
-					} else {
-						console.log("不通过")
-						return false
-					}
-				})
-			},
-			resetForm(formName) {
-				this.$refs[formName].resetFields();
-				this.$refs.myUpload.clearFiles();
-			},
-			//监听修改事件
-			currElectricOutChange(){
-				this.addDeviceData.deviceTypeId = ''
-				this.showDeviceType = false
-				this.getDeviceTypeList()
-			}
-		},
-		created() {
-			this.$dict.getPriceTypeOptions().then(list => {
-				this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+			}).catch(() => {
+				this.$message.error('上传失败，请重试')
+				this.fullscreenLoading = false
 			})
 		},
+		importPreview(fileName) {
+			importPreview({ fileName }).then(res => {
+				if (res.code == 200) {
+					this.addDeviceData.deviceData = res.data
+				} else {
+					this.$message.error(res.msg)
+				}
+			}).catch(() => {
+				this.$message.error('上传失败，请重试')
+			})
+		},
+		importData(formName) {
+			const data = this.addDeviceData
+			if (data.devicePriceId == '' || data.devicePriceId == null) {
+				this.$message.error('计费规则不能为空')
+				return false
+			}
+			if (data.deviceTypeId == '' || data.deviceTypeId == null) {
+				this.$message.error('设备类型不能为空')
+				return false
+			}
+			if (data.deviceData == '' || data.deviceData == null) {
+				this.$message.error('设备数据不能为空')
+				return false
+			}
+			data.devicePurpose = data.isVirtual ? 'VIRTUAL_CONNECTION' : 'DIRECT_CONNECTION'
+			importData(data).then(res => {
+				if (res.code == 200) {
+					this.showDevice = false
+					this.resetForm(formName)
+					this.$message.success(res.msg)
+					this.$emit('getLists')
+				} else {
+					this.$message.error(res.msg)
+				}
+			}).catch(() => {
+				this.$message.error('导入失败，请重试')
+			})
+		},
+		changeChagePattern(e) {
+			this.addDeviceData.deviceChagePattern = e
+			this.addDeviceData.devicePriceId = ''
+			this.getDevicePriceByPriceType()
+		},
+		getDevicePriceByPriceType() {
+			let ruleId = this.addDeviceData.ruleId
+			let deviceChagePattern = this.addDeviceData.deviceChagePattern
+			if (parseInt(deviceChagePattern) == 3) {
+				deviceChagePattern = 2
+			}
+			if (this.addDeviceData.ruleId === 2) {
+				deviceChagePattern = 1
+			}
+			findDevicePriceByPriceType({ priceType: deviceChagePattern, ruleId }).then(res => {
+				if (res.code == 200) {
+					this.priceTypeList = res.data || []
+				}
+			})
+		},
+		onShowDevice() {
+			this.fileList = []
+			this.addDeviceData.ruleId = this.listRuleId
+			this.showDevice = true
+			this.ruleIdChange(this.addDeviceData.ruleId)
+		},
+		ruleIdChange(ruleId) {
+			this.addDeviceData.deviceTypeId = ''
+			this.selectedDeviceType = null
+			this.addDeviceData.devicePriceId = ''
+			this.loadDeviceTypeOptions(ruleId)
+			this.getDevicePriceByPriceType()
+		},
+		resetForm(formName) {
+			this.$refs[formName].resetFields()
+			this.$refs.myUpload.clearFiles()
+			this.selectedDeviceType = null
+		}
+	},
+	created() {
+		this.$dict.getPriceTypeOptions().then(list => {
+			this.priceTypeOptions = (list || []).filter(i => [0, 1, 2].includes(Number(i.value)))
+		})
 	}
+}
 </script>
 
-<style>
-
+<style scoped>
+.form-tip {
+	font-size: 12px;
+	color: #909399;
+	line-height: 1.5;
+	margin-top: 6px;
+}
 </style>
