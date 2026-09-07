@@ -337,7 +337,7 @@
 <script>
   import {
     saveOrUpdate,
-    findDeviceType
+    listDeviceTypeSelectOptions
   } from '@/api/device/deviceList.js'
   import {
   	connect,
@@ -479,11 +479,10 @@
         })
       },
       getDeviceTypeModels(){
-        let data = {
+        listDeviceTypeSelectOptions({
           ruleId: 2,
           electricOut: this.form.chargePointModel
-        }
-        findDeviceType(data).then(res => {
+        }).then(res => {
         	if (res.code === 200) {
         		this.chargingPointModels = res.data
             console.log("chargingPointModels",this.chargingPointModels)

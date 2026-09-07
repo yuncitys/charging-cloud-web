@@ -62,7 +62,7 @@
 
 <script>
 	import {
-		findDeviceType,
+		listDeviceTypeSelectOptions,
 		findDevicePriceByPriceType,
 		downLoadDeviceCodes,
 	} from '@/api/device/deviceList.js'
@@ -234,12 +234,10 @@
 			},
 			getTypeListss() {
 				this.listLoading = true
-				let data = {
-					ruleId: this.configData.ruleId
-				}
-				findDeviceType(data).then(res => {
+				listDeviceTypeSelectOptions({ ruleId: this.configData.ruleId }).then(res => {
+					this.listLoading = false
 					if (res.code == 200) {
-						this.dectinoType = res.data;
+						this.dectinoType = res.data
 					} else {
 						this.$message.error(res.msg)
 					}
