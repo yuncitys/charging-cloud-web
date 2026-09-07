@@ -92,6 +92,10 @@
 				</el-table-column>
 				<el-table-column prop="deviceTypeName" label="设备类型" v-if="formThead.deviceTypeName" align="center"
 					:show-overflow-tooltip="isPc">
+					<template slot-scope="scope">
+						<span v-if="scope.row.deviceTypeName">{{ scope.row.deviceTypeName }}</span>
+						<el-tag v-else type="warning" size="mini">未绑定</el-tag>
+					</template>
 				</el-table-column>
 				<el-table-column prop="deviceStatus" label="设备状态" v-if="formThead.deviceStatus" align="center"
 					:show-overflow-tooltip="isPc">
@@ -174,7 +178,8 @@
 							</div>
 
 							<div>
-								<editDeviceType :row_data="scope.row" @getLists="getLists"></editDeviceType>
+								<bindDeviceType v-if="!scope.row.deviceTypeId" :row_data="scope.row" @getLists="getLists" />
+								<editDeviceType v-else :row_data="scope.row" @getLists="getLists"></editDeviceType>
 								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
 									style="margin-top: 10px;margin-left: 0px;">
 									<el-button type="primary" @click="showonPriceType(scope.row)" size='mini'>
@@ -334,6 +339,7 @@
 	import deviceBind from '../device/components/deviceBind.vue'
 	import deviceAdmin from '../device/components/deviceAdmin.vue'
 	import editDeviceType from '../device/components/editDeviceType.vue'
+	import bindDeviceType from './components/bindDeviceType.vue'
 	import batchPower from '../device/components/batchPower.vue'
 	export default {
 		components: {
@@ -346,6 +352,7 @@
 			deviceBind,
 			deviceAdmin,
 			editDeviceType,
+			bindDeviceType,
 			batchPower
 		},
 		name: 'virtualDeviceList',
