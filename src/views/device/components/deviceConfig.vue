@@ -19,11 +19,12 @@
 					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码前缀"/>
 				</el-form-item>
 				<el-form-item :label="'设备类型'" prop="deviceTypeId">
-					<el-select v-model="configData.deviceTypeId" placeholder="请选择端口数" style="width: 100%;">
-						<el-option v-for="item in dectinoType" :key="item.deviceTypeId" :label="item.deviceTypeName" :value="item.deviceTypeId"
-							:disabled="item.disabled">
-						</el-option>
+					<el-select v-model="configData.deviceTypeId" placeholder="请选择设备类型" filterable clearable
+						style="width: 100%;" @change="onDeviceTypeIdChange">
+						<el-option v-for="item in deviceTypeOptions" :key="item.deviceTypeId"
+							:label="formatDeviceTypeOptionLabel(item)" :value="item.deviceTypeId" />
 					</el-select>
+					<div v-if="selectedDeviceType" class="form-tip">{{ typeSummaryText }}</div>
 				</el-form-item>
 				<el-form-item :label="'总功率'" prop="deviceTotalPower">
 					<el-input v-model="configData.deviceTotalPower" clearable placeholder="请输入总设备功率">
@@ -62,14 +63,16 @@
 
 <script>
 	import {
-		listDeviceTypeSelectOptions,
 		findDevicePriceByPriceType,
 		downLoadDeviceCodes,
 	} from '@/api/device/deviceList.js'
 	import {
 		getNowTime
 	} from '@/utils/index'
+	import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+
 	export default {
+		mixins: [deviceTypePickerMixin],
 		props: {
 			syncRuleIdFromList: {
 				type: Boolean,
@@ -118,8 +121,8 @@
 					}],
 					deviceTypeId: [{
 						required: true,
-						message: '请选择端口数',
-						trigger: 'blur',
+						message: '请选择设备类型',
+						trigger: 'change',
 					}],
 					deviceTotalPower: [{
 						required: true,
@@ -152,7 +155,6 @@
 						trigger: 'blur',
 					}],
 				},
-				dectinoType: [],
 				operatorList: [],
 				devicePriceList: [],
 				deviceRuleOptions: [],
@@ -184,6 +186,11 @@
 					}]
 				}
 				return r
+			},
+			typeSummaryText() {
+				const t = this.selectedDeviceType
+				if (!t) return ''
+				return this.formatDeviceTypeOptionLabel(t) + '（生成后将从类型继承默认参数）'
 			}
 		},
 		methods: {
@@ -222,26 +229,16 @@
 				if (this.syncRuleIdFromList) {
 					this.ruleIdChange()
 				} else {
-					this.getTypeListss()
+					this.loadDeviceTypeOptions(this.configData.ruleId)
 					this.getDevicePriceByPriceType()
 				}
 			},
 			ruleIdChange() {
         		this.configData.deviceTypeId = ''
+				this.selectedDeviceType = null
 				this.configData.devicePriceId = ''
-				this.getTypeListss()
+				this.loadDeviceTypeOptions(this.configData.ruleId)
 				this.getDevicePriceByPriceType()
-			},
-			getTypeListss() {
-				this.listLoading = true
-				listDeviceTypeSelectOptions({ ruleId: this.configData.ruleId }).then(res => {
-					this.listLoading = false
-					if (res.code == 200) {
-						this.dectinoType = res.data
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
 			},
 			//导出设备配置
 			DownloadConfig(formName) {
@@ -367,7 +364,8 @@
 			},
 			//清除表单
 			resetForm(formName) {
-				this.$refs[formName].resetFields();
+				this.$refs[formName].resetFields()
+				this.selectedDeviceType = null
 			},
 		},
 		created() {
@@ -379,5 +377,11 @@
 	}
 </script>
 
-<style>
+<style scoped>
+.form-tip {
+	font-size: 12px;
+	color: #909399;
+	line-height: 1.5;
+	margin-top: 6px;
+}
 </style>
