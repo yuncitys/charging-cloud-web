@@ -19,9 +19,10 @@
 						placeholder="请选择设备类型" clearable filterable @change="onDeviceTypeIdChange">
 						<el-option v-for="item in deviceTypeOptions" :key="item.deviceTypeId"
 							:label="deviceTypeOptionLabel(item)" :value="item.deviceTypeId"
-							:disabled="isDeviceTypePortMismatch(item)" />
+							:disabled="isDeviceTypeOptionDisabled(item)" />
 					</el-select>
 					<div v-if="selectedDeviceType" class="form-tip">{{ typeSummaryText }}</div>
+					<div v-if="isInterconnectionDevice" class="form-tip">互联设备换类型须与当前 Connector 端口数一致</div>
 				</el-form-item>
 				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
 					<el-input v-model="formData.deviceQrLink" clearable placeholder="请输入设备二维码前缀" :disabled="formData.ruleId === 2"/>
@@ -41,6 +42,8 @@
 <script>
 import { updateDevice } from '@/api/device/deviceList.js'
 import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+
+const INTER_CONNECTION = 'INTER_CONNECTION'
 
 export default {
 	mixins: [deviceTypePickerMixin],
@@ -85,10 +88,15 @@ export default {
 				deviceQrLink: [{ required: true, message: '请输入二维码前缀', trigger: 'blur' }]
 			},
 			deviceRuleOptions: [],
-			currentPortCount: 0
+			currentPortCount: 0,
+			currentDeviceSender: '',
+			devicePurpose: ''
 		}
 	},
 	computed: {
+		isInterconnectionDevice() {
+			return this.devicePurpose === INTER_CONNECTION
+		},
 		typeSummaryText() {
 			const t = this.selectedDeviceType
 			if (!t) return ''
@@ -99,6 +107,8 @@ export default {
 		onShowDevice() {
 			this.showDevice = true
 			this.currentPortCount = Number(this.row_data.portCount) || 0
+			this.currentDeviceSender = (this.row_data.deviceSender || '').trim()
+			this.devicePurpose = this.row_data.devicePurpose || ''
 			this.originalDeviceTypeId = this.row_data.deviceTypeId ? String(this.row_data.deviceTypeId) : ''
 			this.formData.deviceCode = this.row_data.deviceCode
 			this.formData.id = this.row_data.id
@@ -108,27 +118,71 @@ export default {
 			this.formData.devicePriceId = this.row_data.devicePriceId !== '' ? Number(this.row_data.devicePriceId) : ''
 			this.formData.deviceTotalPower = this.row_data.deviceTotalPower ? Number(this.row_data.deviceTotalPower) : ''
 			this.formData.deviceQrLink = this.row_data.deviceQrcodeLink ? this.row_data.deviceQrcodeLink : ''
-			this.loadDeviceTypeOptions(this.formData.ruleId).then(() => {
+			const extra = {}
+			if (this.isInterconnectionDevice && this.currentPortCount) {
+				extra.portCount = this.currentPortCount
+			}
+			this.loadDeviceTypeOptions(this.formData.ruleId, extra).then(() => {
 				this.resolveSelectedDeviceType(this.formData.deviceTypeId)
 			})
 		},
 		ruleIdChange(ruleId) {
 			this.formData.deviceTypeId = ''
 			this.selectedDeviceType = null
-			this.loadDeviceTypeOptions(ruleId)
+			const extra = {}
+			if (this.isInterconnectionDevice && this.currentPortCount) {
+				extra.portCount = this.currentPortCount
+			}
+			this.loadDeviceTypeOptions(ruleId, extra)
 		},
 		isDeviceTypePortMismatch(item) {
-			if (!this.currentPortCount || !item || item.portCount == null) {
+			if (!this.isInterconnectionDevice || !this.currentPortCount || !item || item.portCount == null) {
 				return false
 			}
 			return Number(item.portCount) !== Number(this.currentPortCount)
+		},
+		isDeviceTypeProtocolMismatch(item) {
+			if (this.isInterconnectionDevice || !item) {
+				return false
+			}
+			const sender = this.currentDeviceSender
+			if (!sender || !item.protocolCode) {
+				return false
+			}
+			return String(item.protocolCode).trim() !== sender
+		},
+		isDeviceTypeOptionDisabled(item) {
+			return this.isDeviceTypePortMismatch(item) || this.isDeviceTypeProtocolMismatch(item)
 		},
 		deviceTypeOptionLabel(item) {
 			const base = this.formatDeviceTypeOptionLabel(item)
 			if (this.isDeviceTypePortMismatch(item)) {
 				return base + '（端口数不一致）'
 			}
+			if (this.isDeviceTypeProtocolMismatch(item)) {
+				return base + '（协议不一致）'
+			}
 			return base
+		},
+		validateSelectedType(selectedType) {
+			if (!selectedType) return null
+			if (this.isDeviceTypePortMismatch(selectedType)) {
+				return '所选设备类型端口数与当前设备不一致'
+			}
+			if (this.isDeviceTypeProtocolMismatch(selectedType)) {
+				return '所选设备类型接入协议与当前设备不一致'
+			}
+			return null
+		},
+		buildTypeChangeConfirmMessage(selectedType) {
+			if (this.isInterconnectionDevice) {
+				return '换类型将同步枪的输出类型、充电分类及功率等规格（不修改枪状态与连接状态）。是否继续？'
+			}
+			const newPorts = selectedType && selectedType.portCount != null ? Number(selectedType.portCount) : 0
+			if (newPorts && this.currentPortCount && newPorts !== this.currentPortCount) {
+				return '换类型将调整枪口数量并同步枪规格（缩容时仅移除空闲/离线枪口，充电中或占位枪口将阻止保存）。是否继续？'
+			}
+			return '换类型将同步枪的输出类型、充电分类及功率等规格（不修改枪状态与连接状态）。是否继续？'
 		},
 		submitUpdate() {
 			updateDevice(this.formData).then(res => {
@@ -146,14 +200,15 @@ export default {
 			this.$refs[formName].validate(valid => {
 				if (!valid) return false
 				const selectedType = this.deviceTypeOptions.find(item => item.deviceTypeId === this.formData.deviceTypeId)
-				if (selectedType && this.isDeviceTypePortMismatch(selectedType)) {
-					this.$message.error('所选设备类型端口数与当前设备不一致')
+				const typeError = this.validateSelectedType(selectedType)
+				if (typeError) {
+					this.$message.error(typeError)
 					return false
 				}
 				const newTypeId = this.formData.deviceTypeId ? String(this.formData.deviceTypeId) : ''
 				if (newTypeId && newTypeId !== this.originalDeviceTypeId) {
 					this.$confirm(
-						'换类型将同步枪的输出类型、充电分类及功率等规格（不修改枪状态与连接状态）。是否继续？',
+						this.buildTypeChangeConfirmMessage(selectedType),
 						'换类型确认',
 						{ confirmButtonText: '继续保存', cancelButtonText: '取消', type: 'warning' }
 					).then(() => {
