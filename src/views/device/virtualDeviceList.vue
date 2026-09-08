@@ -166,94 +166,78 @@
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="520" fixed="right">
+				<el-table-column label="操作" align="center" width="280" fixed="right">
 					<template slot-scope="scope">
-						<div style="display: flex;align-items: center;justify-content: space-around;">
-							<div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')">
-									<el-button type="primary" @click='toConectionDevice(scope.row)' size='mini'>
-										打开连接
-									</el-button>
-								</div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:info')"
-									class="top10">
-									<el-button type="danger" @click='closeConnection(scope.row.deviceCode)' size='mini'>
-										关闭连接
-									</el-button>
-								</div>
-							</div>
-
-							<div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')">
-									<el-button type="primary" @click='toSetDevice(scope.row)' size='mini'>
-										控制
-									</el-button>
-								</div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:info')"
-									class="top10">
-									<!-- 详情 -->
-									<device-detail :row_data="scope.row" />
-								</div>
-							</div>
-
-							<div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')"
-									style="margin-left: 0px;">
-									<el-button type="primary" @click="showallocation(scope.row)" size='mini'>
-                    					分配设备
-									</el-button>
-								</div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
-									style="margin-top: 10px;margin-left: 0px;">
-									<el-button type="primary" @click="showonPriceType(scope.row)" size='mini'>
-										收费方案
-									</el-button>
-								</div>
-							</div>
-
-							<div>
-								<div v-if="scope.row.operationState == 0 
-									&& btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')">
-									<el-button type="danger" @click="onOperationDevice(scope.row.id,1)" size='mini'>
-                    					禁用
-									</el-button>
-                				</div>
-
-								<div v-if="scope.row.operationState == 1 
-									&& btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')">
-									<el-button type="primary" @click="onOperationDevice(scope.row.id,0)" size='mini'>
-										启用
-									</el-button>
-								</div>
-
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
-									style="margin-top: 10px;margin-left: 0px;">
-									<el-button type="danger" @click="del(scope.row.id)" size='mini'>
-										删除
-									</el-button>
-								</div>
-              				</div>
-
-							<div>
-								<div>
-									<el-button type="primary" @click="showWXQrcode(scope.row)" size='mini'>
-                    					二维码
-									</el-button>
-								</div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')" class="top10">
+						<device-table-actions :show-more="hasDeviceMoreActions()">
+							<device-detail
+								v-if="btnAuthen.permsVerifAuthention(':device:deviceList:info')"
+								:row_data="scope.row"
+							/>
+							<el-button
+								v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')"
+								type="primary"
+								size="mini"
+								@click="toSetDevice(scope.row)"
+							>
+								控制
+							</el-button>
+							<template slot="more">
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')"
+									@click.native="showallocation(scope.row)"
+								>
+									分配设备
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')"
+									@click.native="toConectionDevice(scope.row)"
+								>
+									打开连接
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:info')"
+									@click.native="closeConnection(scope.row.deviceCode)"
+								>
+									关闭连接
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
+									@click.native="showonPriceType(scope.row)"
+								>
+									收费方案
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="scope.row.operationState == 0 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')"
+									@click.native="onOperationDevice(scope.row.id, 1)"
+								>
+									禁用
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="scope.row.operationState == 1 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')"
+									@click.native="onOperationDevice(scope.row.id, 0)"
+								>
+									启用
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
+									@click.native="del(scope.row.id)"
+								>
+									删除
+								</el-dropdown-item>
+								<el-dropdown-item @click.native="showWXQrcode(scope.row)">
+									二维码
+								</el-dropdown-item>
+								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 									<deviceBind :deviceId="scope.row.id" :deviceCode="scope.row.deviceCode" />
-								</div>
-							</div>
-
-							<div>
-								<editDeviceType :row_data="scope.row" @getLists="getLists"></editDeviceType>
-								<div class="top10">
-									<el-button type="primary" @click="upDownRecord(scope.row)" size='mini'>
-                    					上下线记录
-									</el-button>
-								</div>
-							</div>
-						</div>
+								</el-dropdown-item>
+								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')">
+									<editDeviceType :row_data="scope.row" @getLists="getLists" />
+								</el-dropdown-item>
+								<el-dropdown-item @click.native="upDownRecord(scope.row)">
+									上下线记录
+								</el-dropdown-item>
+							</template>
+						</device-table-actions>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -373,6 +357,7 @@
 	import deviceAdmin from './components/deviceAdmin.vue'
 	import editDeviceType from './components/editDeviceType.vue'
 	import batchPower from './components/batchPower.vue'
+	import DeviceTableActions from './components/DeviceTableActions.vue'
 	export default {
 		components: {
 			addPage,
@@ -384,7 +369,8 @@
 			deviceBind,
 			deviceAdmin,
 			editDeviceType,
-			batchPower
+			batchPower,
+			DeviceTableActions
 		},
 		name: 'virtualDeviceList',
 		data() {
@@ -505,6 +491,10 @@
 			},
 		},
 		methods: {
+			hasDeviceMoreActions() {
+				// 二维码、上下线记录无独立权限，始终进更多
+				return true
+			},
 			closeConnection(deviceCode){
 				let data = {
 					chargePointId: deviceCode

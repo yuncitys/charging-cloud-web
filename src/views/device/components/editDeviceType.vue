@@ -1,7 +1,6 @@
 <template>
-	<div style="display: inline-block;">
-		<el-button type="primary" @click="onShowDevice"
-			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')" size="mini">编辑设备
+	<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')" style="display: inline-block;">
+		<el-button type="primary" @click="onShowDevice" size="mini">编辑设备
 		</el-button>
 		<el-dialog :visible.sync="showDevice" title="编辑设备" @close="showDevice = false" :append-to-body="true">
 			<el-form ref="formData" :model="formData" :rules="deviceRules" label-position="left" label-width="100px"

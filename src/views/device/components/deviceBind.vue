@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<div v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 		<div style="display: inline-block;">
 			<el-button type="primary" @click='onShowDialog' size="mini">
 				码绑定

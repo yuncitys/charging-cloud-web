@@ -152,42 +152,39 @@
 						</div>
 					</template>
 				</el-table-column>
-				<el-table-column label="操作" align="center" width="350">
+				<el-table-column label="操作" align="center" width="280">
 					<template slot-scope="scope">
-						<div style="display: flex;justify-content: space-around;">
-							<div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')">
-									<el-button type="danger" @click="del(scope.row.id)" size='mini'>
-                    					删除
-									</el-button>
-								</div>
-								<div class="top10">
-									<!-- 详情 -->
-									<device-detail :row_data="scope.row" />
-								</div>
-							</div>
-							<div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')">
-									<el-button type="primary" @click='toSetDevice(scope.row)' size='mini'>
-										控制
-									</el-button>
-								</div>
-								<div style="margin-top: 10px;"
-									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')">
-									<el-button type="primary" @click="showonPriceType(scope.row)" size='mini'>
-										收费方案
-									</el-button>
-								</div>
-							</div>
-							<div>
-								<div v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
+						<device-table-actions :show-more="hasDeviceMoreActions()">
+							<device-detail :row_data="scope.row" />
+							<el-button
+								v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')"
+								type="primary"
+								size="mini"
+								@click="toSetDevice(scope.row)"
+							>
+								控制
+							</el-button>
+							<template slot="more">
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
+									@click.native="del(scope.row.id)"
+								>
+									删除
+								</el-dropdown-item>
+								<el-dropdown-item
+									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
+									@click.native="showonPriceType(scope.row)"
+								>
+									收费方案
+								</el-dropdown-item>
+								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 									<deviceBind :deviceId="scope.row.id" :deviceCode="scope.row.deviceCode" />
-								</div>
-								<div style="margin-top: 10px;">
-									<editDeviceType :row_data="scope.row" @getLists="getLists"></editDeviceType>
-								</div>
-							</div>
-						</div>
+								</el-dropdown-item>
+								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')">
+									<editDeviceType :row_data="scope.row" @getLists="getLists" />
+								</el-dropdown-item>
+							</template>
+						</device-table-actions>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -301,6 +298,7 @@
 	import editDeviceType from './components/editDeviceType.vue'
 	import batchPower from './components/batchPower.vue'
 	import batchAddDevice from './components/batchAddDevice.vue'
+	import DeviceTableActions from './components/DeviceTableActions.vue'
 	export default {
 		components: {
 			wxCode,
@@ -312,7 +310,8 @@
 			deviceAdmin,
 			editDeviceType,
 			batchPower,
-			batchAddDevice
+			batchAddDevice,
+			DeviceTableActions
 		},
 		name: 'undeviceList',
 		data() {
@@ -430,6 +429,13 @@
 			},
 		},
 		methods: {
+			hasDeviceMoreActions() {
+				const auth = (p) => this.btnAuthen.permsVerifAuthention(p)
+				return auth(':device:deviceList:oneDelete')
+					|| auth(':device:deviceList:oneCharge')
+					|| auth(':device:qr:binding')
+					|| auth(':device:deviceList:oneEdit')
+			},
 			//模板下载
 			handleDownload() {
 				import('@/vendor/Export2Excel').then(excel => {

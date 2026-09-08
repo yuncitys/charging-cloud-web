@@ -1,7 +1,6 @@
 <template>
-	<div style="display: inline-block;">
-		<el-button type="warning" size="mini" @click="openDialog"
-			v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')">
+	<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')" style="display: inline-block;">
+		<el-button type="warning" size="mini" @click="openDialog">
 			绑定类型
 		</el-button>
 		<el-dialog :visible.sync="showDialog" title="绑定设备类型" width="520px" append-to-body @close="onClose">
