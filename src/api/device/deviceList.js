@@ -74,6 +74,29 @@ export function listGuns(data) {
 	})
 }
 
+// 更新枪名称或启停状态
+export function updateGun(data) {
+	return request({
+		url: '/api/web/device/updateGun',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					if (data[it] === undefined || data[it] === null) continue
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
 // 删除设备
 export function deleteDevice(data) {
 	return request({
