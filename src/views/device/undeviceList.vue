@@ -439,8 +439,8 @@
 			//模板下载
 			handleDownload() {
 				import('@/vendor/Export2Excel').then(excel => {
-					// const tHeader = ['设备编号', '设备IMEI', '设备名称', '设备功率', '二维码前缀']
-					const tHeader = ['设备编号', '设备IMEI', '设备功率', '二维码前缀']
+					// const tHeader = ['设备编号', '设备IMEI', '设备名称', '设备功率', '二维码规则']
+					const tHeader = ['设备编号', '设备IMEI', '设备功率', '二维码规则']
 					const exampleRow = ['示例设备001', '860000000000001', '120', 'https://example.com/q/']
 					const data = [exampleRow]
 					excel.export_json_to_excel({

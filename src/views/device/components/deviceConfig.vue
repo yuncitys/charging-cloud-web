@@ -22,8 +22,8 @@
 						</el-option>
 					</el-select>
 				</el-form-item>
-				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
-					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码前缀"/>
+				<el-form-item :label="'二维码规则'" prop="deviceQrLink">
+					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码规则"/>
 				</el-form-item>
 				<el-form-item :label="'设备类型'" prop="deviceTypeId">
 					<el-select v-model="configData.deviceTypeId" placeholder="请选择设备类型" filterable clearable
@@ -158,7 +158,7 @@
 					}],
 					deviceQrLink: [{
 						required: true,
-						message: '请输入设备二维码前缀',
+						message: '请输入设备二维码规则',
 						trigger: 'blur',
 					}],
 				},

@@ -23,8 +23,8 @@
 					<div v-if="selectedDeviceType" class="form-tip">{{ typeSummaryText }}</div>
 					<div v-if="isInterconnectionDevice" class="form-tip">互联设备换类型须与当前 Connector 端口数一致</div>
 				</el-form-item>
-				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
-					<el-input v-model="formData.deviceQrLink" clearable placeholder="请输入设备二维码前缀" :disabled="formData.ruleId === 2"/>
+				<el-form-item :label="'二维码规则'" prop="deviceQrLink">
+					<el-input v-model="formData.deviceQrLink" clearable placeholder="请输入设备二维码规则" :disabled="formData.ruleId === 2"/>
 				</el-form-item>
 				<el-form-item :label="'总功率'" prop="deviceTotalPower">
 					<el-input v-model="formData.deviceTotalPower" clearable placeholder="如 120 表示 120kW">
@@ -78,7 +78,7 @@ export default {
 					{ required: true, message: '请输入设备总功率', trigger: 'blur' },
 					{ validator: createKwValidator('请输入设备总功率', '请输入大于 0 的功率(kW)'), trigger: 'blur' }
 				],
-				deviceQrLink: [{ required: true, message: '请输入二维码前缀', trigger: 'blur' }]
+				deviceQrLink: [{ required: true, message: '请输入二维码规则', trigger: 'blur' }]
 			},
 			deviceRuleOptions: [],
 			currentPortCount: 0,

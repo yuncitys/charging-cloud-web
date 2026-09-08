@@ -44,8 +44,8 @@
 						<template slot="append">kW</template>
 					</el-input>
 				</el-form-item>
-				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
-					<el-input v-model="addDeviceData.deviceQrLink" clearable placeholder="请输入设备二维码前缀" />
+				<el-form-item :label="'二维码规则'" prop="deviceQrLink">
+					<el-input v-model="addDeviceData.deviceQrLink" clearable placeholder="请输入设备二维码规则" />
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="addDevices('addDeviceData')">确定</el-button>
@@ -100,7 +100,7 @@ export default {
 				],
 				devicePriceId: [{ required: true, message: '请选择计费方案', trigger: 'blur' }],
 				deviceChagePattern: [{ required: true, message: '请选择计费类型', trigger: 'blur' }],
-				deviceQrLink: [{ required: true, message: '请输入二维码前缀', trigger: 'blur' }]
+				deviceQrLink: [{ required: true, message: '请输入二维码规则', trigger: 'blur' }]
 			},
 			deviceRuleOptions: [],
 			priceTypeOptions: []
