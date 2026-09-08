@@ -58,6 +58,7 @@
 			</el-form>
 		</el-dialog>
 
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
@@ -66,15 +67,16 @@
 		findDevicePriceByPriceType,
 		downLoadDeviceCodes,
 	} from '@/api/device/deviceList.js'
-	import {
-		getNowTime
-	} from '@/utils/index'
 	import { createKwValidator } from '@/utils/powerUnit.js'
 	import deviceTypePickerMixin from './deviceTypePickerMixin.js'
 	import devicePowerKwMixin from './devicePowerKwMixin.js'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
 
 	export default {
 		mixins: [deviceTypePickerMixin, devicePowerKwMixin],
+		components: {
+			downloadProgress
+		},
 		props: {
 			syncRuleIdFromList: {
 				type: Boolean,
@@ -258,112 +260,20 @@
 					}
 					this.loading = true
 					downLoadDeviceCodes(configData).then(res => {
-							if (res.code == 200) {
-								let port = res.data.port;
-								import('@/vendor/Export2Excel').then(excel => {
-									const tHeader = ['Broker Address', 'Broker Port', 'Client ID', 'User Name', 'Password', '发布Topic', '订阅Topic', '设备编号',
-										'整机二维码内容']
-									for (let i = 0; i < port; i++) {
-										tHeader.push(`第${i+1}路二维码内容`)
-									}
-									const filterVal = ['brokeAddress',
-										'brokePort',
-										'clientID',
-										'userName',
-										'password',
-										'upTopic',
-										'downTopic',
-										'deviceCode',
-										'deviceCodeCom'
-									]
-									for (let i = 0; i < port; i++) {
-										filterVal.push(`port${i+1}`)
-									}
-									const list = []
-									let listData = res.data || {}
-									let {
-										clientID,
-										downTopic,
-										password,
-										brokePort,
-										brokeAddress,
-										deviceCode,
-										userName,
-										upTopic
-									} = listData
-									if (clientID.length != 0) {
-										clientID.forEach((item, index) => {
-											let obj = {
-												'brokePort': '',
-												'clientID': '',
-												'userName': '',
-												'password': '',
-												'upTopic': '',
-												'downTopic': '',
-												'deviceCode': '',
-												'deviceCodeCom': ''
-											}
-											obj.clientID = clientID[index]
-											obj.downTopic = downTopic[index]
-											obj.password = password[index]
-											obj.brokePort = brokePort[index]
-											obj.brokeAddress = brokeAddress[index]
-											obj.deviceCode = deviceCode[index]
-											obj.userName = userName[index]
-											obj.upTopic = upTopic[index]
-											let baseUrl = this.configData.deviceQrLink
-											let urls = deviceCode[index]
-											const ruleId = this.configData.ruleId
-											for (let i = 0; i <= port; i++) {
-												if (i == 0) {
-													obj.deviceCodeCom = baseUrl + urls
-												} else if (ruleId === 2) {
-													let str = 'port' + i
-													obj[str] = baseUrl + urls + String(i).padStart(2, '0')
-												} else {
-													let str = 'port' + i
-													obj[str] = baseUrl + urls + '&port=' + i
-												}
-											}
-											list.push(obj)
-										})
-									}
-									console.log(list)
-									const data = this.formatJson(filterVal, list)
-									let filename = '设备配置-' + getNowTime()
-									excel.export_json_to_excel({
-										header: tHeader,
-										data,
-										filename: filename
-									})
-									this.loading = false
-									this.showConfig = false
-									this.resetForm(formName)
-									this.$emit('getLists')
-								})
-							} else {
-								this.loading = false
-								this.$message({
-									message: '导出失败，请重试',
-									type: 'warning'
-								})
-							}
-						})
+						this.loading = false
+						if (res.code == 200 && res.data && res.data.id) {
+							this.showConfig = false
+							this.resetForm(formName)
+							this.$message.success(res.msg || '已开始生成，请在下载进度中获取文件')
+							this.$refs.downloadProgress.open(res.data.id)
+							this.$emit('getLists')
+						} else {
+							this.$message({ message: (res && res.msg) || '导出失败，请重试', type: 'warning' })
+						}
+					}).catch(() => {
+						this.loading = false
+					})
 				})
-			},
-			getFormat(str) {
-				let url = ''
-				let lastStr = str.substr(-1)
-				if (lastStr !== '/') {
-					url = str + '/'
-				} else {
-					url = str
-				}
-				return url
-			},
-			//导出excel格式转化
-			formatJson(filterVal, jsonData) {
-				return jsonData.map(v => filterVal.map(j => v[j]))
 			},
 			//清除表单
 			resetForm(formName) {
