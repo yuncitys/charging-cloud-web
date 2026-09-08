@@ -40,8 +40,8 @@
 					</el-select>
 				</el-form-item>
 				<el-form-item :label="'总功率'" prop="deviceTotalPower">
-					<el-input v-model="addDeviceData.deviceTotalPower" clearable placeholder="请输入总设备功率">
-						<template slot="append">W</template>
+					<el-input v-model="addDeviceData.deviceTotalPower" clearable placeholder="如 120 表示 120kW">
+						<template slot="append">kW</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
@@ -58,10 +58,12 @@
 
 <script>
 import { addDevice, findDevicePriceByPriceType } from '@/api/device/deviceList.js'
+import { createKwValidator } from '@/utils/powerUnit.js'
 import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+import devicePowerKwMixin from './devicePowerKwMixin.js'
 
 export default {
-	mixins: [deviceTypePickerMixin],
+	mixins: [deviceTypePickerMixin, devicePowerKwMixin],
 	props: {
 		syncRuleIdFromList: {
 			type: Boolean,
@@ -73,16 +75,6 @@ export default {
 		}
 	},
 	data() {
-		const checkNum = (rule, value, callback) => {
-			if (!value) {
-				return new Error('必填信息')
-			}
-			if (!(/(^[1-9]\d*$)/.test(value))) {
-				callback(new Error('请输入正整数'))
-			} else {
-				callback()
-			}
-		}
 		return {
 			showDevice: false,
 			addDeviceData: {
@@ -104,7 +96,7 @@ export default {
 				deviceImei: [{ required: true, message: '请输入设备Imei号', trigger: 'blur' }],
 				deviceTotalPower: [
 					{ required: true, message: '请输入设备总功率', trigger: 'blur' },
-					{ validator: checkNum, trigger: 'blur' }
+					{ validator: createKwValidator('请输入设备总功率', '请输入大于 0 的功率(kW)'), trigger: 'blur' }
 				],
 				devicePriceId: [{ required: true, message: '请选择计费方案', trigger: 'blur' }],
 				deviceChagePattern: [{ required: true, message: '请选择计费类型', trigger: 'blur' }],
@@ -166,7 +158,11 @@ export default {
 		addDevices(formName) {
 			this.$refs[formName].validate(valid => {
 				if (!valid) return false
-				addDevice(this.addDeviceData).then(res => {
+				const payload = {
+					...this.addDeviceData,
+					deviceTotalPower: this.toApiDeviceTotalPower(this.addDeviceData.deviceTotalPower)
+				}
+				addDevice(payload).then(res => {
 					if (res.code == 200) {
 						this.showDevice = false
 						this.resetForm(formName)

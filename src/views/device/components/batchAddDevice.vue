@@ -38,7 +38,10 @@
 						:action="uploadFileUrl" accept=".xls,.xlsx" v-loading.fullscreen.lock="fullscreenLoading">
 						<i class="el-icon-upload"></i>
 						<div class="el-upload__text">将文件拖到此处，或<em>点击上传</em></div>
-						<div class="el-upload__tip" slot="tip"><i class="el-icon-warning-outline" style="font-size: 14px; display: inline-block; margin-right: 5px;"></i>只能上传Excel文件，且不超过500kb</div>
+						<div class="el-upload__tip" slot="tip">
+							<div><i class="el-icon-warning-outline" style="font-size: 14px; display: inline-block; margin-right: 5px;"></i>只能上传Excel文件，且不超过500kb</div>
+							<div class="form-tip">Excel「设备功率」列请填 kW（如 120 表示 120kW），导入时自动换算为 W 入库</div>
+						</div>
 					</el-upload>
 				</el-form-item>
 				<el-form-item>
@@ -58,6 +61,7 @@ import {
 	importData
 } from '@/api/device/deviceList.js'
 import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+import { convertDeviceImportRowsToWatts } from '@/utils/powerUnit.js'
 
 export default {
 	mixins: [deviceTypePickerMixin],
@@ -153,7 +157,11 @@ export default {
 				return false
 			}
 			data.devicePurpose = data.isVirtual ? 'VIRTUAL_CONNECTION' : 'DIRECT_CONNECTION'
-			importData(data).then(res => {
+			const payload = {
+				...data,
+				deviceData: convertDeviceImportRowsToWatts(data.deviceData)
+			}
+			importData(payload).then(res => {
 				if (res.code == 200) {
 					this.showDevice = false
 					this.resetForm(formName)

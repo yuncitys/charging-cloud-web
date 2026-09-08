@@ -1,6 +1,7 @@
 /** 设备类型添加/编辑：按设备形态区分字段显示与校验 */
 
 import { filterDeviceProtocolOptionsByRule } from '@/utils/dictionary.js'
+import { createKwValidator, kwToWatts, wattsToKw } from '@/utils/powerUnit.js'
 
 
 
@@ -116,7 +117,7 @@ export default {
 
 					{ required: true, message: '请填写柜体额定功率', trigger: ['blur', 'change'] },
 
-					{ validator: this.checkPositiveNum, trigger: ['blur', 'change'] }
+					{ validator: createKwValidator('请填写柜体额定功率', '请输入大于 0 的功率(kW)'), trigger: ['blur', 'change'] }
 
 				]
 
@@ -130,7 +131,7 @@ export default {
 
 					{ required: true, message: '请填写单枪默认功率', trigger: ['blur', 'change'] },
 
-					{ validator: this.checkPositiveNum, trigger: ['blur', 'change'] }
+					{ validator: createKwValidator('请填写单枪默认功率', '请输入大于 0 的功率(kW)'), trigger: ['blur', 'change'] }
 
 				]
 
@@ -238,6 +239,14 @@ export default {
 
 			})
 
+		},
+
+		toFormPowerKw(wattsValue) {
+			return wattsToKw(wattsValue)
+		},
+
+		toApiPower(kwValue) {
+			return kwToWatts(kwValue)
 		},
 
 		checkPortCount(rule, value, callback) {
@@ -430,7 +439,7 @@ export default {
 				gunNumber: row.gunNumber,
 				electricOutType: Number(row.electricOutType),
 				chargingType: Number(row.chargingType),
-				ratedPower: Number(row.ratedPower),
+				ratedPower: this.toApiPower(row.ratedPower),
 				defaultVoltage: row.defaultVoltage,
 				defaultCurrent: row.defaultCurrent
 			}))
@@ -450,14 +459,14 @@ export default {
 				delete payload.defaultGunPower
 				delete payload.defaultVoltage
 				delete payload.defaultCurrent
-				payload.cabinetRatedPower = Number(payload.cabinetRatedPower)
+				payload.cabinetRatedPower = this.toApiPower(payload.cabinetRatedPower)
 				payload.gunTemplates = this.buildGunTemplates()
 			} else {
 				delete payload.cabinetRatedPower
 				delete payload.gunTemplates
 				payload.electricOut = Number(payload.electricOut)
 				payload.chargingType = Number(payload.chargingType)
-				payload.defaultGunPower = Number(payload.defaultGunPower)
+				payload.defaultGunPower = this.toApiPower(payload.defaultGunPower)
 			}
 			if (!this.isCarRule) {
 				payload.deviceForm = 0

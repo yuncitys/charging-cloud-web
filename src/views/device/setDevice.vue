@@ -172,38 +172,38 @@
 										</el-col>
 									</el-row>
 									<el-form-item label="总功率上限：" prop="totalPowerUpper">
-										<el-input placeholder="限制设备输出总功率（单位瓦，默认6000瓦）"
+										<el-input placeholder="限制设备输出总功率，默认 6kW"
 											v-model="deviceInfoo.totalPowerUpper" type="number" @focus="handleSelect"
 >
-											<template slot="append">单位瓦</template>
+											<template slot="append">kW</template>
 										</el-input>
 									</el-form-item>
 									<el-form-item label="单路功率上限：" prop="powerUpper">
-										<el-input placeholder="限制设备单个端口的最大功率（单位瓦，默认1000瓦）"
+										<el-input placeholder="单端口最大功率，默认 1kW"
 											v-model="deviceInfoo.powerUpper" type="number" @focus="handleSelect"
 >
-											<template slot="append">单位瓦</template>
+											<template slot="append">kW</template>
 										</el-input>
 									</el-form-item>
 									<el-form-item label="单路功率下限：" prop="powerLower">
-										<el-input placeholder="充电完成判断（单位瓦，默认10瓦）" v-model="deviceInfoo.powerLower"
+										<el-input placeholder="充电完成判断，默认 10W" v-model="deviceInfoo.powerLower"
 											type="number" @focus="handleSelect">
-											<template slot="append">单位瓦</template>
+											<template slot="append">W</template>
 										</el-input>
 									</el-form-item>
 
 									<!-- 端口数改由 t_device_guns 维护，此处不再配置 -->
 
 									<el-form-item label="大功率端口上限:" prop="highPowerUpper">
-										<el-input placeholder="大功率端口上限（单位瓦）" v-model="deviceInfoo.highPowerUpper"
+										<el-input placeholder="大功率端口上限" v-model="deviceInfoo.highPowerUpper"
 											type="number" @focus="handleSelect">
-											<template slot="append">单位瓦</template>
+											<template slot="append">kW</template>
 										</el-input>
 									</el-form-item>
 									<el-form-item label="大功率端口下限:" prop="highPowerLower">
-										<el-input placeholder="大功率端口下限（单位瓦）" v-model="deviceInfoo.highPowerLower"
+										<el-input placeholder="大功率端口下限" v-model="deviceInfoo.highPowerLower"
 											type="number" @focus="handleSelect">
-											<template slot="append">单位瓦</template>
+											<template slot="append">W</template>
 										</el-input>
 									</el-form-item>
 									<el-form-item label="低温温度：" prop="lowTemperature">
@@ -294,8 +294,9 @@
 											<el-form-item label="设备总功率：">
 												<div class="flex">
 													<div>
-														<el-input disabled v-model="deviceInfo.deviceTotalPower"
+														<el-input disabled :value="displayDeviceTotalPowerKw"
 															style="min-width: 100px;">
+															<template slot="append">kW</template>
 														</el-input>
 													</div>
 												</div>
@@ -350,6 +351,11 @@
 	import SockJS from 'sockjs-client'
 	import Stomp from 'stompjs'
 	import JsonView from '@/components/JsonView/JsonView'
+	import {
+		convertDevicePowerFieldsToKw,
+		convertDevicePowerFieldsToWatts,
+		wattsToKw
+	} from '@/utils/powerUnit.js'
 
 	export default {
 		name: 'bikeDeviceController',
@@ -372,10 +378,10 @@
 					deviceChargePattern: 0,
 					deviceHeartbeatTime: 60,
 					waitTime: 30,
-					totalPowerUpper: 6000,
-					powerUpper: 1000,
+					totalPowerUpper: 6,
+					powerUpper: 1,
 					powerLower: 10,
-					highPowerUpper: 3000,
+					highPowerUpper: 3,
 					highPowerLower: 50,
 					lowTemperature: 20,
 					warningTemperature: 55,
@@ -403,17 +409,17 @@
 					}, ],
 					totalPowerUpper: [{
 						required: true,
-						message: '限制设备输出总功率（单位瓦，默认6000瓦）',
+						message: '限制设备输出总功率（kW）',
 						trigger: 'blur'
 					}, ],
 					powerUpper: [{
 						required: true,
-						message: '限制设备单个端口的最大功率（单位瓦，默认1000瓦）',
+						message: '限制单端口最大功率（kW）',
 						trigger: 'blur'
 					}, ],
 					powerLower: [{
 						required: true,
-						message: '充电完成判断（单位瓦，默认10瓦）',
+						message: '充电完成判断（W）',
 						trigger: 'blur'
 					}, ],
 					lowTemperature: [{
@@ -444,6 +450,11 @@
 				}
 			}
 		},
+		computed: {
+			displayDeviceTotalPowerKw() {
+				return wattsToKw(this.deviceInfo.deviceTotalPower) || '—'
+			}
+		},
 		methods: {
 			handleCommand(command) {
 				this.queryDeviceParams(command)
@@ -455,20 +466,21 @@
 				this.time = value
 			},
 			editConfirm() {
+				const converted = convertDevicePowerFieldsToWatts(this.deviceInfoo)
 				const deviceData = {
 					deviceCode: this.deviceInfo.deviceCode,
-					chargeType: this.deviceInfoo.deviceChargePattern,
-					portCount: this.deviceInfoo.portCount,
-					heartbeatTime: this.deviceInfoo.deviceHeartbeatTime,
-					waitTime: this.deviceInfoo.waitTime,
-					totalPowerUpper: this.deviceInfoo.totalPowerUpper,
-					powerUpper: this.deviceInfoo.powerUpper,
-					powerLower: this.deviceInfoo.powerLower,
-					highPowerUpper: this.deviceInfoo.highPowerUpper,
-					highPowerLower: this.deviceInfoo.highPowerLower,
-					lowTemperature: this.deviceInfoo.lowTemperature,
-					highTemperature: this.deviceInfoo.highTemperature,
-					warningTemperature: this.deviceInfoo.warningTemperature
+					chargeType: converted.deviceChargePattern,
+					portCount: converted.portCount,
+					heartbeatTime: converted.deviceHeartbeatTime,
+					waitTime: converted.waitTime,
+					totalPowerUpper: converted.totalPowerUpper,
+					powerUpper: converted.powerUpper,
+					powerLower: converted.powerLower,
+					highPowerUpper: converted.highPowerUpper,
+					highPowerLower: converted.highPowerLower,
+					lowTemperature: converted.lowTemperature,
+					highTemperature: converted.highTemperature,
+					warningTemperature: converted.warningTemperature
 				}
 				this.loading = true
 				setDeviceParams(deviceData).then(res => {
@@ -582,6 +594,7 @@
 							highPowerLower: this.deviceInfo.highPowerLower || 50,
 							portCount: this.deviceInfo.portCount || 10
 						}
+						convertDevicePowerFieldsToKw(this.deviceInfoo)
 					} else {
 						this.$message.error(res.msg)
 					}

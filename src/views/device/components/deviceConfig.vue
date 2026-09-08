@@ -27,8 +27,8 @@
 					<div v-if="selectedDeviceType" class="form-tip">{{ typeSummaryText }}</div>
 				</el-form-item>
 				<el-form-item :label="'总功率'" prop="deviceTotalPower">
-					<el-input v-model="configData.deviceTotalPower" clearable placeholder="请输入总设备功率">
-						<template slot="append">W</template>
+					<el-input v-model="configData.deviceTotalPower" clearable placeholder="如 120 表示 120kW">
+						<template slot="append">kW</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'编号长度'" prop="length">
@@ -69,10 +69,12 @@
 	import {
 		getNowTime
 	} from '@/utils/index'
+	import { createKwValidator } from '@/utils/powerUnit.js'
 	import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+	import devicePowerKwMixin from './devicePowerKwMixin.js'
 
 	export default {
-		mixins: [deviceTypePickerMixin],
+		mixins: [deviceTypePickerMixin, devicePowerKwMixin],
 		props: {
 			syncRuleIdFromList: {
 				type: Boolean,
@@ -127,6 +129,9 @@
 					deviceTotalPower: [{
 						required: true,
 						message: '请输入设备总功率',
+						trigger: 'blur',
+					}, {
+						validator: createKwValidator('请输入设备总功率', '请输入大于 0 的功率(kW)'),
 						trigger: 'blur',
 					}],
 					deviceChagePattern: [{
@@ -242,14 +247,17 @@
 			},
 			//导出设备配置
 			DownloadConfig(formName) {
-				let configData = this.configData
-				console.log(configData)
 				this.$refs[formName].validate(valid => {
-					console.log(valid)
-					if (valid) {
-						console.log("通过")
-						this.loading = true
-						downLoadDeviceCodes(configData).then(res => {
+					if (!valid) {
+						this.loading = false
+						return false
+					}
+					const configData = {
+						...this.configData,
+						deviceTotalPower: this.toApiDeviceTotalPower(this.configData.deviceTotalPower)
+					}
+					this.loading = true
+					downLoadDeviceCodes(configData).then(res => {
 							if (res.code == 200) {
 								let port = res.data.port;
 								import('@/vendor/Export2Excel').then(excel => {
@@ -341,11 +349,6 @@
 								})
 							}
 						})
-					} else {
-						this.loading = false
-						console.log("不通过")
-						return false
-					}
 				})
 			},
 			getFormat(str) {

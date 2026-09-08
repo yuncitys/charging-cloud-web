@@ -126,8 +126,10 @@
 						</el-form-item>
 					</el-col>
 					<el-col v-if="needsGunTemplate" :span="12">
-						<el-form-item label="柜体额定功率 (W)" prop="cabinetRatedPower">
-							<el-input v-model="formData.cabinetRatedPower" type="number" clearable placeholder="分体堆柜体总功率" />
+						<el-form-item label="柜体额定功率 (kW)" prop="cabinetRatedPower">
+							<el-input v-model="formData.cabinetRatedPower" type="number" clearable placeholder="如 360 表示 360kW">
+								<template slot="append">kW</template>
+							</el-input>
 						</el-form-item>
 					</el-col>
 				</el-row>
@@ -142,8 +144,10 @@
 							</el-form-item>
 						</el-col>
 						<el-col :span="12">
-							<el-form-item label="单枪默认功率 (W)" prop="defaultGunPower">
-								<el-input v-model="formData.defaultGunPower" type="number" clearable placeholder="请输入单枪默认功率" />
+							<el-form-item label="单枪默认功率 (kW)" prop="defaultGunPower">
+								<el-input v-model="formData.defaultGunPower" type="number" clearable placeholder="如 60 表示 60kW">
+									<template slot="append">kW</template>
+								</el-input>
 							</el-form-item>
 						</el-col>
 						<el-col :span="12">
@@ -180,9 +184,9 @@
 								</template>
 							</el-table-column>
 							<el-table-column min-width="110">
-								<template slot="header"><span class="col-required">*</span>功率 (W)</template>
+								<template slot="header"><span class="col-required">*</span>功率 (kW)</template>
 								<template slot-scope="scope">
-									<el-input v-model="scope.row.ratedPower" size="mini" type="number" />
+									<el-input v-model="scope.row.ratedPower" size="mini" type="number" placeholder="kW" />
 								</template>
 							</el-table-column>
 							<el-table-column min-width="100">

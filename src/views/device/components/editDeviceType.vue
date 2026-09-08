@@ -27,8 +27,10 @@
 				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
 					<el-input v-model="formData.deviceQrLink" clearable placeholder="请输入设备二维码前缀" :disabled="formData.ruleId === 2"/>
 				</el-form-item>
-				<el-form-item :label="'总功率/W'" prop="deviceTotalPower">
-					<el-input v-model="formData.deviceTotalPower" clearable placeholder="请输入设备总功率" />
+				<el-form-item :label="'总功率'" prop="deviceTotalPower">
+					<el-input v-model="formData.deviceTotalPower" clearable placeholder="如 120 表示 120kW">
+						<template slot="append">kW</template>
+					</el-input>
 				</el-form-item>
 				<el-form-item>
 					<el-button type="primary" @click="confirm('formData')">确定</el-button>
@@ -41,12 +43,14 @@
 
 <script>
 import { updateDevice } from '@/api/device/deviceList.js'
+import { createKwValidator } from '@/utils/powerUnit.js'
 import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+import devicePowerKwMixin from './devicePowerKwMixin.js'
 
 const INTER_CONNECTION = 'INTER_CONNECTION'
 
 export default {
-	mixins: [deviceTypePickerMixin],
+	mixins: [deviceTypePickerMixin, devicePowerKwMixin],
 	props: {
 		row_data: {
 			type: Object,
@@ -54,16 +58,6 @@ export default {
 		}
 	},
 	data() {
-		const checkNum = (rule, value, callback) => {
-			if (!value) {
-				return new Error('必填信息')
-			}
-			if (!(/(^[1-9]\d*$)/.test(value))) {
-				callback(new Error('请输入正整数'))
-			} else {
-				callback()
-			}
-		}
 		return {
 			showDevice: false,
 			originalDeviceTypeId: '',
@@ -83,7 +77,7 @@ export default {
 				ruleId: [{ required: true, message: '请选择归属系列', trigger: 'change' }],
 				deviceTotalPower: [
 					{ required: true, message: '请输入设备总功率', trigger: 'blur' },
-					{ validator: checkNum, trigger: 'blur' }
+					{ validator: createKwValidator('请输入设备总功率', '请输入大于 0 的功率(kW)'), trigger: 'blur' }
 				],
 				deviceQrLink: [{ required: true, message: '请输入二维码前缀', trigger: 'blur' }]
 			},
@@ -116,7 +110,7 @@ export default {
 			this.formData.deviceTypeId = this.row_data.deviceTypeId ? Number(this.row_data.deviceTypeId) : ''
 			this.formData.deviceChagePattern = this.row_data.priceType !== '' ? Number(this.row_data.priceType) : ''
 			this.formData.devicePriceId = this.row_data.devicePriceId !== '' ? Number(this.row_data.devicePriceId) : ''
-			this.formData.deviceTotalPower = this.row_data.deviceTotalPower ? Number(this.row_data.deviceTotalPower) : ''
+			this.formData.deviceTotalPower = this.toFormDeviceTotalPowerKw(this.row_data.deviceTotalPower)
 			this.formData.deviceQrLink = this.row_data.deviceQrcodeLink ? this.row_data.deviceQrcodeLink : ''
 			const extra = {}
 			if (this.isInterconnectionDevice && this.currentPortCount) {
@@ -185,7 +179,11 @@ export default {
 			return '换类型将同步枪的输出类型、充电分类及功率等规格（不修改枪状态与连接状态）。是否继续？'
 		},
 		submitUpdate() {
-			updateDevice(this.formData).then(res => {
+			const payload = {
+				...this.formData,
+				deviceTotalPower: this.toApiDeviceTotalPower(this.formData.deviceTotalPower)
+			}
+			updateDevice(payload).then(res => {
 				if (res.code == 200) {
 					this.showDevice = false
 					this.resetForm('formData')

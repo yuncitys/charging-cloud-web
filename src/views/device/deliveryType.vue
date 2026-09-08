@@ -80,9 +80,9 @@
 						<span v-else class="text-muted">自动</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="defaultGunPower" label="单枪功率(W)" align="center" :show-overflow-tooltip="isPc">
+				<el-table-column label="额定功率" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
-						<span v-if="scope.row.defaultGunPower">{{ scope.row.defaultGunPower }}</span>
+						<span v-if="typePowerWatts(scope.row)">{{ formatGunPower(typePowerWatts(scope.row)) }}</span>
 						<span v-else class="text-muted">-</span>
 					</template>
 				</el-table-column>
@@ -114,6 +114,7 @@
 	} from '@/api/device/deviceList.js'
 	import addPage from './components/deliveryType/addPage.vue'
 	import editPage from './components/deliveryType/editPage.vue'
+	import { formatWattsAsKw } from '@/utils/powerUnit.js'
 	export default {
 		components: {
 			addPage,
@@ -157,6 +158,13 @@
 
 		},
 		methods: {
+			typePowerWatts(row) {
+				if (!row) return null
+				return row.defaultGunPower || row.cabinetRatedPower || null
+			},
+			formatGunPower(power) {
+				return formatWattsAsKw(power)
+			},
 			//设置表格一页数量
 			handleSizeChange(val) {
 				this.listQuery.limit = val

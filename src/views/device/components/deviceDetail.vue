@@ -15,9 +15,9 @@
 								<el-form-item label="设备名称" prop="deviceName">
 									<el-input v-model="deviceInfo.deviceName" disabled></el-input>
 								</el-form-item>
-								<el-form-item label="实时总功率" prop="deviceTotalPower">
-									<el-input v-model="deviceInfo.deviceTotalPower" disabled>
-										<template slot="append">W</template>
+								<el-form-item label="档案总功率" prop="deviceTotalPower">
+									<el-input :value="displayDeviceTotalPowerKw" disabled>
+										<template slot="append">kW</template>
 									</el-input>
 								</el-form-item>
 								<el-form-item label="功率下限" prop="powerLower">
@@ -26,12 +26,22 @@
 									</el-input>
 								</el-form-item>
 								<el-form-item label="功率上限" prop="powerUpper">
-									<el-input v-model="deviceInfo.powerUpper" disabled>
-										<template slot="append">W</template>
+									<el-input :value="displayPowerUpperKw" disabled>
+										<template slot="append">kW</template>
 									</el-input>
 								</el-form-item>
 								<el-form-item label="总功率上限" prop="totalPowerUpper">
-									<el-input v-model="deviceInfo.totalPowerUpper" disabled>
+									<el-input :value="displayTotalPowerUpperKw" disabled>
+										<template slot="append">kW</template>
+									</el-input>
+								</el-form-item>
+								<el-form-item label="大功率端口上限" prop="highPowerUpper">
+									<el-input :value="displayHighPowerUpperKw" disabled>
+										<template slot="append">kW</template>
+									</el-input>
+								</el-form-item>
+								<el-form-item label="大功率端口下限" prop="highPowerLower">
+									<el-input v-model="deviceInfo.highPowerLower" disabled>
 										<template slot="append">W</template>
 									</el-input>
 								</el-form-item>
@@ -72,7 +82,7 @@
 						<el-table-column prop="gunCode" label="枪编码" min-width="150" />
 						<el-table-column prop="power" label="额定功率" width="100" align="center">
 							<template slot-scope="scope">
-								<span>{{ scope.row.power ? scope.row.power + ' W' : '-' }}</span>
+								<span>{{ formatGunPower(scope.row.power) }}</span>
 							</template>
 						</el-table-column>
 						<el-table-column prop="electricOutTypeText" label="输出类型" width="90" align="center">
@@ -108,6 +118,7 @@
 		findDeviceInfoById,
 		listGuns
 	} from '@/api/device/deviceList.js'
+	import { formatWattsAsKw, wattsToKw } from '@/utils/powerUnit.js'
 
 	export default {
 		props: {
@@ -126,7 +137,24 @@
 				gunList: []
 			}
 		},
+		computed: {
+			displayDeviceTotalPowerKw() {
+				return wattsToKw(this.deviceInfo.deviceTotalPower) || '—'
+			},
+			displayPowerUpperKw() {
+				return wattsToKw(this.deviceInfo.powerUpper) || '—'
+			},
+			displayTotalPowerUpperKw() {
+				return wattsToKw(this.deviceInfo.totalPowerUpper) || '—'
+			},
+			displayHighPowerUpperKw() {
+				return wattsToKw(this.deviceInfo.highPowerUpper) || '—'
+			}
+		},
 		methods: {
+			formatGunPower(power) {
+				return formatWattsAsKw(power)
+			},
 			onShowDeviceInfo() {
 				this.onfindDeviceInfoById()
 				this.loadGuns()

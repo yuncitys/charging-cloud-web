@@ -81,9 +81,9 @@ export default {
 			this.formData.ruleId = row.ruleId
 			this.formData.electricOut = row.electricOut != null ? row.electricOut : ''
 			this.formData.deviceForm = row.deviceForm != null ? row.deviceForm : 0
-			this.formData.cabinetRatedPower = row.cabinetRatedPower != null ? row.cabinetRatedPower : ''
+			this.formData.cabinetRatedPower = this.toFormPowerKw(row.cabinetRatedPower)
 			this.formData.chargingType = row.chargingType != null ? row.chargingType : ''
-			this.formData.defaultGunPower = row.defaultGunPower != null ? row.defaultGunPower : ''
+			this.formData.defaultGunPower = this.toFormPowerKw(row.defaultGunPower)
 			this.formData.defaultVoltage = row.defaultVoltage != null ? row.defaultVoltage : ''
 			this.formData.defaultCurrent = row.defaultCurrent != null ? row.defaultCurrent : ''
 			this.formData.manufacturerId = row.manufacturerId || ''
@@ -107,7 +107,7 @@ export default {
 							gunNumber: item.gunNumber,
 							electricOutType: item.electricOutType,
 							chargingType: item.chargingType != null ? item.chargingType : '',
-							ratedPower: item.ratedPower != null ? item.ratedPower : '',
+							ratedPower: this.toFormPowerKw(item.ratedPower),
 							defaultVoltage: item.defaultVoltage != null ? item.defaultVoltage : '',
 							defaultCurrent: item.defaultCurrent != null ? item.defaultCurrent : ''
 						})))
