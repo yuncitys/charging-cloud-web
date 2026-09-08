@@ -1,7 +1,7 @@
 <template>
 	<div style="display: inline-block;">
 		<el-button type="primary" @click="onShowDeviceInfo" size="mini">
-			详情
+			查看详情
 		</el-button>
 		<el-drawer
 			:visible.sync="showDeviceInfo"

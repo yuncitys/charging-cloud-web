@@ -179,14 +179,14 @@
 								size="mini"
 								@click="toSetDevice(scope.row)"
 							>
-								控制
+								远程控制
 							</el-button>
 							<template slot="more">
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')"
 									@click.native="showallocation(scope.row)"
 								>
-									分配设备
+									分配站点
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:contrt')"
@@ -204,28 +204,28 @@
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
 									@click.native="showonPriceType(scope.row)"
 								>
-									收费方案
+									配置计费
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="scope.row.operationState == 0 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')"
 									@click.native="onOperationDevice(scope.row.id, 1)"
 								>
-									禁用
+									停用设备
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="scope.row.operationState == 1 && btnAuthen.permsVerifAuthention(':device:deviceList:operationDevice')"
 									@click.native="onOperationDevice(scope.row.id, 0)"
 								>
-									启用
+									启用设备
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
 									@click.native="del(scope.row.id)"
 								>
-									删除
+									删除设备
 								</el-dropdown-item>
 								<el-dropdown-item @click.native="showWXQrcode(scope.row)">
-									二维码
+									查看二维码
 								</el-dropdown-item>
 								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 									<deviceBind :deviceId="scope.row.id" :deviceCode="scope.row.deviceCode" />
@@ -234,7 +234,7 @@
 									<editDeviceType :row_data="scope.row" @getLists="getLists" />
 								</el-dropdown-item>
 								<el-dropdown-item @click.native="upDownRecord(scope.row)">
-									上下线记录
+									设备日志
 								</el-dropdown-item>
 							</template>
 						</device-table-actions>

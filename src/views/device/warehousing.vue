@@ -164,20 +164,20 @@
 								size="mini"
 								@click="toSetDevice(scope.row)"
 							>
-								控制
+								远程控制
 							</el-button>
 							<template slot="more">
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:allocation')"
 									@click.native="showallocation(scope.row)"
 								>
-									分配设备
+									分配站点
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
 									@click.native="del(scope.row.id)"
 								>
-									删除
+									删除设备
 								</el-dropdown-item>
 								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 									<deviceBind :deviceId="scope.row.id" :deviceCode="scope.row.deviceCode" />

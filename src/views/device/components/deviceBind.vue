@@ -2,7 +2,7 @@
 	<div v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 		<div style="display: inline-block;">
 			<el-button type="primary" @click='onShowDialog' size="mini">
-				码绑定
+				绑定二维码
 			</el-button>
 			<el-dialog :visible.sync="showDialog" title="绑定二维码" @close="showDialog=false" :append-to-body="true">
 				<el-form ref="bindingData" :model="bindingData" :rules="bindingRules" label-position="left" label-width="100px"

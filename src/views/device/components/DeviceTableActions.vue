@@ -8,7 +8,7 @@
 			@command="$emit('command', $event)"
 		>
 			<el-button type="primary" size="mini">
-				更多<i class="el-icon-arrow-down el-icon--right" />
+				更多操作<i class="el-icon-arrow-down el-icon--right" />
 			</el-button>
 			<el-dropdown-menu slot="dropdown" class="device-table-actions__menu">
 				<slot name="more" />

@@ -162,20 +162,20 @@
 								size="mini"
 								@click="toSetDevice(scope.row)"
 							>
-								控制
+								远程控制
 							</el-button>
 							<template slot="more">
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneDelete')"
 									@click.native="del(scope.row.id)"
 								>
-									删除
+									删除设备
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
 									@click.native="showonPriceType(scope.row)"
 								>
-									收费方案
+									配置计费
 								</el-dropdown-item>
 								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:qr:binding')">
 									<deviceBind :deviceId="scope.row.id" :deviceCode="scope.row.deviceCode" />
