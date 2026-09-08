@@ -15,6 +15,13 @@
 				<el-form-item :label="'导出条数'" prop="number">
 					<el-input v-model="configData.number" clearable placeholder="请输入导出条数" type="number" />
 				</el-form-item>
+				<el-form-item :label="'编号长度'" prop="length">
+					<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
+						<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
+							:disabled="item.disabled">
+						</el-option>
+					</el-select>
+				</el-form-item>
 				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
 					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码前缀"/>
 				</el-form-item>
@@ -30,13 +37,6 @@
 					<el-input v-model="configData.deviceTotalPower" clearable placeholder="如 120 表示 120kW">
 						<template slot="append">kW</template>
 					</el-input>
-				</el-form-item>
-				<el-form-item :label="'编号长度'" prop="length">
-					<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
-						<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
-							:disabled="item.disabled">
-						</el-option>
-					</el-select>
 				</el-form-item>
 				<el-form-item label="计费规则" prop="deviceChagePattern" v-if="configData.ruleId === 1">
 					<el-radio-group v-model="configData.deviceChagePattern" @change="changeChagePattern">
