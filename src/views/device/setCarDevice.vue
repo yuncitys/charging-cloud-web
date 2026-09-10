@@ -251,7 +251,6 @@
 					return
 				}
 				openDevice({
-					userId: 1,
 					deviceCode: this.deviceCode,
 					port: this.getSelectedPortNumber(),
 					mod: 1,
