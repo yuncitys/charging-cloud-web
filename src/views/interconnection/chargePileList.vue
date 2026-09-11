@@ -177,11 +177,8 @@
 								远程控制
 							</el-button>
 							<template slot="more">
-								<el-dropdown-item v-if="!scope.row.deviceTypeId && btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')">
+								<el-dropdown-item v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')">
 									<bindDeviceType :row_data="scope.row" @getLists="getLists" />
-								</el-dropdown-item>
-								<el-dropdown-item v-else-if="scope.row.deviceTypeId && btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')">
-									<editDeviceType :row_data="scope.row" @getLists="getLists" />
 								</el-dropdown-item>
 								<el-dropdown-item
 									v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneCharge')"
@@ -331,7 +328,6 @@
 	import allocation from '../device/components/allocation.vue'
 	import deviceBind from '../device/components/deviceBind.vue'
 	import deviceAdmin from '../device/components/deviceAdmin.vue'
-	import editDeviceType from '../device/components/editDeviceType.vue'
 	import bindDeviceType from './components/bindDeviceType.vue'
 	import batchPower from '../device/components/batchPower.vue'
 	import DeviceTableActions from '../device/components/DeviceTableActions.vue'
@@ -345,7 +341,6 @@
 			allocation,
 			deviceBind,
 			deviceAdmin,
-			editDeviceType,
 			bindDeviceType,
 			batchPower,
 			DeviceTableActions

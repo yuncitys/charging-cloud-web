@@ -1,9 +1,9 @@
 <template>
 	<div v-if="btnAuthen.permsVerifAuthention(':device:deviceList:oneEdit')" style="display: inline-block;">
 		<el-button type="warning" size="mini" @click="openDialog">
-			绑定类型
+			{{ actionLabel }}
 		</el-button>
-		<el-dialog :visible.sync="showDialog" title="绑定设备类型" width="520px" append-to-body @close="onClose">
+		<el-dialog :visible.sync="showDialog" :title="actionLabel" width="520px" append-to-body @close="onClose">
 			<el-form ref="formData" :model="formData" :rules="rules" label-width="90px">
 				<el-form-item label="设备号">
 					<el-input :value="row_data.deviceCode" disabled />
@@ -49,6 +49,12 @@ export default {
 		}
 	},
 	computed: {
+		hasDeviceType() {
+			return !!this.row_data.deviceTypeId
+		},
+		actionLabel() {
+			return this.hasDeviceType ? '换绑类型' : '绑定类型'
+		},
 		portCountText() {
 			const n = Number(this.row_data.portCount)
 			return n > 0 ? n + ' 口' : '-'
