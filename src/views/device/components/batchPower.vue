@@ -23,30 +23,30 @@
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'总功率上限'" prop="totalPowerUpper">
-					<el-input v-model="formData.totalPowerUpper" clearable placeholder="限制设备输出总功率（单位瓦，默认6000瓦）"
+					<el-input v-model="formData.totalPowerUpper" clearable placeholder="限制设备输出总功率，默认 6kW"
 						type="number">
-						<template slot="append">单位瓦</template>
+						<template slot="append">kW</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'单路功率上限'" prop="powerUpper">
-					<el-input v-model="formData.powerUpper" clearable placeholder="限制设备单个端口的最大功率（单位瓦，默认800瓦）"
+					<el-input v-model="formData.powerUpper" clearable placeholder="单端口最大功率，默认 0.6kW"
 						type="number">
-						<template slot="append">单位瓦</template>
+						<template slot="append">kW</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'单路功率下限'" prop="powerLower">
-					<el-input v-model="formData.powerLower" clearable placeholder="充电完成判断（单位瓦，默认8瓦）" type="number">
-						<template slot="append">单位瓦</template>
+					<el-input v-model="formData.powerLower" clearable placeholder="充电完成判断，默认 8W" type="number">
+						<template slot="append">W</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'大功率端口上限'" prop="highPowerUpper">
-					<el-input v-model="formData.highPowerUpper" clearable placeholder="大功率端口上限（单位瓦）" type="number">
-						<template slot="append">单位瓦</template>
+					<el-input v-model="formData.highPowerUpper" clearable placeholder="大功率端口上限" type="number">
+						<template slot="append">kW</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item :label="'大功率端口下限'" prop="highPowerLower">
-					<el-input v-model="formData.highPowerLower" clearable placeholder="大功率端口下限（单位瓦）" type="number">
-						<template slot="append">单位瓦</template>
+					<el-input v-model="formData.highPowerLower" clearable placeholder="大功率端口下限" type="number">
+						<template slot="append">W</template>
 					</el-input>
 				</el-form-item>
 				<el-form-item label="低温温度：" prop="lowTemperature">
@@ -79,6 +79,7 @@
 	import {
 		batchSetPower,
 	} from '@/api/device/deviceList.js'
+	import { convertDevicePowerFieldsToWatts } from '@/utils/powerUnit.js'
 	export default {
 		data() {
 			return {
@@ -88,10 +89,10 @@
 					chargeType: 0,
 					heartbeatTime: '30',
 					waitTime: '30',
-					totalPowerUpper: '10000',
-					powerUpper: '600',
-					powerLower: '5',
-					highPowerUpper: '3500',
+					totalPowerUpper: '10',
+					powerUpper: '0.6',
+					powerLower: '8',
+					highPowerUpper: '3.5',
 					highPowerLower: '10',
 					lowTemperature: '-20',
 					warningTemperature: '55',
@@ -170,13 +171,11 @@
 				this.formData.deviceCodes = deviceCodes
 			},
 			formConfirm(formName) {
-				console.log(this.formData)
 				this.formData.lowTemperature = Math.abs(this.formData.lowTemperature)
 				this.$refs[formName].validate(valid => {
-					console.log(valid)
-					if (valid) {
-						console.log("通过")
-						batchSetPower(this.formData).then(res => {
+					if (!valid) return false
+					const payload = convertDevicePowerFieldsToWatts(this.formData)
+					batchSetPower(payload).then(res => {
 							if (res.code == 200) {
 								this.showDialog = false
 								this.resetForm(formName)
@@ -185,10 +184,6 @@
 								this.$message.error(res.msg)
 							}
 						})
-					} else {
-						console.log("不通过")
-						return false
-					}
 				})
 			},
 			resetForm(formName) {

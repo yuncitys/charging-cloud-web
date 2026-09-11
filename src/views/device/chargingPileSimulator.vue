@@ -337,13 +337,14 @@
 <script>
   import {
     saveOrUpdate,
-    findDeviceType
+    listDeviceTypeSelectOptions
   } from '@/api/device/deviceList.js'
   import {
   	connect,
     disconnect,
     connectStatus,
-    trigger
+    trigger,
+    syncGunStatus
   } from '@/api/device/chargingPileSimulator.js'
   import {
   	connectWebsocket,
@@ -478,11 +479,10 @@
         })
       },
       getDeviceTypeModels(){
-        let data = {
+        listDeviceTypeSelectOptions({
           ruleId: 2,
           electricOut: this.form.chargePointModel
-        }
-        findDeviceType(data).then(res => {
+        }).then(res => {
         	if (res.code === 200) {
         		this.chargingPointModels = res.data
             console.log("chargingPointModels",this.chargingPointModels)
@@ -531,17 +531,28 @@
           deviceTypeId: this.form.chargingPointTypeId,
           deviceVersion: this.form.firmwareVersion,
           operationState: this.chargePointFrom.chargePointStatus,
-          port1: this.connector1From.connectorStatus,
-          port2: this.connector2From.connectorStatus,
           devicePurpose: 'VIRTUAL_CONNECTION'
         }
         console.log("表单数据:", saveForm);
         saveOrUpdate(saveForm).then(res => {
         	if (res.code === 200) {
-        		this.$message.success("操作成功")
-        	} else {
-        		this.$message.error(res.msg)
+            return syncGunStatus({
+              chargePointId: this.form.chargePointId,
+              guns: [
+                { gunNumber: 1, status: this.connector1From.connectorStatus },
+                { gunNumber: 2, status: this.connector2From.connectorStatus }
+              ]
+            })
         	}
+        	return Promise.reject(new Error(res.msg || '保存失败'))
+        }).then(res => {
+        	if (res && res.code === 200) {
+        		this.$message.success("操作成功")
+        	} else if (res) {
+        		this.$message.error(res.msg || '枪口状态同步失败')
+        	}
+        }).catch(err => {
+        	this.$message.error((err && err.message) || '操作失败')
         })
       },
       //建立连接
@@ -586,15 +597,22 @@
             if (!res.data){
               return;
             }
-            this.serverConnected = res.data.connectStatus,
+            this.serverConnected = res.data.connectStatus
             this.form.chargePointServer = res.data.chargePointServer
-            this.form.chargePointId = res.data.chargePointId,
-            this.form.chargePointModel = parseInt(res.data.chargePointModel),
-            this.form.firmwareVersion = res.data.firmwareVersion,
-            this.form.chargingPointTypeId = res.data.deviceTypeId,
-            this.chargePointFrom.chargePointStatus = res.data.chargePointStatus,
-            this.connector1From.connectorStatus =  res.data.port1,
-            this.connector2From.connectorStatus =  res.data.port2
+            this.form.chargePointId = res.data.chargePointId
+            this.form.chargePointModel = parseInt(res.data.chargePointModel)
+            this.form.firmwareVersion = res.data.firmwareVersion
+            this.form.chargingPointTypeId = res.data.deviceTypeId
+            this.chargePointFrom.chargePointStatus = res.data.chargePointStatus
+            const guns = Array.isArray(res.data.guns) ? res.data.guns : []
+            const gun1 = guns.find(g => Number(g.gunNumber) === 1)
+            const gun2 = guns.find(g => Number(g.gunNumber) === 2)
+            if (gun1 && gun1.status != null) {
+              this.connector1From.connectorStatus = gun1.status
+            }
+            if (gun2 && gun2.status != null) {
+              this.connector2From.connectorStatus = gun2.status
+            }
         	} else {
         		this.$message.error(res.msg)
         	}

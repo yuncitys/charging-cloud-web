@@ -209,6 +209,10 @@ export function formatElectricOutType(val) {
 	return formatDictLabel('electric_out_type', val)
 }
 
+export function formatChargingType(val) {
+	return formatDictLabel('charging_type', val)
+}
+
 export function formatDeviceStatus(val) {
 	return formatDictLabel('device_status', val)
 }
@@ -252,6 +256,20 @@ export function formatDeviceActivateStatus(val) {
 
 export function formatConnectorStatus(val) {
 	return formatDictLabel('connector_status', val)
+}
+
+/** 设备控制页枪口状态颜色：0空闲 1占用 2离线 3故障 4占位 5预约占位 */
+export function getConnectorStatusColor(status) {
+	const colors = {
+		0: '',
+		1: '#FCCC40',
+		2: '#909399',
+		3: '#F56C6C',
+		4: '#E6A23C',
+		5: '#409EFF'
+	}
+	if (status === null || status === undefined || status === '') return '#606266'
+	return colors[Number(status)] !== undefined ? colors[Number(status)] : '#606266'
 }
 
 export function formatOrgType(val) {
@@ -553,6 +571,44 @@ export function getElectricOutOptionsForRule(ruleId) {
 	})
 }
 
+/** 按字典 description（ruleId）过滤接入协议选项 */
+export function filterDeviceProtocolOptionsByRule(list, ruleId) {
+	const rule = String(Number(ruleId))
+	return (list || []).filter(item => {
+		const desc = (item.description || '').trim()
+		if (!desc) return true
+		return desc.split(/[,，]/).map(s => s.trim()).includes(rule)
+	})
+}
+
+export function getDeviceBrandOptions() {
+	return getSelectorOptions('device_brand')
+}
+
+export function getTcecEquipmentTypeOptions() {
+	return getSelectorOptions('tcec_equipment_type', { numeric: true })
+}
+
+export function getDeviceProtocolOptions() {
+	return getSelectorOptions('device_protocol')
+}
+
+export function getDeviceProtocolOptionsForRule(ruleId) {
+	return getDeviceProtocolOptions().then(list => filterDeviceProtocolOptionsByRule(list, ruleId))
+}
+
+export function formatDeviceBrand(val) {
+	return formatDictLabel('device_brand', val)
+}
+
+export function formatDeviceProtocol(val) {
+	return formatDictLabel('device_protocol', val)
+}
+
+export function formatTcecEquipmentType(val) {
+	return formatDictLabel('tcec_equipment_type', val)
+}
+
 export function getDeviceRuleOptions() {
 	return getSelectorOptions('device_rule', { numeric: true })
 }
@@ -589,14 +645,19 @@ const dictApi = {
 	getOrderStatus,
 	formatOrderType,
 	formatElectricOutType,
+	formatChargingType,
 	formatDeviceStatus,
 	normalizeOrderPayMethodCode,
 	formatOrderPayMethod,
 	formatOrderStartType,
 	formatPriceType,
 	formatDeviceRule,
+	formatDeviceBrand,
+	formatDeviceProtocol,
+	formatTcecEquipmentType,
 	formatDeviceActivateStatus,
 	formatConnectorStatus,
+	getConnectorStatusColor,
 	formatOrgType,
 	formatFeeCollectFlag,
 	formatFinanceSplitType,
@@ -667,6 +728,10 @@ const dictApi = {
 	getElectricOutTypeOptions,
 	getElectricOutOptionsForRule,
 	getDeviceRuleOptions,
+	getDeviceBrandOptions,
+	getTcecEquipmentTypeOptions,
+	getDeviceProtocolOptions,
+	getDeviceProtocolOptionsForRule,
 	getPriceTypeOptions,
 	getFinanceUserFlowTypeOptions,
 	getFinanceOrgFlowTypeOptions,

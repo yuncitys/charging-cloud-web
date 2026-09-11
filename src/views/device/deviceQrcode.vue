@@ -106,8 +106,8 @@
 					<el-form-item :label="'生成数量'" prop="number">
 						<el-input v-model="configData.number" clearable placeholder="请输入生成数量" type="number" />
 					</el-form-item>
-					<el-form-item :label="'二维码前缀'" prop="qrText">
-						<el-input v-model="configData.qrText" clearable placeholder="请输入生成的二维码前缀" />
+					<el-form-item :label="'二维码规则'" prop="qrText">
+						<el-input v-model="configData.qrText" clearable placeholder="请输入生成的二维码规则" />
 					</el-form-item>
 					<el-form-item :label="'导出格式'" prop="type">
 						<el-select v-model="configData.type" placeholder="请选择导出格式" style="width: 100%;">
@@ -226,7 +226,7 @@
 					}],
 					qrText: [{
 						required: true,
-						message: '请输入二维码前缀',
+						message: '请输入二维码规则',
 						trigger: 'blur'
 					}]
 				},

@@ -65,6 +65,38 @@ export function findDeviceCommand(data) {
 	})
 }
 
+// 查询设备所属充电枪/端口列表
+export function listGuns(data) {
+	return request({
+		url: '/api/web/device/listGuns',
+		method: 'get',
+		params: data
+	})
+}
+
+// 更新枪名称或启停状态
+export function updateGun(data) {
+	return request({
+		url: '/api/web/device/updateGun',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					if (data[it] === undefined || data[it] === null) continue
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
 // 删除设备
 export function deleteDevice(data) {
 	return request({
@@ -110,6 +142,28 @@ export function addDevice(data) {
 	})
 }
 
+// 绑定设备类型（互联桩等）
+export function bindDeviceType(data) {
+	return request({
+		url: '/api/web/device/bindDeviceType',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
 // 编辑设备
 export function updateDevice(data) {
 	return request({
@@ -132,25 +186,12 @@ export function updateDevice(data) {
 	})
 }
 
-// 查询设备类型
-export function findDeviceType(data) {
+// 设备类型下拉选项（加桩、编辑、绑类型等）
+export function listDeviceTypeSelectOptions(params) {
 	return request({
-		url: '/api/web/device/findDeviceType',
-		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
-		data
+		url: '/api/web/device/listDeviceTypeSelectOptions',
+		method: 'get',
+		params
 	})
 }
 
@@ -457,19 +498,6 @@ export function saveDeviceType(data) {
 	return request({
 		url: '/api/web/device/saveDeviceType',
 		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
 	})
 }
@@ -496,25 +524,30 @@ export function deleteDeviceType(data) {
 	})
 }
 
-// 编辑设备
+// 编辑设备类型
 export function updateDeviceType(data) {
 	return request({
 		url: '/api/web/device/updateDeviceType',
 		method: 'post',
-		headers: {
-			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-		},
-		transformRequest: [
-			function(data) {
-				var ret = ''
-				for (var it in data) {
-					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
-				}
-				ret = ret.substring(0, ret.lastIndexOf('&'))
-				return ret
-			}
-		],
 		data
+	})
+}
+
+// 查询设备类型枪模板
+export function findDeviceTypeGunTemplates(params) {
+	return request({
+		url: '/api/web/device/findDeviceTypeGunTemplates',
+		method: 'get',
+		params
+	})
+}
+
+// 统计绑定某设备类型的设备数量（P5-C C2 同步确认）
+export function countDevicesByDeviceType(params) {
+	return request({
+		url: '/api/web/device/countDevicesByDeviceType',
+		method: 'get',
+		params
 	})
 }
 

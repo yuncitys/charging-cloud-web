@@ -1,157 +1,215 @@
 <template>
 	<div style="display: inline-block;">
 		<el-button size="mini" type="primary" v-if="btnAuthen.permsVerifAuthention(':device:deviceType:updateDeviceType')"
-			@click="onShowDialog">编辑</el-button>
-		<!-- 编辑 -->
-		<el-dialog :visible.sync="showDialog" title="编辑设备类型" @close="showDialog = false" :append-to-body="true">
-			<el-form ref="formData" :model="formData" label-position="left" label-width="150px"
-				style="width: 600px; margin-left:50px;" :rules="rules">
-				<el-form-item :label="'设备类型ID'" prop="deviceTypeId">
-					<el-input v-model="formData.deviceTypeId" disabled clearable />
-				</el-form-item>
-				<el-form-item :label="'产品名称'" prop="ruleId">
-					<el-radio-group v-model="formData.ruleId" @change="onchangeEleetricOut($event)">
-						<el-radio v-for="item in deviceRuleOptions" :key="'rule-'+item.value" :label="item.value">{{ item.label }}</el-radio>
-					</el-radio-group>
-				</el-form-item>
-        <el-form-item :label="'电流输出'" prop="electricOut">
-        	<el-select v-model="formData.electricOut" placeholder="请选择电流输出类型" style="width: 100%;">
-        		<el-option v-for="item in electricOutList" :key="item.value" :label="item.label" :value="item.value"
-        			:disabled="item.disabled">
-        		</el-option>
-        	</el-select>
-        </el-form-item>
-				<el-form-item :label="'设备类型名称'" prop="deviceTypeName">
-					<el-input v-model="formData.deviceTypeName" clearable />
-				</el-form-item>
-				<el-form-item :label="'端口数'" prop="portCount">
-					<el-input type="number" v-model="formData.portCount" clearable />
-				</el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="formConfirm('formData')">确定</el-button>
-          <el-button @click="showDialog = false">取消</el-button>
-        </el-form-item>
-			</el-form>
-		</el-dialog>
+			@click="openDrawer">编辑</el-button>
+		<el-drawer
+			title="编辑设备类型"
+			:visible.sync="showDrawer"
+			direction="rtl"
+			:size="drawerSize"
+			:wrapper-closable="false"
+			append-to-body
+			custom-class="device-type-drawer"
+			@close="onDrawerClose">
+			<div class="device-type-drawer__body">
+				<device-type-form-panel
+					ref="formPanel"
+					:form-data="formData"
+					show-type-id
+					port-count-disabled
+					:device-rule-options="deviceRuleOptions"
+					:electric-out-list="electricOutList"
+					:charging-type-options="chargingTypeOptions"
+					:template-electric-out-options="templateElectricOutOptions" />
+			</div>
+			<div class="device-type-drawer__footer">
+				<el-button @click="showDrawer = false">取消</el-button>
+				<el-button type="primary" @click="handleSubmit">保存</el-button>
+			</div>
+		</el-drawer>
 	</div>
 </template>
 
 <script>
-	import {
-		findDeviceTypeList,
-		saveDeviceType,
-		deleteDeviceType,
-		updateDeviceType,
-		addDevice
-	} from '@/api/device/deviceList.js'
-	export default {
-		name: 'deviceList1',
-		props: {
-			row_data: {
-				type: Object
-			}
-		},
-		data() {
-			let checkNum = (rule, value, callback) => {
-				if (!(/(^[1-9]\d*$)/.test(value))) {
-					callback(new Error('请输入正整数'))
-					return false;
-				} else {
-					callback()
-				}
-			}
-			return {
-				showDialog: false,
-				formData: {
-					deviceTypeName: '',
-					portCount: '',
-					deviceTypeId: '',
-          electricOut:'',
-					ruleId: ''
-				},
-				rules: {
-					deviceTypeName: [{
-						required: true,
-						message: '请输入设备类型名称',
-						trigger: 'blur'
-					}],
-					portCount: [{
-						required: true,
-						message: '请输入端口数',
-						trigger: 'blur'
-					}, {
-						validator: checkNum,
-						trigger: 'blur'
-					}],
-          ruleId: [{
-          	required: true,
-          	message: '请选择产品系列',
-          	trigger: ['blur', 'change']
-          }],
-          electricOut: [{
-          	required: true,
-          	message: '请选择电流输出类型',
-          	trigger: ['blur', 'change']
-          }],
-				},
-				deviceRuleOptions: [],
-				electricOutList: []
-			}
-		},
-		mounted() {
+import { updateDeviceType, findDeviceTypeGunTemplates, countDevicesByDeviceType } from '@/api/device/deviceList.js'
+import deviceTypeFormMixin from './deviceTypeFormMixin.js'
+import DeviceTypeFormPanel from './DeviceTypeFormPanel.vue'
 
-		},
-		methods: {
-			onShowDialog() {
-				this.formData.deviceTypeName = this.row_data.deviceTypeName
-				this.formData.portCount = this.row_data.portCount
-				this.formData.deviceTypeId = this.row_data.deviceTypeId
-				this.formData.ruleId = this.row_data.ruleId
-        this.formData.electricOut = this.row_data.electricOut
-				this.$dict.getElectricOutOptionsForRule(this.formData.ruleId).then(list => {
-					this.electricOutList = list || []
-				})
-				this.showDialog = true
+export default {
+	name: 'deviceTypeEditPage',
+	components: { DeviceTypeFormPanel },
+	mixins: [deviceTypeFormMixin],
+	props: {
+		row_data: { type: Object }
+	},
+	data() {
+		return {
+			showDrawer: false,
+			formData: {
+				deviceTypeName: '',
+				portCount: '',
+				deviceTypeId: '',
+				electricOut: '',
+				ruleId: '',
+				deviceForm: 0,
+				cabinetRatedPower: '',
+				chargingType: '',
+				defaultGunPower: '',
+				defaultVoltage: '',
+				defaultCurrent: '',
+				manufacturerId: '',
+				manufacturerName: '',
+				brandName: '',
+				equipmentModel: '',
+				protocolCode: '',
+				equipmentType: '',
+				typeStatus: 1,
+				remark: ''
 			},
-			formConfirm(formName) {
-				this.$refs[formName].validate(valid => {
-					if (valid) {
-						updateDeviceType(this.formData).then(res => {
-							if (res.code == 200) {
-								this.showDialog = false
-								this.$message.success(res.msg)
-								this.resetForm(formName)
-								this.$emit('getLists')
-							} else {
-								this.$message.error(res.msg)
-							}
-						})
+			deviceRuleOptions: [],
+			electricOutList: [],
+			chargingTypeOptions: [],
+			templateElectricOutOptions: []
+		}
+	},
+	methods: {
+		openDrawer() {
+			const row = this.row_data || {}
+			this.formData.deviceTypeName = row.deviceTypeName
+			this.formData.portCount = row.portCount
+			this.formData.deviceTypeId = row.deviceTypeId
+			this.formData.ruleId = row.ruleId
+			this.formData.electricOut = row.electricOut != null ? row.electricOut : ''
+			this.formData.deviceForm = row.deviceForm != null ? row.deviceForm : 0
+			this.formData.cabinetRatedPower = this.toFormPowerKw(row.cabinetRatedPower)
+			this.formData.chargingType = row.chargingType != null ? row.chargingType : ''
+			this.formData.defaultGunPower = this.toFormPowerKw(row.defaultGunPower)
+			this.formData.defaultVoltage = row.defaultVoltage != null ? row.defaultVoltage : ''
+			this.formData.defaultCurrent = row.defaultCurrent != null ? row.defaultCurrent : ''
+			this.formData.manufacturerId = row.manufacturerId || ''
+			this.formData.manufacturerName = row.manufacturerName || ''
+			this.formData.brandName = row.brandName || ''
+			this.formData.equipmentModel = row.equipmentModel || ''
+			this.formData.protocolCode = row.protocolCode || ''
+			this.formData.equipmentType = row.equipmentType != null ? row.equipmentType : ''
+			this.formData.typeStatus = row.typeStatus != null ? row.typeStatus : 1
+			this.formData.remark = row.remark || ''
+			this.$dict.getElectricOutOptionsForRule(this.formData.ruleId).then(list => {
+				this.electricOutList = list || []
+			})
+			findDeviceTypeGunTemplates({ deviceTypeId: row.deviceTypeId }).then(res => {
+				this.showDrawer = true
+				this.$nextTick(() => {
+					const panel = this.$refs.formPanel
+					if (!panel) return
+					if (res.code == 200 && Array.isArray(res.data) && res.data.length) {
+						panel.loadGunTemplates(res.data.map(item => ({
+							gunNumber: item.gunNumber,
+							electricOutType: item.electricOutType,
+							chargingType: item.chargingType != null ? item.chargingType : '',
+							ratedPower: this.toFormPowerKw(item.ratedPower),
+							defaultVoltage: item.defaultVoltage != null ? item.defaultVoltage : '',
+							defaultCurrent: item.defaultCurrent != null ? item.defaultCurrent : ''
+						})))
+					} else {
+						panel.syncGunTemplates()
 					}
 				})
-			},
-			//清除表单
-			resetForm(formName) {
-				this.$refs[formName].resetFields();
-			},
-      //更改电流输出
-      onchangeEleetricOut(ruleId){
-        console.log(ruleId)
-        this.formData.electricOut = ''
-        this.$dict.getElectricOutOptionsForRule(ruleId).then(list => {
-          this.electricOutList = list || []
-        })
-      }
+			})
 		},
-		created() {
-			this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
+		handleSubmit() {
+			const panel = this.$refs.formPanel
+			const formRef = panel && panel.$refs.formData
+			if (!formRef) return
+			formRef.validate(valid => {
+				if (!valid || !panel.validateGunTemplates()) {
+					return
+				}
+				const payload = panel.buildPayload()
+				countDevicesByDeviceType({ deviceTypeId: payload.deviceTypeId }).then(res => {
+					const bound = res.code == 200 ? Number(res.data || 0) : 0
+					if (bound <= 0) {
+						this.saveDeviceType(payload, false)
+						return
+					}
+					this.$confirm(
+						`该类型已绑定 ${bound} 台设备。是否将类型/枪模板参数同步到这些设备的枪？（不修改枪状态与连接状态）`,
+						'同步确认',
+						{
+							confirmButtonText: '保存并同步',
+							cancelButtonText: '仅保存模板',
+							distinguishCancelAndClose: true,
+							type: 'warning'
+						}
+					).then(() => {
+						this.saveDeviceType(payload, true)
+					}).catch(action => {
+						if (action === 'cancel') {
+							this.saveDeviceType(payload, false)
+						}
+					})
+				})
+			})
 		},
+		saveDeviceType(payload, syncBoundDevices) {
+			updateDeviceType({
+				...payload,
+				syncBoundDevices: !!syncBoundDevices
+			}).then(res => {
+				if (res.code == 200) {
+					this.showDrawer = false
+					this.$message.success(res.msg || '修改成功')
+					this.$emit('getLists')
+				} else {
+					this.$message.error(res.msg)
+				}
+			})
+		},
+		onDrawerClose() {
+			const panel = this.$refs.formPanel
+			if (panel) {
+				panel.loadGunTemplates([])
+			}
+		}
+	},
+	created() {
+		this.$dict.getDeviceRuleOptions().then(list => { this.deviceRuleOptions = list || [] })
+		this.$dict.getSelectorOptions('charging_type', { numeric: true }).then(list => { this.chargingTypeOptions = list || [] })
+		this.$dict.getSelectorOptions('electric_out_type', { numeric: true }).then(list => { this.templateElectricOutOptions = list || [] })
 	}
+}
 </script>
 
-<style scoped="scoped">
-	.portText {
-		font-weight: bold;
-		color: #000000;
-		margin-top: 20px;
-	}
+<style lang="scss">
+.device-type-drawer .el-drawer__body {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	height: 100%;
+	overflow: hidden;
+	background: #f5f7fa;
+}
+.device-type-drawer .el-drawer__header {
+	margin-bottom: 0;
+	padding: 16px 24px;
+	border-bottom: 1px solid #ebeef5;
+	background: #fff;
+	flex-shrink: 0;
+}
+</style>
+
+<style scoped>
+.device-type-drawer__body {
+	flex: 1;
+	min-height: 0;
+	overflow-y: auto;
+	padding: 16px 20px 20px;
+}
+.device-type-drawer__footer {
+	flex-shrink: 0;
+	padding: 12px 24px;
+	border-top: 1px solid #ebeef5;
+	text-align: right;
+	background: #fff;
+}
 </style>

@@ -10,8 +10,8 @@
           <el-radio v-for="item in qrTypeOptions" :key="item.value" :label="item.value">{{ item.label }}</el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item label="二维码前缀">
-        <el-input v-model="qrPrefix" placeholder="请输入二维码前缀" clearable></el-input>
+      <el-form-item label="二维码规则">
+        <el-input v-model="qrPrefix" placeholder="请输入二维码规则" clearable></el-input>
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">

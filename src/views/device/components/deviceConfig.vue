@@ -15,27 +15,28 @@
 				<el-form-item :label="'导出条数'" prop="number">
 					<el-input v-model="configData.number" clearable placeholder="请输入导出条数" type="number" />
 				</el-form-item>
-				<el-form-item :label="'二维码前缀'" prop="deviceQrLink">
-					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码前缀"/>
-				</el-form-item>
-				<el-form-item :label="'设备类型'" prop="deviceTypeId">
-					<el-select v-model="configData.deviceTypeId" placeholder="请选择端口数" style="width: 100%;">
-						<el-option v-for="item in dectinoType" :key="item.deviceTypeId" :label="item.deviceTypeName" :value="item.deviceTypeId"
-							:disabled="item.disabled">
-						</el-option>
-					</el-select>
-				</el-form-item>
-				<el-form-item :label="'总功率'" prop="deviceTotalPower">
-					<el-input v-model="configData.deviceTotalPower" clearable placeholder="请输入总设备功率">
-						<template slot="append">W</template>
-					</el-input>
-				</el-form-item>
 				<el-form-item :label="'编号长度'" prop="length">
 					<el-select v-model="configData.length" placeholder="请选择设备号长度" style="width: 100%;">
 						<el-option v-for="item in digitData" :key="item.id" :label="item.value + '位'" :value="item.value"
 							:disabled="item.disabled">
 						</el-option>
 					</el-select>
+				</el-form-item>
+				<el-form-item :label="'二维码规则'" prop="deviceQrLink">
+					<el-input v-model="configData.deviceQrLink" clearable placeholder="请输入设备二维码规则"/>
+				</el-form-item>
+				<el-form-item :label="'设备类型'" prop="deviceTypeId">
+					<el-select v-model="configData.deviceTypeId" placeholder="请选择设备类型" filterable clearable
+						style="width: 100%;" @change="onDeviceTypeIdChange">
+						<el-option v-for="item in deviceTypeOptions" :key="item.deviceTypeId"
+							:label="formatDeviceTypeOptionLabel(item)" :value="item.deviceTypeId" />
+					</el-select>
+					<div v-if="selectedDeviceType" class="form-tip">{{ typeSummaryText }}</div>
+				</el-form-item>
+				<el-form-item :label="'总功率'" prop="deviceTotalPower">
+					<el-input v-model="configData.deviceTotalPower" clearable placeholder="如 120 表示 120kW">
+						<template slot="append">kW</template>
+					</el-input>
 				</el-form-item>
 				<el-form-item label="计费规则" prop="deviceChagePattern" v-if="configData.ruleId === 1">
 					<el-radio-group v-model="configData.deviceChagePattern" @change="changeChagePattern">
@@ -57,19 +58,25 @@
 			</el-form>
 		</el-dialog>
 
+		<downloadProgress ref="downloadProgress" />
 	</div>
 </template>
 
 <script>
 	import {
-		findDeviceType,
 		findDevicePriceByPriceType,
 		downLoadDeviceCodes,
 	} from '@/api/device/deviceList.js'
-	import {
-		getNowTime
-	} from '@/utils/index'
+	import { createKwValidator } from '@/utils/powerUnit.js'
+	import deviceTypePickerMixin from './deviceTypePickerMixin.js'
+	import devicePowerKwMixin from './devicePowerKwMixin.js'
+	import downloadProgress from '@/components/Common/downloadProgress.vue'
+
 	export default {
+		mixins: [deviceTypePickerMixin, devicePowerKwMixin],
+		components: {
+			downloadProgress
+		},
 		props: {
 			syncRuleIdFromList: {
 				type: Boolean,
@@ -118,12 +125,15 @@
 					}],
 					deviceTypeId: [{
 						required: true,
-						message: '请选择端口数',
-						trigger: 'blur',
+						message: '请选择设备类型',
+						trigger: 'change',
 					}],
 					deviceTotalPower: [{
 						required: true,
 						message: '请输入设备总功率',
+						trigger: 'blur',
+					}, {
+						validator: createKwValidator('请输入设备总功率', '请输入大于 0 的功率(kW)'),
 						trigger: 'blur',
 					}],
 					deviceChagePattern: [{
@@ -148,11 +158,10 @@
 					}],
 					deviceQrLink: [{
 						required: true,
-						message: '请输入设备二维码前缀',
+						message: '请输入设备二维码规则',
 						trigger: 'blur',
 					}],
 				},
-				dectinoType: [],
 				operatorList: [],
 				devicePriceList: [],
 				deviceRuleOptions: [],
@@ -184,6 +193,11 @@
 					}]
 				}
 				return r
+			},
+			typeSummaryText() {
+				const t = this.selectedDeviceType
+				if (!t) return ''
+				return this.formatDeviceTypeOptionLabel(t) + '（生成后将从类型继承默认参数）'
 			}
 		},
 		methods: {
@@ -222,150 +236,49 @@
 				if (this.syncRuleIdFromList) {
 					this.ruleIdChange()
 				} else {
-					this.getTypeListss()
+					this.loadDeviceTypeOptions(this.configData.ruleId)
 					this.getDevicePriceByPriceType()
 				}
 			},
 			ruleIdChange() {
         		this.configData.deviceTypeId = ''
+				this.selectedDeviceType = null
 				this.configData.devicePriceId = ''
-				this.getTypeListss()
+				this.loadDeviceTypeOptions(this.configData.ruleId)
 				this.getDevicePriceByPriceType()
-			},
-			getTypeListss() {
-				this.listLoading = true
-				let data = {
-					ruleId: this.configData.ruleId
-				}
-				findDeviceType(data).then(res => {
-					if (res.code == 200) {
-						this.dectinoType = res.data;
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
 			},
 			//导出设备配置
 			DownloadConfig(formName) {
-				let configData = this.configData
-				console.log(configData)
 				this.$refs[formName].validate(valid => {
-					console.log(valid)
-					if (valid) {
-						console.log("通过")
-						this.loading = true
-						downLoadDeviceCodes(configData).then(res => {
-							if (res.code == 200) {
-								let port = res.data.port;
-								import('@/vendor/Export2Excel').then(excel => {
-									const tHeader = ['Broker Address', 'Broker Port', 'Client ID', 'User Name', 'Password', '发布Topic', '订阅Topic', '设备编号',
-										'整机二维码内容']
-									for (let i = 0; i < port; i++) {
-										tHeader.push(`第${i+1}路二维码内容`)
-									}
-									const filterVal = ['brokeAddress',
-										'brokePort',
-										'clientID',
-										'userName',
-										'password',
-										'upTopic',
-										'downTopic',
-										'deviceCode',
-										'deviceCodeCom'
-									]
-									for (let i = 0; i < port; i++) {
-										filterVal.push(`port${i+1}`)
-									}
-									const list = []
-									let listData = res.data || {}
-									let {
-										clientID,
-										downTopic,
-										password,
-										brokePort,
-										brokeAddress,
-										deviceCode,
-										userName,
-										upTopic
-									} = listData
-									if (clientID.length != 0) {
-										clientID.forEach((item, index) => {
-											let obj = {
-												'brokePort': '',
-												'clientID': '',
-												'userName': '',
-												'password': '',
-												'upTopic': '',
-												'downTopic': '',
-												'deviceCode': '',
-												'deviceCodeCom': ''
-											}
-											obj.clientID = clientID[index]
-											obj.downTopic = downTopic[index]
-											obj.password = password[index]
-											obj.brokePort = brokePort[index]
-											obj.brokeAddress = brokeAddress[index]
-											obj.deviceCode = deviceCode[index]
-											obj.userName = userName[index]
-											obj.upTopic = upTopic[index]
-											let baseUrl = this.configData.deviceQrLink
-											let urls = deviceCode[index]
-											for (let i = 0; i <= port; i++) {
-												if (i == 0) {
-													obj.deviceCodeCom = baseUrl + urls
-												} else {
-													let str = 'port' + i
-													obj[str] = baseUrl + urls + '&port=' + i
-												}
-											}
-											list.push(obj)
-										})
-									}
-									console.log(list)
-									const data = this.formatJson(filterVal, list)
-									let filename = '设备配置-' + getNowTime()
-									excel.export_json_to_excel({
-										header: tHeader,
-										data,
-										filename: filename
-									})
-									this.loading = false
-									this.showConfig = false
-									this.resetForm(formName)
-									this.$emit('getLists')
-								})
-							} else {
-								this.loading = false
-								this.$message({
-									message: '导出失败，请重试',
-									type: 'warning'
-								})
-							}
-						})
-					} else {
+					if (!valid) {
 						this.loading = false
-						console.log("不通过")
 						return false
 					}
+					const configData = {
+						...this.configData,
+						deviceTotalPower: this.toApiDeviceTotalPower(this.configData.deviceTotalPower)
+					}
+					this.loading = true
+					downLoadDeviceCodes(configData).then(res => {
+						this.loading = false
+						if (res.code == 200 && res.data && res.data.id) {
+							this.showConfig = false
+							this.resetForm(formName)
+							this.$message.success(res.msg || '已开始生成，请在下载进度中获取文件')
+							this.$refs.downloadProgress.open(res.data.id)
+							this.$emit('getLists')
+						} else {
+							this.$message({ message: (res && res.msg) || '导出失败，请重试', type: 'warning' })
+						}
+					}).catch(() => {
+						this.loading = false
+					})
 				})
-			},
-			getFormat(str) {
-				let url = ''
-				let lastStr = str.substr(-1)
-				if (lastStr !== '/') {
-					url = str + '/'
-				} else {
-					url = str
-				}
-				return url
-			},
-			//导出excel格式转化
-			formatJson(filterVal, jsonData) {
-				return jsonData.map(v => filterVal.map(j => v[j]))
 			},
 			//清除表单
 			resetForm(formName) {
-				this.$refs[formName].resetFields();
+				this.$refs[formName].resetFields()
+				this.selectedDeviceType = null
 			},
 		},
 		created() {
@@ -377,5 +290,11 @@
 	}
 </script>
 
-<style>
+<style scoped>
+.form-tip {
+	font-size: 12px;
+	color: #909399;
+	line-height: 1.5;
+	margin-top: 6px;
+}
 </style>

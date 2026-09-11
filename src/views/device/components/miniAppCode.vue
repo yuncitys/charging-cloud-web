@@ -14,13 +14,13 @@
 						</button>
 					</div>
 				</div>
-				<div style="flex-wrap: wrap;display: flex;text-align: center;" >
-					<div style="margin-right: 20px;width: 150px;margin-top: 10px;" v-for="(item,index) in portCount" :key="index">
-						<div :id="`qrCode${index+1}`" ref="`qrCode${index+1}`"></div>
-						<div class="portText">端口{{index+1}}</div>
+				<div style="flex-wrap: wrap;display: flex;text-align: center;">
+					<div style="margin-right: 20px;width: 150px;margin-top: 10px;" v-for="gunNumber in gunNumbers" :key="gunNumber">
+						<div :id="`qrCode${gunNumber}`" :ref="`qrCode${gunNumber}`"></div>
+						<div class="portText">{{ gunNumber }}号端口</div>
 						<div style="margin-top: 20px;">
-							<el-button @click="print(`trueBtn${index+1}`)" type="primary">打印二维码</el-button>
-							<button v-print="`#qrCode${index+1}`" :id="`trueBtn${index+1}`" style="display: none">
+							<el-button @click="print(`trueBtn${gunNumber}`)" type="primary">打印二维码</el-button>
+							<button v-print="`#qrCode${gunNumber}`" :id="`trueBtn${gunNumber}`" style="display: none">
 								打印二维码
 							</button>
 						</div>
@@ -33,71 +33,89 @@
 
 <script>
 	import QRCode from 'qrcodejs2'
+	import { listGuns } from '@/api/device/deviceList.js'
+
 	export default {
-		props: {
-			
-		},
 		data() {
 			return {
 				codeWidth: 150,
 				codeHeight: 150,
 				showqrCode: false,
 				titleStr: '',
-				portCount:10
+				codeUrl: '',
+				gunNumbers: []
 			}
 		},
-		mounted() {
-
-		},
 		methods: {
-			//清除二维码
 			qrCodeHandleClose() {
-				this.showqrCode = false;
-				this.qrCode = '';
-				for (let i = 0; i < this.portCount+1; i++) {
-					let str = 'qrCode' + i
-					document.getElementById(str).innerHTML = '';
+				this.showqrCode = false
+				this.gunNumbers.forEach(gunNumber => {
+					const el = document.getElementById('qrCode' + gunNumber)
+					if (el) {
+						el.innerHTML = ''
+					}
+				})
+				const deviceEl = document.getElementById('qrCode0')
+				if (deviceEl) {
+					deviceEl.innerHTML = ''
 				}
 			},
-			//显示二维码
-			showQrcode(deviceCode,portCount) {
-				this.showqrCode = true
-				this.codeUrl =deviceCode
-				this.portCount=portCount || 10
-				this.titleStr = "设备号:" + deviceCode
+			loadGunNumbers(deviceCode) {
+				return listGuns({ deviceCode }).then(res => {
+					if (res.code === 200 && Array.isArray(res.data) && res.data.length) {
+						return res.data
+							.slice()
+							.sort((a, b) => (Number(a.gunNumber) || 0) - (Number(b.gunNumber) || 0))
+							.map(g => Number(g.gunNumber))
+							.filter(n => n > 0)
+					}
+					return Promise.reject(new Error(res.msg || '未查询到枪口数据'))
+				})
+			},
+			showQrcode(deviceCode) {
+				this.codeUrl = deviceCode
+				this.titleStr = '设备号:' + deviceCode
+				this.loadGunNumbers(deviceCode).then(gunNumbers => {
+					this.gunNumbers = gunNumbers
+					this.showqrCode = true
+				}).catch(err => {
+					this.$message.error(err.message || '加载枪口列表失败')
+				})
 			},
 			qrcode(url) {
-				for (let i = 0; i < this.portCount+1; i++) {
-					let str = 'qrCode' + i
-					let baseUrl = this.Global.codeUrl
-					let urls = ''
-					if (i == 0) {
-						urls = baseUrl + '?qrcode=' + url
-					} else {
-						urls = baseUrl + '?qrcode=' + url + '&port=' + i
-					}
-					this.qrCode = new QRCode(str, {
-						text: urls,
+				const baseUrl = this.Global.codeUrl
+				const deviceEl = document.getElementById('qrCode0')
+				if (deviceEl) {
+					deviceEl.innerHTML = ''
+					new QRCode('qrCode0', {
+						text: baseUrl + '?qrcode=' + url,
 						width: this.codeWidth,
 						height: this.codeHeight
 					})
 				}
-			},
-			qrCodeCreate() {
-				let url = this.codeUrl
-				this.$nextTick(() => {
-					this.qrcode(url);
+				this.gunNumbers.forEach(gunNumber => {
+					const elId = 'qrCode' + gunNumber
+					const el = document.getElementById(elId)
+					if (!el) {
+						return
+					}
+					el.innerHTML = ''
+					new QRCode(elId, {
+						text: baseUrl + '?qrcode=' + url + '&port=' + gunNumber,
+						width: this.codeWidth,
+						height: this.codeHeight
+					})
 				})
 			},
-			//打印
-			print(str) {
-				console.log(str)
-				document.getElementById(str).click();
+			qrCodeCreate() {
+				this.$nextTick(() => {
+					this.qrcode(this.codeUrl)
+				})
 			},
-		},
-		created() {
-
-		},
+			print(str) {
+				document.getElementById(str).click()
+			}
+		}
 	}
 </script>
 
