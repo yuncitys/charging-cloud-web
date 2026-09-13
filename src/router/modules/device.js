@@ -24,6 +24,15 @@ export default [
       }
     },
 {
+      path: '/device/stationMonitor',
+      component: () => import('@/views/monitor/stationMonitor'),
+      name: 'stationMonitor',
+      meta: {
+        title: '电站监控',
+        icon: 'el-icon-view',
+      }
+    },
+{
       path: '/device/warehousing',
       component: () => import('@/views/device/warehousing'),
       name: 'warehousing',
