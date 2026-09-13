@@ -375,6 +375,10 @@ export default {
         this.handleBizFail(res, silent)
       }).catch(() => {
         if (seq !== this.loadSeq) return
+        if (silent) {
+          console.warn('station monitor poll failed, keeping last data')
+          return
+        }
         this.toastKeepOld(silent)
       })
     },
@@ -388,21 +392,25 @@ export default {
         this.handleBizFail(res, silent)
       }).catch(() => {
         if (seq !== this.loadSeq) return
+        if (silent) {
+          console.warn('station monitor poll failed, keeping last data')
+          return
+        }
         this.toastKeepOld(silent)
       })
     },
     handleBizFail(res, silent) {
       const code = res && Number(res.code)
       const msg = (res && res.msg) || '加载失败'
+      if (silent) {
+        console.warn('station monitor poll biz fail, keeping last data', msg)
+        return
+      }
       if (code === 401 || code === 403) {
         this.toastOnce(msg)
         return
       }
-      if (!silent) {
-        this.toastOnce(msg)
-        return
-      }
-      this.toastKeepOld(true)
+      this.toastOnce(msg)
     },
     toastKeepOld(silent) {
       if (!silent && !this.piles.length && !this.summary.totalCount) {
