@@ -52,10 +52,6 @@
       </el-select>
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <el-radio-group v-model="viewMode" class="filter-item view-switch" size="small">
-        <el-radio-button label="thumb">实时缩略</el-radio-button>
-        <el-radio-button label="detail">实时详情</el-radio-button>
-      </el-radio-group>
       <el-button
         class="filter-item"
         type="text"
@@ -98,7 +94,13 @@
     </div>
 
     <div v-if="!hasStation" class="empty-hint">请选择站点后查看监控</div>
-    <div v-else v-loading="loading && !piles.length">
+    <el-card v-else class="content-card" shadow="never" v-loading="loading && !piles.length">
+      <div slot="header" class="content-card__head">
+        <el-radio-group v-model="viewMode" size="small">
+          <el-radio-button label="thumb">实时缩略</el-radio-button>
+          <el-radio-button label="detail">实时详情</el-radio-button>
+        </el-radio-group>
+      </div>
       <div v-if="viewMode === 'thumb'" class="pile-grid">
         <el-card
           v-for="pile in displayPiles"
@@ -131,9 +133,9 @@
                 </div>
               </div>
               <div class="gun-actions">
-                <el-button type="text" size="mini" class="gun-action-btn" @click="openEvents(gun)">状态日志</el-button>
-                <el-dropdown trigger="click" @command="cmd => onMoreCommand(cmd, gun)">
-                  <el-button type="text" size="mini" class="gun-action-btn">
+                <el-button size="mini" class="gun-action-btn" @click="openEvents(gun)">状态日志</el-button>
+                <el-dropdown trigger="click" class="gun-action-dropdown" @command="cmd => onMoreCommand(cmd, gun)">
+                  <el-button size="mini" class="gun-action-btn">
                     更多操作<i class="el-icon-arrow-down el-icon--right" />
                   </el-button>
                   <el-dropdown-menu slot="dropdown">
@@ -159,10 +161,10 @@
               <span class="detail-card__code">{{ disp(gun.deviceCode) }} · 枪 {{ formatGun(gun.gunNumber) }}</span>
               <el-tag size="mini" :type="statusTagType(gun)" class="detail-card__tag">{{ statusText(gun) }}</el-tag>
             </div>
-            <div>
-              <el-button type="text" size="mini" @click="openEvents(gun)">状态日志</el-button>
+            <div class="detail-card__actions">
+              <el-button size="mini" class="gun-action-btn" @click="openEvents(gun)">状态日志</el-button>
               <el-dropdown trigger="click" @command="cmd => onMoreCommand(cmd, gun)">
-                <el-button type="text" size="mini">
+                <el-button size="mini" class="gun-action-btn">
                   更多操作<i class="el-icon-arrow-down el-icon--right" />
                 </el-button>
                 <el-dropdown-menu slot="dropdown">
@@ -183,7 +185,7 @@
       </div>
 
       <div v-if="!loading && !piles.length" class="empty-hint">暂无符合条件的汽车桩</div>
-    </div>
+    </el-card>
 
     <gun-status-event-dialog ref="eventDialog" />
   </div>
@@ -738,6 +740,23 @@ export default {
   margin-left: 12px;
 }
 
+.content-card {
+  margin-top: 0;
+}
+
+.content-card >>> .el-card__header {
+  padding: 10px 16px;
+}
+
+.content-card__head {
+  display: flex;
+  align-items: center;
+}
+
+.content-card >>> .el-card__body {
+  padding: 16px;
+}
+
 .status-bar {
   display: flex;
   flex: 1;
@@ -898,13 +917,21 @@ export default {
   margin: 0 !important;
   padding: 8px 4px;
   border-radius: 0;
+  border: none;
+  border-left: 1px solid #ebeef5;
+  color: #303133 !important;
+  background: #fff !important;
 }
 
-.gun-actions .el-dropdown {
+.gun-actions > .gun-action-btn {
+  border-left: none;
+}
+
+.gun-action-dropdown {
   width: 100%;
 }
 
-.gun-actions .el-dropdown .gun-action-btn {
+.gun-action-dropdown .gun-action-btn {
   width: 100%;
 }
 
@@ -913,6 +940,19 @@ export default {
   align-items: center;
   justify-content: space-between;
   padding: 4px 6px 6px;
+}
+
+.detail-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-card__actions .gun-action-btn {
+  width: auto;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 7px 12px;
 }
 
 .detail-card {
