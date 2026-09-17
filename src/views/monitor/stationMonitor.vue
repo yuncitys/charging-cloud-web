@@ -65,23 +65,35 @@
       >刷新</el-button>
     </div>
 
-    <div class="power-bar">
-      <span>额定功率 {{ dispPower(summary.ratedPowerKw) }}</span>
-      <span class="power-bar__sep">/</span>
-      <span>实时功率 {{ dispPower(summary.realtimePowerKw) }}</span>
-      <span v-if="summary.networkName" class="power-bar__name">{{ summary.networkName }}</span>
-    </div>
-
-    <div class="status-bar">
-      <div
-        v-for="tab in statusTabs"
-        :key="'tab-' + String(tab.value)"
-        class="status-chip"
-        :class="['status-chip--' + tab.tone, { 'is-active': isTabActive(tab.value) }]"
-        @click="onTabChange(tab.value)"
-      >
-        <span class="status-chip__name">{{ tab.name }}</span>
-        <span class="status-chip__num">{{ tabCount(tab.countKey) }}</span>
+    <div class="summary-strip">
+      <div class="summary-power">
+        <div class="summary-metric">
+          <span class="summary-metric__label">额定功率</span>
+          <div class="summary-metric__value">
+            <span class="summary-metric__num">{{ dispPowerNum(summary.ratedPowerKw) }}</span>
+            <span v-if="hasPower(summary.ratedPowerKw)" class="summary-metric__unit">kW</span>
+          </div>
+        </div>
+        <div class="summary-metric">
+          <span class="summary-metric__label">实时功率</span>
+          <div class="summary-metric__value">
+            <span class="summary-metric__num">{{ dispPowerNum(summary.realtimePowerKw) }}</span>
+            <span v-if="hasPower(summary.realtimePowerKw)" class="summary-metric__unit">kW</span>
+          </div>
+        </div>
+      </div>
+      <div class="summary-strip__divider" />
+      <div class="status-bar">
+        <div
+          v-for="tab in statusTabs"
+          :key="'tab-' + String(tab.value)"
+          class="status-chip"
+          :class="['status-chip--' + tab.tone, { 'is-active': isTabActive(tab.value) }]"
+          @click="onTabChange(tab.value)"
+        >
+          <span class="status-chip__name">{{ tab.name }}</span>
+          <span class="status-chip__num">{{ tabCount(tab.countKey) }}</span>
+        </div>
       </div>
     </div>
 
@@ -112,20 +124,23 @@
                 </span>
                 <span>{{ statusText(gun) }}</span>
               </div>
-              <div v-for="row in cardFields(gun)" :key="row.label" class="gun-kv">
-                <span>{{ row.label }}</span>
-                <span>{{ row.value }}</span>
+              <div class="gun-col__body">
+                <div v-for="row in cardFields(gun)" :key="row.label" class="gun-kv">
+                  <span>{{ row.label }}</span>
+                  <span>{{ row.value }}</span>
+                </div>
               </div>
               <div class="gun-actions">
-                <el-button type="text" size="mini" @click="openEvents(gun)">状态日志</el-button>
-                <el-button
-                  v-if="isCharging(gun)"
-                  type="text"
-                  size="mini"
-                  class="is-stop"
-                  @click="stopCharge(gun)"
-                >停止充电</el-button>
-                <el-button type="text" size="mini" @click="goMore(gun)">更多</el-button>
+                <el-button type="text" size="mini" class="gun-action-btn" @click="openEvents(gun)">状态日志</el-button>
+                <el-dropdown trigger="click" @command="cmd => onMoreCommand(cmd, gun)">
+                  <el-button type="text" size="mini" class="gun-action-btn">
+                    更多操作<i class="el-icon-arrow-down el-icon--right" />
+                  </el-button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item v-if="isCharging(gun)" command="stop">停止充电</el-dropdown-item>
+                    <el-dropdown-item command="more">设备详情</el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
               </div>
             </div>
           </div>
@@ -146,14 +161,15 @@
             </div>
             <div>
               <el-button type="text" size="mini" @click="openEvents(gun)">状态日志</el-button>
-              <el-button
-                v-if="isCharging(gun)"
-                type="text"
-                size="mini"
-                class="is-stop"
-                @click="stopCharge(gun)"
-              >停止充电</el-button>
-              <el-button type="text" size="mini" @click="goMore(gun)">更多</el-button>
+              <el-dropdown trigger="click" @command="cmd => onMoreCommand(cmd, gun)">
+                <el-button type="text" size="mini">
+                  更多操作<i class="el-icon-arrow-down el-icon--right" />
+                </el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item v-if="isCharging(gun)" command="stop">停止充电</el-dropdown-item>
+                  <el-dropdown-item command="more">设备详情</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
             </div>
           </div>
           <el-descriptions :column="3" size="small" border>
@@ -456,6 +472,14 @@ export default {
       if (v == null || v === '') return MISSING
       return Number(v) + ' kW'
     },
+    hasPower(v) {
+      return v != null && v !== '' && !isNaN(Number(v))
+    },
+    dispPowerNum(v) {
+      if (!this.hasPower(v)) return MISSING
+      const n = Number(v)
+      return Number.isInteger(n) ? String(n) : n.toFixed(2)
+    },
     dispEnergy(v) {
       if (v == null || v === '') return MISSING
       return Number(v) + ' kWh'
@@ -623,6 +647,15 @@ export default {
       if (gun.deviceId) query.id = gun.deviceId
       this.$router.push({ path: '/device/setCarDevice', query })
     },
+    onMoreCommand(cmd, gun) {
+      if (cmd === 'stop') {
+        this.stopCharge(gun)
+        return
+      }
+      if (cmd === 'more') {
+        this.goMore(gun)
+      }
+    },
     stopCharge(gun) {
       if (!this.isCharging(gun)) return
       this.$confirm('确认停止该枪充电？', '提示', {
@@ -649,21 +682,56 @@ export default {
 </script>
 
 <style scoped>
-.power-bar {
-  margin: 4px 0 12px;
-  color: #606266;
-  font-size: 14px;
+.summary-strip {
+  display: flex;
+  align-items: stretch;
+  margin: 4px 0 16px;
+  padding: 12px 16px;
+  border: 1px solid #e4e7ed;
+  border-radius: 4px;
+  background: #fff;
+  box-sizing: border-box;
 }
 
-.power-bar__sep {
-  margin: 0 8px;
-  color: #c0c4cc;
+.summary-power {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 40px;
+  padding-right: 20px;
 }
 
-.power-bar__name {
-  margin-left: 16px;
+.summary-metric__label {
+  display: block;
+  font-size: 12px;
+  color: #909399;
+  line-height: 1.2;
+}
+
+.summary-metric__value {
+  display: flex;
+  align-items: baseline;
+  margin-top: 4px;
+  gap: 4px;
+}
+
+.summary-metric__num {
+  font-size: 22px;
+  font-weight: 700;
   color: #303133;
-  font-weight: 600;
+  line-height: 1.2;
+}
+
+.summary-metric__unit {
+  font-size: 12px;
+  color: #909399;
+}
+
+.summary-strip__divider {
+  width: 1px;
+  margin: 0 16px;
+  background: #e4e7ed;
+  align-self: stretch;
 }
 
 .view-switch {
@@ -672,13 +740,15 @@ export default {
 
 .status-bar {
   display: flex;
+  flex: 1;
   flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
-  margin-bottom: 16px;
+  min-width: 0;
 }
 
 .status-chip {
-  min-width: 88px;
+  min-width: 72px;
   padding: 8px 12px;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
@@ -755,6 +825,8 @@ export default {
 }
 
 .gun-col {
+  display: flex;
+  flex-direction: column;
   flex: 1 1 180px;
   min-width: 180px;
   max-width: 100%;
@@ -794,6 +866,10 @@ export default {
 .gun-col--offline .gun-col__status { background: #909399; }
 .gun-col--other .gun-col__status { background: #606266; }
 
+.gun-col__body {
+  flex: 1;
+}
+
 .gun-kv {
   display: flex;
   justify-content: space-between;
@@ -809,7 +885,29 @@ export default {
   word-break: break-all;
 }
 
-.gun-actions,
+.gun-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  margin-top: auto;
+  border-top: 1px solid #ebeef5;
+}
+
+.gun-action-btn {
+  width: 100%;
+  margin: 0 !important;
+  padding: 8px 4px;
+  border-radius: 0;
+}
+
+.gun-actions .el-dropdown {
+  width: 100%;
+}
+
+.gun-actions .el-dropdown .gun-action-btn {
+  width: 100%;
+}
+
 .detail-card__head {
   display: flex;
   align-items: center;
@@ -830,14 +928,25 @@ export default {
   vertical-align: middle;
 }
 
-.is-stop {
-  color: #E6A23C;
-}
-
 @media (max-width: 1200px) {
   .pile-card {
     width: 100%;
     min-width: 0;
+  }
+
+  .summary-strip {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .summary-power {
+    padding-right: 0;
+  }
+
+  .summary-strip__divider {
+    width: auto;
+    height: 1px;
+    margin: 0;
   }
 }
 </style>
