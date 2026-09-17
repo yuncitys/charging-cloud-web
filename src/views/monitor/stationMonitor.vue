@@ -95,12 +95,20 @@
       v-loading="loading && !piles.length"
     >
       <div slot="header" class="content-card__head">
-        <span class="content-card__station">{{ selectedStationName }}</span>
-        <el-radio-group v-model="viewMode" size="small" class="content-card__tabs">
-          <el-radio-button label="thumb">实时缩略</el-radio-button>
-          <el-radio-button label="detail">实时详情</el-radio-button>
-        </el-radio-group>
-        <el-button size="mini" class="content-card__fullscreen" @click="toggleFullscreen">
+        <div class="content-card__left">
+          <span class="content-card__station">{{ selectedStationName }}</span>
+          <el-radio-group v-model="viewMode" size="small" class="content-card__tabs">
+            <el-radio-button label="thumb">实时缩略</el-radio-button>
+            <el-radio-button label="detail">实时详情</el-radio-button>
+          </el-radio-group>
+        </div>
+        <el-button
+          type="primary"
+          size="mini"
+          class="content-card__fullscreen"
+          :icon="isFullscreen ? 'el-icon-close' : 'el-icon-full-screen'"
+          @click="toggleFullscreen"
+        >
           {{ isFullscreen ? '退出全屏' : '全屏展示' }}
         </el-button>
       </div>
@@ -779,10 +787,18 @@ export default {
 }
 
 .content-card__head {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.content-card__left {
+  display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+  flex: 1;
 }
 
 .content-card__station {
@@ -792,14 +808,15 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
 }
 
 .content-card__tabs {
-  justify-self: center;
+  flex-shrink: 0;
 }
 
 .content-card__fullscreen {
-  justify-self: end;
+  flex-shrink: 0;
 }
 
 .content-card.is-fullscreen,
@@ -1080,17 +1097,8 @@ export default {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .content-card__head {
-    grid-template-columns: 1fr auto;
-    grid-template-rows: auto auto;
-  }
-
-  .content-card__station {
-    grid-column: 1 / -1;
-  }
-
-  .content-card__tabs {
-    justify-self: start;
+  .content-card__left {
+    flex-wrap: wrap;
   }
 }
 </style>
