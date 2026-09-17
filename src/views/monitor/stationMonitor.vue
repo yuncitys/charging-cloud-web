@@ -54,6 +54,11 @@
       <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
     </div>
 
+    <div
+      ref="monitorStage"
+      class="monitor-stage"
+      :class="{ 'is-fullscreen': isFullscreen }"
+    >
     <div class="summary-strip">
       <div class="summary-power">
         <div class="summary-metric">
@@ -89,7 +94,6 @@
     <div v-if="!hasStation" class="empty-hint">请选择站点后查看监控</div>
     <el-card
       v-else
-      ref="contentCard"
       class="content-card"
       shadow="never"
       v-loading="loading && !piles.length"
@@ -196,6 +200,7 @@
 
       <div v-if="!loading && !piles.length" class="empty-hint">暂无符合条件的汽车桩</div>
     </el-card>
+    </div>
 
     <gun-status-event-dialog ref="eventDialog" />
   </div>
@@ -363,9 +368,7 @@ export default {
         this.$message.warning('当前浏览器不支持全屏')
         return
       }
-      const el = this.$refs.contentCard && this.$refs.contentCard.$el
-        ? this.$refs.contentCard.$el
-        : null
+      const el = this.$refs.monitorStage
       if (!el) return
       screenfull.toggle(el)
     },
@@ -778,12 +781,27 @@ export default {
   margin-left: 12px;
 }
 
-.content-card {
-  margin-top: 0;
+.monitor-stage.is-fullscreen,
+.monitor-stage:fullscreen {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 16px;
+  background: #f5f7fa;
+  overflow: auto;
 }
 
-.content-card >>> .el-card__header {
+.station-monitor >>> .el-card__header {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
   padding: 10px 16px;
+  box-sizing: border-box;
+  border-bottom: none;
+}
+
+.content-card {
+  margin-top: 0;
 }
 
 .content-card__head {
@@ -791,6 +809,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  width: 100%;
 }
 
 .content-card__left {
@@ -819,42 +838,32 @@ export default {
   flex-shrink: 0;
 }
 
-.content-card.is-fullscreen,
-.content-card:fullscreen {
-  background: #fff;
-  overflow: auto;
-}
-
 .detail-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  border-top: 1px solid #ebeef5;
-  border-left: 1px solid #ebeef5;
+  gap: 8px 24px;
 }
 
 .detail-grid__item {
   display: flex;
   min-width: 0;
-  border-right: 1px solid #ebeef5;
-  border-bottom: 1px solid #ebeef5;
+  align-items: baseline;
+  gap: 8px;
   font-size: 12px;
+  line-height: 1.5;
 }
 
 .detail-grid__label {
-  flex: 0 0 88px;
-  padding: 8px 10px;
+  flex: 0 0 auto;
   color: #909399;
-  background: #fafafa;
-  border-right: 1px solid #ebeef5;
-  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .detail-grid__value {
   flex: 1;
-  padding: 8px 10px;
+  min-width: 0;
   color: #303133;
   word-break: break-all;
-  box-sizing: border-box;
 }
 
 .content-card >>> .el-card__body {
@@ -937,8 +946,10 @@ export default {
 }
 
 .pile-card__head {
+  width: 100%;
   font-weight: 600;
   color: #303133;
+  line-height: 1.4;
 }
 
 .gun-row {
@@ -1043,7 +1054,8 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 6px 6px;
+  width: 100%;
+  gap: 12px;
 }
 
 .detail-card__actions {
