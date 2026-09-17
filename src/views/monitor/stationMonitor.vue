@@ -92,6 +92,7 @@
           v-for="pile in displayPiles"
           :key="pile.deviceCode"
           class="pile-card"
+          :class="{ 'pile-card--wide': isWidePile(pile) }"
           shadow="never"
         >
           <div slot="header" class="pile-card__head">
@@ -105,7 +106,10 @@
               :class="'gun-col--' + statusTone(gun)"
             >
               <div class="gun-col__status">
-                <span>{{ formatGun(gun.gunNumber) }}</span>
+                <span class="gun-col__title">
+                  <span>{{ gunTitle(gun) }}</span>
+                  <span v-if="gun.parkingNo" class="gun-col__parking"> · 车位 {{ gun.parkingNo }}</span>
+                </span>
                 <span>{{ statusText(gun) }}</span>
               </div>
               <div v-for="row in cardFields(gun)" :key="row.label" class="gun-kv">
@@ -239,11 +243,15 @@ export default {
     if (this.$dict && this.$dict.getSelector) {
       this.$dict.getSelector('electric_out_type')
     }
-    this.searchStations('')
-    if (this.hasStation) {
-      this.loadAll()
-      this.startPoll()
-    }
+    this.searchStations('').then(() => {
+      if (!this.hasStation && this.stationOptions.length) {
+        this.stationId = this.stationOptions[0].id
+      }
+      if (this.hasStation) {
+        this.loadAll()
+        this.startPoll()
+      }
+    })
   },
   beforeDestroy() {
     this.clearPoll()
@@ -251,7 +259,7 @@ export default {
   methods: {
     searchStations(query) {
       this.stationLoading = true
-      getNetworkDotPage({
+      return getNetworkDotPage({
         page: 1,
         limit: 20,
         type: 1,
@@ -431,6 +439,14 @@ export default {
     sortedGuns(pile) {
       const guns = (pile && Array.isArray(pile.guns)) ? pile.guns.slice() : []
       return guns.sort((a, b) => Number(a.gunNumber || 0) - Number(b.gunNumber || 0))
+    },
+    isWidePile(pile) {
+      return this.sortedGuns(pile).length > 2
+    },
+    gunTitle(gun) {
+      const name = gun && gun.gunName
+      if (name != null && String(name).trim() !== '') return String(name).trim()
+      return this.formatGun(gun && gun.gunNumber)
     },
     disp(v) {
       if (v == null || v === '') return MISSING
@@ -722,6 +738,11 @@ export default {
   box-sizing: border-box;
 }
 
+.pile-card--wide {
+  width: 100%;
+  min-width: 0;
+}
+
 .pile-card__head {
   font-weight: 600;
   color: #303133;
@@ -729,25 +750,41 @@ export default {
 
 .gun-row {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
 .gun-col {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 180px;
+  min-width: 180px;
+  max-width: 100%;
   border: 1px solid #ebeef5;
   border-radius: 4px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .gun-col__status {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
   padding: 8px 10px;
   color: #fff;
   font-size: 13px;
   font-weight: 600;
   background: #909399;
+}
+
+.gun-col__title {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.gun-col__parking {
+  font-weight: 500;
+  opacity: 0.95;
 }
 
 .gun-col--idle .gun-col__status { background: #67C23A; }
