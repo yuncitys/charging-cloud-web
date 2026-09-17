@@ -50,15 +50,8 @@
         <el-option label="默认" value="" />
         <el-option label="枪编号" value="gunCode" />
       </el-select>
-      <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
-      <el-button class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <el-button
-        class="filter-item"
-        type="text"
-        icon="el-icon-refresh"
-        :disabled="!hasStation"
-        @click="onManualRefresh"
-      >刷新</el-button>
+      <el-button type="primary" size="mini" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
+      <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
     </div>
 
     <div class="summary-strip">
@@ -94,12 +87,22 @@
     </div>
 
     <div v-if="!hasStation" class="empty-hint">请选择站点后查看监控</div>
-    <el-card v-else class="content-card" shadow="never" v-loading="loading && !piles.length">
+    <el-card
+      v-else
+      ref="contentCard"
+      class="content-card"
+      shadow="never"
+      v-loading="loading && !piles.length"
+    >
       <div slot="header" class="content-card__head">
-        <el-radio-group v-model="viewMode" size="small">
+        <span class="content-card__station">{{ selectedStationName }}</span>
+        <el-radio-group v-model="viewMode" size="small" class="content-card__tabs">
           <el-radio-button label="thumb">实时缩略</el-radio-button>
           <el-radio-button label="detail">实时详情</el-radio-button>
         </el-radio-group>
+        <el-button size="mini" class="content-card__fullscreen" @click="toggleFullscreen">
+          {{ isFullscreen ? '退出全屏' : '全屏展示' }}
+        </el-button>
       </div>
       <div v-if="viewMode === 'thumb'" class="pile-grid">
         <el-card
@@ -174,13 +177,12 @@
               </el-dropdown>
             </div>
           </div>
-          <el-descriptions :column="3" size="small" border>
-            <el-descriptions-item
-              v-for="row in detailFields(gun)"
-              :key="row.label"
-              :label="row.label"
-            >{{ row.value }}</el-descriptions-item>
-          </el-descriptions>
+          <div class="detail-grid">
+            <div v-for="row in detailFields(gun)" :key="row.label" class="detail-grid__item">
+              <span class="detail-grid__label">{{ row.label }}</span>
+              <span class="detail-grid__value">{{ row.value }}</span>
+            </div>
+          </div>
         </el-card>
       </div>
 
@@ -196,6 +198,7 @@ import { getStationMonitorSummary, getStationMonitorPiles } from '@/api/monitor/
 import { getList as getNetworkDotPage } from '@/api/netWorkDot/netWorkDotList'
 import { closeDevice } from '@/api/device/deviceList'
 import { parseTime } from '@/utils/index'
+import screenfull from 'screenfull'
 import GunStatusEventDialog from './components/GunStatusEventDialog.vue'
 
 const POLL_MS = 8000
@@ -223,6 +226,7 @@ export default {
       pollTimer: null,
       loadSeq: 0,
       lastFailToastAt: 0,
+      isFullscreen: false,
       statusTabs: [
         { name: '全部', value: null, countKey: 'totalCount', tone: 'all' },
         { name: '故障', value: 3, countKey: 'faultCount', tone: 'fault' },
@@ -247,6 +251,12 @@ export default {
         this.sortedGuns(pile).forEach(gun => guns.push(gun))
       })
       return guns
+    },
+    selectedStationName() {
+      const hit = (this.stationOptions || []).find(item => String(item.id) === String(this.stationId))
+      if (hit && hit.networkName) return hit.networkName
+      if (this.summary && this.summary.networkName) return this.summary.networkName
+      return MISSING
     }
   },
   created() {
@@ -270,9 +280,11 @@ export default {
         this.startPoll()
       }
     })
+    this.setupFullscreen()
   },
   beforeDestroy() {
     this.clearPoll()
+    this.teardownFullscreen()
   },
   methods: {
     searchStations(query) {
@@ -338,9 +350,27 @@ export default {
       this.listQuery.sort = ''
       if (this.hasStation) this.loadAll()
     },
-    onManualRefresh() {
-      if (!this.hasStation) return
-      this.loadAll()
+    toggleFullscreen() {
+      if (!screenfull.enabled) {
+        this.$message.warning('当前浏览器不支持全屏')
+        return
+      }
+      const el = this.$refs.contentCard && this.$refs.contentCard.$el
+        ? this.$refs.contentCard.$el
+        : null
+      if (!el) return
+      screenfull.toggle(el)
+    },
+    onFullscreenChange() {
+      this.isFullscreen = !!(screenfull.isFullscreen)
+    },
+    setupFullscreen() {
+      if (!screenfull.enabled) return
+      screenfull.on('change', this.onFullscreenChange)
+    },
+    teardownFullscreen() {
+      if (!screenfull.enabled) return
+      screenfull.off('change', this.onFullscreenChange)
     },
     isTabActive(value) {
       if (value === null) return this.tabStatus === null
@@ -749,8 +779,65 @@ export default {
 }
 
 .content-card__head {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 12px;
+}
+
+.content-card__station {
+  font-size: 15px;
+  font-weight: 600;
+  color: #303133;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.content-card__tabs {
+  justify-self: center;
+}
+
+.content-card__fullscreen {
+  justify-self: end;
+}
+
+.content-card.is-fullscreen,
+.content-card:fullscreen {
+  background: #fff;
+  overflow: auto;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-top: 1px solid #ebeef5;
+  border-left: 1px solid #ebeef5;
+}
+
+.detail-grid__item {
+  display: flex;
+  min-width: 0;
+  border-right: 1px solid #ebeef5;
+  border-bottom: 1px solid #ebeef5;
+  font-size: 12px;
+}
+
+.detail-grid__label {
+  flex: 0 0 88px;
+  padding: 8px 10px;
+  color: #909399;
+  background: #fafafa;
+  border-right: 1px solid #ebeef5;
+  box-sizing: border-box;
+}
+
+.detail-grid__value {
+  flex: 1;
+  padding: 8px 10px;
+  color: #303133;
+  word-break: break-all;
+  box-sizing: border-box;
 }
 
 .content-card >>> .el-card__body {
@@ -987,6 +1074,23 @@ export default {
     width: auto;
     height: 1px;
     margin: 0;
+  }
+
+  .detail-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .content-card__head {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+  }
+
+  .content-card__station {
+    grid-column: 1 / -1;
+  }
+
+  .content-card__tabs {
+    justify-self: start;
   }
 }
 </style>
