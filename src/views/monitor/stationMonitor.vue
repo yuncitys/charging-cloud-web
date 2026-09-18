@@ -655,7 +655,7 @@ export default {
           { label: '实时/需求功率', value: this.dispPower(gun.realtimePowerKw) + ' / ' + this.dispPower(gun.requirePowerKw) },
           { label: '电量', value: this.dispEnergy(gun.chargedKwh) },
           { label: 'SOC', value: this.dispSoc(gun.realtimeSoc) },
-          { label: '剩余', value: this.dispMinutes(gun.remainMinutes) },
+          { label: '预计剩余时长', value: this.dispMinutes(gun.remainMinutes) },
           { label: '车牌', value: this.disp(gun.plateNumber) },
           { label: '用户标签', value: this.disp(gun.userLabel) }
         ]
@@ -695,7 +695,7 @@ export default {
         { label: '插枪时间', value: this.dispTimeShort(gun.plugTime) },
         { label: '充电时间', value: this.dispTimeShort(gun.chargeStartTime) },
         { label: '结束时间', value: this.dispTimeShort(gun.chargeEndTime) },
-        { label: '预计剩余', value: this.dispMinutes(gun.remainMinutes) },
+        { label: '预计剩余时长', value: this.dispMinutes(gun.remainMinutes) },
         { label: '充电时长', value: this.dispChargeDuration(gun) },
         { label: '充电电量', value: this.dispEnergyDetail(gun.chargedKwh) },
         { label: charging ? '车牌号' : '上次车牌号', value: this.disp(charging ? gun.plateNumber : (gun.lastPlateNumber || gun.plateNumber)) },
@@ -1037,6 +1037,13 @@ export default {
   box-sizing: border-box;
 }
 
+.pile-card--wide .gun-col {
+  flex: 0 0 calc((100% - 36px) / 4);
+  width: calc((100% - 36px) / 4);
+  min-width: 0;
+  max-width: calc((100% - 36px) / 4);
+}
+
 .gun-col__status {
   display: flex;
   justify-content: space-between;
@@ -1155,6 +1162,12 @@ export default {
   .pile-card {
     width: 100%;
     min-width: 0;
+  }
+
+  .pile-card--wide .gun-col {
+    flex: 0 0 calc((100% - 12px) / 2);
+    width: calc((100% - 12px) / 2);
+    max-width: calc((100% - 12px) / 2);
   }
 
   .summary-strip {
