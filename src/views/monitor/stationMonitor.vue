@@ -85,24 +85,29 @@
           :class="['status-chip--' + tab.tone, { 'is-active': isTabActive(tab.value) }]"
           @click="onTabChange(tab.value)"
         >
-          <div class="status-chip__top">
-            <span class="status-chip__name">{{ tab.name }}</span>
-            <el-tooltip
-              v-if="tab.tone === 'occupy'"
-              effect="dark"
-              content="占用分为占用·充电前与占用·充电后；占用·充电前：即为未开启充电前的插枪占用；占用·充电后：即为充电结束后的插枪占用。"
-              placement="top"
-            >
-              <i class="el-icon-question status-chip__help" @click.stop />
-            </el-tooltip>
-            <span
-              v-if="tab.tone === 'fault' || tab.tone === 'offline'"
-              class="status-chip__detail"
-              @click.stop="openExceptionDrawer(tab.tone)"
-            >详情 &gt;</span>
+          <div class="status-chip__body">
+            <div class="status-chip__row">
+              <span class="status-chip__name">{{ tab.name }}</span>
+              <el-tooltip
+                v-if="tab.tone === 'occupy'"
+                effect="dark"
+                content="占用分为插枪未充与充完未拔；插枪未充：启动充电前的插枪占用；充完未拔：充电结束后仍插枪未拔的占用。"
+                placement="top"
+              >
+                <i class="el-icon-question status-chip__help" @click.stop />
+              </el-tooltip>
+              <span
+                v-else-if="tab.tone === 'fault' || tab.tone === 'offline'"
+                class="status-chip__detail"
+                @click.stop="openExceptionDrawer(tab.tone)"
+              >详情<i class="el-icon-arrow-right" /></span>
+            </div>
+            <span class="status-chip__num">{{ tabCount(tab.countKey) }}</span>
           </div>
-          <span class="status-chip__num">{{ tabCount(tab.countKey) }}</span>
-          <i v-if="isTabActive(tab.value)" class="el-icon-check status-chip__check" />
+          <i
+            class="el-icon-check status-chip__check"
+            :class="{ 'is-on': isTabActive(tab.value) }"
+          />
         </div>
       </div>
     </div>
@@ -805,9 +810,11 @@ export default {
 .summary-power {
   display: flex;
   align-items: center;
-  flex: 0 0 auto;
+  flex: 0 0 30%;
+  max-width: 30%;
   gap: 40px;
-  padding-right: 20px;
+  padding-right: 12px;
+  box-sizing: border-box;
 }
 
 .summary-metric__label {
@@ -841,6 +848,7 @@ export default {
   margin: 0 16px;
   background: #e4e7ed;
   align-self: stretch;
+  flex-shrink: 0;
 }
 
 .view-switch {
@@ -962,90 +970,125 @@ export default {
 
 .status-bar {
   display: flex;
-  flex: 1;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  flex: 1 1 70%;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 10px;
   min-width: 0;
+  box-sizing: border-box;
 }
 
 .status-chip {
   position: relative;
-  min-width: 72px;
-  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 68px;
+  padding: 0 14px;
   border: 1px solid #e4e7ed;
   border-radius: 4px;
   background: #fff;
   cursor: pointer;
-  text-align: center;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.status-chip__body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  gap: 4px;
+}
+
+.status-chip__row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: 8px;
+  line-height: 18px;
 }
 
 .status-chip__name {
-  display: inline-block;
-  font-size: 12px;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 400;
   color: #909399;
-}
-
-.status-chip__top {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 18px;
+  line-height: 18px;
+  white-space: nowrap;
 }
 
 .status-chip__help {
+  flex: 0 0 auto;
+  margin-left: auto;
   color: #c0c4cc;
-  font-size: 13px;
+  font-size: 14px;
+  line-height: 18px;
   cursor: help;
 }
 
 .status-chip__detail {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  margin-left: auto;
   color: #07b161;
   font-size: 12px;
+  line-height: 18px;
+  white-space: nowrap;
   cursor: pointer;
+}
+
+.status-chip__detail .el-icon-arrow-right {
+  margin-left: 1px;
+  font-size: 12px;
+}
+
+.status-chip__detail:hover {
+  opacity: 0.85;
 }
 
 .status-chip__num {
   display: block;
-  margin-top: 2px;
-  font-size: 18px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
   color: #303133;
+  line-height: 1.15;
 }
 
 .status-chip.is-active {
   border-color: #07b161;
 }
 
+/* 右下角三角角标：未选浅灰，选中主题绿 */
 .status-chip__check {
   position: absolute;
-  right: -1px;
-  bottom: -1px;
-  width: 16px;
-  height: 16px;
-  border-radius: 8px 0 4px 0;
-  background: #07b161;
-  color: #fff;
-  font-size: 12px;
-  line-height: 16px;
-  text-align: center;
+  right: 0;
+  bottom: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  background: linear-gradient(135deg, transparent 50%, #e4e7ed 50%);
+  color: #c0c4cc;
+  font-size: 10px;
+  font-style: normal;
 }
 
-.status-chip--fault.is-active,
-.status-chip--fault .status-chip__num { color: #F56C6C; }
-.status-chip--offline.is-active,
-.status-chip--offline .status-chip__num { color: #909399; }
-.status-chip--occupy.is-active,
-.status-chip--occupy .status-chip__num { color: #E6A23C; }
-.status-chip--charging.is-active,
-.status-chip--charging .status-chip__num { color: #409EFF; }
-.status-chip--idle.is-active,
-.status-chip--idle .status-chip__num { color: #67C23A; }
-.status-chip--other.is-active,
-.status-chip--other .status-chip__num { color: #606266; }
-.status-chip--all.is-active,
-.status-chip--all .status-chip__num { color: #303133; }
+.status-chip__check::before {
+  position: absolute;
+  right: 1px;
+  bottom: 0;
+  line-height: 1;
+}
+
+.status-chip__check.is-on {
+  background: linear-gradient(135deg, transparent 50%, #07b161 50%);
+  color: #fff;
+}
 
 .empty-hint {
   padding: 48px 0;
@@ -1226,6 +1269,24 @@ export default {
     flex: 0 0 calc((100% - 12px) / 2);
     width: calc((100% - 12px) / 2);
     max-width: calc((100% - 12px) / 2);
+  }
+
+  .status-bar {
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+
+  .status-chip {
+    flex: 0 0 96px;
+    width: 96px;
+    min-width: 96px;
+    max-width: 96px;
+  }
+
+  .summary-power {
+    flex: 0 0 auto;
+    max-width: 100%;
   }
 
   .summary-strip {

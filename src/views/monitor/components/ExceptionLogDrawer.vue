@@ -61,14 +61,17 @@
         <el-button size="small" type="primary" :loading="exporting" @click="exportList">导出列表</el-button>
       </div>
     </div>
+    <download-progress ref="downloadProgress" />
   </el-drawer>
 </template>
 
 <script>
 import { getStationExceptionLogs, exportStationExceptionLogs } from '@/api/monitor/stationMonitor'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
 
 export default {
   name: 'ExceptionLogDrawer',
+  components: { downloadProgress },
   data() {
     return {
       visible: false,
@@ -147,8 +150,8 @@ export default {
         type: this.activeType
       }).then(res => {
         this.exporting = false
-        if (res && Number(res.code) === 200) {
-          this.$message.success((res && res.msg) || '导出任务已创建，请到下载中心查看进度')
+        if (res && Number(res.code) === 200 && res.data && res.data.id != null) {
+          this.$refs.downloadProgress.open(res.data.id)
           return
         }
         this.$message.error((res && res.msg) || '导出失败，请重试')
