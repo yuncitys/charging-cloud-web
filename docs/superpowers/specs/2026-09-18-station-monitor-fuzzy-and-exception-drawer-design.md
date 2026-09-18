@@ -66,8 +66,8 @@
 
 | 列 | 来源 |
 |---|---|
-| 枪名称 | `t_device_guns.gun_name`（按 device_code + connector_code/gun_number join；无则 `-`） |
-| 枪编号 | 优先 `gun_code`，否则 `device_code` + 补零枪号 |
+| 枪名称 | `t_device_guns.gun_name`（按设备 join；枪级日志按 `connector_code` 精确匹配；设备级离线 `connector_code=0` 时展开为该桩全部枪；无则 `-`） |
+| 枪编号 | `device_code` + 两位枪号（优先 `g.gun_number`，否则 `connector_code`；均无则回落设备编号） |
 | 类型 | 固定或由 `alarm_item` 推导：故障→「故障」；离线→「离线」 |
 | 所属电站 | `t_network_dot.network_name` |
 | 故障名称 / 离线原因 | `reason`（空则回落 `alarm_item`） |
