@@ -83,9 +83,6 @@ export default {
     }
   },
   computed: {
-    activeTypeLabel() {
-      return this.activeType === 'offline' ? '离线明细' : '故障明细'
-    },
     reasonLabel() {
       return this.activeType === 'offline' ? '离线原因' : '故障名称'
     },
