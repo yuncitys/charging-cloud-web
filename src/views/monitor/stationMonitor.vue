@@ -173,7 +173,7 @@
         >
           <div slot="header" class="detail-card__head">
             <div>
-              <span class="detail-card__code">{{ disp(gun.deviceCode) }} · 枪 {{ formatGun(gun.gunNumber) }}</span>
+              <span class="detail-card__code">{{ detailGunTitle(gun) }}</span>
               <el-tag size="mini" :type="statusTagType(gun)" class="detail-card__tag">{{ statusText(gun) }}</el-tag>
             </div>
             <div class="detail-card__actions">
@@ -190,9 +190,17 @@
             </div>
           </div>
           <div class="detail-grid">
-            <div v-for="row in detailFields(gun)" :key="row.label" class="detail-grid__item">
-              <span class="detail-grid__label">{{ row.label }}</span>
-              <span class="detail-grid__value">{{ row.value }}</span>
+            <div class="detail-grid__col">
+              <div v-for="row in detailLeftFields(gun)" :key="row.label" class="detail-grid__item">
+                <span class="detail-grid__label">{{ row.label }}</span>
+                <span class="detail-grid__value">{{ row.value }}</span>
+              </div>
+            </div>
+            <div class="detail-grid__col">
+              <div v-for="row in detailRightFields(gun)" :key="row.label" class="detail-grid__item">
+                <span class="detail-grid__label">{{ row.label }}</span>
+                <span class="detail-grid__value">{{ row.value }}</span>
+              </div>
             </div>
           </div>
         </el-card>
@@ -562,6 +570,44 @@ export default {
         ? (this.$dict.formatElectricOutType(v) || MISSING)
         : MISSING
     },
+    dispEnergyDetail(v) {
+      if (v == null || v === '') return MISSING
+      return Number(v) + 'kW.h'
+    },
+    dispTimeShort(v) {
+      const text = parseTime(v, '{m}-{d} {h}:{i}')
+      return text || MISSING
+    },
+    dispAmpDetail(v) {
+      if (v == null || v === '') return MISSING
+      return Number(v) + ' (A)'
+    },
+    dispVoltDetail(v) {
+      if (v == null || v === '') return MISSING
+      return Number(v) + ' (V)'
+    },
+    dispChargeDuration(gun) {
+      if (!gun || !gun.chargeStartTime) return MISSING
+      const start = new Date(String(gun.chargeStartTime).replace(/-/g, '/')).getTime()
+      if (isNaN(start)) return MISSING
+      let end = Date.now()
+      if (gun.chargeEndTime) {
+        const endTs = new Date(String(gun.chargeEndTime).replace(/-/g, '/')).getTime()
+        if (!isNaN(endTs)) end = endTs
+      }
+      if (end < start) return MISSING
+      return this.dispMinutes(Math.floor((end - start) / 60000))
+    },
+    detailGunCode(gun) {
+      if (gun && gun.gunCode) return String(gun.gunCode)
+      if (!gun || !gun.deviceCode) return MISSING
+      const n = this.formatGun(gun.gunNumber)
+      return n === MISSING ? String(gun.deviceCode) : String(gun.deviceCode) + n
+    },
+    detailGunTitle(gun) {
+      const code = this.detailGunCode(gun)
+      return code === MISSING ? '充电桩' : ('充电桩' + code)
+    },
     formatGun(n) {
       if (n == null || n === '') return MISSING
       const num = Number(n)
@@ -642,43 +688,40 @@ export default {
         { label: '上次 SOC', value: this.dispSoc(gun.lastSoc) }
       ]
     },
-    detailFields(gun) {
+    detailLeftFields(gun) {
+      const charging = this.isCharging(gun)
       return [
-        { label: '桩编号', value: this.disp(gun.deviceCode) },
-        { label: '枪编号', value: this.formatGun(gun.gunNumber) },
-        { label: '枪编码', value: this.disp(gun.gunCode) },
-        { label: '状态', value: this.statusText(gun) },
-        { label: '占用细分', value: this.disp(gun.occupyPhaseLabel) },
-        { label: '输出类型', value: this.dispElectric(gun.electricOutType) },
-        { label: '车位', value: this.disp(gun.parkingNo) },
-        { label: '车牌', value: this.disp(gun.plateNumber) },
-        { label: '上次车牌', value: this.disp(gun.lastPlateNumber) },
-        { label: '用户标签', value: this.disp(gun.userLabel) },
-        { label: 'VIN', value: this.disp(gun.vinCode) },
-        { label: '卡号', value: this.disp(gun.cardNo) },
-        { label: '占用时长', value: this.dispMinutes(gun.occupyMinutes) },
-        { label: '占用开始', value: this.dispTime(gun.occupyStartTime) },
-        { label: '插枪时间', value: this.dispTime(gun.plugTime) },
-        { label: '充电开始', value: this.dispTime(gun.chargeStartTime) },
-        { label: '充电结束', value: this.dispTime(gun.chargeEndTime) },
-        { label: '上次结束', value: this.dispTime(gun.lastEndTime) },
-        { label: '初始 SOC', value: this.dispSoc(gun.startSoc) },
-        { label: '实时 SOC', value: this.dispSoc(gun.realtimeSoc) },
-        { label: '上次 SOC', value: this.dispSoc(gun.lastSoc) },
-        { label: '剩余时间', value: this.dispMinutes(gun.remainMinutes) },
-        { label: '实时功率', value: this.dispPower(gun.realtimePowerKw) },
-        { label: '需求功率', value: this.dispPower(gun.requirePowerKw) },
-        { label: '已充电量', value: this.dispEnergy(gun.chargedKwh) },
-        { label: '输出电流', value: this.dispAmp(gun.outputCurrent) },
-        { label: '输出电压', value: this.dispVolt(gun.outputVoltage) },
-        { label: '需求电流', value: this.dispAmp(gun.requireCurrent) },
-        { label: '需求电压', value: this.dispVolt(gun.requireVoltage) },
-        { label: '枪温', value: this.dispTemp(gun.gunTemperature) },
-        { label: '电池温', value: this.dispTemp(gun.batteryTemperature) },
-        { label: '停止原因', value: this.disp(gun.stopReason) },
-        { label: '最近告警', value: this.disp(gun.lastAlarmReason) },
-        { label: '订单号', value: this.disp(gun.orderCode) }
+        { label: '枪编号', value: this.detailGunCode(gun) },
+        { label: '插枪时间', value: this.dispTimeShort(gun.plugTime) },
+        { label: '充电时间', value: this.dispTimeShort(gun.chargeStartTime) },
+        { label: '结束时间', value: this.dispTimeShort(gun.chargeEndTime) },
+        { label: '预计剩余', value: this.dispMinutes(gun.remainMinutes) },
+        { label: '充电时长', value: this.dispChargeDuration(gun) },
+        { label: '充电电量', value: this.dispEnergyDetail(gun.chargedKwh) },
+        { label: charging ? '车牌号' : '上次车牌号', value: this.disp(charging ? gun.plateNumber : (gun.lastPlateNumber || gun.plateNumber)) },
+        { label: 'VIN码', value: this.disp(gun.vinCode) },
+        { label: '电卡号', value: this.disp(gun.cardNo) }
       ]
+    },
+    detailRightFields(gun) {
+      const charging = this.isCharging(gun)
+      const rows = []
+      if (charging) {
+        rows.push({ label: '初始SOC', value: this.dispSoc(gun.startSoc) })
+        rows.push({ label: '实时SOC', value: this.dispSoc(gun.realtimeSoc) })
+      } else {
+        rows.push({ label: '上次SOC', value: this.dispSoc(gun.lastSoc) })
+      }
+      rows.push(
+        { label: '电池温度', value: this.dispTemp(gun.batteryTemperature) },
+        { label: '枪端温度', value: this.dispTemp(gun.gunTemperature) },
+        { label: '输出电流', value: this.dispAmpDetail(gun.outputCurrent) },
+        { label: '输出电压', value: this.dispVoltDetail(gun.outputVoltage) },
+        { label: '需求电流', value: this.dispAmpDetail(gun.requireCurrent) },
+        { label: '需求电压', value: this.dispVoltDetail(gun.requireVoltage) },
+        { label: '用户标签', value: this.disp(gun.userLabel) }
+      )
+      return rows
     },
     openEvents(gun) {
       if (this.$refs.eventDialog) {
@@ -834,14 +877,33 @@ export default {
   flex-shrink: 0;
 }
 
+.content-card__tabs >>> .el-radio-button__inner {
+  color: #606266;
+}
+
+.content-card__tabs >>> .el-radio-button__inner:hover {
+  color: #07b161;
+}
+
+.content-card__tabs >>> .el-radio-button__orig-radio:checked + .el-radio-button__inner {
+  color: #fff;
+  background-color: #07b161;
+  border-color: #07b161;
+  box-shadow: -1px 0 0 0 #07b161;
+}
+
 .content-card__fullscreen {
   flex-shrink: 0;
 }
 
 .detail-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px 24px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 32px;
+}
+
+.detail-grid__col {
+  min-width: 0;
 }
 
 .detail-grid__item {
@@ -849,6 +911,7 @@ export default {
   min-width: 0;
   align-items: baseline;
   gap: 8px;
+  padding: 4px 0;
   font-size: 12px;
   line-height: 1.5;
 }
@@ -857,6 +920,10 @@ export default {
   flex: 0 0 auto;
   color: #909399;
   white-space: nowrap;
+}
+
+.detail-grid__label::after {
+  content: '：';
 }
 
 .detail-grid__value {
@@ -1106,7 +1173,7 @@ export default {
   }
 
   .detail-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: 1fr;
   }
 
   .content-card__left {
