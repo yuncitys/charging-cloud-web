@@ -32,10 +32,10 @@
         @clear="handleFilter"
       />
       <el-input
-        v-model="listQuery.gunNumber"
+        v-model="listQuery.gunCode"
         class="filter-item"
         style="width: 140px; margin-right: 20px;"
-        placeholder="请输入枪编号"
+        placeholder="请输入枪编码"
         clearable
         @keyup.enter.native="handleFilter"
         @clear="handleFilter"
@@ -238,7 +238,7 @@ export default {
       tabStatus: null,
       listQuery: {
         deviceCode: '',
-        gunNumber: '',
+        gunCode: '',
         sort: ''
       },
       summary: {},
@@ -367,7 +367,7 @@ export default {
     },
     handleReset() {
       this.listQuery.deviceCode = ''
-      this.listQuery.gunNumber = ''
+      this.listQuery.gunCode = ''
       this.listQuery.sort = ''
       if (this.hasStation) this.loadAll()
     },
@@ -419,11 +419,8 @@ export default {
       if (this.tabStatus !== null) params.tabStatus = this.tabStatus
       const deviceCode = (this.listQuery.deviceCode || '').trim()
       if (deviceCode) params.deviceCode = deviceCode
-      const gun = this.listQuery.gunNumber
-      if (gun !== '' && gun != null) {
-        const n = Number(gun)
-        if (!isNaN(n)) params.gunNumber = n
-      }
+      const gunCode = (this.listQuery.gunCode || '').trim()
+      if (gunCode) params.gunCode = gunCode
       if (this.listQuery.sort) params.sort = this.listQuery.sort
       return params
     },
