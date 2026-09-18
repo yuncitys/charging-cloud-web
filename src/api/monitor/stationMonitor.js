@@ -22,3 +22,19 @@ export function getGunStatusEvents(deviceCode, connector, params) {
     params
   })
 }
+
+export function getStationExceptionLogs(stationId, params) {
+  return request({
+    url: `/api/web/monitor/stations/${stationId}/exception-logs`,
+    method: 'get',
+    params
+  })
+}
+
+export function exportStationExceptionLogs(stationId, params) {
+  return request({
+    url: `/api/web/monitor/stations/${stationId}/exception-logs/export`,
+    method: 'post',
+    params
+  })
+}
