@@ -51,7 +51,10 @@
 					limit: 5000,
 					deviceCode: this.queryData.deviceCode,
 					createTimeStart: this.queryData.createTimeStart,
-					createTimeEnd: this.queryData.createTimeEnd
+					createTimeEnd: this.queryData.createTimeEnd,
+					networkDotId: this.queryData.networkDotId,
+					alarmCode: this.queryData.alarmCode,
+					connectorCode: this.queryData.connectorCode
 				}
 				downLoadDeviceLogList(downloadData).then(res => {
 					if (res.code == 200) {
@@ -66,7 +69,10 @@
 				let downloadData = {
 					deviceCode: this.queryData.deviceCode,
 					createTimeStart: this.queryData.createTimeStart,
-					createTimeEnd: this.queryData.createTimeEnd
+					createTimeEnd: this.queryData.createTimeEnd,
+					networkDotId: this.queryData.networkDotId,
+					alarmCode: this.queryData.alarmCode,
+					connectorCode: this.queryData.connectorCode
 				}
 				downLoadDeviceLogList(downloadData).then(res => {
 					this.downloadLoading = false
