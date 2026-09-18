@@ -85,8 +85,24 @@
           :class="['status-chip--' + tab.tone, { 'is-active': isTabActive(tab.value) }]"
           @click="onTabChange(tab.value)"
         >
-          <span class="status-chip__name">{{ tab.name }}</span>
+          <div class="status-chip__top">
+            <span class="status-chip__name">{{ tab.name }}</span>
+            <el-tooltip
+              v-if="tab.tone === 'occupy'"
+              effect="dark"
+              content="占用分为占用·充电前与占用·充电后；占用·充电前：即为未开启充电前的插枪占用；占用·充电后：即为充电结束后的插枪占用。"
+              placement="top"
+            >
+              <i class="el-icon-question status-chip__help" @click.stop />
+            </el-tooltip>
+            <span
+              v-if="tab.tone === 'fault' || tab.tone === 'offline'"
+              class="status-chip__detail"
+              @click.stop="openExceptionDrawer(tab.tone)"
+            >详情 &gt;</span>
+          </div>
           <span class="status-chip__num">{{ tabCount(tab.countKey) }}</span>
+          <i v-if="isTabActive(tab.value)" class="el-icon-check status-chip__check" />
         </div>
       </div>
     </div>
@@ -211,6 +227,7 @@
     </div>
 
     <gun-status-event-dialog ref="eventDialog" />
+    <exception-log-drawer ref="exceptionDrawer" />
   </div>
 </template>
 
@@ -221,6 +238,7 @@ import { closeDevice } from '@/api/device/deviceList'
 import { parseTime } from '@/utils/index'
 import screenfull from 'screenfull'
 import GunStatusEventDialog from './components/GunStatusEventDialog.vue'
+import ExceptionLogDrawer from './components/ExceptionLogDrawer.vue'
 
 const POLL_MS = 8000
 const FAIL_TOAST_MS = 30000
@@ -228,7 +246,7 @@ const MISSING = '-'
 
 export default {
   name: 'StationMonitor',
-  components: { GunStatusEventDialog },
+  components: { GunStatusEventDialog, ExceptionLogDrawer },
   data() {
     return {
       stationId: '',
@@ -403,6 +421,14 @@ export default {
       this.tabStatus = value
       if (!this.hasStation) return
       this.loadAll()
+    },
+    openExceptionDrawer(tone) {
+      if (!this.hasStation) {
+        this.$message.warning('请先选择站点')
+        return
+      }
+      const type = tone === 'offline' ? 'offline' : 'fault'
+      this.$refs.exceptionDrawer.open(this.stationId, type)
     },
     startPoll() {
       this.clearPoll()
@@ -944,6 +970,7 @@ export default {
 }
 
 .status-chip {
+  position: relative;
   min-width: 72px;
   padding: 8px 12px;
   border: 1px solid #e4e7ed;
@@ -954,9 +981,29 @@ export default {
 }
 
 .status-chip__name {
-  display: block;
+  display: inline-block;
   font-size: 12px;
   color: #909399;
+}
+
+.status-chip__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 18px;
+}
+
+.status-chip__help {
+  color: #c0c4cc;
+  font-size: 13px;
+  cursor: help;
+}
+
+.status-chip__detail {
+  color: #07b161;
+  font-size: 12px;
+  cursor: pointer;
 }
 
 .status-chip__num {
@@ -968,7 +1015,21 @@ export default {
 }
 
 .status-chip.is-active {
-  box-shadow: 0 0 0 1px currentColor inset;
+  border-color: #07b161;
+}
+
+.status-chip__check {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 16px;
+  height: 16px;
+  border-radius: 8px 0 4px 0;
+  background: #07b161;
+  color: #fff;
+  font-size: 12px;
+  line-height: 16px;
+  text-align: center;
 }
 
 .status-chip--fault.is-active,

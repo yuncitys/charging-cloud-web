@@ -15,7 +15,7 @@
       </el-tabs>
 
       <div class="exception-log-drawer__hint">
-        <span>展示当前电站{{ activeTypeLabel }}，按上报时间倒序排列。</span>
+        <span>由于设备状态会实时变化，若获取最新数据，请点击 刷新</span>
         <el-link type="primary" :underline="false" @click="refresh">刷新</el-link>
       </div>
 
