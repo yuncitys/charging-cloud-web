@@ -52,9 +52,11 @@
 					deviceCode: this.queryData.deviceCode,
 					createTimeStart: this.queryData.createTimeStart,
 					createTimeEnd: this.queryData.createTimeEnd,
-					networkDotId: this.queryData.networkDotId,
 					alarmCode: this.queryData.alarmCode,
 					connectorCode: this.queryData.connectorCode
+				}
+				if (this.queryData.networkDotId != null && this.queryData.networkDotId !== '') {
+					downloadData.networkDotId = this.queryData.networkDotId
 				}
 				downLoadDeviceLogList(downloadData).then(res => {
 					if (res.code == 200) {
@@ -70,9 +72,11 @@
 					deviceCode: this.queryData.deviceCode,
 					createTimeStart: this.queryData.createTimeStart,
 					createTimeEnd: this.queryData.createTimeEnd,
-					networkDotId: this.queryData.networkDotId,
 					alarmCode: this.queryData.alarmCode,
 					connectorCode: this.queryData.connectorCode
+				}
+				if (this.queryData.networkDotId != null && this.queryData.networkDotId !== '') {
+					downloadData.networkDotId = this.queryData.networkDotId
 				}
 				downLoadDeviceLogList(downloadData).then(res => {
 					this.downloadLoading = false

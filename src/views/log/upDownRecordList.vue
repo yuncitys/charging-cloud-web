@@ -187,6 +187,10 @@
 				if (listQuery.createTimeEnd == null) {
 					listQuery.createTimeEnd = ''
 				}
+				// form-urlencoded 会把 null 编成字符串 "null"，Integer 绑定失败
+				if (listQuery.networkDotId == null || listQuery.networkDotId === '') {
+					delete listQuery.networkDotId
+				}
 				getList(listQuery).then(res => {
 					if (res.code == 200) {
 						console.log(res)
