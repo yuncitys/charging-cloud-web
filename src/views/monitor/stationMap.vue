@@ -192,25 +192,44 @@ export default {
       const stationId = this.escapeHtml(point.stationId)
       return [
         '<div class="station-map-info">',
-        '<div class="station-map-info__title">' + this.escapeHtml(point.networkName || '-') + '</div>',
-        '<div class="station-map-info__address">' + this.escapeHtml(point.networkAddress || '-') + '</div>',
+        this.buildLabeledRow('电站名称', point.networkName || '-'),
+        this.buildLabeledRow('电站地址', point.networkAddress || '-'),
         this.buildCountBlock('直流设备', point.dc),
         this.buildCountBlock('交流设备', point.ac),
         '<a href="javascript:;" class="station-map-info__link" data-station-id="' + stationId + '">进入站点监控</a>',
         '</div>'
       ].join('')
     },
+    buildLabeledRow(label, value) {
+      return [
+        '<div class="station-map-info__row">',
+        '<span class="station-map-info__label">' + this.escapeHtml(label) + '：</span>',
+        '<span class="station-map-info__value">' + this.escapeHtml(value) + '</span>',
+        '</div>'
+      ].join('')
+    },
     buildCountBlock(label, counts) {
       const data = counts || {}
+      const items = [
+        { name: '空闲', value: data.idle },
+        { name: '充电', value: data.charging },
+        { name: '故障', value: data.fault },
+        { name: '离线', value: data.offline },
+        { name: '其它', value: data.other }
+      ]
       return [
         '<div class="station-map-info__block">',
-        '<div>' + label + this.count(data.total) + '个</div>',
-        '<div class="station-map-info__counts">',
-        '空闲 ' + this.count(data.idle),
-        '<span>充电 ' + this.count(data.charging) + '</span>',
-        '<span>故障 ' + this.count(data.fault) + '</span>',
-        '<span>离线 ' + this.count(data.offline) + '</span>',
-        '<span>其它 ' + this.count(data.other) + '</span>',
+        '<div class="station-map-info__row">',
+        '<span class="station-map-info__label">' + this.escapeHtml(label) + '：</span>',
+        '<span class="station-map-info__value">' + this.count(data.total) + '个</span>',
+        '</div>',
+        '<div class="station-map-info__stats">',
+        items.map(item => [
+          '<div class="station-map-info__stat">',
+          '<div class="station-map-info__stat-num">' + this.count(item.value) + '</div>',
+          '<div class="station-map-info__stat-name">' + item.name + '</div>',
+          '</div>'
+        ].join('')).join(''),
         '</div>',
         '</div>'
       ].join('')
@@ -276,38 +295,75 @@ export default {
 }
 
 ::v-deep .station-map-info {
-  min-width: 260px;
-  line-height: 1.8;
-  color: #303133;
+  min-width: 280px;
+  max-width: 360px;
+  padding: 2px 4px 4px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #606266;
 
-  &__title {
-    margin-bottom: 4px;
-    font-size: 15px;
-    font-weight: 600;
+  &__row {
+    margin-bottom: 6px;
+    word-break: break-all;
   }
 
-  &__address {
-    margin-bottom: 8px;
+  &__label {
+    font-weight: 700;
+    color: #303133;
+  }
+
+  &__value {
+    font-weight: 400;
     color: #606266;
   }
 
   &__block {
-    margin-top: 8px;
+    margin-top: 10px;
   }
 
-  &__counts span {
-    margin-left: 12px;
+  &__stats {
+    display: flex;
+    align-items: stretch;
+    justify-content: space-between;
+    margin-top: 6px;
+    padding: 4px 0;
+  }
+
+  &__stat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-width: 0;
+  }
+
+  &__stat-num {
+    font-size: 14px;
+    line-height: 1.2;
+    font-weight: 500;
+    color: #606266;
+  }
+
+  &__stat-name {
+    margin-top: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    color: #909399;
   }
 
   &__link {
     display: inline-block;
     margin-top: 10px;
     color: #07b161;
+    font-weight: 500;
     text-decoration: none;
   }
 }
 
 ::v-deep .amap-info-close {
-  color: #07b161;
+  color: #f59a23 !important;
+  font-weight: 700;
 }
 </style>
