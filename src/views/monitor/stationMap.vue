@@ -268,20 +268,33 @@ export default {
   position: relative;
   height: calc(100vh - 130px);
   min-height: 560px;
-  padding: 0;
+  padding: 16px;
+  box-sizing: border-box;
   overflow: hidden;
+  background: #fff;
 }
 
 .station-map-canvas {
   width: 100%;
   height: 100%;
-  min-height: 560px;
+  min-height: 528px;
+  overflow: hidden;
+  border: 1px solid #dcdfe6;
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.04),
+    0 1px 4px rgba(0, 21, 41, 0.06);
+  box-sizing: border-box;
+}
+
+::v-deep .station-map-canvas .amap-container {
+  border-radius: 8px;
 }
 
 .station-map-filter {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 28px;
+  right: 28px;
   z-index: 10;
   display: flex;
   align-items: center;
