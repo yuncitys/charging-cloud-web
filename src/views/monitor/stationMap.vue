@@ -196,7 +196,9 @@ export default {
         this.buildLabeledRow('电站地址', point.networkAddress || '-'),
         this.buildCountBlock('直流设备', point.dc),
         this.buildCountBlock('交流设备', point.ac),
-        '<a href="javascript:;" class="station-map-info__link" data-station-id="' + stationId + '">进入站点监控</a>',
+        '<div class="station-map-info__footer">',
+        '<a href="javascript:;" class="station-map-info__link" data-station-id="' + stationId + '">进入站点监控<span class="station-map-info__link-arrow">›</span></a>',
+        '</div>',
         '</div>'
       ].join('')
     },
@@ -353,17 +355,48 @@ export default {
     color: #909399;
   }
 
+  &__footer {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid #ebeef5;
+    text-align: center;
+  }
+
   &__link {
-    display: inline-block;
-    margin-top: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 140px;
+    height: 30px;
+    padding: 0 14px;
     color: #07b161;
+    font-size: 13px;
     font-weight: 500;
+    line-height: 30px;
     text-decoration: none;
+    border: 1px solid rgba(7, 177, 97, 0.35);
+    border-radius: 4px;
+    background: rgba(7, 177, 97, 0.06);
+    box-sizing: border-box;
+    transition: background 0.15s ease, border-color 0.15s ease;
+
+    &:hover {
+      background: rgba(7, 177, 97, 0.12);
+      border-color: #07b161;
+      color: #07b161;
+    }
+  }
+
+  &__link-arrow {
+    margin-left: 4px;
+    font-size: 16px;
+    line-height: 1;
   }
 }
 
 ::v-deep .amap-info-close {
-  color: #f59a23 !important;
+  color: #07b161 !important;
   font-weight: 700;
+  opacity: 1 !important;
 }
 </style>
