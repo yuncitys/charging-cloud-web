@@ -39,6 +39,7 @@ import loadMap from '@/utils/loadMap'
 import { getStationMapCities, getStationMapPoints } from '@/api/monitor/stationMap'
 
 const MAP_VERSION = '1.4.4'
+const MAP_PLUGINS = ['AMap.Geolocation']
 const MARKER_ICON = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png'
 const FALLBACK_MAP_KEY = '87331a23c6a4e734969f8621bc166eff'
 
@@ -56,22 +57,26 @@ export default {
       AMap: null,
       map: null,
       infoWindow: null,
-      markers: []
+      markers: [],
+      markerPoints: [],
+      hasAutoLocated: false
     }
   },
   mounted() {
     document.addEventListener('click', this.onInfoWindowClick)
-    this.loadCities()
     const mapKey = (window.BaseConfig && window.BaseConfig.VUE_MAP_KEY) || FALLBACK_MAP_KEY
     if (!mapKey) {
       this.$message.error('未配置地图 Key（BaseConfig.VUE_MAP_KEY）')
       return
     }
-    loadMap(mapKey, [], MAP_VERSION).then(AMap => {
+    Promise.all([
+      this.loadCities(),
+      loadMap(mapKey, MAP_PLUGINS, MAP_VERSION)
+    ]).then(([, AMap]) => {
       this.AMap = AMap
       this.$nextTick(() => {
         this.initMap()
-        this.loadPoints()
+        this.bootstrapByLocation()
       })
     }).catch(() => {
       this.$message.error('地图加载失败，请稍后重试')
@@ -106,6 +111,122 @@ export default {
         }
       })
     },
+    bootstrapByLocation() {
+      if (this.hasAutoLocated) {
+        return this.loadPoints()
+      }
+      this.hasAutoLocated = true
+      return this.resolveCurrentLocation().then(location => {
+        if (location && location.city) {
+          const matchedCity = this.matchCityOption(location.city)
+          if (matchedCity) {
+            this.query.city = matchedCity
+          }
+        }
+        return this.loadPoints().then(() => {
+          if (location && location.position) {
+            this.focusNearestStation(location.position)
+          }
+        })
+      }).catch(() => this.loadPoints())
+    },
+    resolveCurrentLocation() {
+      return this.ensureGeolocationPlugin().then(() => new Promise(resolve => {
+        if (!this.AMap || typeof this.AMap.Geolocation !== 'function') {
+          resolve(null)
+          return
+        }
+        const geolocation = new this.AMap.Geolocation({
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 0,
+          convert: true,
+          showButton: false,
+          showMarker: false,
+          showCircle: false,
+          panToLocation: false,
+          zoomToAccuracy: false
+        })
+        geolocation.getCurrentPosition((status, result) => {
+          if (status !== 'complete' || !result) {
+            resolve(null)
+            return
+          }
+          const address = result.addressComponent || {}
+          const city = address.city || address.province || ''
+          const position = result.position
+            ? [result.position.getLng(), result.position.getLat()]
+            : null
+          resolve({
+            city: String(city || '').trim(),
+            position
+          })
+        })
+      }))
+    },
+    ensureGeolocationPlugin() {
+      return new Promise(resolve => {
+        if (!this.AMap) {
+          resolve()
+          return
+        }
+        if (typeof this.AMap.Geolocation === 'function') {
+          resolve()
+          return
+        }
+        if (typeof this.AMap.plugin !== 'function') {
+          resolve()
+          return
+        }
+        this.AMap.plugin('AMap.Geolocation', () => resolve())
+      })
+    },
+    matchCityOption(locatedCity) {
+      const city = String(locatedCity || '').trim()
+      if (!city || !this.cityOptions.length) return ''
+      if (this.cityOptions.indexOf(city) >= 0) return city
+      const normalize = value => String(value || '').replace(/(特别行政区|自治州|地区|盟|市)$/g, '')
+      const locatedKey = normalize(city)
+      const matched = this.cityOptions.find(option => {
+        const optionKey = normalize(option)
+        return optionKey === locatedKey || option.indexOf(locatedKey) >= 0 || city.indexOf(optionKey) >= 0
+      })
+      return matched || ''
+    },
+    focusNearestStation(userPosition) {
+      if (!userPosition || !this.markerPoints.length || !this.markers.length) return
+      let nearestIndex = -1
+      let nearestDistance = Infinity
+      this.markerPoints.forEach((point, index) => {
+        const position = this.getPosition(point)
+        if (!position) return
+        const distance = this.distanceMeters(userPosition, position)
+        if (distance < nearestDistance) {
+          nearestDistance = distance
+          nearestIndex = index
+        }
+      })
+      if (nearestIndex < 0) return
+      const point = this.markerPoints[nearestIndex]
+      const marker = this.markers[nearestIndex]
+      if (!point || !marker) return
+      this.map.setZoomAndCenter(14, marker.getPosition())
+      this.openInfoWindow(point, marker)
+    },
+    distanceMeters(from, to) {
+      const toRad = deg => deg * Math.PI / 180
+      const lng1 = from[0]
+      const lat1 = from[1]
+      const lng2 = to[0]
+      const lat2 = to[1]
+      const earthRadius = 6371000
+      const dLat = toRad(lat2 - lat1)
+      const dLng = toRad(lng2 - lng1)
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2)
+      return 2 * earthRadius * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    },
     loadCities() {
       this.cityLoading = true
       return getStationMapCities(this.buildParams()).then(res => {
@@ -117,7 +238,7 @@ export default {
       })
     },
     loadPoints() {
-      if (!this.map || !this.AMap) return
+      if (!this.map || !this.AMap) return Promise.resolve()
       this.pointLoading = true
       return getStationMapPoints(this.buildParams()).then(res => {
         const points = this.normalizeList(res)
@@ -151,6 +272,7 @@ export default {
     renderMarkers(points) {
       this.clearMarkers()
       const validPoints = (points || []).filter(point => this.getPosition(point))
+      this.markerPoints = validPoints
       this.markers = validPoints.map(point => {
         const marker = new this.AMap.Marker({
           icon: MARKER_ICON,
@@ -169,6 +291,7 @@ export default {
         this.map.remove(this.markers)
       }
       this.markers = []
+      this.markerPoints = []
     },
     getPosition(point) {
       if (!point) return null
