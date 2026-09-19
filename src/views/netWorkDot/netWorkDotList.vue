@@ -85,41 +85,66 @@
         style="width: 100%;"
         align="center"
       >
-        <el-table-column type="index" width="55" label="序号" align="center">
+        <el-table-column label="电站信息" min-width="260" align="left">
           <template slot-scope="scope">
-            <span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span>
+            <div class="station-list-cell">
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">名称：</span>
+                <span class="station-list-cell__value" :title="disp(scope.row.networkName)">{{ disp(scope.row.networkName) }}</span>
+              </div>
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">ID：</span>
+                <span class="station-list-cell__value" :title="disp(scope.row.externalStationId)">{{ disp(scope.row.externalStationId) }}</span>
+              </div>
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">内部ID：</span>
+                <span class="station-list-cell__value">{{ disp(scope.row.id) }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
         <el-table-column
           prop="merchantName"
           label="运营商户"
+          min-width="120"
           align="center"
           :show-overflow-tooltip="isPc"
         />
-        <el-table-column
-          prop="networkName"
-          label="充电站名称"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="networkAddress"
-          label="投放地"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="networkLongitude"
-          label="地址经度"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="networkLatitude"
-          label="地址纬度"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
+        <el-table-column label="设备数" width="100" align="left">
+          <template slot-scope="scope">
+            <div class="station-list-cell">
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">直：</span>
+                <span class="station-list-cell__value">{{ countOrZero(scope.row.dcGunCount) }}</span>
+              </div>
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">交：</span>
+                <span class="station-list-cell__value">{{ countOrZero(scope.row.acGunCount) }}</span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="枪总数" width="90" align="center">
+          <template slot-scope="scope">
+            <span>{{ countOrZero(scope.row.gunTotalCount) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="额定功率" width="110" align="center">
+          <template slot-scope="scope">
+            <span>{{ formatRatedPower(scope.row.ratedPowerKw) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="建设状态" width="110" align="center">
+          <template slot-scope="scope">
+            <el-tag
+              size="mini"
+              effect="plain"
+              :type="operateStatusTagType(scope.row.operateStatus)"
+            >
+              {{ operateStatusText(scope.row.operateStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="App展示" align="center" width="110">
           <template slot-scope="scope">
             <el-switch
@@ -129,40 +154,6 @@
               :disabled="!btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit') || !!appDisplayUpdating[scope.row.id]"
               @change="handleAppDisplayChange(scope.row, $event)"
             />
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="createUser"
-          label="创建用户"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="updateUser"
-          label="更新用户"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="createTime"
-          label="创建时间"
-          align="center"
-          :show-overflow-tooltip="isPc"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span>{{ scope.row.createTime | formatDate }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="updateTime"
-          label="更新时间"
-          align="center"
-          :show-overflow-tooltip="isPc"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span>{{ scope.row.updateTime | formatDate }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="180" fixed="right">
@@ -250,6 +241,40 @@ export default {
     normalizeFlag01(val) {
       if (val === 1 || val === '1' || val === true) return 1
       return 0
+    },
+    disp(val) {
+      if (val === null || val === undefined || val === '') return '-'
+      return val
+    },
+    countOrZero(val) {
+      const n = Number(val)
+      return isNaN(n) ? 0 : n
+    },
+    formatRatedPower(val) {
+      if (val === null || val === undefined || val === '') return '-'
+      const n = Number(val)
+      if (isNaN(n)) return '-'
+      const text = Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000)
+      return text + 'kW'
+    },
+    operateStatusText(status) {
+      const map = {
+        0: '未知',
+        1: '建设中',
+        5: '关闭下线',
+        6: '维护中',
+        50: '正常使用'
+      }
+      const key = status === null || status === undefined || status === '' ? '' : Number(status)
+      return map[key] || (status === null || status === undefined || status === '' ? '-' : String(status))
+    },
+    operateStatusTagType(status) {
+      const key = Number(status)
+      if (key === 50) return 'success'
+      if (key === 1) return 'warning'
+      if (key === 6) return 'warning'
+      if (key === 5) return 'info'
+      return 'info'
     },
     handleAppDisplayChange(row, val) {
       if (!row || !row.id) return
@@ -657,5 +682,25 @@ export default {
 		font-size: 13px;
 		color: #909399;
 		line-height: 20px;
+	}
+
+	.station-list-cell {
+		line-height: 1.7;
+		padding: 2px 0;
+	}
+
+	.station-list-cell__row {
+		display: flex;
+		align-items: flex-start;
+		word-break: break-all;
+	}
+
+	.station-list-cell__label {
+		flex: none;
+		color: #909399;
+	}
+
+	.station-list-cell__value {
+		color: #303133;
 	}
 </style>
