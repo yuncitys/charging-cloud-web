@@ -32,6 +32,15 @@ export default [
         icon: 'el-icon-view',
       }
     },
+  {
+    path: '/device/stationMap',
+    component: () => import('@/views/monitor/stationMap'),
+    name: 'stationMap',
+    meta: {
+      title: '站点地图',
+      icon: 'el-icon-map-location'
+    }
+  },
 {
       path: '/device/warehousing',
       component: () => import('@/views/device/warehousing'),
