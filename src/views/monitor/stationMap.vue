@@ -156,8 +156,14 @@ export default {
     },
     getPosition(point) {
       if (!point) return null
-      const lng = Number(point.longitude)
-      const lat = Number(point.latitude)
+      const lngRaw = point.longitude
+      const latRaw = point.latitude
+      if (lngRaw == null || latRaw == null) return null
+      const lngStr = String(lngRaw).trim()
+      const latStr = String(latRaw).trim()
+      if (!lngStr || !latStr) return null
+      const lng = Number(lngStr)
+      const lat = Number(latStr)
       if (isNaN(lng) || isNaN(lat)) return null
       if (lng < -180 || lng > 180 || lat < -90 || lat > 90) return null
       return [lng, lat]
