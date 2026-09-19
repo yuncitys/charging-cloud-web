@@ -26,10 +26,14 @@
 
 ### 菜单配置（上线时）
 
+脚本：`charging-cloud/docs/sql/t_menu_station_map_20260919.sql`（幂等，可重复执行）
+
 在「站点设备」下新增菜单：
 - 名称：站点地图
 - 路由：`/device/stationMap`
 - 权限：`:ops:stationMap:page`
+- 图标：`el-icon-map-location`
+- sorting：`4`（紧挨电站监控上方）
 
 ## 2. UI / 交互
 

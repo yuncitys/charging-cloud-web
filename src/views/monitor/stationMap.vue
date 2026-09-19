@@ -1,6 +1,6 @@
 <template>
   <div class="app-container station-map-page">
-    <div id="station-map" />
+    <div id="station-map" class="station-map-canvas"></div>
 
     <div class="station-map-filter">
       <el-select
@@ -38,9 +38,9 @@
 import loadMap from '@/utils/loadMap'
 import { getStationMapCities, getStationMapPoints } from '@/api/monitor/stationMap'
 
-const MAP_KEY = '87331a23c6a4e734969f8621bc166eff'
 const MAP_VERSION = '1.4.4'
 const MARKER_ICON = 'https://webapi.amap.com/theme/v1.3/markers/n/mark_b.png'
+const FALLBACK_MAP_KEY = '87331a23c6a4e734969f8621bc166eff'
 
 export default {
   name: 'StationMap',
@@ -62,10 +62,17 @@ export default {
   mounted() {
     document.addEventListener('click', this.onInfoWindowClick)
     this.loadCities()
-    loadMap(MAP_KEY, [], MAP_VERSION).then(AMap => {
+    const mapKey = (window.BaseConfig && window.BaseConfig.VUE_MAP_KEY) || FALLBACK_MAP_KEY
+    if (!mapKey) {
+      this.$message.error('未配置地图 Key（BaseConfig.VUE_MAP_KEY）')
+      return
+    }
+    loadMap(mapKey, [], MAP_VERSION).then(AMap => {
       this.AMap = AMap
-      this.initMap()
-      this.loadPoints()
+      this.$nextTick(() => {
+        this.initMap()
+        this.loadPoints()
+      })
     }).catch(() => {
       this.$message.error('地图加载失败，请稍后重试')
     })
@@ -79,15 +86,24 @@ export default {
     if (this.map && this.map.destroy) {
       this.map.destroy()
     }
+    this.map = null
   },
   methods: {
     initMap() {
-      this.map = new this.AMap.Map('station-map', {
+      const container = document.getElementById('station-map')
+      if (!container || !this.AMap) return
+      this.map = new this.AMap.Map(container, {
         zoom: 11,
         resizeEnable: true
       })
       this.infoWindow = new this.AMap.InfoWindow({
         offset: new this.AMap.Pixel(0, -35)
+      })
+      // 布局完成后强制重算尺寸，避免容器初始为 0 导致白屏
+      this.$nextTick(() => {
+        if (this.map && typeof this.map.resize === 'function') {
+          this.map.resize()
+        }
       })
     },
     loadCities() {
@@ -229,17 +245,16 @@ export default {
 <style lang="scss" scoped>
 .station-map-page {
   position: relative;
-  height: calc(100vh - 84px);
+  height: calc(100vh - 130px);
   min-height: 560px;
   padding: 0;
+  overflow: hidden;
 }
 
-#station-map {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+.station-map-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 560px;
 }
 
 .station-map-filter {
