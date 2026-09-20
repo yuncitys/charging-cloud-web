@@ -56,6 +56,28 @@ export function updateSwitch(data) {
 	})
 }
 
+// 修改建设状态
+export function updateOperateStatus(data) {
+	return request({
+		url: '/api/web/networkDot/updateOperateStatus',
+		method: 'post',
+		headers: {
+			"Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+		},
+		transformRequest: [
+			function(data) {
+				var ret = ''
+				for (var it in data) {
+					ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+				}
+				ret = ret.substring(0, ret.lastIndexOf('&'))
+				return ret
+			}
+		],
+		data
+	})
+}
+
 //删除网点
 export function deleteNetworkDot(data) {
 	return request({

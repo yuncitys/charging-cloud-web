@@ -134,9 +134,38 @@
             <span>{{ formatRatedPower(scope.row.ratedPowerKw) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="建设状态" width="110" align="center">
+        <el-table-column label="建设状态" width="140" align="center">
           <template slot-scope="scope">
+            <el-tooltip
+              v-if="Number(scope.row.type) === 2"
+              content="互联站状态由同步更新"
+              placement="top"
+            >
+              <el-tag
+                size="mini"
+                effect="plain"
+                :type="operateStatusTagType(scope.row.operateStatus)"
+              >
+                {{ operateStatusText(scope.row.operateStatus) }}
+              </el-tag>
+            </el-tooltip>
+            <el-select
+              v-else-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
+              :value="scope.row.operateStatus"
+              size="mini"
+              style="width: 110px;"
+              :disabled="!!operateStatusUpdating[scope.row.id]"
+              @change="handleOperateStatusChange(scope.row, $event)"
+            >
+              <el-option
+                v-for="opt in operateStatusOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
             <el-tag
+              v-else
               size="mini"
               effect="plain"
               :type="operateStatusTagType(scope.row.operateStatus)"
@@ -191,7 +220,7 @@
 </template>
 
 <script>
-import { getList, updateSwitch, deleteNetworkDot } from '@/api/netWorkDot/netWorkDotList.js'
+import { getList, updateSwitch, updateOperateStatus, deleteNetworkDot } from '@/api/netWorkDot/netWorkDotList.js'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
 import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
@@ -214,6 +243,14 @@ export default {
       total: 10,
       merchantList: [],
       appDisplayUpdating: {},
+      operateStatusUpdating: {},
+      operateStatusOptions: [
+        { value: 0, label: '未知' },
+        { value: 1, label: '建设中' },
+        { value: 5, label: '关闭下线' },
+        { value: 6, label: '维护中' },
+        { value: 50, label: '正常使用' }
+      ],
       listQuery: {
         page: 1,
         limit: 10,
@@ -294,6 +331,29 @@ export default {
         this.$message.error('更新失败')
       }).finally(() => {
         this.$delete(this.appDisplayUpdating, row.id)
+      })
+    },
+    handleOperateStatusChange(row, val) {
+      if (!row || !row.id) return
+      if (Number(row.type) === 2) return
+      const nextVal = Number(val)
+      const prevVal = row.operateStatus
+      if (nextVal === Number(prevVal)) return
+
+      this.$set(this.operateStatusUpdating, row.id, true)
+      row.operateStatus = nextVal
+      updateOperateStatus({ id: row.id, operateStatus: nextVal }).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success(res.msg || '更新成功')
+        } else {
+          row.operateStatus = prevVal
+          this.$message.error((res && res.msg) || '更新失败')
+        }
+      }).catch(() => {
+        row.operateStatus = prevVal
+        this.$message.error('更新失败')
+      }).finally(() => {
+        this.$delete(this.operateStatusUpdating, row.id)
       })
     },
     toStationSetting(row) {
