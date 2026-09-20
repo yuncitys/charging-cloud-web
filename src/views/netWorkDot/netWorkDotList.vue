@@ -134,7 +134,7 @@
             <span>{{ formatRatedPower(scope.row.ratedPowerKw) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="建设状态" width="140" align="center">
+        <el-table-column label="建设状态" width="130" align="center">
           <template slot-scope="scope">
             <el-tooltip
               v-if="Number(scope.row.type) === 2"
@@ -142,7 +142,7 @@
               placement="top"
             >
               <el-tag
-                size="mini"
+                size="small"
                 effect="plain"
                 :type="operateStatusTagType(scope.row.operateStatus)"
               >
@@ -152,8 +152,10 @@
             <el-select
               v-else-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
               :value="scope.row.operateStatus"
-              size="mini"
-              style="width: 110px;"
+              size="small"
+              class="operate-status-select"
+              :class="'operate-status-select--' + (operateStatusTagType(scope.row.operateStatus) || 'info')"
+              placeholder="建设状态"
               :disabled="!!operateStatusUpdating[scope.row.id]"
               @change="handleOperateStatusChange(scope.row, $event)"
             >
@@ -162,11 +164,12 @@
                 :key="opt.value"
                 :label="opt.label"
                 :value="opt.value"
-              />
+              >
+              </el-option>
             </el-select>
             <el-tag
               v-else
-              size="mini"
+              size="small"
               effect="plain"
               :type="operateStatusTagType(scope.row.operateStatus)"
             >
@@ -765,5 +768,53 @@ export default {
 
 	.station-list-cell__value {
 		color: #303133;
+	}
+
+	.operate-status-select {
+		width: 108px;
+		max-width: 100%;
+		vertical-align: middle;
+		margin: 0;
+	}
+
+	.operate-status-select .el-input__inner {
+		border-radius: 4px;
+		font-weight: 500;
+		text-align: left;
+		padding-left: 10px;
+		padding-right: 28px;
+	}
+
+	.operate-status-select--success .el-input__inner {
+		color: #67c23a;
+		border-color: #c2e7b0;
+		background-color: #f0f9eb;
+	}
+
+	.operate-status-select--warning .el-input__inner {
+		color: #e6a23c;
+		border-color: #f5dab1;
+		background-color: #fdf6ec;
+	}
+
+	.operate-status-select--info .el-input__inner {
+		color: #909399;
+		border-color: #d3d4d6;
+		background-color: #f4f4f5;
+	}
+
+	.operate-status-select .el-input.is-focus .el-input__inner,
+	.operate-status-select .el-input__inner:hover {
+		border-color: #409eff;
+	}
+
+	.operate-status-select--success .el-input.is-focus .el-input__inner,
+	.operate-status-select--success .el-input__inner:hover {
+		border-color: #67c23a;
+	}
+
+	.operate-status-select--warning .el-input.is-focus .el-input__inner,
+	.operate-status-select--warning .el-input__inner:hover {
+		border-color: #e6a23c;
 	}
 </style>
