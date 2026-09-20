@@ -20,8 +20,10 @@
 
 去掉：投放地、经纬度、创建/更新用户与时间。
 
-## 数据口径
+## 建设状态 / operateStatus
 
-- 枪统计：`t_device_guns` join `t_device`，`g.is_delete=0` 且 `IFNULL(g.start_status,1)=1`，`d.is_delete=0`
-- 额定功率：站下设备 `SUM(device_total_power)`（W）÷1000，前端展示 `NKW`
-- 建设状态：0未知 / 1建设中 / 5关闭下线 / 6维护中 / 50正常使用
+- 字段：`t_network_dot.operate_status`
+- 互联同步：原样写入对方 `StationStatus`（0/1/5/6/50），不做 0/1 转换
+- 出站查询站点：`StationStatus` 原样回推 `operateStatus`
+- 列表展示文案对齐互联枚举：未知/建设中/关闭下线/维护中/正常使用
+
