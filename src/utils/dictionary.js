@@ -217,6 +217,10 @@ export function formatDeviceStatus(val) {
 	return formatDictLabel('device_status', val)
 }
 
+export function formatOperateStatus(val) {
+	return formatDictLabel('operate_status', val)
+}
+
 const ORDER_PAY_METHOD_ALIASES = {
 	BALANCE_PAY: 'BALANCE',
 	WECHAT_PAY: 'WECHAT',
@@ -556,6 +560,10 @@ export function getDeviceStatusOptions() {
 	return getSelectorOptions('device_status', { numeric: true })
 }
 
+export function getOperateStatusOptions() {
+	return getSelectorOptions('operate_status', { numeric: true })
+}
+
 export function getElectricOutTypeOptions() {
 	return getSelectorOptions('electric_out_type', { numeric: true })
 }
@@ -647,6 +655,7 @@ const dictApi = {
 	formatElectricOutType,
 	formatChargingType,
 	formatDeviceStatus,
+	formatOperateStatus,
 	normalizeOrderPayMethodCode,
 	formatOrderPayMethod,
 	formatOrderStartType,
@@ -725,6 +734,7 @@ const dictApi = {
 	getIotCardStatusOptions,
 	getSysDataScopeFormOptions,
 	getDeviceStatusOptions,
+	getOperateStatusOptions,
 	getElectricOutTypeOptions,
 	getElectricOutOptionsForRule,
 	getDeviceRuleOptions,

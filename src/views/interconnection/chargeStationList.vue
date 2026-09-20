@@ -196,6 +196,7 @@
 				total: 10,
 				merchantList: [],
 				appDisplayUpdating: {},
+				operateStatusOptions: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
@@ -239,7 +240,19 @@
 		mounted() {
 
 		},
+		created() {
+			this.getLists()
+			this.getMerchantList()
+			this.loadOperateStatusOptions()
+		},
 		methods: {
+			loadOperateStatusOptions() {
+				this.$dict.getOperateStatusOptions().then(list => {
+					this.operateStatusOptions = list || []
+				}).catch(() => {
+					this.operateStatusOptions = []
+				})
+			},
 			normalizeFlag01(val) {
 				if (val === 1 || val === '1' || val === true) return 1
 				return 0
@@ -260,15 +273,9 @@
 				return text + 'kW'
 			},
 			operateStatusText(status) {
-				const map = {
-					0: '未知',
-					1: '建设中',
-					5: '关闭下线',
-					6: '维护中',
-					50: '正常使用'
-				}
-				const key = status === null || status === undefined || status === '' ? '' : Number(status)
-				return map[key] || (status === null || status === undefined || status === '' ? '-' : String(status))
+				if (status === null || status === undefined || status === '') return '-'
+				const label = this.$dict.formatOperateStatus(status)
+				return label === '-' ? String(status) : label
 			},
 			operateStatusTagType(status) {
 				const key = Number(status)
@@ -410,10 +417,6 @@
 					this.merchantList = []
 				})
 			},
-		},
-		created() {
-			this.getLists()
-			this.getMerchantList()
 		},
 	}
 </script>
