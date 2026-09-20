@@ -405,7 +405,10 @@ export default {
           const list = Array.isArray(res.data) ? res.data : []
           this.list = list.map(item => {
             const isAppDisplay = this.normalizeFlag01(item.isAppDisplay ?? item.is_app_display)
-            return { ...item, isAppDisplay }
+            const operateStatus = (item.operateStatus === null || item.operateStatus === undefined || item.operateStatus === '')
+              ? item.operateStatus
+              : Number(item.operateStatus)
+            return { ...item, isAppDisplay, operateStatus }
           })
           this.total = res.count || 0
         } else {
