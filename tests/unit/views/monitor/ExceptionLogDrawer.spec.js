@@ -148,4 +148,60 @@ describe('ExceptionLogDrawer transfer to work order', () => {
       query: { id: 101, workOrderId: 101 }
     })
   })
+
+  it('uses backend VO fields before legacy gunCode fallback', async() => {
+    const wrapper = factory()
+    const row = {
+      typeLabel: '故障',
+      gunCode: 'LEGACY-GUN-09',
+      alarmCode: 'DEVICE_FAULT',
+      reason: 'BMS故障',
+      deviceLogId: 88,
+      deviceCode: 'DEV009',
+      connectorCode: 2
+    }
+    findOpenWorkOrderByAlarm.mockResolvedValue({ code: 200, data: null })
+
+    wrapper.vm.transferToWorkOrder(row)
+    await flush()
+
+    expect(findOpenWorkOrderByAlarm).toHaveBeenCalledWith({
+      deviceLogId: 88,
+      deviceCode: 'DEV009',
+      connectorCode: 2,
+      alarmCode: 'DEVICE_FAULT'
+    })
+    expect(wrapper.vm.createDialog.form).toMatchObject({
+      deviceLogId: 88,
+      deviceCode: 'DEV009',
+      connectorCode: 2,
+      alarmCode: 'DEVICE_FAULT',
+      alarmItem: 'BMS故障',
+      title: 'BMS故障'
+    })
+  })
+
+  it('falls back to gunCode only when device fields are absent', async() => {
+    const wrapper = factory()
+    const row = {
+      typeLabel: '故障',
+      gunCode: 'DEV00102',
+      alarmCode: 'DEVICE_FAULT',
+      reason: '过温'
+    }
+    findOpenWorkOrderByAlarm.mockResolvedValue({ code: 200, data: null })
+
+    wrapper.vm.transferToWorkOrder(row)
+    await flush()
+
+    expect(findOpenWorkOrderByAlarm).toHaveBeenCalledWith({
+      deviceCode: 'DEV00102',
+      alarmCode: 'DEVICE_FAULT'
+    })
+    expect(wrapper.vm.createDialog.form).toMatchObject({
+      deviceCode: 'DEV00102',
+      connectorCode: '',
+      title: '过温'
+    })
+  })
 })

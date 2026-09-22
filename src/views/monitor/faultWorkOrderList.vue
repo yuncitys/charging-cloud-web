@@ -276,6 +276,7 @@ export default {
         workOrder: null,
         actions: []
       },
+      routeDetailId: '',
       actionDialog: {
         visible: false,
         loading: false,
@@ -336,6 +337,17 @@ export default {
     this.loadStations()
     this.getList()
   },
+  mounted() {
+    this.openRouteDetail()
+  },
+  activated() {
+    this.openRouteDetail()
+  },
+  watch: {
+    $route() {
+      this.openRouteDetail()
+    }
+  },
   methods: {
     initFromRoute() {
       const q = this.$route.query || {}
@@ -345,6 +357,16 @@ export default {
       if (q.start && q.end) {
         this.dateRange = [String(q.start).slice(0, 10), String(q.end).slice(0, 10)]
       }
+    },
+    routeWorkOrderId() {
+      const q = (this.$route && this.$route.query) || {}
+      return this.firstValue(q.id, q.workOrderId)
+    },
+    openRouteDetail() {
+      const id = this.routeWorkOrderId()
+      if (!id) return
+      if (String(this.routeDetailId) === String(id) && this.detailVisible) return
+      this.openDetail({ id })
     },
     loadStations() {
       getChargingStationList({}).then(res => {
@@ -407,6 +429,7 @@ export default {
     },
     openDetail(row) {
       if (!row || !row.id) return
+      this.routeDetailId = row.id
       this.detailVisible = true
       this.detailLoading = true
       getFaultWorkOrder(row.id).then(res => {
@@ -579,6 +602,10 @@ export default {
     disp(v) {
       if (v === null || v === undefined || v === '') return '-'
       return v
+    },
+    firstValue(...values) {
+      const match = values.find(value => value !== null && value !== undefined && value !== '')
+      return match === undefined ? '' : match
     },
     time(v) {
       if (!v) return '-'

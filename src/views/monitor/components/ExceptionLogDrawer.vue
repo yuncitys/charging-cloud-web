@@ -281,7 +281,7 @@ export default {
       })
     },
     buildWorkOrderForm(row) {
-      const deviceCode = this.firstValue(row.deviceCode, row.device, row.deviceNo)
+      const deviceCode = this.firstValue(row.deviceCode, row.device, row.deviceNo, row.gunCode)
       const connectorCode = this.firstValue(row.connectorCode, row.connector, row.gunNumber)
       const alarmItem = this.firstValue(row.alarmItem, row.reason)
       const title = alarmItem || this.firstValue(row.title, row.alarmName, row.alarmCode)
