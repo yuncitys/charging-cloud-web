@@ -44,6 +44,19 @@
         <el-table-column prop="alarmCode" :label="codeLabel" min-width="130" show-overflow-tooltip>
           <template slot-scope="scope">{{ disp(scope.row.alarmCode) }}</template>
         </el-table-column>
+        <el-table-column label="操作" width="100" align="center" fixed="right">
+          <template slot-scope="scope">
+            <el-button
+              v-if="canTransferToWorkOrder(scope.row)"
+              size="mini"
+              type="primary"
+              :loading="transferLoadingId === rowKey(scope.row)"
+              @click="transferToWorkOrder(scope.row)"
+            >
+              转工单
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <div class="exception-log-drawer__pager">
@@ -62,11 +75,35 @@
       </div>
     </div>
     <download-progress ref="downloadProgress" />
+    <el-dialog title="转工单" :visible.sync="createDialog.visible" width="560px" append-to-body>
+      <el-form :model="createDialog.form" label-width="90px">
+        <el-form-item label="设备编号">
+          <el-input v-model="createDialog.form.deviceCode" clearable placeholder="请输入设备编号" />
+        </el-form-item>
+        <el-form-item label="枪口">
+          <el-input v-model="createDialog.form.connectorCode" clearable placeholder="请输入枪口号" />
+        </el-form-item>
+        <el-form-item label="告警码">
+          <el-input v-model="createDialog.form.alarmCode" clearable placeholder="请输入告警码" />
+        </el-form-item>
+        <el-form-item label="标题">
+          <el-input v-model="createDialog.form.title" clearable placeholder="请输入工单标题" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="createDialog.form.description" type="textarea" :rows="3" clearable placeholder="请输入故障描述" />
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button @click="createDialog.visible = false">取消</el-button>
+        <el-button type="primary" :loading="createDialog.loading" @click="submitCreateWorkOrder">确定</el-button>
+      </span>
+    </el-dialog>
   </el-drawer>
 </template>
 
 <script>
 import { getStationExceptionLogs, exportStationExceptionLogs } from '@/api/monitor/stationMonitor'
+import { findOpenWorkOrderByAlarm, createFaultWorkOrder } from '@/api/monitor/faultMonitor'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 
 export default {
@@ -82,7 +119,13 @@ export default {
       limit: 10,
       total: 0,
       loading: false,
-      exporting: false
+      exporting: false,
+      transferLoadingId: null,
+      createDialog: {
+        visible: false,
+        loading: false,
+        form: this.emptyCreateForm()
+      }
     }
   },
   computed: {
@@ -107,6 +150,18 @@ export default {
       if (v == null || v === '') return '-'
       return v
     },
+    emptyCreateForm() {
+      return {
+        stationId: '',
+        deviceLogId: '',
+        deviceCode: '',
+        connectorCode: '',
+        alarmCode: '',
+        alarmItem: '',
+        title: '',
+        description: ''
+      }
+    },
     onTabClick() {
       this.page = 1
       this.load()
@@ -119,6 +174,12 @@ export default {
       this.list = []
       this.total = 0
       this.exporting = false
+      this.transferLoadingId = null
+      this.createDialog = {
+        visible: false,
+        loading: false,
+        form: this.emptyCreateForm()
+      }
     },
     refresh() {
       this.page = 1
@@ -157,6 +218,104 @@ export default {
         this.$message.error((res && res.msg) || '导出失败，请重试')
       }).catch(() => {
         this.exporting = false
+      })
+    },
+    canTransferToWorkOrder(row) {
+      if (!row) return false
+      if (row.type != null) return String(row.type).toLowerCase() === 'fault'
+      if (row.typeLabel != null) return row.typeLabel === '故障'
+      return this.activeType === 'fault'
+    },
+    transferToWorkOrder(row) {
+      if (!this.canTransferToWorkOrder(row)) return
+      const form = this.buildWorkOrderForm(row)
+      const query = this.cleanQuery({
+        deviceLogId: form.deviceLogId,
+        deviceCode: form.deviceCode,
+        connectorCode: form.connectorCode,
+        alarmCode: form.alarmCode
+      })
+      this.transferLoadingId = this.rowKey(row)
+      findOpenWorkOrderByAlarm(query).then(res => {
+        this.transferLoadingId = null
+        if (res && Number(res.code) === 200) {
+          const order = res.data
+          if (order && order.id != null) {
+            this.goWorkOrder(order.id)
+            return
+          }
+          this.openCreateWorkOrderDialog(form)
+          return
+        }
+        this.$message.error((res && res.msg) || '查询工单失败')
+      }).catch(() => {
+        this.transferLoadingId = null
+      })
+    },
+    openCreateWorkOrderDialog(form) {
+      this.createDialog = {
+        visible: true,
+        loading: false,
+        form: { ...this.emptyCreateForm(), ...form }
+      }
+    },
+    submitCreateWorkOrder() {
+      const form = this.createDialog.form
+      if (!form.stationId || !form.title) {
+        this.$message.warning('请确认站点并填写标题')
+        return
+      }
+      this.createDialog.loading = true
+      createFaultWorkOrder(this.cleanQuery(form)).then(res => {
+        this.createDialog.loading = false
+        if (res && Number(res.code) === 200) {
+          this.$message.success('建单成功')
+          this.createDialog.visible = false
+          const id = res.data && res.data.id
+          if (id != null) this.goWorkOrder(id)
+          return
+        }
+        this.$message.error((res && res.msg) || '建单失败')
+      }).catch(() => {
+        this.createDialog.loading = false
+      })
+    },
+    buildWorkOrderForm(row) {
+      const deviceCode = this.firstValue(row.deviceCode, row.device, row.deviceNo)
+      const connectorCode = this.firstValue(row.connectorCode, row.connector, row.gunNumber)
+      const alarmItem = this.firstValue(row.alarmItem, row.reason)
+      const title = alarmItem || this.firstValue(row.title, row.alarmName, row.alarmCode)
+      return {
+        stationId: this.firstValue(row.stationId, this.stationId),
+        deviceLogId: this.firstValue(row.deviceLogId, row.id),
+        deviceCode,
+        connectorCode,
+        alarmCode: this.firstValue(row.alarmCode, row.code),
+        alarmItem,
+        title,
+        description: this.firstValue(row.description, row.reason, alarmItem)
+      }
+    },
+    firstValue(...values) {
+      const match = values.find(value => value !== null && value !== undefined && value !== '')
+      return match === undefined ? '' : match
+    },
+    rowKey(row) {
+      return row && this.firstValue(row.id, row.deviceLogId, row.gunCode, row.alarmCode)
+    },
+    cleanQuery(query) {
+      const result = {}
+      Object.keys(query).forEach(key => {
+        if (query[key] !== '' && query[key] !== null && query[key] !== undefined) {
+          result[key] = query[key]
+        }
+      })
+      return result
+    },
+    goWorkOrder(id) {
+      this.$router.push({
+        path: '/device/faultWorkOrders',
+        query: { id, workOrderId: id }
       })
     }
   }

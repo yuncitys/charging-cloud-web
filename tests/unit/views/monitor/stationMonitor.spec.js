@@ -7,12 +7,24 @@ jest.mock('@/api/monitor/stationMonitor', () => ({
   getStationMonitorPiles: jest.fn()
 }))
 
+jest.mock('@/api/monitor/faultMonitor', () => ({
+  findOpenWorkOrderByAlarm: jest.fn(),
+  createFaultWorkOrder: jest.fn()
+}))
+
 jest.mock('@/api/netWorkDot/netWorkDotList', () => ({
   getList: jest.fn(() => Promise.resolve({ code: 200, data: [] }))
 }))
 
 jest.mock('@/api/device/deviceList', () => ({
   closeDevice: jest.fn()
+}))
+
+jest.mock('@/components/Common/downloadProgress.vue', () => ({
+  name: 'DownloadProgress',
+  render(h) {
+    return h('div')
+  }
 }))
 
 jest.mock('screenfull', () => ({
@@ -39,6 +51,9 @@ const factory = (options = {}) => {
 
   return shallowMount(StationMonitor, {
     mocks,
+    directives: {
+      loading: {}
+    },
     stubs: {
       'el-select': true,
       'el-option': true,
