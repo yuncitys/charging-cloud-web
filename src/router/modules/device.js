@@ -32,6 +32,24 @@ export default [
         icon: 'el-icon-view',
       }
     },
+{
+      path: '/device/faultMonitor',
+      component: () => import('@/views/monitor/faultMonitor'),
+      name: 'faultMonitor',
+      meta: {
+        title: '故障监控',
+        icon: 'el-icon-warning-outline',
+      }
+    },
+{
+      path: '/device/faultWorkOrders',
+      component: () => import('@/views/monitor/faultWorkOrderList'),
+      name: 'faultWorkOrders',
+      meta: {
+        title: '故障工单',
+        icon: 'el-icon-tickets',
+      }
+    },
   {
     path: '/device/stationMap',
     component: () => import('@/views/monitor/stationMap'),
