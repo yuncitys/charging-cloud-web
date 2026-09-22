@@ -31,15 +31,6 @@
       >
         <el-option v-for="item in stationList" :key="item.id" :label="item.networkName" :value="item.id" />
       </el-select>
-      <el-input
-        v-model="assigneeKeyword"
-        class="filter-item"
-        style="width: 160px; margin-right: 20px;"
-        placeholder="指派人"
-        clearable
-        @keyup.enter.native="handleFilter"
-        @clear="handleFilter"
-      />
       <el-date-picker
         v-model="dateRange"
         class="filter-item"
@@ -58,7 +49,7 @@
 
     <el-table
       v-loading="listLoading"
-      :data="displayList"
+      :data="list"
       element-loading-text="拼命加载中......"
       fit
       highlight-current-row
@@ -270,7 +261,6 @@ export default {
       list: [],
       total: 0,
       stationList: [],
-      assigneeKeyword: '',
       dateRange: [],
       listQuery: {
         page: 1,
@@ -313,11 +303,6 @@ export default {
     }
   },
   computed: {
-    displayList() {
-      const keyword = (this.assigneeKeyword || '').trim()
-      if (!keyword) return this.list
-      return this.list.filter(item => String(item.assigneeName || item.assigneeUserId || '').indexOf(keyword) !== -1)
-    },
     detailActions() {
       return Array.isArray(this.detail.actions) ? this.detail.actions : []
     },
@@ -384,7 +369,6 @@ export default {
     },
     handleReset() {
       this.dateRange = []
-      this.assigneeKeyword = ''
       this.listQuery = {
         page: 1,
         limit: 10,
@@ -511,8 +495,8 @@ export default {
         this.$message.success('操作成功')
         this.actionDialog.visible = false
         this.getList()
-        if (this.detailVisible && this.actionDialog.row && this.actionDialog.row.id) {
-          this.openDetail(this.actionDialog.row)
+        if (this.detailVisible && this.detail.workOrder && this.detail.workOrder.id) {
+          this.openDetail({ id: this.detail.workOrder.id })
         }
         return
       }
