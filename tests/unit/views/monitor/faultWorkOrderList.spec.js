@@ -87,4 +87,11 @@ describe('FaultWorkOrderList route detail opening', () => {
 
     expect(getFaultWorkOrder).toHaveBeenCalledWith(101)
   })
+
+  it('applies route merchantId to list query', async() => {
+    factory({ mocks: { $route: { query: { merchantId: 66 }}}})
+    await flush()
+
+    expect(pageFaultWorkOrders).toHaveBeenCalledWith(expect.objectContaining({ merchantId: 66 }))
+  })
 })

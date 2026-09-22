@@ -267,6 +267,7 @@ export default {
         limit: 10,
         workOrderNo: '',
         status: '',
+        merchantId: '',
         stationId: '',
         start: '',
         end: ''
@@ -293,6 +294,7 @@ export default {
         loading: false,
         form: {
           stationId: '',
+          merchantId: '',
           deviceCode: '',
           connectorCode: '',
           alarmCode: '',
@@ -396,6 +398,7 @@ export default {
         limit: 10,
         workOrderNo: '',
         status: '',
+        merchantId: this.routeMerchantId(),
         stationId: '',
         start: '',
         end: ''
@@ -529,6 +532,7 @@ export default {
       this.createDialog.visible = true
       this.createDialog.form = {
         stationId: '',
+        merchantId: this.routeMerchantId(),
         deviceCode: '',
         connectorCode: '',
         alarmCode: '',
@@ -542,6 +546,7 @@ export default {
         return
       }
       this.createDialog.loading = true
+      this.applyCreateMerchantId()
       createFaultWorkOrder(this.cleanQuery(this.createDialog.form)).then(res => {
         this.createDialog.loading = false
         if (res && Number(res.code) === 200) {
@@ -554,6 +559,14 @@ export default {
       }).catch(() => {
         this.createDialog.loading = false
       })
+    },
+    applyCreateMerchantId() {
+      if (this.createDialog.form.merchantId) return
+      const station = this.stationList.find(item => String(item.id) === String(this.createDialog.form.stationId))
+      const merchantId = station && (station.merchantId || station.merchant_id || station.merchantID)
+      if (merchantId !== null && merchantId !== undefined && merchantId !== '') {
+        this.createDialog.form.merchantId = merchantId
+      }
     },
     canAssign(row) {
       return row && row.status === 'OPEN'
@@ -606,6 +619,10 @@ export default {
     firstValue(...values) {
       const match = values.find(value => value !== null && value !== undefined && value !== '')
       return match === undefined ? '' : match
+    },
+    routeMerchantId() {
+      const q = (this.$route && this.$route.query) || {}
+      return this.firstValue(q.merchantId)
     },
     time(v) {
       if (!v) return '-'
