@@ -303,6 +303,19 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
     expect(assignFaultWorkOrder).toHaveBeenCalledWith(1, { assigneeUserId: '24' })
   })
 
+  it('reassign starts empty and shows current assignee as placeholder', async() => {
+    getAssigneeCandidates.mockResolvedValue({ code: 200, data: [] })
+    const wrapper = factory()
+    await flush()
+
+    wrapper.vm.openAssign({ id: 1, status: 'IN_PROGRESS', assigneeUserId: '24', assigneeName: '李四' })
+
+    expect(wrapper.vm.actionDialog.form.assigneeUserId).toBe('')
+    expect(wrapper.vm.assigneePlaceholder).toBe('当前：李四，请选择新的指派人')
+    wrapper.vm.openAssign({ id: 2, status: 'OPEN' })
+    expect(wrapper.vm.assigneePlaceholder).toBe('请选择指派人')
+  })
+
   it('export opens download progress with task id', async() => {
     exportFaultWorkOrders.mockResolvedValue({ code: 200, data: { id: 777 }})
     const open = jest.fn()

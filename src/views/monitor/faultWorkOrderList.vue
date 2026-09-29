@@ -202,7 +202,7 @@
               filterable
               clearable
               :loading="actionDialog.candidatesLoading"
-              placeholder="请选择指派人"
+              :placeholder="assigneePlaceholder"
             >
               <el-option
                 v-for="item in actionDialog.candidates"
@@ -448,6 +448,10 @@ export default {
       if (this.actionDialog.type === 'cancel') return '取消工单'
       return '结案工单'
     },
+    assigneePlaceholder() {
+      const row = this.actionDialog.row
+      return row && row.assigneeName ? `当前：${row.assigneeName}，请选择新的指派人` : '请选择指派人'
+    },
     createGuns() {
       const device = this.createDialog.devices.find(item => item.deviceCode === this.createDialog.form.deviceCode)
       return device && Array.isArray(device.guns) ? device.guns : []
@@ -597,7 +601,7 @@ export default {
         candidates: [],
         candidatesLoading: true,
         form: {
-          assigneeUserId: row.assigneeUserId ? String(row.assigneeUserId) : '',
+          assigneeUserId: '',
           remark: ''
         }
       }
