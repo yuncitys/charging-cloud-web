@@ -221,22 +221,49 @@
 
     <el-dialog title="手工建单" :visible.sync="createDialog.visible" width="560px">
       <el-form ref="createForm" :model="createDialog.form" label-width="90px">
-        <el-form-item label="所属站点">
-          <el-select v-model="createDialog.form.stationId" style="width: 100%;" filterable clearable placeholder="请选择充电站">
+        <el-form-item label="所属站点" required>
+          <el-select
+            v-model="createDialog.form.stationId"
+            style="width: 100%;"
+            filterable
+            clearable
+            placeholder="请选择充电站"
+            @change="handleCreateStationChange"
+          >
             <el-option v-for="item in stationList" :key="item.id" :label="item.networkName" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="设备编号">
-          <el-input v-model="createDialog.form.deviceCode" clearable placeholder="请输入设备编号" />
+        <el-form-item label="设备" required>
+          <el-select
+            v-model="createDialog.form.deviceCode"
+            style="width: 100%;"
+            filterable
+            clearable
+            :disabled="!createDialog.form.stationId"
+            :placeholder="createDialog.devicesLoading ? '加载中...' : '请选择设备'"
+            @change="handleCreateDeviceChange"
+          >
+            <el-option v-for="item in createDialog.devices" :key="item.deviceCode" :label="deviceLabel(item)" :value="item.deviceCode" />
+          </el-select>
         </el-form-item>
         <el-form-item label="枪口">
-          <el-input v-model="createDialog.form.connectorCode" clearable placeholder="请输入枪口号" />
+          <el-select
+            v-model="createDialog.form.connectorCode"
+            style="width: 100%;"
+            clearable
+            :disabled="!createDialog.form.deviceCode"
+            placeholder="不选则为整桩"
+          >
+            <el-option v-for="item in createGuns" :key="item.gunNumber" :label="gunLabel(item)" :value="item.gunNumber" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="告警码">
-          <el-input v-model="createDialog.form.alarmCode" clearable placeholder="请输入告警码" />
+        <el-form-item label="告警项">
+          <el-select v-model="createDialog.form.alarmCode" style="width: 100%;" clearable placeholder="可选">
+            <el-option v-for="item in alarmOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
         </el-form-item>
-        <el-form-item label="标题">
-          <el-input v-model="createDialog.form.title" clearable placeholder="请输入工单标题" />
+        <el-form-item label="标题" required>
+          <el-input v-model="createDialog.form.title" maxlength="128" show-word-limit clearable placeholder="请输入工单标题" />
         </el-form-item>
         <el-form-item label="描述">
           <el-input v-model="createDialog.form.description" type="textarea" :rows="3" clearable placeholder="请输入故障描述" />
@@ -245,6 +272,31 @@
       <span slot="footer">
         <el-button @click="createDialog.visible = false">取消</el-button>
         <el-button type="primary" :loading="createDialog.loading" @click="submitCreate">确定</el-button>
+      </span>
+    </el-dialog>
+
+    <el-dialog title="该设备已有未结束工单" :visible.sync="duplicateDialog.visible" width="680px" append-to-body>
+      <el-table :data="duplicateDialog.list" size="small">
+        <el-table-column prop="workOrderNo" label="工单编号" min-width="150" show-overflow-tooltip />
+        <el-table-column label="状态" width="90" align="center">
+          <template slot-scope="scope">{{ statusLabel(scope.row.status) }}</template>
+        </el-table-column>
+        <el-table-column label="枪口" width="70" align="center">
+          <template slot-scope="scope">{{ disp(scope.row.connectorCode) }}</template>
+        </el-table-column>
+        <el-table-column prop="title" label="标题" min-width="140" show-overflow-tooltip />
+        <el-table-column label="打开时间" min-width="150">
+          <template slot-scope="scope">{{ time(scope.row.openedAt) }}</template>
+        </el-table-column>
+        <el-table-column label="操作" width="80" align="center">
+          <template slot-scope="scope">
+            <el-button type="text" size="mini" @click="viewDuplicate(scope.row)">查看</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <span slot="footer">
+        <el-button @click="duplicateDialog.visible = false">返回修改</el-button>
+        <el-button type="primary" :loading="createDialog.loading" @click="confirmDuplicateCreate">仍然创建</el-button>
       </span>
     </el-dialog>
   </div>
@@ -259,7 +311,9 @@ import {
   startFaultWorkOrder,
   remarkFaultWorkOrder,
   closeFaultWorkOrder,
-  cancelFaultWorkOrder
+  cancelFaultWorkOrder,
+  listFaultStationDevices,
+  checkOpenWorkOrders
 } from '@/api/monitor/faultMonitor'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import { parseTime } from '@/utils/index'
@@ -341,15 +395,20 @@ export default {
       createDialog: {
         visible: false,
         loading: false,
+        devicesLoading: false,
+        devices: [],
         form: {
           stationId: '',
-          merchantId: '',
           deviceCode: '',
           connectorCode: '',
           alarmCode: '',
           title: '',
           description: ''
         }
+      },
+      duplicateDialog: {
+        visible: false,
+        list: []
       },
       statusOptions: STATUS_OPTIONS,
       sourceOptions: SOURCE_OPTIONS,
@@ -365,6 +424,10 @@ export default {
       if (this.actionDialog.type === 'remark') return '工单备注'
       if (this.actionDialog.type === 'cancel') return '取消工单'
       return '结案工单'
+    },
+    createGuns() {
+      const device = this.createDialog.devices.find(item => item.deviceCode === this.createDialog.form.deviceCode)
+      return device && Array.isArray(device.guns) ? device.guns : []
     },
     detailFields() {
       const row = this.detail.workOrder || {}
@@ -586,9 +649,10 @@ export default {
     },
     openCreateDialog() {
       this.createDialog.visible = true
+      this.createDialog.loading = false
+      this.createDialog.devices = []
       this.createDialog.form = {
         stationId: '',
-        merchantId: this.routeMerchantId(),
         deviceCode: '',
         connectorCode: '',
         alarmCode: '',
@@ -596,17 +660,88 @@ export default {
         description: ''
       }
     },
+    handleCreateStationChange(stationId) {
+      this.createDialog.form.deviceCode = ''
+      this.createDialog.form.connectorCode = ''
+      this.createDialog.devices = []
+      if (!stationId) return
+      this.createDialog.devicesLoading = true
+      listFaultStationDevices(stationId).then(res => {
+        this.createDialog.devicesLoading = false
+        if (String(this.createDialog.form.stationId) !== String(stationId)) return
+        if (res && Number(res.code) === 200) {
+          this.createDialog.devices = Array.isArray(res.data) ? res.data : []
+          return
+        }
+        this.$message.error((res && res.msg) || '设备列表加载失败')
+      }).catch(() => {
+        this.createDialog.devicesLoading = false
+      })
+    },
+    handleCreateDeviceChange() {
+      this.createDialog.form.connectorCode = ''
+    },
+    deviceLabel(item) {
+      return item.deviceName ? `${item.deviceCode}（${item.deviceName}）` : item.deviceCode
+    },
+    gunLabel(item) {
+      return item.gunName ? `${item.gunNumber}号枪（${item.gunName}）` : `${item.gunNumber}号枪`
+    },
     submitCreate() {
-      if (!this.createDialog.form.stationId || !this.createDialog.form.title) {
-        this.$message.warning('请选择站点并填写标题')
+      const form = this.createDialog.form
+      if (!form.stationId) {
+        this.$message.warning('请选择站点')
+        return
+      }
+      if (!form.deviceCode) {
+        this.$message.warning('请选择设备')
+        return
+      }
+      if (!String(form.title || '').trim()) {
+        this.$message.warning('请填写标题')
         return
       }
       this.createDialog.loading = true
-      this.applyCreateMerchantId()
-      createFaultWorkOrder(this.cleanQuery(this.createDialog.form)).then(res => {
+      checkOpenWorkOrders(this.cleanQuery({
+        deviceCode: form.deviceCode,
+        connectorCode: form.connectorCode
+      })).then(res => {
+        const list = res && Number(res.code) === 200 && Array.isArray(res.data) ? res.data : []
+        if (list.length) {
+          this.createDialog.loading = false
+          this.duplicateDialog = { visible: true, list }
+          return
+        }
+        this.doCreate()
+      }).catch(() => {
+        this.createDialog.loading = false
+      })
+    },
+    confirmDuplicateCreate() {
+      this.createDialog.loading = true
+      this.doCreate()
+    },
+    viewDuplicate(row) {
+      this.duplicateDialog.visible = false
+      this.createDialog.visible = false
+      this.openDetail(row)
+    },
+    doCreate() {
+      const form = this.createDialog.form
+      const alarm = ALARM_OPTIONS.find(item => item.value === form.alarmCode)
+      createFaultWorkOrder(this.cleanQuery({
+        stationId: form.stationId,
+        deviceCode: form.deviceCode,
+        connectorCode: form.connectorCode,
+        alarmCode: form.alarmCode,
+        alarmItem: alarm ? alarm.label : '',
+        title: String(form.title || '').trim(),
+        description: form.description
+      })).then(res => {
         this.createDialog.loading = false
         if (res && Number(res.code) === 200) {
           this.$message.success('建单成功')
+          this.duplicateDialog.visible = false
           this.createDialog.visible = false
           this.handleFilter()
           return
@@ -615,14 +750,6 @@ export default {
       }).catch(() => {
         this.createDialog.loading = false
       })
-    },
-    applyCreateMerchantId() {
-      if (this.createDialog.form.merchantId) return
-      const station = this.stationList.find(item => String(item.id) === String(this.createDialog.form.stationId))
-      const merchantId = station && (station.merchantId || station.merchant_id || station.merchantID)
-      if (merchantId !== null && merchantId !== undefined && merchantId !== '') {
-        this.createDialog.form.merchantId = merchantId
-      }
     },
     canAssign(row) {
       return row && row.status === 'OPEN'

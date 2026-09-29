@@ -3,7 +3,10 @@ import { shallowMount } from '@vue/test-utils'
 import FaultWorkOrderList from '@/views/monitor/faultWorkOrderList.vue'
 import {
   pageFaultWorkOrders,
-  getFaultWorkOrder
+  getFaultWorkOrder,
+  createFaultWorkOrder,
+  listFaultStationDevices,
+  checkOpenWorkOrders
 } from '@/api/monitor/faultMonitor'
 
 jest.mock('@/api/monitor/faultMonitor', () => ({
@@ -157,5 +160,89 @@ describe('FaultWorkOrderList list and detail fields', () => {
     expect(labels['所属站点']).toBe('一号站')
     expect(labels['指派时间']).toBe('2026-09-29 10:00:00')
     expect(labels['创建人']).toBe('王五')
+  })
+})
+
+describe('FaultWorkOrderList manual create', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    listFaultStationDevices.mockResolvedValue({
+      code: 200,
+      data: [{ deviceCode: 'D1', deviceName: '一号桩', guns: [{ gunNumber: 1 }, { gunNumber: 2 }] }]
+    })
+  })
+
+  const fillForm = async wrapper => {
+    wrapper.vm.openCreateDialog()
+    wrapper.vm.createDialog.form.stationId = 10
+    wrapper.vm.handleCreateStationChange(10)
+    await flush()
+    wrapper.vm.createDialog.form.deviceCode = 'D1'
+    wrapper.vm.createDialog.form.connectorCode = 1
+    wrapper.vm.createDialog.form.alarmCode = 'DEVICE_FAULT'
+    wrapper.vm.createDialog.form.title = ' 急停 '
+  }
+
+  it('loads station devices and exposes guns of selected device', async() => {
+    const wrapper = factory()
+    await fillForm(wrapper)
+
+    expect(listFaultStationDevices).toHaveBeenCalledWith(10)
+    expect(wrapper.vm.createGuns.map(g => g.gunNumber)).toEqual([1, 2])
+  })
+
+  it('requires device before submit', async() => {
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openCreateDialog()
+    wrapper.vm.createDialog.form.stationId = 10
+    wrapper.vm.createDialog.form.title = 't'
+
+    wrapper.vm.submitCreate()
+
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('请选择设备')
+    expect(checkOpenWorkOrders).not.toHaveBeenCalled()
+  })
+
+  it('shows duplicate dialog instead of creating when open orders exist', async() => {
+    checkOpenWorkOrders.mockResolvedValue({ code: 200, data: [{ id: 5, workOrderNo: 'FW1', status: 'OPEN' }] })
+    const wrapper = factory()
+    await fillForm(wrapper)
+
+    wrapper.vm.submitCreate()
+    await flush()
+
+    expect(checkOpenWorkOrders).toHaveBeenCalledWith({ deviceCode: 'D1', connectorCode: 1 })
+    expect(wrapper.vm.duplicateDialog.visible).toBe(true)
+    expect(createFaultWorkOrder).not.toHaveBeenCalled()
+  })
+
+  it('creates with alarmItem label when no duplicates, and after confirming duplicates', async() => {
+    checkOpenWorkOrders.mockResolvedValue({ code: 200, data: [] })
+    createFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await fillForm(wrapper)
+
+    wrapper.vm.submitCreate()
+    await flush()
+
+    expect(createFaultWorkOrder).toHaveBeenCalledWith({
+      stationId: 10,
+      deviceCode: 'D1',
+      connectorCode: 1,
+      alarmCode: 'DEVICE_FAULT',
+      alarmItem: '电桩故障',
+      title: '急停'
+    })
+    expect(wrapper.vm.createDialog.visible).toBe(false)
+
+    createFaultWorkOrder.mockClear()
+    wrapper.vm.duplicateDialog = { visible: true, list: [{ id: 5 }] }
+    wrapper.vm.createDialog.visible = true
+    wrapper.vm.confirmDuplicateCreate()
+    await flush()
+    expect(createFaultWorkOrder).toHaveBeenCalled()
+    expect(wrapper.vm.duplicateDialog.visible).toBe(false)
   })
 })
