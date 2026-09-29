@@ -73,7 +73,8 @@
       />
       <el-button type="primary" size="mini" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
-      <el-button size="mini" class="filter-item" icon="el-icon-plus" @click="openCreateDialog">手工建单</el-button>
+      <el-button v-if="hasPerm('create')" size="mini" class="filter-item" icon="el-icon-plus" @click="openCreateDialog">手工建单</el-button>
+      <el-button v-if="hasPerm('export')" size="mini" class="filter-item" icon="el-icon-download" :loading="exporting" @click="exportList">导出</el-button>
     </div>
 
     <el-table
@@ -116,7 +117,7 @@
       <el-table-column label="操作" align="center" min-width="260" fixed="right">
         <template slot-scope="scope">
           <el-button size="mini" @click="openDetail(scope.row)">详情</el-button>
-          <el-button v-if="canAssign(scope.row)" size="mini" type="primary" @click="openAssign(scope.row)">指派</el-button>
+          <el-button v-if="canAssign(scope.row)" size="mini" type="primary" @click="openAssign(scope.row)">{{ assignLabel(scope.row) }}</el-button>
           <el-button v-if="canStart(scope.row)" size="mini" type="success" @click="startOrder(scope.row)">开始处理</el-button>
           <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="cmd => handleActionCommand(cmd, scope.row)">
             <el-button size="mini">
@@ -124,8 +125,8 @@
             </el-button>
             <el-dropdown-menu slot="dropdown">
               <el-dropdown-item v-if="canRemark(scope.row)" command="remark">备注</el-dropdown-item>
-              <el-dropdown-item v-if="canFinish(scope.row)" command="close">结案</el-dropdown-item>
-              <el-dropdown-item v-if="canFinish(scope.row)" command="cancel">取消</el-dropdown-item>
+              <el-dropdown-item v-if="canClose(scope.row)" command="close">结案</el-dropdown-item>
+              <el-dropdown-item v-if="canCancel(scope.row)" command="cancel">取消</el-dropdown-item>
             </el-dropdown-menu>
           </el-dropdown>
         </template>
@@ -165,11 +166,11 @@
         </div>
 
         <div v-if="detail.workOrder" class="drawer-actions">
-          <el-button v-if="canAssign(detail.workOrder)" size="small" type="primary" @click="openAssign(detail.workOrder)">指派</el-button>
+          <el-button v-if="canAssign(detail.workOrder)" size="small" type="primary" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
           <el-button v-if="canStart(detail.workOrder)" size="small" type="success" @click="startOrder(detail.workOrder)">开始处理</el-button>
           <el-button v-if="canRemark(detail.workOrder)" size="small" @click="openRemark(detail.workOrder)">备注</el-button>
-          <el-button v-if="canFinish(detail.workOrder)" size="small" type="primary" @click="openFinish(detail.workOrder, 'close')">结案</el-button>
-          <el-button v-if="canFinish(detail.workOrder)" size="small" type="warning" @click="openFinish(detail.workOrder, 'cancel')">取消</el-button>
+          <el-button v-if="canClose(detail.workOrder)" size="small" type="primary" @click="openFinish(detail.workOrder, 'close')">结案</el-button>
+          <el-button v-if="canCancel(detail.workOrder)" size="small" type="warning" @click="openFinish(detail.workOrder, 'cancel')">取消</el-button>
         </div>
 
         <h4 class="drawer-title">处理流水</h4>
@@ -194,11 +195,23 @@
     <el-dialog :title="actionDialogTitle" :visible.sync="actionDialog.visible" width="420px">
       <el-form ref="actionForm" :model="actionDialog.form" label-width="90px">
         <template v-if="actionDialog.type === 'assign'">
-          <el-form-item label="用户ID">
-            <el-input v-model="actionDialog.form.userId" clearable placeholder="请输入指派人用户ID" />
-          </el-form-item>
           <el-form-item label="指派人">
-            <el-input v-model="actionDialog.form.userName" clearable placeholder="请输入指派人姓名" />
+            <el-select
+              v-model="actionDialog.form.assigneeUserId"
+              style="width: 100%;"
+              filterable
+              clearable
+              :loading="actionDialog.candidatesLoading"
+              placeholder="请选择指派人"
+            >
+              <el-option
+                v-for="item in actionDialog.candidates"
+                :key="item.adminId"
+                :label="candidateLabel(item)"
+                :value="String(item.adminId)"
+              />
+            </el-select>
+            <div v-if="!actionDialog.candidatesLoading && !actionDialog.candidates.length" class="form-hint">暂无可指派账号</div>
           </el-form-item>
         </template>
         <template v-else>
@@ -299,6 +312,8 @@
         <el-button type="primary" :loading="createDialog.loading" @click="confirmDuplicateCreate">仍然创建</el-button>
       </span>
     </el-dialog>
+
+    <download-progress ref="downloadProgress" />
   </div>
 </template>
 
@@ -313,10 +328,13 @@ import {
   closeFaultWorkOrder,
   cancelFaultWorkOrder,
   listFaultStationDevices,
-  checkOpenWorkOrders
+  checkOpenWorkOrders,
+  getAssigneeCandidates,
+  exportFaultWorkOrders
 } from '@/api/monitor/faultMonitor'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import { parseTime } from '@/utils/index'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
 
 const STATUS_OPTIONS = [
   { value: 'OPEN', label: '待处理', type: 'warning' },
@@ -354,10 +372,12 @@ const ACTION_LABELS = {
 
 export default {
   name: 'FaultWorkOrderList',
+  components: { downloadProgress },
   data() {
     return {
       listLoading: false,
       detailLoading: false,
+      exporting: false,
       list: [],
       total: 0,
       stationList: [],
@@ -386,9 +406,10 @@ export default {
         loading: false,
         type: '',
         row: null,
+        candidates: [],
+        candidatesLoading: false,
         form: {
-          userId: '',
-          userName: '',
+          assigneeUserId: '',
           remark: ''
         }
       },
@@ -420,7 +441,9 @@ export default {
       return Array.isArray(this.detail.actions) ? this.detail.actions : []
     },
     actionDialogTitle() {
-      if (this.actionDialog.type === 'assign') return '指派工单'
+      if (this.actionDialog.type === 'assign') {
+        return this.actionDialog.row && this.actionDialog.row.assigneeUserId ? '改派工单' : '指派工单'
+      }
       if (this.actionDialog.type === 'remark') return '工单备注'
       if (this.actionDialog.type === 'cancel') return '取消工单'
       return '结案工单'
@@ -571,12 +594,23 @@ export default {
         loading: false,
         type: 'assign',
         row,
+        candidates: [],
+        candidatesLoading: true,
         form: {
-          userId: row.assigneeUserId || '',
-          userName: row.assigneeName || '',
+          assigneeUserId: row.assigneeUserId ? String(row.assigneeUserId) : '',
           remark: ''
         }
       }
+      getAssigneeCandidates(row.id).then(res => {
+        this.actionDialog.candidatesLoading = false
+        if (res && Number(res.code) === 200) {
+          this.actionDialog.candidates = Array.isArray(res.data) ? res.data : []
+          return
+        }
+        this.$message.error((res && res.msg) || '候选指派人加载失败')
+      }).catch(() => {
+        this.actionDialog.candidatesLoading = false
+      })
     },
     openRemark(row) {
       this.actionDialog = {
@@ -584,7 +618,9 @@ export default {
         loading: false,
         type: 'remark',
         row,
-        form: { userId: '', userName: '', remark: '' }
+        candidates: [],
+        candidatesLoading: false,
+        form: { assigneeUserId: '', remark: '' }
       }
     },
     openFinish(row, type) {
@@ -593,7 +629,9 @@ export default {
         loading: false,
         type,
         row,
-        form: { userId: '', userName: '', remark: '' }
+        candidates: [],
+        candidatesLoading: false,
+        form: { assigneeUserId: '', remark: '' }
       }
     },
     handleActionCommand(command, row) {
@@ -609,13 +647,14 @@ export default {
         this.$message.warning('请输入处理说明')
         return
       }
+      if (type === 'assign' && !this.actionDialog.form.assigneeUserId) {
+        this.$message.warning('请选择指派人')
+        return
+      }
       this.actionDialog.loading = true
       let request
       if (type === 'assign') {
-        request = assignFaultWorkOrder(row.id, {
-          userId: this.actionDialog.form.userId,
-          userName: this.actionDialog.form.userName
-        })
+        request = assignFaultWorkOrder(row.id, { assigneeUserId: this.actionDialog.form.assigneeUserId })
       } else if (type === 'remark') {
         request = remarkFaultWorkOrder(row.id, { remark: this.actionDialog.form.remark })
       } else if (type === 'cancel') {
@@ -751,20 +790,54 @@ export default {
         this.createDialog.loading = false
       })
     },
+    hasPerm(action) {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(`:ops:faultWorkOrder:${action}`))
+    },
+    isActive(row) {
+      return !!row && (row.status === 'OPEN' || row.status === 'IN_PROGRESS')
+    },
     canAssign(row) {
-      return row && row.status === 'OPEN'
+      return this.hasPerm('assign') && this.isActive(row)
     },
     canStart(row) {
-      return row && row.status === 'OPEN'
+      return this.hasPerm('start') && !!row && row.status === 'OPEN'
     },
     canRemark(row) {
-      return row && (row.status === 'OPEN' || row.status === 'IN_PROGRESS')
+      return this.hasPerm('remark') && this.isActive(row)
     },
-    canFinish(row) {
-      return row && (row.status === 'OPEN' || row.status === 'IN_PROGRESS')
+    canClose(row) {
+      return this.hasPerm('close') && this.isActive(row)
+    },
+    canCancel(row) {
+      return this.hasPerm('cancel') && this.isActive(row)
     },
     hasMoreActions(row) {
-      return this.canRemark(row) || this.canFinish(row)
+      return this.canRemark(row) || this.canClose(row) || this.canCancel(row)
+    },
+    assignLabel(row) {
+      return row && row.assigneeUserId ? '改派' : '指派'
+    },
+    candidateLabel(item) {
+      if (item.adminFullname && item.adminName) return `${item.adminFullname}（${item.adminName}）`
+      return item.adminFullname || item.adminName || String(item.adminId)
+    },
+    exportList() {
+      if (this.exporting) return
+      this.syncDateQuery()
+      const params = this.cleanQuery(Object.assign({}, this.listQuery))
+      delete params.page
+      delete params.limit
+      this.exporting = true
+      exportFaultWorkOrders(params).then(res => {
+        this.exporting = false
+        if (res && Number(res.code) === 200 && res.data && res.data.id != null) {
+          this.$refs.downloadProgress.open(res.data.id)
+          return
+        }
+        this.$message.error((res && res.msg) || '导出失败，请重试')
+      }).catch(() => {
+        this.exporting = false
+      })
     },
     cleanQuery(query) {
       const result = {}
@@ -884,6 +957,11 @@ export default {
   padding: 32px 0;
   color: #909399;
   text-align: center;
+}
+.form-hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 20px;
 }
 </style>
 

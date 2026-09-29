@@ -5,8 +5,11 @@ import {
   pageFaultWorkOrders,
   getFaultWorkOrder,
   createFaultWorkOrder,
+  assignFaultWorkOrder,
   listFaultStationDevices,
-  checkOpenWorkOrders
+  checkOpenWorkOrders,
+  getAssigneeCandidates,
+  exportFaultWorkOrders
 } from '@/api/monitor/faultMonitor'
 
 jest.mock('@/api/monitor/faultMonitor', () => ({
@@ -244,5 +247,97 @@ describe('FaultWorkOrderList manual create', () => {
     await flush()
     expect(createFaultWorkOrder).toHaveBeenCalled()
     expect(wrapper.vm.duplicateDialog.visible).toBe(false)
+  })
+})
+
+describe('FaultWorkOrderList assign, permissions and export', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+  })
+
+  it('hides actions without button permission', async() => {
+    const wrapper = factory({
+      mocks: {
+        $route: { query: {}},
+        $message: { warning: jest.fn(), error: jest.fn(), success: jest.fn() },
+        $confirm: jest.fn(),
+        btnAuthen: { permsVerifAuthention: jest.fn(perm => perm === ':ops:faultWorkOrder:start') }
+      }
+    })
+    await flush()
+    const row = { id: 1, status: 'OPEN' }
+
+    expect(wrapper.vm.canAssign(row)).toBe(false)
+    expect(wrapper.vm.canStart(row)).toBe(true)
+    expect(wrapper.vm.canClose(row)).toBe(false)
+    expect(wrapper.vm.hasMoreActions(row)).toBe(false)
+  })
+
+  it('allows reassign on in-progress orders and labels it', async() => {
+    const wrapper = factory()
+    await flush()
+
+    expect(wrapper.vm.canAssign({ status: 'IN_PROGRESS' })).toBe(true)
+    expect(wrapper.vm.assignLabel({ assigneeUserId: '24' })).toBe('改派')
+    expect(wrapper.vm.assignLabel({})).toBe('指派')
+  })
+
+  it('loads candidates and submits assigneeUserId', async() => {
+    getAssigneeCandidates.mockResolvedValue({ code: 200, data: [{ adminId: 24, adminName: 'lisi', adminFullname: '李四' }] })
+    assignFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await flush()
+
+    wrapper.vm.openAssign({ id: 1, status: 'OPEN' })
+    await flush()
+    expect(getAssigneeCandidates).toHaveBeenCalledWith(1)
+    expect(wrapper.vm.candidateLabel(wrapper.vm.actionDialog.candidates[0])).toBe('李四（lisi）')
+
+    wrapper.vm.submitAction()
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('请选择指派人')
+    expect(assignFaultWorkOrder).not.toHaveBeenCalled()
+
+    wrapper.vm.actionDialog.form.assigneeUserId = '24'
+    wrapper.vm.submitAction()
+    expect(assignFaultWorkOrder).toHaveBeenCalledWith(1, { assigneeUserId: '24' })
+  })
+
+  it('export opens download progress with task id', async() => {
+    exportFaultWorkOrders.mockResolvedValue({ code: 200, data: { id: 777 }})
+    const open = jest.fn()
+    const wrapper = factory({
+      stubs: {
+        'el-input': true,
+        'el-select': true,
+        'el-option': true,
+        'el-date-picker': true,
+        'el-button': true,
+        'el-table': true,
+        'el-table-column': true,
+        'el-tag': true,
+        'el-dropdown': true,
+        'el-dropdown-menu': true,
+        'el-dropdown-item': true,
+        'el-pagination': true,
+        'el-drawer': true,
+        'el-timeline': true,
+        'el-timeline-item': true,
+        'el-card': true,
+        'el-dialog': true,
+        'el-form': true,
+        'el-form-item': true,
+        'download-progress': { render(h) { return h('div') }, methods: { open }}
+      }
+    })
+    await flush()
+    wrapper.vm.listQuery.status = 'OPEN'
+
+    wrapper.vm.exportList()
+    await flush()
+
+    expect(exportFaultWorkOrders).toHaveBeenCalledWith(expect.objectContaining({ status: 'OPEN' }))
+    expect(exportFaultWorkOrders.mock.calls[0][0].page).toBeUndefined()
+    expect(open).toHaveBeenCalledWith(777)
   })
 })
