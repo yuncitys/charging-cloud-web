@@ -140,7 +140,8 @@ export default {
       return Object.keys(dist).some(key => Number(dist[key]) > 0)
     },
     hasTrendData() {
-      return this.dailyTrends.some(item => Number(item.openedCount) > 0 || Number(item.orderSuccessRate) > 0)
+      const keys = ['openedCount', 'startedCount', 'completedCount', 'faultNoResponseCount', 'orderSuccessRate']
+      return this.dailyTrends.some(item => keys.some(key => Number(item[key]) > 0))
     },
     kpiCards() {
       return [

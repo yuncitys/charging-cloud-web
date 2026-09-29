@@ -20,6 +20,35 @@
       >
         <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
+      <el-input
+        v-model="listQuery.deviceCode"
+        class="filter-item"
+        style="width: 160px; margin-right: 20px;"
+        placeholder="设备编号"
+        clearable
+        @keyup.enter.native="handleFilter"
+        @clear="handleFilter"
+      />
+      <el-select
+        v-model="listQuery.source"
+        class="filter-item"
+        style="width: 130px; margin-right: 20px;"
+        clearable
+        placeholder="来源"
+        @change="handleFilter"
+      >
+        <el-option v-for="item in sourceOptions" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+      <el-select
+        v-model="listQuery.alarmCode"
+        class="filter-item"
+        style="width: 170px; margin-right: 20px;"
+        clearable
+        placeholder="告警项"
+        @change="handleFilter"
+      >
+        <el-option v-for="item in alarmOptions" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
       <el-select
         v-model="listQuery.stationId"
         class="filter-item"
@@ -70,7 +99,7 @@
         </template>
       </el-table-column>
       <el-table-column prop="stationId" label="所属站点" min-width="150" show-overflow-tooltip>
-        <template slot-scope="scope">{{ stationName(scope.row.stationId) }}</template>
+        <template slot-scope="scope">{{ rowStationName(scope.row) }}</template>
       </el-table-column>
       <el-table-column prop="deviceCode" label="设备编号" min-width="130" show-overflow-tooltip>
         <template slot-scope="scope">{{ disp(scope.row.deviceCode) }}</template>
@@ -242,6 +271,23 @@ const STATUS_OPTIONS = [
   { value: 'CANCELLED', label: '已取消', type: 'info' }
 ]
 
+const SOURCE_OPTIONS = [
+  { value: 'AUTO_ALARM', label: '自动告警' },
+  { value: 'MANUAL', label: '手工建单' }
+]
+
+const ALARM_OPTIONS = [
+  { value: 'DEVICE_FAULT', label: '电桩故障' },
+  { value: 'DEVICE_ACTION_DOWNLINE', label: '设备下线' },
+  { value: 'DEVICE_ACTION_ONLINE', label: '设备上线' },
+  { value: 'VOLTAGE_CURRENT_ABNORMAL', label: '电压电流异常' },
+  { value: 'REALTIME_DATA_ABNORMAL', label: '实时数据异常' },
+  { value: 'SOC_ABNORMAL', label: 'SOC异常' },
+  { value: 'TEMPERATURE_ABNORMAL', label: '温度超高' },
+  { value: 'CHARGING_BMS_END', label: '充电阶段BMS中止' },
+  { value: 'CHARGING_MACHINE_END', label: '充电阶段充电机中止' }
+]
+
 const ACTION_LABELS = {
   CREATE: '创建工单',
   DUP_ALARM: '重复告警',
@@ -267,6 +313,9 @@ export default {
         limit: 10,
         workOrderNo: '',
         status: '',
+        deviceCode: '',
+        source: '',
+        alarmCode: '',
         merchantId: '',
         stationId: '',
         start: '',
@@ -302,7 +351,9 @@ export default {
           description: ''
         }
       },
-      statusOptions: STATUS_OPTIONS
+      statusOptions: STATUS_OPTIONS,
+      sourceOptions: SOURCE_OPTIONS,
+      alarmOptions: ALARM_OPTIONS
     }
   },
   computed: {
@@ -320,14 +371,16 @@ export default {
       return [
         { label: '工单编号', value: this.disp(row.workOrderNo) },
         { label: '状态', value: this.statusLabel(row.status), tag: true },
-        { label: '所属站点', value: this.stationName(row.stationId) },
+        { label: '所属站点', value: this.rowStationName(row) },
         { label: '来源', value: this.sourceLabel(row.source) },
         { label: '设备编号', value: this.disp(row.deviceCode) },
         { label: '枪口', value: this.disp(row.connectorCode) },
         { label: '告警码', value: this.disp(row.alarmCode) },
         { label: '告警项', value: this.disp(row.alarmItem) },
+        { label: '创建人', value: this.disp(this.detail.createUserName) },
         { label: '指派人', value: this.disp(row.assigneeName) },
         { label: '打开时间', value: this.time(row.openedAt) },
+        { label: '指派时间', value: this.time(row.assignedAt) },
         { label: '关闭时间', value: this.time(row.closedAt) },
         { label: '结案说明', value: this.disp(row.closeRemark) },
         { label: '描述', value: this.disp(row.description), wide: true }
@@ -398,6 +451,9 @@ export default {
         limit: 10,
         workOrderNo: '',
         status: '',
+        deviceCode: '',
+        source: '',
+        alarmCode: '',
         merchantId: this.routeMerchantId(),
         stationId: '',
         start: '',
@@ -592,6 +648,10 @@ export default {
       })
       return result
     },
+    rowStationName(row) {
+      if (row && row.stationName) return row.stationName
+      return this.stationName(row && row.stationId)
+    },
     stationName(stationId) {
       const match = this.stationList.find(item => String(item.id) === String(stationId))
       return match ? match.networkName : this.disp(stationId)
@@ -605,9 +665,8 @@ export default {
       return match ? match.type : 'info'
     },
     sourceLabel(source) {
-      if (source === 'AUTO_ALARM') return '自动告警'
-      if (source === 'MANUAL') return '手工建单'
-      return this.disp(source)
+      const match = SOURCE_OPTIONS.find(item => item.value === source)
+      return match ? match.label : this.disp(source)
     },
     actionLabel(actionType) {
       return ACTION_LABELS[actionType] || this.disp(actionType)

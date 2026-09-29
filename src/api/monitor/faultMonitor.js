@@ -78,3 +78,33 @@ export function findOpenWorkOrderByAlarm(params) {
     params
   })
 }
+
+export function listFaultStationDevices(stationId) {
+  return request({
+    url: `/api/web/monitor/fault/stations/${stationId}/devices`,
+    method: 'get'
+  })
+}
+
+export function checkOpenWorkOrders(params) {
+  return request({
+    url: '/api/web/monitor/fault/work-orders/open-check',
+    method: 'get',
+    params
+  })
+}
+
+export function getAssigneeCandidates(id) {
+  return request({
+    url: `/api/web/monitor/fault/work-orders/${id}/assignee-candidates`,
+    method: 'get'
+  })
+}
+
+export function exportFaultWorkOrders(params) {
+  return request({
+    url: '/api/web/monitor/fault/work-orders/export',
+    method: 'post',
+    params
+  })
+}
