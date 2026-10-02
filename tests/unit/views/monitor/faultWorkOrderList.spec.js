@@ -316,6 +316,19 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
     expect(wrapper.vm.assigneePlaceholder).toBe('请选择指派人')
   })
 
+  it('provides usage tips for every action', async() => {
+    const wrapper = factory()
+    await flush()
+
+    ;['create', 'detail', 'assign', 'start', 'remark', 'close', 'cancel', 'export'].forEach(key => {
+      expect(wrapper.vm.actionTip(key)).not.toBe('')
+    })
+    wrapper.vm.openFinish({ id: 1, status: 'OPEN' }, 'cancel')
+    expect(wrapper.vm.remarkField.label).toBe('取消原因')
+    wrapper.vm.openFinish({ id: 1, status: 'OPEN' }, 'close')
+    expect(wrapper.vm.remarkField.label).toBe('处理说明')
+  })
+
   it('export opens download progress with task id', async() => {
     exportFaultWorkOrders.mockResolvedValue({ code: 200, data: { id: 777 }})
     const open = jest.fn()

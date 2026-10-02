@@ -75,6 +75,17 @@
       <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <el-button v-if="hasPerm('create')" size="mini" class="filter-item" icon="el-icon-plus" @click="openCreateDialog">手工建单</el-button>
       <el-button v-if="hasPerm('export')" size="mini" class="filter-item" icon="el-icon-download" :loading="exporting" @click="exportList">导出</el-button>
+      <el-popover placement="bottom-end" width="560" trigger="click">
+        <div class="action-guide">
+          <div class="action-guide__flow">处理流程：待处理 →（指派）→ 开始处理 → 处理中 →（备注）→ 结案；误报或无需处理时直接取消。</div>
+          <div v-for="item in actionGuide" :key="item.key" class="action-guide__item">
+            <span class="action-guide__name">{{ item.name }}</span>
+            <span class="action-guide__when">{{ item.when }}</span>
+            <span class="action-guide__desc">{{ item.desc }}</span>
+          </div>
+        </div>
+        <el-button slot="reference" size="mini" class="filter-item" icon="el-icon-question">操作说明</el-button>
+      </el-popover>
     </div>
 
     <el-table
@@ -114,21 +125,38 @@
       <el-table-column prop="openedAt" label="打开时间" min-width="160" show-overflow-tooltip>
         <template slot-scope="scope">{{ time(scope.row.openedAt || scope.row.createTime) }}</template>
       </el-table-column>
-      <el-table-column label="操作" align="center" min-width="260" fixed="right">
+      <el-table-column label="操作" align="center" width="230" fixed="right">
         <template slot-scope="scope">
-          <el-button size="mini" @click="openDetail(scope.row)">详情</el-button>
-          <el-button v-if="canAssign(scope.row)" size="mini" type="primary" @click="openAssign(scope.row)">{{ assignLabel(scope.row) }}</el-button>
-          <el-button v-if="canStart(scope.row)" size="mini" type="success" @click="startOrder(scope.row)">开始处理</el-button>
-          <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="cmd => handleActionCommand(cmd, scope.row)">
-            <el-button size="mini">
-              更多<i class="el-icon-arrow-down el-icon--right" />
-            </el-button>
-            <el-dropdown-menu slot="dropdown">
-              <el-dropdown-item v-if="canRemark(scope.row)" command="remark">备注</el-dropdown-item>
-              <el-dropdown-item v-if="canClose(scope.row)" command="close">结案</el-dropdown-item>
-              <el-dropdown-item v-if="canCancel(scope.row)" command="cancel">取消</el-dropdown-item>
-            </el-dropdown-menu>
-          </el-dropdown>
+          <div class="row-actions">
+            <el-tooltip :content="actionTip('detail')" placement="top" :open-delay="400">
+              <el-button type="text" size="mini" @click="openDetail(scope.row)">详情</el-button>
+            </el-tooltip>
+            <el-tooltip v-if="canAssign(scope.row)" :content="actionTip('assign')" placement="top" :open-delay="400">
+              <el-button type="text" size="mini" @click="openAssign(scope.row)">{{ assignLabel(scope.row) }}</el-button>
+            </el-tooltip>
+            <el-tooltip v-if="canStart(scope.row)" :content="actionTip('start')" placement="top" :open-delay="400">
+              <el-button type="text" size="mini" class="row-actions__start" @click="startOrder(scope.row)">开始处理</el-button>
+            </el-tooltip>
+            <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="cmd => handleActionCommand(cmd, scope.row)">
+              <el-button type="text" size="mini">
+                更多<i class="el-icon-arrow-down el-icon--right" />
+              </el-button>
+              <el-dropdown-menu slot="dropdown" class="fault-action-menu">
+                <el-dropdown-item v-if="canRemark(scope.row)" command="remark">
+                  <div class="fault-action-menu__title">备注</div>
+                  <div class="fault-action-menu__desc">{{ actionTip('remark') }}</div>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="canClose(scope.row)" command="close">
+                  <div class="fault-action-menu__title">结案</div>
+                  <div class="fault-action-menu__desc">{{ actionTip('close') }}</div>
+                </el-dropdown-item>
+                <el-dropdown-item v-if="canCancel(scope.row)" command="cancel">
+                  <div class="fault-action-menu__title">取消</div>
+                  <div class="fault-action-menu__desc">{{ actionTip('cancel') }}</div>
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -166,11 +194,21 @@
         </div>
 
         <div v-if="detail.workOrder" class="drawer-actions">
-          <el-button v-if="canAssign(detail.workOrder)" size="small" type="primary" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
-          <el-button v-if="canStart(detail.workOrder)" size="small" type="success" @click="startOrder(detail.workOrder)">开始处理</el-button>
-          <el-button v-if="canRemark(detail.workOrder)" size="small" @click="openRemark(detail.workOrder)">备注</el-button>
-          <el-button v-if="canClose(detail.workOrder)" size="small" type="primary" @click="openFinish(detail.workOrder, 'close')">结案</el-button>
-          <el-button v-if="canCancel(detail.workOrder)" size="small" type="warning" @click="openFinish(detail.workOrder, 'cancel')">取消</el-button>
+          <el-tooltip v-if="canAssign(detail.workOrder)" :content="actionTip('assign')" placement="top" :open-delay="400">
+            <el-button size="small" type="primary" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
+          </el-tooltip>
+          <el-tooltip v-if="canStart(detail.workOrder)" :content="actionTip('start')" placement="top" :open-delay="400">
+            <el-button size="small" type="success" @click="startOrder(detail.workOrder)">开始处理</el-button>
+          </el-tooltip>
+          <el-tooltip v-if="canRemark(detail.workOrder)" :content="actionTip('remark')" placement="top" :open-delay="400">
+            <el-button size="small" @click="openRemark(detail.workOrder)">备注</el-button>
+          </el-tooltip>
+          <el-tooltip v-if="canClose(detail.workOrder)" :content="actionTip('close')" placement="top" :open-delay="400">
+            <el-button size="small" type="primary" @click="openFinish(detail.workOrder, 'close')">结案</el-button>
+          </el-tooltip>
+          <el-tooltip v-if="canCancel(detail.workOrder)" :content="actionTip('cancel')" placement="top" :open-delay="400">
+            <el-button size="small" type="warning" @click="openFinish(detail.workOrder, 'cancel')">取消</el-button>
+          </el-tooltip>
         </div>
 
         <h4 class="drawer-title">处理流水</h4>
@@ -192,7 +230,15 @@
       </div>
     </el-drawer>
 
-    <el-dialog :title="actionDialogTitle" :visible.sync="actionDialog.visible" width="420px">
+    <el-dialog :title="actionDialogTitle" :visible.sync="actionDialog.visible" width="460px">
+      <el-alert
+        v-if="actionDialog.type"
+        :title="actionTip(actionDialog.type)"
+        type="info"
+        :closable="false"
+        show-icon
+        class="action-dialog-tip"
+      />
       <el-form ref="actionForm" :model="actionDialog.form" label-width="90px">
         <template v-if="actionDialog.type === 'assign'">
           <el-form-item label="指派人">
@@ -215,13 +261,13 @@
           </el-form-item>
         </template>
         <template v-else>
-          <el-form-item :label="actionDialog.type === 'remark' ? '备注' : '说明'">
+          <el-form-item :label="remarkField.label">
             <el-input
               v-model="actionDialog.form.remark"
               type="textarea"
               :rows="4"
               clearable
-              :placeholder="actionDialog.type === 'remark' ? '请输入备注' : '请输入处理说明'"
+              :placeholder="remarkField.placeholder"
             />
           </el-form-item>
         </template>
@@ -233,6 +279,7 @@
     </el-dialog>
 
     <el-dialog title="手工建单" :visible.sync="createDialog.visible" width="560px">
+      <el-alert :title="actionTip('create')" type="info" :closable="false" show-icon class="action-dialog-tip" />
       <el-form ref="createForm" :model="createDialog.form" label-width="90px">
         <el-form-item label="所属站点" required>
           <el-select
@@ -360,6 +407,17 @@ const ALARM_OPTIONS = [
   { value: 'CHARGING_MACHINE_END', label: '充电阶段充电机中止' }
 ]
 
+const ACTION_GUIDE = [
+  { key: 'create', name: '手工建单', when: '系统未自动开单时', desc: '巡检、用户反馈或电话报修发现故障，但系统没有自动生成工单时，手工登记一张工单。' },
+  { key: 'detail', name: '详情', when: '任意状态', desc: '查看工单完整信息和处理流水（谁在什么时间做了什么）。' },
+  { key: 'assign', name: '指派 / 改派', when: '待处理、处理中', desc: '把工单交给能看到该站点的运维人员负责；已有负责人时为改派。不改变工单状态。' },
+  { key: 'start', name: '开始处理', when: '仅待处理', desc: '运维人员已接单、开始排查或到场时点击，工单变为「处理中」。' },
+  { key: 'remark', name: '备注', when: '待处理、处理中', desc: '记录处理进展，如已联系厂家、等待配件、已远程重启等。只写流水，不改变状态。' },
+  { key: 'close', name: '结案', when: '待处理、处理中', desc: '故障已修复、设备恢复正常时使用，需填写处理说明（原因和处理方式），工单变为「已结案」。' },
+  { key: 'cancel', name: '取消', when: '待处理、处理中', desc: '误报、重复工单或确认无需处理时使用，需填写取消原因，工单变为「已取消」。' },
+  { key: 'export', name: '导出', when: '任意时候', desc: '按当前筛选条件导出全部工单为 Excel，生成后在下载进度框中下载。' }
+]
+
 const ACTION_LABELS = {
   CREATE: '创建工单',
   DUP_ALARM: '重复告警',
@@ -431,6 +489,7 @@ export default {
         visible: false,
         list: []
       },
+      actionGuide: ACTION_GUIDE,
       statusOptions: STATUS_OPTIONS,
       sourceOptions: SOURCE_OPTIONS,
       alarmOptions: ALARM_OPTIONS
@@ -447,6 +506,15 @@ export default {
       if (this.actionDialog.type === 'remark') return '工单备注'
       if (this.actionDialog.type === 'cancel') return '取消工单'
       return '结案工单'
+    },
+    remarkField() {
+      if (this.actionDialog.type === 'remark') {
+        return { label: '备注', placeholder: '例如：已联系厂家，等待配件到货' }
+      }
+      if (this.actionDialog.type === 'cancel') {
+        return { label: '取消原因', placeholder: '例如：误报，现场确认设备正常；或与工单 FW… 重复' }
+      }
+      return { label: '处理说明', placeholder: '请填写故障原因和处理方式，例如：急停按钮卡住，复位后恢复正常' }
     },
     assigneePlaceholder() {
       const row = this.actionDialog.row
@@ -818,6 +886,10 @@ export default {
     hasMoreActions(row) {
       return this.canRemark(row) || this.canClose(row) || this.canCancel(row)
     },
+    actionTip(key) {
+      const item = ACTION_GUIDE.find(guide => guide.key === key)
+      return item ? item.desc : ''
+    },
     assignLabel(row) {
       return row && row.assigneeUserId ? '改派' : '指派'
     },
@@ -967,9 +1039,75 @@ export default {
   font-size: 12px;
   line-height: 20px;
 }
+.row-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.row-actions .el-button + .el-button,
+.row-actions > * + * {
+  margin-left: 12px;
+}
+.row-actions .el-button--text {
+  padding: 0;
+}
+.row-actions__start {
+  color: #67c23a;
+}
+.action-dialog-tip {
+  margin-bottom: 16px;
+}
+.action-guide {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.action-guide__flow {
+  margin-bottom: 10px;
+  padding: 8px 10px;
+  color: #606266;
+  background: #f4f4f5;
+  border-radius: 4px;
+}
+.action-guide__item {
+  display: flex;
+  padding: 6px 0;
+  border-bottom: 1px dashed #ebeef5;
+}
+.action-guide__item:last-child {
+  border-bottom: none;
+}
+.action-guide__name {
+  flex: 0 0 80px;
+  color: #303133;
+  font-weight: 600;
+}
+.action-guide__when {
+  flex: 0 0 100px;
+  color: #909399;
+}
+.action-guide__desc {
+  flex: 1;
+  color: #606266;
+}
 </style>
 
 <style>
+.fault-action-menu .el-dropdown-menu__item {
+  max-width: 280px;
+  line-height: 1.5;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.fault-action-menu__title {
+  color: #303133;
+}
+.fault-action-menu__desc {
+  color: #909399;
+  font-size: 12px;
+  white-space: normal;
+}
 .fault-order-drawer-wrap .el-drawer__body {
   padding: 0;
   overflow: auto;
