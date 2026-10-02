@@ -10,7 +10,9 @@ import {
   checkOpenWorkOrders,
   getAssigneeCandidates,
   exportFaultWorkOrders,
-  getFaultWorkOrderStatusCounts
+  getFaultWorkOrderStatusCounts,
+  reopenFaultWorkOrder,
+  batchCloseFaultWorkOrders
 } from '@/api/monitor/faultMonitor'
 
 jest.mock('@/api/monitor/faultMonitor', () => ({
@@ -26,7 +28,11 @@ jest.mock('@/api/monitor/faultMonitor', () => ({
   checkOpenWorkOrders: jest.fn(),
   getAssigneeCandidates: jest.fn(),
   exportFaultWorkOrders: jest.fn(),
-  getFaultWorkOrderStatusCounts: jest.fn()
+  getFaultWorkOrderStatusCounts: jest.fn(),
+  reopenFaultWorkOrder: jest.fn(),
+  batchAssignFaultWorkOrders: jest.fn(),
+  batchCloseFaultWorkOrders: jest.fn(),
+  batchCancelFaultWorkOrders: jest.fn()
 }))
 
 jest.mock('@/components/Common/downloadProgress.vue', () => ({
@@ -340,7 +346,7 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
     const wrapper = factory()
     await flush()
 
-    ;['create', 'detail', 'assign', 'start', 'remark', 'close', 'cancel', 'export'].forEach(key => {
+    ;['create', 'detail', 'assign', 'start', 'remark', 'close', 'cancel', 'reopen', 'batch', 'export'].forEach(key => {
       expect(wrapper.vm.actionTip(key)).not.toBe('')
     })
     wrapper.vm.openFinish({ id: 1, status: 'OPEN' }, 'cancel')
@@ -465,5 +471,82 @@ describe('FaultWorkOrderList status tabs and filters', () => {
     const row = { status: 'OPEN', openedAt: '2026-10-02 09:00:00' }
     expect(wrapper.vm.duration(row)).toBe('3小时0分')
     expect(wrapper.vm.overdue(row)).toBe(true)
+  })
+})
+
+describe('FaultWorkOrderList reopen and batch', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
+  })
+
+  it('reopen only for closed orders with permission and requires reason', async() => {
+    const wrapper = factory()
+    await flush()
+    expect(wrapper.vm.canReopen({ status: 'CLOSED' })).toBe(true)
+    expect(wrapper.vm.canReopen({ status: 'CANCELLED' })).toBe(false)
+
+    wrapper.vm.openReopen({ id: 8, status: 'CLOSED' })
+    expect(wrapper.vm.remarkField.label).toBe('重新打开原因')
+    wrapper.vm.submitAction()
+    expect(reopenFaultWorkOrder).not.toHaveBeenCalled()
+
+    reopenFaultWorkOrder.mockResolvedValue({ code: 200 })
+    wrapper.vm.actionDialog.form.remark = '复现'
+    wrapper.vm.submitAction()
+    await flush()
+    expect(reopenFaultWorkOrder).toHaveBeenCalledWith(8, { reason: '复现' })
+  })
+
+  it('batch close posts ids and shows result', async() => {
+    batchCloseFaultWorkOrders.mockResolvedValue({ code: 200, data: { successCount: 1, failures: [{ id: 2, workOrderNo: 'FW2', reason: '工单已结束' }] }})
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.handleSelectionChange([{ id: 1, status: 'OPEN' }, { id: 2, status: 'IN_PROGRESS' }])
+
+    wrapper.vm.openBatch('close')
+    wrapper.vm.submitAction()
+    expect(batchCloseFaultWorkOrders).not.toHaveBeenCalled()
+
+    wrapper.vm.actionDialog.form.remark = '已修复'
+    wrapper.vm.submitAction()
+    await flush()
+
+    expect(batchCloseFaultWorkOrders).toHaveBeenCalledWith({ ids: [1, 2], closeRemark: '已修复' })
+    expect(wrapper.vm.batchResult.visible).toBe(true)
+    expect(wrapper.vm.batchResult.failures[0].workOrderNo).toBe('FW2')
+    expect(wrapper.vm.selection).toEqual([])
+  })
+
+  it('batch assign offers only accounts valid for every selected station', async() => {
+    getAssigneeCandidates.mockImplementation(id => Promise.resolve({
+      code: 200,
+      data: id === 1 ? [{ adminId: 10 }, { adminId: 11 }] : [{ adminId: 11 }, { adminId: 12 }]
+    }))
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.handleSelectionChange([
+      { id: 1, stationId: 100, status: 'OPEN' },
+      { id: 3, stationId: 100, status: 'OPEN' },
+      { id: 2, stationId: 200, status: 'OPEN' }
+    ])
+
+    wrapper.vm.openBatch('assign')
+    await flush()
+
+    expect(getAssigneeCandidates).toHaveBeenCalledTimes(2)
+    expect(wrapper.vm.actionDialog.candidates.map(c => c.adminId)).toEqual([11])
+  })
+
+  it('rejects more than 100 selected', async() => {
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.handleSelectionChange(Array.from({ length: 101 }, (v, i) => ({ id: i + 1, status: 'OPEN' })))
+
+    wrapper.vm.openBatch('cancel')
+
+    expect(wrapper.vm.actionDialog.visible).toBe(false)
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('一次最多处理100单')
   })
 })

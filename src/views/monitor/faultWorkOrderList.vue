@@ -87,14 +87,25 @@
       <el-tag size="small" closable @close="clearStatusIn">{{ statusInLabel }}</el-tag>
     </div>
 
+    <div v-if="selection.length" class="batch-bar">
+      <span class="batch-bar__count">已选 <b>{{ selection.length }}</b> 单</span>
+      <el-button v-if="hasPerm('assign')" size="mini" icon="el-icon-user" @click="openBatch('assign')">批量指派</el-button>
+      <el-button v-if="hasPerm('close')" size="mini" icon="el-icon-circle-check" @click="openBatch('close')">批量结案</el-button>
+      <el-button v-if="hasPerm('cancel')" size="mini" icon="el-icon-circle-close" @click="openBatch('cancel')">批量取消</el-button>
+      <el-button size="mini" type="text" @click="clearSelection">清空</el-button>
+    </div>
+
     <el-table
+      ref="table"
       v-loading="listLoading"
       :data="list"
       element-loading-text="拼命加载中......"
       fit
       highlight-current-row
       style="width: 100%;"
+      @selection-change="handleSelectionChange"
     >
+      <el-table-column type="selection" width="45" align="center" :selectable="isActive" />
       <el-table-column type="index" width="55" label="序号" align="center">
         <template slot-scope="scope"><span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span></template>
       </el-table-column>
@@ -141,6 +152,9 @@
             </el-tooltip>
             <el-tooltip v-if="canStart(scope.row)" :content="actionTip('start')" placement="top" :open-delay="400">
               <el-button type="text" size="mini" class="row-actions__start" @click="startOrder(scope.row)">开始处理</el-button>
+            </el-tooltip>
+            <el-tooltip v-if="canReopen(scope.row)" :content="actionTip('reopen')" placement="top" :open-delay="400">
+              <el-button type="text" size="mini" class="row-actions__reopen" @click="openReopen(scope.row)">重新打开</el-button>
             </el-tooltip>
             <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="cmd => handleActionCommand(cmd, scope.row)">
               <el-button type="text" size="mini">
@@ -260,6 +274,7 @@
           <el-button v-if="canCancel(detail.workOrder)" size="small" type="text" class="drawer-footer__danger" @click="openFinish(detail.workOrder, 'cancel')">取消工单</el-button>
         </div>
         <div class="drawer-footer__right">
+          <el-button v-if="canReopen(detail.workOrder)" size="small" type="warning" plain icon="el-icon-refresh-left" @click="openReopen(detail.workOrder)">重新打开</el-button>
           <el-button v-if="canAssign(detail.workOrder)" size="small" type="primary" icon="el-icon-user" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
           <el-button
             v-if="canClose(detail.workOrder)"
@@ -301,6 +316,7 @@
               />
             </el-select>
             <div v-if="!actionDialog.candidatesLoading && !actionDialog.candidates.length" class="form-hint">暂无可指派账号</div>
+            <div v-if="actionDialog.batch" class="form-hint">只列出能处理全部所选站点工单的账号</div>
           </el-form-item>
         </template>
         <template v-else>
@@ -419,6 +435,22 @@
       </span>
     </el-dialog>
 
+    <el-dialog title="批量处理结果" :visible.sync="batchResult.visible" width="560px" append-to-body>
+      <div class="batch-result__summary">
+        成功 <b class="batch-result__success">{{ batchResult.successCount }}</b> 单，
+        失败 <b class="batch-result__fail">{{ batchResult.failures.length }}</b> 单
+      </div>
+      <el-table v-if="batchResult.failures.length" :data="batchResult.failures" size="small" max-height="300">
+        <el-table-column label="工单编号" min-width="170">
+          <template slot-scope="scope">{{ disp(scope.row.workOrderNo || scope.row.id) }}</template>
+        </el-table-column>
+        <el-table-column prop="reason" label="原因" min-width="200" show-overflow-tooltip />
+      </el-table>
+      <span slot="footer">
+        <el-button type="primary" @click="batchResult.visible = false">知道了</el-button>
+      </span>
+    </el-dialog>
+
     <download-progress ref="downloadProgress" />
   </div>
 </template>
@@ -437,12 +469,18 @@ import {
   checkOpenWorkOrders,
   getAssigneeCandidates,
   exportFaultWorkOrders,
-  getFaultWorkOrderStatusCounts
+  getFaultWorkOrderStatusCounts,
+  reopenFaultWorkOrder,
+  batchAssignFaultWorkOrders,
+  batchCloseFaultWorkOrders,
+  batchCancelFaultWorkOrders
 } from '@/api/monitor/faultMonitor'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import { parseTime } from '@/utils/index'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { orderDurationMs, isOverdue, formatDuration } from './faultWorkOrderMeta'
+
+const BATCH_LIMIT = 100
 
 const STATUS_OPTIONS = [
   { value: 'OPEN', label: '待处理', type: 'warning' },
@@ -481,6 +519,8 @@ const ACTION_GUIDE = [
   { key: 'remark', name: '备注', when: '待处理、处理中', desc: '记录处理进展，如已联系厂家、等待配件、已远程重启等。只写流水，不改变状态。' },
   { key: 'close', name: '结案', when: '待处理、处理中', desc: '故障已修复、设备恢复正常时使用，需填写处理说明（原因和处理方式），工单变为「已结案」。' },
   { key: 'cancel', name: '取消', when: '待处理、处理中', desc: '误报、重复工单或确认无需处理时使用，需填写取消原因，工单变为「已取消」。' },
+  { key: 'reopen', name: '重新打开', when: '仅已结案', desc: '结案后同一故障复现或处理不彻底时使用，需填写原因；工单回到「处理中」，保留原指派人并通知其继续处理。' },
+  { key: 'batch', name: '批量指派 / 结案 / 取消', when: '勾选待处理、处理中的工单', desc: '一次最多 100 单，逐单处理；状态已变化或无权处理的工单会被跳过，并在结果中列出原因。' },
   { key: 'export', name: '导出', when: '任意时候', desc: '按当前筛选条件导出全部工单为 Excel，生成后在下载进度框中下载。' }
 ]
 
@@ -491,7 +531,8 @@ const ACTION_LABELS = {
   START: '开始处理',
   REMARK: '备注',
   CLOSE: '结案',
-  CANCEL: '取消'
+  CANCEL: '取消',
+  REOPEN: '重新打开'
 }
 
 export default {
@@ -537,12 +578,20 @@ export default {
         loading: false,
         type: '',
         row: null,
+        rows: [],
+        batch: false,
         candidates: [],
         candidatesLoading: false,
         form: {
           assigneeUserId: '',
           remark: ''
         }
+      },
+      selection: [],
+      batchResult: {
+        visible: false,
+        successCount: 0,
+        failures: []
       },
       createDialog: {
         visible: false,
@@ -579,11 +628,17 @@ export default {
       return Array.isArray(this.detail.actions) ? this.detail.actions : []
     },
     actionDialogTitle() {
-      if (this.actionDialog.type === 'assign') {
+      const type = this.actionDialog.type
+      if (this.actionDialog.batch) {
+        const names = { assign: '批量指派', close: '批量结案', cancel: '批量取消' }
+        return `${names[type] || '批量处理'}（${this.actionDialog.rows.length} 单）`
+      }
+      if (type === 'assign') {
         return this.actionDialog.row && this.actionDialog.row.assigneeUserId ? '改派工单' : '指派工单'
       }
-      if (this.actionDialog.type === 'remark') return '工单备注'
-      if (this.actionDialog.type === 'cancel') return '取消工单'
+      if (type === 'remark') return '工单备注'
+      if (type === 'cancel') return '取消工单'
+      if (type === 'reopen') return '重新打开工单'
       return '结案工单'
     },
     remarkField() {
@@ -592,6 +647,9 @@ export default {
       }
       if (this.actionDialog.type === 'cancel') {
         return { label: '取消原因', placeholder: '例如：误报，现场确认设备正常；或与工单 FW… 重复' }
+      }
+      if (this.actionDialog.type === 'reopen') {
+        return { label: '重新打开原因', placeholder: '例如：结案后同一故障再次出现，需要继续处理' }
       }
       return { label: '处理说明', placeholder: '请填写故障原因和处理方式，例如：急停按钮卡住，复位后恢复正常' }
     },
@@ -669,7 +727,7 @@ export default {
     },
     hasDetailActions() {
       const row = this.detail.workOrder
-      return this.canAssign(row) || this.canStart(row) || this.canRemark(row) || this.canClose(row) || this.canCancel(row)
+      return this.canAssign(row) || this.canStart(row) || this.canRemark(row) || this.canClose(row) || this.canCancel(row) || this.canReopen(row)
     }
   },
   created() {
@@ -822,19 +880,21 @@ export default {
         this.detailLoading = false
       })
     },
-    openAssign(row) {
-      this.actionDialog = {
+    openActionDialog(type, row, extra = {}) {
+      this.actionDialog = Object.assign({
         visible: true,
         loading: false,
-        type: 'assign',
+        type,
         row,
+        rows: [],
+        batch: false,
         candidates: [],
-        candidatesLoading: true,
-        form: {
-          assigneeUserId: '',
-          remark: ''
-        }
-      }
+        candidatesLoading: false,
+        form: { assigneeUserId: '', remark: '' }
+      }, extra)
+    },
+    openAssign(row) {
+      this.openActionDialog('assign', row, { candidatesLoading: true })
       getAssigneeCandidates(row.id).then(res => {
         this.actionDialog.candidatesLoading = false
         if (res && Number(res.code) === 200) {
@@ -847,26 +907,88 @@ export default {
       })
     },
     openRemark(row) {
-      this.actionDialog = {
-        visible: true,
-        loading: false,
-        type: 'remark',
-        row,
-        candidates: [],
-        candidatesLoading: false,
-        form: { assigneeUserId: '', remark: '' }
-      }
+      this.openActionDialog('remark', row)
     },
     openFinish(row, type) {
-      this.actionDialog = {
-        visible: true,
-        loading: false,
-        type,
-        row,
-        candidates: [],
-        candidatesLoading: false,
-        form: { assigneeUserId: '', remark: '' }
+      this.openActionDialog(type, row)
+    },
+    openReopen(row) {
+      this.openActionDialog('reopen', row)
+    },
+    handleSelectionChange(rows) {
+      this.selection = Array.isArray(rows) ? rows : []
+    },
+    clearSelection() {
+      this.selection = []
+      if (this.$refs.table && this.$refs.table.clearSelection) this.$refs.table.clearSelection()
+    },
+    openBatch(type) {
+      if (!this.selection.length) return
+      if (this.selection.length > BATCH_LIMIT) {
+        this.$message.warning('一次最多处理100单')
+        return
       }
+      const rows = this.selection.slice()
+      this.openActionDialog(type, null, { batch: true, rows, candidatesLoading: type === 'assign' })
+      if (type === 'assign') this.loadBatchCandidates(rows)
+    },
+    loadBatchCandidates(rows) {
+      const firstIdByStation = {}
+      rows.forEach(row => {
+        const key = String(row.stationId)
+        if (!firstIdByStation[key]) firstIdByStation[key] = row.id
+      })
+      const ids = Object.keys(firstIdByStation).map(key => firstIdByStation[key])
+      Promise.all(ids.map(id => getAssigneeCandidates(id))).then(results => {
+        this.actionDialog.candidatesLoading = false
+        const lists = results.map(res => (res && Number(res.code) === 200 && Array.isArray(res.data) ? res.data : []))
+        this.actionDialog.candidates = lists.reduce((common, list) =>
+          common.filter(item => list.some(other => String(other.adminId) === String(item.adminId))))
+      }).catch(() => {
+        this.actionDialog.candidatesLoading = false
+      })
+    },
+    submitBatch() {
+      const type = this.actionDialog.type
+      const ids = this.actionDialog.rows.map(row => row.id)
+      const remark = String(this.actionDialog.form.remark || '').trim()
+      if (type === 'assign' && !this.actionDialog.form.assigneeUserId) {
+        this.$message.warning('请选择指派人')
+        return
+      }
+      if (type !== 'assign' && !remark) {
+        this.$message.warning(type === 'cancel' ? '请输入取消原因' : '请输入处理说明')
+        return
+      }
+      this.actionDialog.loading = true
+      let request
+      if (type === 'assign') {
+        request = batchAssignFaultWorkOrders({ ids, assigneeUserId: this.actionDialog.form.assigneeUserId })
+      } else if (type === 'cancel') {
+        request = batchCancelFaultWorkOrders({ ids, closeRemark: remark })
+      } else {
+        request = batchCloseFaultWorkOrders({ ids, closeRemark: remark })
+      }
+      request.then(res => {
+        this.actionDialog.loading = false
+        if (res && Number(res.code) === 200 && res.data) {
+          this.actionDialog.visible = false
+          this.batchResult = {
+            visible: true,
+            successCount: res.data.successCount || 0,
+            failures: Array.isArray(res.data.failures) ? res.data.failures : []
+          }
+          this.clearSelection()
+          this.getList()
+          return
+        }
+        this.$message.error((res && res.msg) || '操作失败')
+      }).catch(() => {
+        this.actionDialog.loading = false
+      })
+    },
+    canReopen(row) {
+      return this.hasPerm('reopen') && !!row && row.status === 'CLOSED'
     },
     handleActionCommand(command, row) {
       if (command === 'remark') this.openRemark(row)
@@ -874,11 +996,20 @@ export default {
       if (command === 'cancel') this.openFinish(row, 'cancel')
     },
     submitAction() {
+      if (this.actionDialog.batch) {
+        this.submitBatch()
+        return
+      }
       const row = this.actionDialog.row
       if (!row || !row.id) return
       const type = this.actionDialog.type
-      if ((type === 'close' || type === 'cancel') && !String(this.actionDialog.form.remark || '').trim()) {
+      const remark = String(this.actionDialog.form.remark || '').trim()
+      if ((type === 'close' || type === 'cancel') && !remark) {
         this.$message.warning('请输入处理说明')
+        return
+      }
+      if (type === 'reopen' && !remark) {
+        this.$message.warning('请输入重新打开原因')
         return
       }
       if (type === 'assign' && !this.actionDialog.form.assigneeUserId) {
@@ -893,6 +1024,8 @@ export default {
         request = remarkFaultWorkOrder(row.id, { remark: this.actionDialog.form.remark })
       } else if (type === 'cancel') {
         request = cancelFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark })
+      } else if (type === 'reopen') {
+        request = reopenFaultWorkOrder(row.id, { reason: remark })
       } else {
         request = closeFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark })
       }
@@ -1318,6 +1451,34 @@ export default {
 }
 .row-actions__start {
   color: #67c23a;
+}
+.row-actions__reopen {
+  color: #e6a23c;
+}
+.batch-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  background: #ecf5ff;
+  border-radius: 4px;
+}
+.batch-bar__count {
+  margin-right: 16px;
+  color: #606266;
+}
+.batch-bar__count b {
+  color: #409eff;
+}
+.batch-result__summary {
+  margin-bottom: 12px;
+  color: #606266;
+}
+.batch-result__success {
+  color: #67c23a;
+}
+.batch-result__fail {
+  color: #f56c6c;
 }
 .action-dialog-tip {
   margin-bottom: 16px;

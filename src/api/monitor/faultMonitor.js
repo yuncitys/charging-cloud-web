@@ -116,3 +116,35 @@ export function exportFaultWorkOrders(params) {
     params
   })
 }
+
+export function reopenFaultWorkOrder(id, data) {
+  return request({
+    url: `/api/web/monitor/fault/work-orders/${id}/reopen`,
+    method: 'post',
+    data
+  })
+}
+
+export function batchAssignFaultWorkOrders(data) {
+  return request({
+    url: '/api/web/monitor/fault/work-orders/batch/assign',
+    method: 'post',
+    data
+  })
+}
+
+export function batchCloseFaultWorkOrders(data) {
+  return request({
+    url: '/api/web/monitor/fault/work-orders/batch/close',
+    method: 'post',
+    data
+  })
+}
+
+export function batchCancelFaultWorkOrders(data) {
+  return request({
+    url: '/api/web/monitor/fault/work-orders/batch/cancel',
+    method: 'post',
+    data
+  })
+}
