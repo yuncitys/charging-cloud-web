@@ -12,7 +12,9 @@ import {
   exportFaultWorkOrders,
   getFaultWorkOrderStatusCounts,
   reopenFaultWorkOrder,
-  batchCloseFaultWorkOrders
+  batchCloseFaultWorkOrders,
+  remarkFaultWorkOrder,
+  closeFaultWorkOrder
 } from '@/api/monitor/faultMonitor'
 
 jest.mock('@/api/monitor/faultMonitor', () => ({
@@ -41,6 +43,8 @@ jest.mock('@/components/Common/downloadProgress.vue', () => ({
     return h('div')
   }
 }))
+
+jest.mock('@/api/upload/file', () => ({ upload: jest.fn() }))
 
 jest.mock('@/api/netWorkDot/netWorkDotList', () => ({
   getChargingStationList: jest.fn(() => Promise.resolve({ code: 200, data: [] }))
@@ -85,7 +89,9 @@ const factory = (options = {}) => {
       'el-tabs': true,
       'el-tab-pane': true,
       'el-checkbox': true,
-      'download-progress': true
+      'download-progress': true,
+      'fault-image-upload': true,
+      'el-image': true
     },
     ...options
   })
@@ -548,5 +554,52 @@ describe('FaultWorkOrderList reopen and batch', () => {
 
     expect(wrapper.vm.actionDialog.visible).toBe(false)
     expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('一次最多处理100单')
+  })
+})
+
+describe('FaultWorkOrderList attachments', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
+  })
+
+  it('remark allows photos without text and posts attachments', async() => {
+    remarkFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openRemark({ id: 5, status: 'OPEN' })
+    expect(wrapper.vm.supportsAttachments).toBe(true)
+
+    wrapper.vm.submitAction()
+    expect(remarkFaultWorkOrder).not.toHaveBeenCalled()
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('请填写备注或上传照片')
+
+    wrapper.vm.actionDialog.form.attachments = [{ fileUrl: '/api/web/file/image/WebAnnexFile/a.png', fileName: 'a.png' }]
+    wrapper.vm.submitAction()
+    await flush()
+    expect(remarkFaultWorkOrder).toHaveBeenCalledWith(5, {
+      remark: '',
+      attachments: [{ fileUrl: '/api/web/file/image/WebAnnexFile/a.png', fileName: 'a.png' }]
+    })
+  })
+
+  it('close posts attachments; cancel and batch do not support photos', async() => {
+    closeFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openFinish({ id: 6, status: 'IN_PROGRESS' }, 'close')
+    wrapper.vm.actionDialog.form.remark = '已修复'
+    wrapper.vm.actionDialog.form.attachments = [{ fileUrl: '/api/web/file/image/WebAnnexFile/b.png' }]
+
+    wrapper.vm.submitAction()
+    await flush()
+
+    expect(closeFaultWorkOrder).toHaveBeenCalledWith(6, { closeRemark: '已修复', attachments: [{ fileUrl: '/api/web/file/image/WebAnnexFile/b.png' }] })
+    wrapper.vm.openFinish({ id: 6, status: 'OPEN' }, 'cancel')
+    expect(wrapper.vm.supportsAttachments).toBe(false)
+    wrapper.vm.handleSelectionChange([{ id: 1, status: 'OPEN' }])
+    wrapper.vm.openBatch('close')
+    expect(wrapper.vm.supportsAttachments).toBe(false)
   })
 })

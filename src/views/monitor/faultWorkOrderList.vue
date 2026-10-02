@@ -261,6 +261,16 @@
                   <span class="action-item__meta">{{ disp(item.operatorName || item.operatorUserId) }}</span>
                 </div>
                 <div v-if="item.remark" class="action-item__remark">{{ item.remark }}</div>
+                <div v-if="item.attachments && item.attachments.length" class="action-item__images">
+                  <el-image
+                    v-for="file in item.attachments"
+                    :key="file.id || file.fileUrl"
+                    class="action-item__image"
+                    :src="fileUrl(file.fileUrl)"
+                    :preview-src-list="item.attachments.map(f => fileUrl(f.fileUrl))"
+                    fit="cover"
+                  />
+                </div>
               </el-timeline-item>
             </el-timeline>
             <div v-else class="empty-hint">暂无处理流水</div>
@@ -288,7 +298,7 @@
       </div>
     </el-drawer>
 
-    <el-dialog :title="actionDialogTitle" :visible.sync="actionDialog.visible" width="460px">
+    <el-dialog :title="actionDialogTitle" :visible.sync="actionDialog.visible" width="560px">
       <el-alert
         v-if="actionDialog.type"
         :title="actionTip(actionDialog.type)"
@@ -328,6 +338,9 @@
               clearable
               :placeholder="remarkField.placeholder"
             />
+          </el-form-item>
+          <el-form-item v-if="supportsAttachments" label="现场照片">
+            <fault-image-upload v-model="actionDialog.form.attachments" />
           </el-form-item>
         </template>
       </el-form>
@@ -478,6 +491,7 @@ import {
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import { parseTime } from '@/utils/index'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
+import FaultImageUpload from './components/FaultImageUpload.vue'
 import { orderDurationMs, isOverdue, formatDuration } from './faultWorkOrderMeta'
 
 const BATCH_LIMIT = 100
@@ -537,7 +551,7 @@ const ACTION_LABELS = {
 
 export default {
   name: 'FaultWorkOrderList',
-  components: { downloadProgress },
+  components: { downloadProgress, FaultImageUpload },
   data() {
     return {
       listLoading: false,
@@ -584,7 +598,8 @@ export default {
         candidatesLoading: false,
         form: {
           assigneeUserId: '',
-          remark: ''
+          remark: '',
+          attachments: []
         }
       },
       selection: [],
@@ -652,6 +667,9 @@ export default {
         return { label: '重新打开原因', placeholder: '例如：结案后同一故障再次出现，需要继续处理' }
       }
       return { label: '处理说明', placeholder: '请填写故障原因和处理方式，例如：急停按钮卡住，复位后恢复正常' }
+    },
+    supportsAttachments() {
+      return !this.actionDialog.batch && (this.actionDialog.type === 'remark' || this.actionDialog.type === 'close')
     },
     assigneePlaceholder() {
       const row = this.actionDialog.row
@@ -890,7 +908,7 @@ export default {
         batch: false,
         candidates: [],
         candidatesLoading: false,
-        form: { assigneeUserId: '', remark: '' }
+        form: { assigneeUserId: '', remark: '', attachments: [] }
       }, extra)
     },
     openAssign(row) {
@@ -1004,6 +1022,11 @@ export default {
       if (!row || !row.id) return
       const type = this.actionDialog.type
       const remark = String(this.actionDialog.form.remark || '').trim()
+      const attachments = this.actionDialog.form.attachments || []
+      if (type === 'remark' && !remark && !attachments.length) {
+        this.$message.warning('请填写备注或上传照片')
+        return
+      }
       if ((type === 'close' || type === 'cancel') && !remark) {
         this.$message.warning('请输入处理说明')
         return
@@ -1021,13 +1044,13 @@ export default {
       if (type === 'assign') {
         request = assignFaultWorkOrder(row.id, { assigneeUserId: this.actionDialog.form.assigneeUserId })
       } else if (type === 'remark') {
-        request = remarkFaultWorkOrder(row.id, { remark: this.actionDialog.form.remark })
+        request = remarkFaultWorkOrder(row.id, { remark, attachments })
       } else if (type === 'cancel') {
         request = cancelFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark })
       } else if (type === 'reopen') {
         request = reopenFaultWorkOrder(row.id, { reason: remark })
       } else {
-        request = closeFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark })
+        request = closeFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark, attachments })
       }
       request.then(res => this.afterAction(res)).catch(() => {
         this.actionDialog.loading = false
@@ -1246,6 +1269,11 @@ export default {
     actionLabel(actionType) {
       return ACTION_LABELS[actionType] || this.disp(actionType)
     },
+    fileUrl(url) {
+      if (!url) return ''
+      if (/^https?:/i.test(url)) return url
+      return ((this.Global && this.Global.APIURl) || '') + url
+    },
     disp(v) {
       if (v === null || v === undefined || v === '') return '-'
       return v
@@ -1396,6 +1424,18 @@ export default {
   line-height: 1.5;
   background: #f5f7fa;
   border-radius: 4px;
+}
+.action-item__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.action-item__image {
+  width: 64px;
+  height: 64px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 .drawer-footer {
   display: flex;
