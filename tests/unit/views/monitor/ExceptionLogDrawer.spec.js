@@ -33,6 +33,7 @@ const factory = (options = {}) => {
       error: jest.fn(),
       success: jest.fn()
     },
+    btnAuthen: { permsVerifAuthention: jest.fn(() => true) },
     ...(options.mocks || {})
   }
 
@@ -71,6 +72,12 @@ describe('ExceptionLogDrawer transfer to work order', () => {
     expect(wrapper.vm.canTransferToWorkOrder({ type: 'fault' })).toBe(true)
     expect(wrapper.vm.canTransferToWorkOrder({ typeLabel: '故障' })).toBe(true)
     expect(wrapper.vm.canTransferToWorkOrder({ type: 'offline', typeLabel: '离线' })).toBe(false)
+  })
+
+  it('hides transfer button without create permission', () => {
+    const wrapper = factory({ mocks: { btnAuthen: { permsVerifAuthention: jest.fn(() => false) }}})
+
+    expect(wrapper.vm.canTransferToWorkOrder({ type: 'fault' })).toBe(false)
   })
 
   it('navigates to an existing open work order before creating', async() => {

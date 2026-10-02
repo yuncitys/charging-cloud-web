@@ -222,6 +222,7 @@ export default {
     },
     canTransferToWorkOrder(row) {
       if (!row) return false
+      if (!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':ops:faultWorkOrder:create'))) return false
       if (row.type != null) return String(row.type).toLowerCase() === 'fault'
       if (row.typeLabel != null) return row.typeLabel === '故障'
       return this.activeType === 'fault'
