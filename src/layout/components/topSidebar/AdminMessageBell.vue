@@ -89,9 +89,10 @@ export default {
     openMessage(item) {
       if (!item) return
       if (!item.readFlag) {
-        item.readFlag = 1
         readAdminMessage(item.id).then(res => {
-          if (res && Number(res.code) === 200) this.notifyChanged()
+          if (!res || Number(res.code) !== 200) return
+          item.readFlag = 1
+          this.notifyChanged()
         }).catch(() => {})
       }
       const route = adminMessageRoute(item)

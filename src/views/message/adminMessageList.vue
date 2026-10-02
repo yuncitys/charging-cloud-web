@@ -74,6 +74,7 @@ export default {
       readingAll: false,
       readingIds: [],
       activatedOnce: false,
+      listSeq: 0,
       list: [],
       total: 0,
       listQuery: {
@@ -98,8 +99,10 @@ export default {
       const params = { page: this.listQuery.page, limit: this.listQuery.limit }
       const tab = TABS.find(item => item.name === this.activeTab)
       if (tab && tab.readFlag !== undefined) params.readFlag = tab.readFlag
+      const seq = ++this.listSeq
       this.listLoading = true
       return pageAdminMessages(params).then(res => {
+        if (seq !== this.listSeq) return
         this.listLoading = false
         if (res && Number(res.code) === 200) {
           this.list = Array.isArray(res.data) ? res.data : []
@@ -110,7 +113,7 @@ export default {
         this.total = 0
         this.$message.error((res && res.msg) || '消息加载失败')
       }).catch(() => {
-        this.listLoading = false
+        if (seq === this.listSeq) this.listLoading = false
       })
     },
     handleTab() {

@@ -71,6 +71,25 @@ describe('AdminMessageList', () => {
     expect(lastParams()).toEqual({ page: 1, limit: 50, readFlag: 1 })
   })
 
+  it('ignores an older list response that resolves after a newer one', async() => {
+    const wrapper = factory()
+    await flush()
+    let resolveOld
+    pageAdminMessages.mockReturnValueOnce(new Promise(resolve => { resolveOld = resolve }))
+    wrapper.vm.getList()
+    pageAdminMessages.mockResolvedValueOnce({ code: 200, data: [{ id: 5, title: '未读', readFlag: 0 }], count: 1 })
+    wrapper.vm.activeTab = 'unread'
+    wrapper.vm.handleTab()
+    await flush()
+
+    resolveOld({ code: 200, data: [{ id: 1, readFlag: 1 }, { id: 2, readFlag: 1 }], count: 2 })
+    await flush()
+
+    expect(wrapper.vm.list.map(item => item.id)).toEqual([5])
+    expect(wrapper.vm.total).toBe(1)
+    expect(wrapper.vm.listLoading).toBe(false)
+  })
+
   it('view marks unread message read, notifies and navigates', async() => {
     const wrapper = factory()
     await flush()

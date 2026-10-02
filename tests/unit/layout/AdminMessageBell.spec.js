@@ -49,6 +49,29 @@ describe('AdminMessageBell', () => {
     wrapper.destroy()
   })
 
+  it('marks a message read only after the read request succeeds', async() => {
+    const wrapper = factory()
+    await flush()
+    const ok = { id: 1, readFlag: 0 }
+    wrapper.vm.openMessage(ok)
+    expect(ok.readFlag).toBe(0)
+    await flush()
+    expect(ok.readFlag).toBe(1)
+
+    readAdminMessage.mockResolvedValue({ code: 500 })
+    const failed = { id: 2, readFlag: 0 }
+    wrapper.vm.openMessage(failed)
+    await flush()
+    expect(failed.readFlag).toBe(0)
+
+    readAdminMessage.mockRejectedValue(new Error('network'))
+    const errored = { id: 3, readFlag: 0 }
+    wrapper.vm.openMessage(errored)
+    await flush()
+    expect(errored.readFlag).toBe(0)
+    wrapper.destroy()
+  })
+
   it('read all clears unread', async() => {
     const wrapper = factory()
     await flush()
