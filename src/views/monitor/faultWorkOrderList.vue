@@ -877,11 +877,13 @@ export default {
       this.listQuery.status = this.activeStatus === 'ALL' ? '' : this.activeStatus
       this.listQuery.statusIn = ''
       this.listQuery.page = 1
+      this.syncDateQuery()
       this.getList()
     },
     clearStatusIn() {
       this.listQuery.statusIn = ''
       this.listQuery.page = 1
+      this.syncDateQuery()
       this.getList()
     },
     duration(row) {

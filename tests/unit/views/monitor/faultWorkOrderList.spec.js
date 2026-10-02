@@ -466,6 +466,21 @@ describe('FaultWorkOrderList status tabs and filters', () => {
     expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'CLOSED' }))
   })
 
+  it('tab switch and clearing statusIn normalize route dates', async() => {
+    const wrapper = factory({ mocks: { $route: { query: { start: '2026-10-01', end: '2026-10-02', statusIn: 'OPEN,IN_PROGRESS' }}}})
+    await flush()
+
+    wrapper.vm.clearStatusIn()
+    expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({
+      start: '2026-10-01 00:00:00', end: '2026-10-02 23:59:59'
+    }))
+
+    wrapper.vm.listQuery.start = '2026-10-01'
+    wrapper.vm.activeStatus = 'OPEN'
+    wrapper.vm.handleStatusTab()
+    expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ start: '2026-10-01 00:00:00' }))
+  })
+
   it('sends mine/overdue only when checked and reads them from route', async() => {
     const wrapper = factory({ mocks: { $route: { query: { mine: 'true' }}}})
     await flush()

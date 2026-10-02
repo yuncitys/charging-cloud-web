@@ -86,6 +86,76 @@ describe('AdminMessageList', () => {
     expect(wrapper.vm.$router.push).toHaveBeenCalledWith({ path: '/device/faultWorkOrders', query: { id: 9 }})
   })
 
+  it('reloads when re-activated by keep-alive but not on first activation', async() => {
+    const wrapper = factory()
+    await flush()
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
+
+    wrapper.vm.$options.activated.forEach(fn => fn.call(wrapper.vm))
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
+    wrapper.vm.$options.activated.forEach(fn => fn.call(wrapper.vm))
+    expect(pageAdminMessages).toHaveBeenCalledTimes(2)
+  })
+
+  it('reloads on admin-message:changed until destroyed', async() => {
+    const wrapper = factory()
+    await flush()
+    const root = wrapper.vm.$root
+    pageAdminMessages.mockClear()
+
+    root.$emit('admin-message:changed')
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
+
+    wrapper.destroy()
+    root.$emit('admin-message:changed')
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
+  })
+
+  it('view keeps row unread when read fails but still navigates', async() => {
+    readAdminMessage.mockResolvedValue({ code: 500, msg: '失败' })
+    const wrapper = factory()
+    await flush()
+    const changed = jest.fn()
+    wrapper.vm.$root.$on('admin-message:changed', changed)
+
+    wrapper.vm.viewMessage(wrapper.vm.list[0])
+    await flush()
+
+    expect(wrapper.vm.list[0].readFlag).toBe(0)
+    expect(changed).not.toHaveBeenCalled()
+    expect(wrapper.vm.$router.push).toHaveBeenCalledWith({ path: '/device/faultWorkOrders', query: { id: 9 }})
+  })
+
+  it('view without a linked page reloads the list', async() => {
+    const wrapper = factory()
+    await flush()
+    pageAdminMessages.mockClear()
+
+    wrapper.vm.viewMessage({ id: 3, readFlag: 0, bizType: 'OTHER' })
+    await flush()
+
+    expect(readAdminMessage).toHaveBeenCalledWith(3)
+    expect(wrapper.vm.$router.push).not.toHaveBeenCalled()
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
+  })
+
+  it('mark read ignores double clicks while in flight', async() => {
+    let resolveRead
+    readAdminMessage.mockReturnValue(new Promise(resolve => { resolveRead = resolve }))
+    const wrapper = factory()
+    await flush()
+    const row = wrapper.vm.list[0]
+
+    wrapper.vm.markRead(row)
+    wrapper.vm.markRead(row)
+    expect(readAdminMessage).toHaveBeenCalledTimes(1)
+    expect(wrapper.vm.isReading(row)).toBe(true)
+
+    resolveRead({ code: 200 })
+    await flush()
+    expect(wrapper.vm.isReading(row)).toBe(false)
+  })
+
   it('view of a read message only navigates', async() => {
     const wrapper = factory()
     await flush()
@@ -108,7 +178,7 @@ describe('AdminMessageList', () => {
 
     expect(readAdminMessage).toHaveBeenCalledWith(1)
     expect(changed).toHaveBeenCalled()
-    expect(pageAdminMessages).toHaveBeenCalled()
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
     expect(wrapper.vm.$router.push).not.toHaveBeenCalled()
   })
 
@@ -125,6 +195,6 @@ describe('AdminMessageList', () => {
     expect(readAllAdminMessages).toHaveBeenCalled()
     expect(wrapper.vm.$message.success).toHaveBeenCalled()
     expect(changed).toHaveBeenCalled()
-    expect(pageAdminMessages).toHaveBeenCalled()
+    expect(pageAdminMessages).toHaveBeenCalledTimes(1)
   })
 })

@@ -90,7 +90,9 @@ export default {
       if (!item) return
       if (!item.readFlag) {
         item.readFlag = 1
-        readAdminMessage(item.id).then(() => this.refreshCount()).catch(() => {})
+        readAdminMessage(item.id).then(res => {
+          if (res && Number(res.code) === 200) this.notifyChanged()
+        }).catch(() => {})
       }
       const route = adminMessageRoute(item)
       if (route) {
@@ -103,10 +105,14 @@ export default {
       this.$router.push('/message/list')
     },
     readAll() {
-      readAllAdminMessages().then(() => {
+      readAllAdminMessages().then(res => {
+        if (!res || Number(res.code) !== 200) return
         this.list.forEach(item => { item.readFlag = 1 })
-        return this.refreshCount()
+        this.notifyChanged()
       }).catch(() => {})
+    },
+    notifyChanged() {
+      this.$root.$emit(ADMIN_MESSAGE_CHANGED)
     },
     time(v) {
       return v ? parseTime(v, '{y}-{m}-{d} {h}:{i}') : ''

@@ -62,6 +62,27 @@ describe('AdminMessageBell', () => {
     wrapper.destroy()
   })
 
+  it('emits admin-message:changed after successful reads only', async() => {
+    const wrapper = factory()
+    await flush()
+    const changed = jest.fn()
+    wrapper.vm.$root.$on('admin-message:changed', changed)
+
+    wrapper.vm.openMessage({ id: 1, readFlag: 0 })
+    await flush()
+    wrapper.vm.readAll()
+    await flush()
+    expect(changed).toHaveBeenCalledTimes(2)
+
+    readAdminMessage.mockResolvedValue({ code: 500 })
+    readAllAdminMessages.mockResolvedValue({ code: 500 })
+    wrapper.vm.openMessage({ id: 2, readFlag: 0 })
+    wrapper.vm.readAll()
+    await flush()
+    expect(changed).toHaveBeenCalledTimes(2)
+    wrapper.destroy()
+  })
+
   it('footer link closes popover and opens message center', async() => {
     const wrapper = factory()
     await flush()

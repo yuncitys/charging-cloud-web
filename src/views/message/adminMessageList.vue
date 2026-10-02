@@ -33,7 +33,7 @@
       <el-table-column label="操作" width="180" align="center">
         <template slot-scope="scope">
           <el-button size="mini" type="primary" @click="viewMessage(scope.row)">查看</el-button>
-          <el-button v-if="!scope.row.readFlag" size="mini" @click="markRead(scope.row)">标为已读</el-button>
+          <el-button v-if="!scope.row.readFlag" size="mini" :loading="isReading(scope.row)" @click="markRead(scope.row)">标为已读</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -72,6 +72,8 @@ export default {
       activeTab: 'all',
       listLoading: false,
       readingAll: false,
+      readingIds: [],
+      activatedOnce: false,
       list: [],
       total: 0,
       listQuery: {
@@ -82,6 +84,14 @@ export default {
   },
   created() {
     this.getList()
+    this.$root.$on(ADMIN_MESSAGE_CHANGED, this.getList)
+  },
+  activated() {
+    if (this.activatedOnce) this.getList()
+    this.activatedOnce = true
+  },
+  beforeDestroy() {
+    this.$root.$off(ADMIN_MESSAGE_CHANGED, this.getList)
   },
   methods: {
     getList() {
@@ -117,26 +127,39 @@ export default {
       this.getList()
     },
     notifyChanged() {
+      // 本页也监听该事件刷新列表，调用方无需再 getList
       this.$root.$emit(ADMIN_MESSAGE_CHANGED)
     },
     viewMessage(row) {
       if (!row) return
       if (!row.readFlag) {
-        row.readFlag = 1
-        readAdminMessage(row.id).then(() => this.notifyChanged()).catch(() => {})
+        readAdminMessage(row.id).then(res => {
+          if (res && Number(res.code) === 200) {
+            row.readFlag = 1
+            this.notifyChanged()
+          }
+        }).catch(() => {})
       }
       const route = adminMessageRoute(row)
       if (route) this.$router.push(route)
     },
+    isReading(row) {
+      return this.readingIds.indexOf(row.id) !== -1
+    },
     markRead(row) {
+      if (this.isReading(row)) return
+      this.readingIds.push(row.id)
+      const done = () => {
+        this.readingIds = this.readingIds.filter(id => id !== row.id)
+      }
       readAdminMessage(row.id).then(res => {
+        done()
         if (res && Number(res.code) === 200) {
           this.notifyChanged()
-          this.getList()
           return
         }
         this.$message.error((res && res.msg) || '操作失败')
-      }).catch(() => {})
+      }).catch(done)
     },
     readAll() {
       this.readingAll = true
@@ -145,7 +168,6 @@ export default {
         if (res && Number(res.code) === 200) {
           this.$message.success('已全部标为已读')
           this.notifyChanged()
-          this.getList()
           return
         }
         this.$message.error((res && res.msg) || '操作失败')
