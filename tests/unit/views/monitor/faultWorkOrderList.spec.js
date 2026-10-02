@@ -208,6 +208,17 @@ describe('FaultWorkOrderList manual create', () => {
     expect(checkOpenWorkOrders).not.toHaveBeenCalled()
   })
 
+  it('requires alarm item before submit', async() => {
+    const wrapper = factory()
+    await fillForm(wrapper)
+    wrapper.vm.createDialog.form.alarmCode = ''
+
+    wrapper.vm.submitCreate()
+
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('请选择告警项')
+    expect(checkOpenWorkOrders).not.toHaveBeenCalled()
+  })
+
   it('shows duplicate dialog instead of creating when open orders exist', async() => {
     checkOpenWorkOrders.mockResolvedValue({ code: 200, data: [{ id: 5, workOrderNo: 'FW1', status: 'OPEN' }] })
     const wrapper = factory()

@@ -244,7 +244,7 @@
           <el-button v-if="canCancel(detail.workOrder)" size="small" type="text" class="drawer-footer__danger" @click="openFinish(detail.workOrder, 'cancel')">取消工单</el-button>
         </div>
         <div class="drawer-footer__right">
-          <el-button v-if="canAssign(detail.workOrder)" size="small" plain type="primary" icon="el-icon-user" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
+          <el-button v-if="canAssign(detail.workOrder)" size="small" type="primary" icon="el-icon-user" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
           <el-button
             v-if="canClose(detail.workOrder)"
             size="small"
@@ -305,62 +305,78 @@
       </span>
     </el-dialog>
 
-    <el-dialog title="手工建单" :visible.sync="createDialog.visible" width="560px">
-      <el-alert :title="actionTip('create')" type="info" :closable="false" show-icon class="action-dialog-tip" />
-      <el-form ref="createForm" :model="createDialog.form" label-width="90px">
-        <el-form-item label="所属站点" required>
-          <el-select
-            v-model="createDialog.form.stationId"
-            style="width: 100%;"
-            filterable
-            clearable
-            placeholder="请选择充电站"
-            @change="handleCreateStationChange"
-          >
-            <el-option v-for="item in stationList" :key="item.id" :label="item.networkName" :value="item.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="设备" required>
-          <el-select
-            v-model="createDialog.form.deviceCode"
-            style="width: 100%;"
-            filterable
-            clearable
-            :disabled="!createDialog.form.stationId"
-            :placeholder="createDialog.devicesLoading ? '加载中...' : '请选择设备'"
-            @change="handleCreateDeviceChange"
-          >
-            <el-option v-for="item in createDialog.devices" :key="item.deviceCode" :label="deviceLabel(item)" :value="item.deviceCode" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="枪口">
-          <el-select
-            v-model="createDialog.form.connectorCode"
-            style="width: 100%;"
-            clearable
-            :disabled="!createDialog.form.deviceCode"
-            placeholder="不选则为整桩"
-          >
-            <el-option v-for="item in createGuns" :key="item.gunNumber" :label="gunLabel(item)" :value="item.gunNumber" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="告警项">
-          <el-select v-model="createDialog.form.alarmCode" style="width: 100%;" clearable placeholder="可选">
-            <el-option v-for="item in alarmOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="标题" required>
-          <el-input v-model="createDialog.form.title" maxlength="128" show-word-limit clearable placeholder="请输入工单标题" />
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="createDialog.form.description" type="textarea" :rows="3" clearable placeholder="请输入故障描述" />
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button @click="createDialog.visible = false">取消</el-button>
-        <el-button type="primary" :loading="createDialog.loading" @click="submitCreate">确定</el-button>
-      </span>
-    </el-dialog>
+    <el-drawer
+      title="手工建单"
+      :visible.sync="createDialog.visible"
+      direction="rtl"
+      size="560px"
+      append-to-body
+      :wrapper-closable="false"
+      custom-class="fault-order-drawer-wrap"
+    >
+      <div class="create-drawer">
+        <el-alert :title="actionTip('create')" type="info" :closable="false" show-icon class="action-dialog-tip" />
+        <el-form ref="createForm" :model="createDialog.form" label-position="top" class="create-form">
+          <el-form-item label="所属站点" required>
+            <el-select
+              v-model="createDialog.form.stationId"
+              style="width: 100%;"
+              filterable
+              clearable
+              placeholder="请选择充电站"
+              @change="handleCreateStationChange"
+            >
+              <el-option v-for="item in stationList" :key="item.id" :label="item.networkName" :value="item.id" />
+            </el-select>
+          </el-form-item>
+          <el-row :gutter="16">
+            <el-col :span="14">
+              <el-form-item label="设备" required>
+                <el-select
+                  v-model="createDialog.form.deviceCode"
+                  style="width: 100%;"
+                  filterable
+                  clearable
+                  :disabled="!createDialog.form.stationId"
+                  :placeholder="createDevicePlaceholder"
+                  @change="handleCreateDeviceChange"
+                >
+                  <el-option v-for="item in createDialog.devices" :key="item.deviceCode" :label="deviceLabel(item)" :value="item.deviceCode" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+            <el-col :span="10">
+              <el-form-item label="枪口">
+                <el-select
+                  v-model="createDialog.form.connectorCode"
+                  style="width: 100%;"
+                  clearable
+                  :disabled="!createDialog.form.deviceCode"
+                  placeholder="不选则为整桩"
+                >
+                  <el-option v-for="item in createGuns" :key="item.gunNumber" :label="gunLabel(item)" :value="item.gunNumber" />
+                </el-select>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="告警项" required>
+            <el-select v-model="createDialog.form.alarmCode" style="width: 100%;" clearable placeholder="请选择告警项">
+              <el-option v-for="item in alarmOptions" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="标题" required>
+            <el-input v-model="createDialog.form.title" maxlength="128" show-word-limit clearable placeholder="请输入工单标题，例如：3号桩急停无法复位" />
+          </el-form-item>
+          <el-form-item label="描述">
+            <el-input v-model="createDialog.form.description" type="textarea" :rows="4" maxlength="500" show-word-limit placeholder="请描述故障现象、发现方式和现场情况" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="drawer-footer drawer-footer--end">
+        <el-button size="small" @click="createDialog.visible = false">取消</el-button>
+        <el-button size="small" type="primary" :loading="createDialog.loading" @click="submitCreate">确定</el-button>
+      </div>
+    </el-drawer>
 
     <el-dialog title="该设备已有未结束工单" :visible.sync="duplicateDialog.visible" width="680px" append-to-body>
       <el-table :data="duplicateDialog.list" size="small">
@@ -545,6 +561,10 @@ export default {
     assigneePlaceholder() {
       const row = this.actionDialog.row
       return row && row.assigneeName ? `当前：${row.assigneeName}，请选择新的指派人` : '请选择指派人'
+    },
+    createDevicePlaceholder() {
+      if (!this.createDialog.form.stationId) return '请先选择站点'
+      return this.createDialog.devicesLoading ? '加载中...' : '请选择设备'
     },
     createGuns() {
       const device = this.createDialog.devices.find(item => item.deviceCode === this.createDialog.form.deviceCode)
@@ -878,6 +898,10 @@ export default {
         this.$message.warning('请选择设备')
         return
       }
+      if (!form.alarmCode) {
+        this.$message.warning('请选择告警项')
+        return
+      }
       if (!String(form.title || '').trim()) {
         this.$message.warning('请填写标题')
         return
@@ -1158,6 +1182,18 @@ export default {
   background: #fff;
   border-top: 1px solid #ebeef5;
 }
+.drawer-footer--end {
+  justify-content: flex-end;
+}
+.create-drawer {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 24px 8px;
+}
+.create-form .el-form-item {
+  margin-bottom: 18px;
+}
 .drawer-footer__danger {
   margin-left: 12px;
   color: #f56c6c;
@@ -1224,6 +1260,10 @@ export default {
   min-height: 0;
   padding: 0;
   overflow: hidden;
+}
+.fault-order-drawer-wrap .create-form .el-form-item__label {
+  padding-bottom: 4px;
+  line-height: 22px;
 }
 .fault-order-drawer-wrap .el-step__title {
   font-size: 13px;
