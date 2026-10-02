@@ -603,3 +603,39 @@ describe('FaultWorkOrderList attachments', () => {
     expect(wrapper.vm.supportsAttachments).toBe(false)
   })
 })
+
+describe('FaultWorkOrderList attachment uploading', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
+  })
+
+  it('blocks submit while photos are uploading and resets on reopen', async() => {
+    remarkFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openRemark({ id: 5, status: 'OPEN' })
+    wrapper.vm.actionDialog.form.remark = '已到场'
+    wrapper.vm.actionDialog.uploading = true
+
+    wrapper.vm.submitAction()
+
+    expect(remarkFaultWorkOrder).not.toHaveBeenCalled()
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('图片上传中，请稍候')
+    wrapper.vm.openRemark({ id: 7, status: 'OPEN' })
+    expect(wrapper.vm.actionDialog.uploading).toBe(false)
+  })
+
+  it('close sends trimmed closeRemark', async() => {
+    closeFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openFinish({ id: 6, status: 'IN_PROGRESS' }, 'close')
+    wrapper.vm.actionDialog.form.remark = '  已修复  '
+
+    wrapper.vm.submitAction()
+
+    expect(closeFaultWorkOrder).toHaveBeenCalledWith(6, { closeRemark: '已修复', attachments: [] })
+  })
+})

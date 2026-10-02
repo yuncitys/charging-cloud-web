@@ -28,6 +28,13 @@ export default {
     value: { type: Array, default: () => [] },
     limit: { type: Number, default: 9 }
   },
+  data() {
+    return {
+      pending: 0,
+      session: 0,
+      lastEmitted: null
+    }
+  },
   computed: {
     fileList() {
       return this.value.map(item => ({
@@ -36,6 +43,14 @@ export default {
         fileUrl: item.fileUrl
       }))
     }
+  },
+  watch: {
+    value(val) {
+      if (val !== this.lastEmitted) this.resetSession()
+    }
+  },
+  beforeDestroy() {
+    this.resetSession()
   },
   methods: {
     fullUrl(url) {
@@ -54,20 +69,50 @@ export default {
       }
       return true
     },
+    resetSession() {
+      this.session++
+      this.setPending(0)
+    },
+    setPending(count) {
+      const wasUploading = this.pending > 0
+      this.pending = count
+      if (wasUploading !== count > 0) this.$emit('uploading', count > 0)
+    },
+    emitValue(list) {
+      this.lastEmitted = list
+      this.$emit('input', list)
+    },
     doUpload({ file }) {
+      const task = { session: this.session, done: false }
+      const live = () => !task.done && task.session === this.session
+      const finish = () => {
+        if (!live()) return
+        task.done = true
+        this.setPending(this.pending - 1)
+      }
       const form = new FormData()
       form.append('file', file)
-      return upload('WebAnnexFile', form).then(res => {
+      this.setPending(this.pending + 1)
+      const request = upload('WebAnnexFile', form).then(res => {
+        if (!live()) return
+        finish()
         const url = res && Number(res.code) === 200 && res.data && res.data.url
         if (!url) {
           this.$message.error((res && res.msg) || '上传失败')
           return Promise.reject(new Error('upload failed'))
         }
-        this.$emit('input', this.value.concat([{ fileUrl: url, fileName: file.name }]))
+        this.emitValue(this.value.concat([{ fileUrl: url, fileName: file.name }]))
+      }, err => {
+        if (!live()) return
+        finish()
+        return Promise.reject(err)
       })
+      request.abort = finish
+      return request
     },
     handleRemove(file) {
-      this.$emit('input', this.value.filter(item => item.fileUrl !== file.fileUrl))
+      if (!file.fileUrl) return
+      this.emitValue(this.value.filter(item => item.fileUrl !== file.fileUrl))
     },
     handleExceed() {
       this.$message.warning(`最多上传 ${this.limit} 张图片`)

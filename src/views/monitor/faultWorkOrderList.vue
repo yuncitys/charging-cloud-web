@@ -340,7 +340,7 @@
             />
           </el-form-item>
           <el-form-item v-if="supportsAttachments" label="现场照片">
-            <fault-image-upload v-model="actionDialog.form.attachments" />
+            <fault-image-upload v-model="actionDialog.form.attachments" @uploading="v => actionDialog.uploading = v" />
           </el-form-item>
         </template>
       </el-form>
@@ -590,6 +590,7 @@ export default {
       actionDialog: {
         visible: false,
         loading: false,
+        uploading: false,
         type: '',
         row: null,
         rows: [],
@@ -902,6 +903,7 @@ export default {
       this.actionDialog = Object.assign({
         visible: true,
         loading: false,
+        uploading: false,
         type,
         row,
         rows: [],
@@ -1023,6 +1025,10 @@ export default {
       const type = this.actionDialog.type
       const remark = String(this.actionDialog.form.remark || '').trim()
       const attachments = this.actionDialog.form.attachments || []
+      if (this.actionDialog.uploading) {
+        this.$message.warning('图片上传中，请稍候')
+        return
+      }
       if (type === 'remark' && !remark && !attachments.length) {
         this.$message.warning('请填写备注或上传照片')
         return
@@ -1050,7 +1056,7 @@ export default {
       } else if (type === 'reopen') {
         request = reopenFaultWorkOrder(row.id, { reason: remark })
       } else {
-        request = closeFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark, attachments })
+        request = closeFaultWorkOrder(row.id, { closeRemark: remark, attachments })
       }
       request.then(res => this.afterAction(res)).catch(() => {
         this.actionDialog.loading = false
