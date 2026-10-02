@@ -329,6 +329,22 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
     expect(wrapper.vm.remarkField.label).toBe('处理说明')
   })
 
+  it('detail cards show progress and finish remark by status', async() => {
+    const wrapper = factory()
+    await flush()
+
+    wrapper.vm.detail = { workOrder: { id: 1, status: 'IN_PROGRESS', assigneeUserId: '24' }, actions: [] }
+    expect(wrapper.vm.detailProgress.active).toBe(3)
+    expect(wrapper.vm.detailFields.map(f => f.label)).not.toContain('结案说明')
+    expect(wrapper.vm.detailFields.find(f => f.label === '枪口').value).toBe('整桩')
+    expect(wrapper.vm.hasDetailActions).toBe(true)
+
+    wrapper.vm.detail = { workOrder: { id: 1, status: 'CANCELLED', closeRemark: '误报' }, actions: [] }
+    expect(wrapper.vm.detailProgress.steps.map(s => s.title)).toEqual(['创建', '已取消'])
+    expect(wrapper.vm.detailFields.find(f => f.label === '取消原因').value).toBe('误报')
+    expect(wrapper.vm.hasDetailActions).toBe(false)
+  })
+
   it('export opens download progress with task id', async() => {
     exportFaultWorkOrders.mockResolvedValue({ code: 200, data: { id: 777 }})
     const open = jest.fn()

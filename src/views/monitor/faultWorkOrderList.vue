@@ -75,17 +75,6 @@
       <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <el-button v-if="hasPerm('create')" size="mini" class="filter-item" icon="el-icon-plus" @click="openCreateDialog">手工建单</el-button>
       <el-button v-if="hasPerm('export')" size="mini" class="filter-item" icon="el-icon-download" :loading="exporting" @click="exportList">导出</el-button>
-      <el-popover placement="bottom-end" width="560" trigger="click">
-        <div class="action-guide">
-          <div class="action-guide__flow">处理流程：待处理 →（指派）→ 开始处理 → 处理中 →（备注）→ 结案；误报或无需处理时直接取消。</div>
-          <div v-for="item in actionGuide" :key="item.key" class="action-guide__item">
-            <span class="action-guide__name">{{ item.name }}</span>
-            <span class="action-guide__when">{{ item.when }}</span>
-            <span class="action-guide__desc">{{ item.desc }}</span>
-          </div>
-        </div>
-        <el-button slot="reference" size="mini" class="filter-item" icon="el-icon-question">操作说明</el-button>
-      </el-popover>
     </div>
 
     <el-table
@@ -183,50 +172,88 @@
       custom-class="fault-order-drawer-wrap"
     >
       <div v-loading="detailLoading" class="fault-order-drawer">
-        <div v-if="detail.workOrder" class="detail-grid">
-          <div v-for="item in detailFields" :key="item.label" class="detail-grid__item" :class="{ 'detail-grid__item--wide': item.wide }">
-            <span class="detail-grid__label">{{ item.label }}</span>
-            <span class="detail-grid__value">
-              <el-tag v-if="item.tag" size="mini" :type="statusType(detail.workOrder.status)">{{ item.value }}</el-tag>
-              <template v-else>{{ item.value }}</template>
-            </span>
+        <template v-if="detail.workOrder">
+          <div class="detail-card detail-hero">
+            <div class="detail-hero__head">
+              <div class="detail-hero__title">{{ disp(detail.workOrder.title || detail.workOrder.alarmItem) }}</div>
+              <el-tag size="small" effect="dark" :type="statusType(detail.workOrder.status)">{{ statusLabel(detail.workOrder.status) }}</el-tag>
+            </div>
+            <div class="detail-hero__meta">
+              <span>{{ disp(detail.workOrder.workOrderNo) }}</span>
+              <span class="detail-hero__dot" />
+              <span>{{ sourceLabel(detail.workOrder.source) }}</span>
+              <span class="detail-hero__dot" />
+              <span>{{ time(detail.workOrder.openedAt) }} 打开</span>
+            </div>
+            <el-steps
+              class="detail-hero__steps"
+              :active="detailProgress.active"
+              finish-status="success"
+              align-center
+            >
+              <el-step
+                v-for="step in detailProgress.steps"
+                :key="step.title"
+                :title="step.title"
+                :description="step.time"
+                :status="step.status"
+              />
+            </el-steps>
           </div>
-        </div>
 
-        <div v-if="detail.workOrder" class="drawer-actions">
-          <el-tooltip v-if="canAssign(detail.workOrder)" :content="actionTip('assign')" placement="top" :open-delay="400">
-            <el-button size="small" type="primary" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
-          </el-tooltip>
-          <el-tooltip v-if="canStart(detail.workOrder)" :content="actionTip('start')" placement="top" :open-delay="400">
-            <el-button size="small" type="success" @click="startOrder(detail.workOrder)">开始处理</el-button>
-          </el-tooltip>
-          <el-tooltip v-if="canRemark(detail.workOrder)" :content="actionTip('remark')" placement="top" :open-delay="400">
-            <el-button size="small" @click="openRemark(detail.workOrder)">备注</el-button>
-          </el-tooltip>
-          <el-tooltip v-if="canClose(detail.workOrder)" :content="actionTip('close')" placement="top" :open-delay="400">
-            <el-button size="small" type="primary" @click="openFinish(detail.workOrder, 'close')">结案</el-button>
-          </el-tooltip>
-          <el-tooltip v-if="canCancel(detail.workOrder)" :content="actionTip('cancel')" placement="top" :open-delay="400">
-            <el-button size="small" type="warning" @click="openFinish(detail.workOrder, 'cancel')">取消</el-button>
-          </el-tooltip>
-        </div>
+          <div v-for="section in detailSections" :key="section.title" class="detail-card">
+            <div class="detail-card__title"><i :class="section.icon" />{{ section.title }}</div>
+            <div class="detail-fields">
+              <div
+                v-for="item in section.fields"
+                :key="item.label"
+                class="detail-field"
+                :class="{ 'detail-field--wide': item.wide, 'detail-field--highlight': item.highlight }"
+              >
+                <div class="detail-field__label">{{ item.label }}</div>
+                <div class="detail-field__value">{{ item.value }}</div>
+              </div>
+            </div>
+          </div>
 
-        <h4 class="drawer-title">处理流水</h4>
-        <el-timeline v-if="detailActions.length">
-          <el-timeline-item
-            v-for="item in detailActions"
-            :key="item.id"
-            :timestamp="time(item.createTime)"
-            placement="top"
-          >
-            <el-card shadow="never" class="action-card">
-              <div class="action-card__title">{{ actionLabel(item.actionType) }}</div>
-              <div class="action-card__meta">操作人：{{ disp(item.operatorName || item.operatorUserId) }}</div>
-              <div v-if="item.remark" class="action-card__remark">{{ item.remark }}</div>
-            </el-card>
-          </el-timeline-item>
-        </el-timeline>
-        <div v-else class="empty-hint">暂无处理流水</div>
+          <div class="detail-card">
+            <div class="detail-card__title"><i class="el-icon-time" />处理流水</div>
+            <el-timeline v-if="detailActions.length" class="detail-timeline">
+              <el-timeline-item
+                v-for="item in detailActions"
+                :key="item.id"
+                :timestamp="time(item.createTime)"
+                placement="top"
+                size="normal"
+              >
+                <div class="action-item">
+                  <span class="action-item__title">{{ actionLabel(item.actionType) }}</span>
+                  <span class="action-item__meta">{{ disp(item.operatorName || item.operatorUserId) }}</span>
+                </div>
+                <div v-if="item.remark" class="action-item__remark">{{ item.remark }}</div>
+              </el-timeline-item>
+            </el-timeline>
+            <div v-else class="empty-hint">暂无处理流水</div>
+          </div>
+        </template>
+      </div>
+
+      <div v-if="detail.workOrder && hasDetailActions" class="drawer-footer">
+        <div class="drawer-footer__left">
+          <el-button v-if="canRemark(detail.workOrder)" size="small" icon="el-icon-edit-outline" @click="openRemark(detail.workOrder)">备注</el-button>
+          <el-button v-if="canCancel(detail.workOrder)" size="small" type="text" class="drawer-footer__danger" @click="openFinish(detail.workOrder, 'cancel')">取消工单</el-button>
+        </div>
+        <div class="drawer-footer__right">
+          <el-button v-if="canAssign(detail.workOrder)" size="small" plain type="primary" icon="el-icon-user" @click="openAssign(detail.workOrder)">{{ assignLabel(detail.workOrder) }}</el-button>
+          <el-button
+            v-if="canClose(detail.workOrder)"
+            size="small"
+            icon="el-icon-circle-check"
+            :type="detail.workOrder.status === 'IN_PROGRESS' ? 'primary' : 'default'"
+            @click="openFinish(detail.workOrder, 'close')"
+          >结案</el-button>
+          <el-button v-if="canStart(detail.workOrder)" size="small" type="primary" icon="el-icon-video-play" @click="startOrder(detail.workOrder)">开始处理</el-button>
+        </div>
       </div>
     </el-drawer>
 
@@ -489,7 +516,6 @@ export default {
         visible: false,
         list: []
       },
-      actionGuide: ACTION_GUIDE,
       statusOptions: STATUS_OPTIONS,
       sourceOptions: SOURCE_OPTIONS,
       alarmOptions: ALARM_OPTIONS
@@ -524,25 +550,69 @@ export default {
       const device = this.createDialog.devices.find(item => item.deviceCode === this.createDialog.form.deviceCode)
       return device && Array.isArray(device.guns) ? device.guns : []
     },
-    detailFields() {
+    detailSections() {
       const row = this.detail.workOrder || {}
+      const finished = row.status === 'CLOSED' || row.status === 'CANCELLED'
+      const description = [{ label: '故障描述', value: this.disp(row.description), wide: true }]
+      if (finished) {
+        description.push({
+          label: row.status === 'CANCELLED' ? '取消原因' : '结案说明',
+          value: this.disp(row.closeRemark),
+          wide: true,
+          highlight: true
+        })
+      }
       return [
-        { label: '工单编号', value: this.disp(row.workOrderNo) },
-        { label: '状态', value: this.statusLabel(row.status), tag: true },
-        { label: '所属站点', value: this.rowStationName(row) },
-        { label: '来源', value: this.sourceLabel(row.source) },
-        { label: '设备编号', value: this.disp(row.deviceCode) },
-        { label: '枪口', value: this.disp(row.connectorCode) },
-        { label: '告警码', value: this.disp(row.alarmCode) },
-        { label: '告警项', value: this.disp(row.alarmItem) },
-        { label: '创建人', value: this.disp(this.detail.createUserName) },
-        { label: '指派人', value: this.disp(row.assigneeName) },
-        { label: '打开时间', value: this.time(row.openedAt) },
-        { label: '指派时间', value: this.time(row.assignedAt) },
-        { label: '关闭时间', value: this.time(row.closedAt) },
-        { label: '结案说明', value: this.disp(row.closeRemark) },
-        { label: '描述', value: this.disp(row.description), wide: true }
+        {
+          title: '设备与告警',
+          icon: 'el-icon-cpu',
+          fields: [
+            { label: '所属站点', value: this.rowStationName(row) },
+            { label: '设备编号', value: this.disp(row.deviceCode) },
+            { label: '枪口', value: row.connectorCode ? `${row.connectorCode}号枪` : '整桩' },
+            { label: '告警项', value: this.disp(row.alarmItem) },
+            { label: '告警码', value: this.disp(row.alarmCode) }
+          ]
+        },
+        {
+          title: '处理信息',
+          icon: 'el-icon-user',
+          fields: [
+            { label: '创建人', value: this.disp(this.detail.createUserName) },
+            { label: '指派人', value: this.disp(row.assigneeName) },
+            { label: '打开时间', value: this.time(row.openedAt) },
+            { label: '指派时间', value: this.time(row.assignedAt) },
+            { label: '关闭时间', value: this.time(row.closedAt) }
+          ]
+        },
+        { title: '描述', icon: 'el-icon-document', fields: description }
       ]
+    },
+    detailFields() {
+      return this.detailSections.reduce((all, section) => all.concat(section.fields), [])
+    },
+    detailProgress() {
+      const row = this.detail.workOrder || {}
+      const created = { title: '创建', time: this.time(row.openedAt) }
+      const closedTime = row.closedAt ? this.time(row.closedAt) : ''
+      if (row.status === 'CANCELLED') {
+        return { steps: [created, { title: '已取消', time: closedTime, status: 'error' }], active: 2 }
+      }
+      const steps = [
+        created,
+        { title: '指派', time: row.assignedAt ? this.time(row.assignedAt) : '' },
+        { title: '处理中', time: '' },
+        { title: '结案', time: closedTime }
+      ]
+      let active = 1
+      if (row.status === 'OPEN' && row.assigneeUserId) active = 2
+      if (row.status === 'IN_PROGRESS') active = 3
+      if (row.status === 'CLOSED') active = 4
+      return { steps, active }
+    },
+    hasDetailActions() {
+      const row = this.detail.workOrder
+      return this.canAssign(row) || this.canStart(row) || this.canRemark(row) || this.canClose(row) || this.canCancel(row)
     }
   },
   created() {
@@ -972,62 +1042,128 @@ export default {
   margin-bottom: 16px;
 }
 .fault-order-drawer {
-  padding: 0 20px 20px;
-}
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-top: 1px solid #ebeef5;
-  border-left: 1px solid #ebeef5;
-}
-.detail-grid__item {
-  display: flex;
-  min-height: 40px;
-  border-right: 1px solid #ebeef5;
-  border-bottom: 1px solid #ebeef5;
-}
-.detail-grid__item--wide {
-  grid-column: span 2;
-}
-.detail-grid__label {
-  flex: 0 0 90px;
-  padding: 11px 10px;
-  color: #909399;
-  background: #f5f7fa;
-  box-sizing: border-box;
-}
-.detail-grid__value {
   flex: 1;
-  padding: 11px 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  background: #f5f7fa;
+}
+.detail-card {
+  margin-bottom: 12px;
+  padding: 16px 20px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.06);
+}
+.detail-card__title {
+  display: flex;
+  align-items: center;
+  margin-bottom: 14px;
   color: #303133;
-  word-break: break-all;
-  box-sizing: border-box;
-}
-.drawer-actions {
-  margin: 16px 0 8px;
-  text-align: right;
-}
-.drawer-title {
-  margin: 20px 0 12px;
-  color: #303133;
-  font-size: 15px;
-}
-.action-card {
-  border-color: #ebeef5;
-}
-.action-card__title {
-  color: #303133;
+  font-size: 14px;
   font-weight: 600;
 }
-.action-card__meta {
-  margin-top: 6px;
+.detail-card__title i {
+  margin-right: 6px;
+  color: #409eff;
+  font-size: 16px;
+}
+.detail-hero__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.detail-hero__title {
+  flex: 1;
+  margin-right: 12px;
+  overflow: hidden;
+  color: #303133;
+  font-size: 18px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 8px;
+  color: #909399;
+  font-size: 13px;
+}
+.detail-hero__dot {
+  width: 3px;
+  height: 3px;
+  margin: 0 8px;
+  background: #c0c4cc;
+  border-radius: 50%;
+}
+.detail-hero__steps {
+  margin-top: 20px;
+}
+.detail-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 24px;
+}
+.detail-field--wide {
+  grid-column: span 2;
+}
+.detail-field__label {
+  margin-bottom: 4px;
   color: #909399;
   font-size: 12px;
 }
-.action-card__remark {
-  margin-top: 8px;
+.detail-field__value {
+  color: #303133;
+  font-size: 14px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+.detail-field--highlight {
+  padding: 10px 12px;
+  background: #f0f9eb;
+  border-radius: 4px;
+}
+.detail-timeline {
+  padding-left: 2px;
+}
+.action-item {
+  display: flex;
+  align-items: center;
+}
+.action-item__title {
+  color: #303133;
+  font-weight: 600;
+}
+.action-item__meta {
+  margin-left: 10px;
+  color: #909399;
+  font-size: 12px;
+}
+.action-item__remark {
+  margin-top: 6px;
+  padding: 8px 10px;
   color: #606266;
   line-height: 1.5;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+.drawer-footer {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background: #fff;
+  border-top: 1px solid #ebeef5;
+}
+.drawer-footer__danger {
+  margin-left: 12px;
+  color: #f56c6c;
+}
+.drawer-footer__danger:hover {
+  color: #f78989;
 }
 .empty-hint {
   padding: 32px 0;
@@ -1059,38 +1195,6 @@ export default {
 .action-dialog-tip {
   margin-bottom: 16px;
 }
-.action-guide {
-  font-size: 13px;
-  line-height: 1.6;
-}
-.action-guide__flow {
-  margin-bottom: 10px;
-  padding: 8px 10px;
-  color: #606266;
-  background: #f4f4f5;
-  border-radius: 4px;
-}
-.action-guide__item {
-  display: flex;
-  padding: 6px 0;
-  border-bottom: 1px dashed #ebeef5;
-}
-.action-guide__item:last-child {
-  border-bottom: none;
-}
-.action-guide__name {
-  flex: 0 0 80px;
-  color: #303133;
-  font-weight: 600;
-}
-.action-guide__when {
-  flex: 0 0 100px;
-  color: #909399;
-}
-.action-guide__desc {
-  flex: 1;
-  color: #606266;
-}
 </style>
 
 <style>
@@ -1108,9 +1212,24 @@ export default {
   font-size: 12px;
   white-space: normal;
 }
+.fault-order-drawer-wrap .el-drawer__header {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+}
 .fault-order-drawer-wrap .el-drawer__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
   padding: 0;
-  overflow: auto;
-  height: calc(100% - 55px);
+  overflow: hidden;
+}
+.fault-order-drawer-wrap .el-step__title {
+  font-size: 13px;
+}
+.fault-order-drawer-wrap .el-step__description {
+  padding: 0 4px;
+  font-size: 11px;
 }
 </style>
