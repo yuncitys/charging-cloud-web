@@ -48,8 +48,6 @@
         @keyup.enter.native="handleFilter"
         @clear="handleFilter"
       />
-      <el-checkbox v-model="listQuery.mine" class="filter-item" style="margin-right: 20px;" @change="handleFilter">只看我的</el-checkbox>
-      <el-checkbox v-model="listQuery.overdue" class="filter-item" style="margin-right: 20px;" @change="handleFilter">只看超时</el-checkbox>
       <el-select
         v-model="listQuery.stationId"
         class="filter-item"
@@ -72,6 +70,8 @@
         end-placeholder="结束日期"
         @change="handleFilter"
       />
+      <el-checkbox v-model="listQuery.mine" class="filter-item" style="margin-right: 20px;" @change="handleFilter">只看我的</el-checkbox>
+      <el-checkbox v-model="listQuery.overdue" class="filter-item" style="margin-right: 20px;" @change="handleFilter">只看超时</el-checkbox>
       <el-button type="primary" size="mini" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
       <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <el-button v-if="hasPerm('create')" size="mini" class="filter-item" icon="el-icon-plus" @click="openCreateDialog">手工建单</el-button>
@@ -106,58 +106,55 @@
       @selection-change="handleSelectionChange"
     >
       <el-table-column type="selection" width="45" align="center" :selectable="isActive" />
-      <el-table-column type="index" width="55" label="序号" align="center">
-        <template slot-scope="scope"><span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span></template>
+      <el-table-column label="工单" min-width="200">
+        <template slot-scope="scope">
+          <div class="cell-main cell-ellipsis" :title="scope.row.title || scope.row.alarmItem">{{ disp(scope.row.title || scope.row.alarmItem) }}</div>
+          <div class="cell-sub cell-ellipsis">{{ disp(scope.row.workOrderNo) }}</div>
+        </template>
       </el-table-column>
-      <el-table-column prop="workOrderNo" label="工单编号" min-width="150" show-overflow-tooltip>
-        <template slot-scope="scope">{{ disp(scope.row.workOrderNo) }}</template>
-      </el-table-column>
-      <el-table-column prop="title" label="告警标题" min-width="150" show-overflow-tooltip>
-        <template slot-scope="scope">{{ disp(scope.row.title || scope.row.alarmItem) }}</template>
-      </el-table-column>
-      <el-table-column prop="status" label="状态" width="100" align="center">
+      <el-table-column prop="status" label="状态" width="90" align="center">
         <template slot-scope="scope">
           <el-tag size="mini" :type="statusType(scope.row.status)">{{ statusLabel(scope.row.status) }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="stationId" label="所属站点" min-width="150" show-overflow-tooltip>
-        <template slot-scope="scope">{{ rowStationName(scope.row) }}</template>
-      </el-table-column>
-      <el-table-column prop="deviceCode" label="设备编号" min-width="130" show-overflow-tooltip>
-        <template slot-scope="scope">{{ disp(scope.row.deviceCode) }}</template>
-      </el-table-column>
-      <el-table-column prop="connectorCode" label="枪口" width="80" align="center">
-        <template slot-scope="scope">{{ disp(scope.row.connectorCode) }}</template>
-      </el-table-column>
-      <el-table-column prop="assigneeName" label="指派人" min-width="110" show-overflow-tooltip>
-        <template slot-scope="scope">{{ disp(scope.row.assigneeName) }}</template>
-      </el-table-column>
-      <el-table-column prop="openedAt" label="打开时间" min-width="160" show-overflow-tooltip>
-        <template slot-scope="scope">{{ time(scope.row.openedAt || scope.row.createTime) }}</template>
-      </el-table-column>
-      <el-table-column label="已持续" min-width="130" align="center">
+      <el-table-column label="站点 / 设备" min-width="200">
         <template slot-scope="scope">
-          <span :class="{ 'duration--overdue': overdue(scope.row) }">{{ duration(scope.row) }}</span>
-          <el-tag v-if="overdue(scope.row)" size="mini" type="danger" effect="plain" class="duration__tag">超时</el-tag>
+          <div class="cell-main cell-ellipsis" :title="rowStationName(scope.row)">{{ rowStationName(scope.row) }}</div>
+          <div class="cell-sub cell-ellipsis">{{ disp(scope.row.deviceCode) }} · {{ connectorText(scope.row) }}</div>
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="230" fixed="right">
+      <el-table-column prop="assigneeName" label="指派人" min-width="100" show-overflow-tooltip>
+        <template slot-scope="scope">
+          <span v-if="scope.row.assigneeName">{{ scope.row.assigneeName }}</span>
+          <span v-else class="cell-sub">未指派</span>
+        </template>
+      </el-table-column>
+      <el-table-column label="已持续" min-width="160">
+        <template slot-scope="scope">
+          <div class="cell-main">
+            <span :class="{ 'duration--overdue': overdue(scope.row) }">{{ duration(scope.row) }}</span>
+            <el-tag v-if="overdue(scope.row)" size="mini" type="danger" effect="plain" class="duration__tag">超时</el-tag>
+          </div>
+          <div class="cell-sub">{{ time(scope.row.openedAt || scope.row.createTime) }} 打开</div>
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" width="290" fixed="right">
         <template slot-scope="scope">
           <div class="row-actions">
             <el-tooltip :content="actionTip('detail')" placement="top" :open-delay="400">
-              <el-button type="text" size="mini" @click="openDetail(scope.row)">详情</el-button>
+              <el-button size="mini" type="primary" @click="openDetail(scope.row)">详情</el-button>
             </el-tooltip>
             <el-tooltip v-if="canAssign(scope.row)" :content="actionTip('assign')" placement="top" :open-delay="400">
-              <el-button type="text" size="mini" @click="openAssign(scope.row)">{{ assignLabel(scope.row) }}</el-button>
+              <el-button size="mini" type="primary" @click="openAssign(scope.row)">{{ assignLabel(scope.row) }}</el-button>
             </el-tooltip>
             <el-tooltip v-if="canStart(scope.row)" :content="actionTip('start')" placement="top" :open-delay="400">
-              <el-button type="text" size="mini" class="row-actions__start" @click="startOrder(scope.row)">开始处理</el-button>
+              <el-button size="mini" type="success" @click="startOrder(scope.row)">开始处理</el-button>
             </el-tooltip>
             <el-tooltip v-if="canReopen(scope.row)" :content="actionTip('reopen')" placement="top" :open-delay="400">
-              <el-button type="text" size="mini" class="row-actions__reopen" @click="openReopen(scope.row)">重新打开</el-button>
+              <el-button size="mini" type="warning" @click="openReopen(scope.row)">重新打开</el-button>
             </el-tooltip>
             <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="cmd => handleActionCommand(cmd, scope.row)">
-              <el-button type="text" size="mini">
+              <el-button size="mini">
                 更多<i class="el-icon-arrow-down el-icon--right" />
               </el-button>
               <el-dropdown-menu slot="dropdown" class="fault-action-menu">
@@ -665,7 +662,7 @@ export default {
         return { label: '取消原因', placeholder: '例如：误报，现场确认设备正常；或与工单 FW… 重复' }
       }
       if (this.actionDialog.type === 'reopen') {
-        return { label: '重新打开原因', placeholder: '例如：结案后同一故障再次出现，需要继续处理' }
+        return { label: '重开原因', placeholder: '例如：结案后同一故障再次出现，需要继续处理' }
       }
       return { label: '处理说明', placeholder: '请填写故障原因和处理方式，例如：急停按钮卡住，复位后恢复正常' }
     },
@@ -703,7 +700,7 @@ export default {
           fields: [
             { label: '所属站点', value: this.rowStationName(row) },
             { label: '设备编号', value: this.disp(row.deviceCode) },
-            { label: '枪口', value: row.connectorCode ? `${row.connectorCode}号枪` : '整桩' },
+            { label: '枪口', value: this.connectorText(row) },
             { label: '告警项', value: this.disp(row.alarmItem) },
             { label: '告警码', value: this.disp(row.alarmCode) }
           ]
@@ -1256,6 +1253,9 @@ export default {
       if (row && row.stationName) return row.stationName
       return this.stationName(row && row.stationId)
     },
+    connectorText(row) {
+      return row && row.connectorCode ? `${row.connectorCode}号枪` : '整桩'
+    },
     stationName(stationId) {
       const match = this.stationList.find(item => String(item.id) === String(stationId))
       return match ? match.networkName : this.disp(stationId)
@@ -1490,16 +1490,21 @@ export default {
 }
 .row-actions .el-button + .el-button,
 .row-actions > * + * {
-  margin-left: 12px;
+  margin-left: 8px;
 }
-.row-actions .el-button--text {
-  padding: 0;
+.cell-main {
+  color: #303133;
+  line-height: 20px;
 }
-.row-actions__start {
-  color: #67c23a;
+.cell-sub {
+  color: #909399;
+  font-size: 12px;
+  line-height: 18px;
 }
-.row-actions__reopen {
-  color: #e6a23c;
+.cell-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .batch-bar {
   display: flex;

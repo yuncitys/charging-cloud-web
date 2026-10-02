@@ -148,6 +148,15 @@ describe('FaultWorkOrderList list and detail fields', () => {
     expect(wrapper.vm.rowStationName({ stationId: 7 })).toBe(7)
   })
 
+  it('labels connector as gun number or whole device', async() => {
+    const wrapper = factory()
+    await flush()
+
+    expect(wrapper.vm.connectorText({ connectorCode: 2 })).toBe('2号枪')
+    expect(wrapper.vm.connectorText({ connectorCode: 0 })).toBe('整桩')
+    expect(wrapper.vm.connectorText({})).toBe('整桩')
+  })
+
   it('sends new filters and reset clears them', async() => {
     const wrapper = factory()
     await flush()
@@ -494,7 +503,7 @@ describe('FaultWorkOrderList reopen and batch', () => {
     expect(wrapper.vm.canReopen({ status: 'CANCELLED' })).toBe(false)
 
     wrapper.vm.openReopen({ id: 8, status: 'CLOSED' })
-    expect(wrapper.vm.remarkField.label).toBe('重新打开原因')
+    expect(wrapper.vm.remarkField.label).toBe('重开原因')
     wrapper.vm.submitAction()
     expect(reopenFaultWorkOrder).not.toHaveBeenCalled()
 
