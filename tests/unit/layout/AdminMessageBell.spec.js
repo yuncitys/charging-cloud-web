@@ -62,6 +62,33 @@ describe('AdminMessageBell', () => {
     wrapper.destroy()
   })
 
+  it('footer link closes popover and opens message center', async() => {
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.visible = true
+
+    expect(wrapper.find('.admin-message__foot').text()).toContain('查看全部')
+    wrapper.vm.viewAll()
+
+    expect(wrapper.vm.visible).toBe(false)
+    expect(wrapper.vm.$router.push).toHaveBeenCalledWith('/message/list')
+    wrapper.destroy()
+  })
+
+  it('refreshes count on admin-message:changed until destroyed', async() => {
+    const wrapper = factory()
+    await flush()
+    const root = wrapper.vm.$root
+    getUnreadMessageCount.mockClear()
+
+    root.$emit('admin-message:changed')
+    expect(getUnreadMessageCount).toHaveBeenCalledTimes(1)
+
+    wrapper.destroy()
+    root.$emit('admin-message:changed')
+    expect(getUnreadMessageCount).toHaveBeenCalledTimes(1)
+  })
+
   it('clears polling timer and visibility listener on destroy', async() => {
     const clearSpy = jest.spyOn(window, 'clearInterval')
     const removeSpy = jest.spyOn(document, 'removeEventListener')

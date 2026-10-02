@@ -26,6 +26,9 @@
         </div>
         <div v-if="!loading && !list.length" class="admin-message__empty">暂无消息</div>
       </div>
+      <div class="admin-message__foot">
+        <el-button type="text" size="mini" @click="viewAll">查看全部</el-button>
+      </div>
     </div>
     <div slot="reference" class="admin-message-bell">
       <el-badge :value="unreadCount" :max="99" :hidden="!unreadCount">
@@ -38,11 +41,9 @@
 <script>
 import { getUnreadMessageCount, pageAdminMessages, readAdminMessage, readAllAdminMessages } from '@/api/message/adminMessage'
 import { parseTime } from '@/utils/index'
+import { adminMessageRoute, ADMIN_MESSAGE_CHANGED } from '@/utils/adminMessageRoute'
 
 const POLL_MS = 60 * 1000
-const BIZ_ROUTES = {
-  FAULT_WORK_ORDER: id => ({ path: '/device/faultWorkOrders', query: { id }})
-}
 
 export default {
   name: 'AdminMessageBell',
@@ -59,10 +60,12 @@ export default {
     this.refreshCount()
     this.timer = setInterval(this.refreshCount, POLL_MS)
     document.addEventListener('visibilitychange', this.onVisibilityChange)
+    this.$root.$on(ADMIN_MESSAGE_CHANGED, this.refreshCount)
   },
   beforeDestroy() {
     clearInterval(this.timer)
     document.removeEventListener('visibilitychange', this.onVisibilityChange)
+    this.$root.$off(ADMIN_MESSAGE_CHANGED, this.refreshCount)
   },
   methods: {
     onVisibilityChange() {
@@ -89,11 +92,15 @@ export default {
         item.readFlag = 1
         readAdminMessage(item.id).then(() => this.refreshCount()).catch(() => {})
       }
-      const route = BIZ_ROUTES[item.bizType]
-      if (route && item.bizId) {
+      const route = adminMessageRoute(item)
+      if (route) {
         this.visible = false
-        this.$router.push(route(item.bizId))
+        this.$router.push(route)
       }
+    },
+    viewAll() {
+      this.visible = false
+      this.$router.push('/message/list')
     },
     readAll() {
       readAllAdminMessages().then(() => {
@@ -171,5 +178,10 @@ export default {
   padding: 24px 0;
   color: #909399;
   text-align: center;
+}
+.admin-message__foot {
+  padding-top: 4px;
+  text-align: center;
+  border-top: 1px solid #ebeef5;
 }
 </style>

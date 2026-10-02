@@ -64,8 +64,24 @@ export const setPwdRoute = {
   }]
 }
 
+/** 消息中心：顶部消息铃铛入口，所有登录用户可访问 */
+export const messageRoute = {
+  path: '/message/list',
+  component: Layout,
+  hidden: true,
+  children: [{
+    path: '',
+    component: () => import('@/views/message/adminMessageList'),
+    name: 'AdminMessageList',
+    hidden: true,
+    meta: {
+      title: '消息中心'
+    }
+  }]
+}
+
 /** 无需鉴权的基础路由 */
-export const constantRoutes = baseRoutes.concat([largeScreenRoute, setPwdRoute])
+export const constantRoutes = baseRoutes.concat([largeScreenRoute, setPwdRoute, messageRoute])
 
 /** 需按菜单 href 过滤的业务路由（不含兜底 *，* 在 addRoutes 时最后追加） */
 export const asyncRoutes = buildLayoutRoutes([
