@@ -332,6 +332,8 @@
               v-model="actionDialog.form.remark"
               type="textarea"
               :rows="4"
+              maxlength="500"
+              show-word-limit
               clearable
               :placeholder="remarkField.placeholder"
             />
@@ -577,6 +579,7 @@ export default {
       },
       activeStatus: 'ALL',
       statusCounts: {},
+      statusCountsSeq: 0,
       now: Date.now(),
       detailVisible: false,
       detail: {
@@ -750,6 +753,7 @@ export default {
     this.initFromRoute()
     this.loadStations()
     this.getList()
+    this.loadStatusCounts()
   },
   mounted() {
     this.openRouteDetail()
@@ -805,6 +809,7 @@ export default {
       this.listQuery.page = 1
       this.syncDateQuery()
       this.getList()
+      this.loadStatusCounts()
     },
     handleReset() {
       this.dateRange = []
@@ -827,6 +832,7 @@ export default {
       }
       this.activeStatus = 'ALL'
       this.getList()
+      this.loadStatusCounts()
     },
     handleSizeChange(limit) {
       this.listQuery.limit = limit
@@ -839,7 +845,6 @@ export default {
     },
     getList() {
       this.now = Date.now()
-      this.loadStatusCounts()
       this.listLoading = true
       pageFaultWorkOrders(this.cleanQuery(this.listQuery)).then(res => {
         this.listLoading = false
@@ -861,18 +866,22 @@ export default {
       delete params.limit
       delete params.status
       delete params.statusIn
+      const seq = ++this.statusCountsSeq
       getFaultWorkOrderStatusCounts(params).then(res => {
+        if (seq !== this.statusCountsSeq) return
         this.statusCounts = res && Number(res.code) === 200 && res.data ? res.data : {}
       }).catch(() => {})
     },
     handleStatusTab() {
       this.listQuery.status = this.activeStatus === 'ALL' ? '' : this.activeStatus
       this.listQuery.statusIn = ''
-      this.handleFilter()
+      this.listQuery.page = 1
+      this.getList()
     },
     clearStatusIn() {
       this.listQuery.statusIn = ''
-      this.handleFilter()
+      this.listQuery.page = 1
+      this.getList()
     },
     duration(row) {
       return formatDuration(orderDurationMs(row, this.now))
@@ -997,6 +1006,7 @@ export default {
           }
           this.clearSelection()
           this.getList()
+          this.loadStatusCounts()
           return
         }
         this.$message.error((res && res.msg) || '操作失败')
@@ -1049,7 +1059,7 @@ export default {
       } else if (type === 'remark') {
         request = remarkFaultWorkOrder(row.id, { remark, attachments })
       } else if (type === 'cancel') {
-        request = cancelFaultWorkOrder(row.id, { closeRemark: this.actionDialog.form.remark })
+        request = cancelFaultWorkOrder(row.id, { closeRemark: remark })
       } else if (type === 'reopen') {
         request = reopenFaultWorkOrder(row.id, { reason: remark })
       } else {
@@ -1072,6 +1082,7 @@ export default {
         this.$message.success('操作成功')
         this.actionDialog.visible = false
         this.getList()
+        this.loadStatusCounts()
         if (this.detailVisible && this.detail.workOrder && this.detail.workOrder.id) {
           this.openDetail({ id: this.detail.workOrder.id })
         }

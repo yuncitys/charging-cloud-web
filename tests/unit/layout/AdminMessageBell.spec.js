@@ -62,6 +62,22 @@ describe('AdminMessageBell', () => {
     wrapper.destroy()
   })
 
+  it('clears polling timer and visibility listener on destroy', async() => {
+    const clearSpy = jest.spyOn(window, 'clearInterval')
+    const removeSpy = jest.spyOn(document, 'removeEventListener')
+    const wrapper = factory()
+    await flush()
+    const timer = wrapper.vm.timer
+    const handler = wrapper.vm.onVisibilityChange
+
+    wrapper.destroy()
+
+    expect(clearSpy).toHaveBeenCalledWith(timer)
+    expect(removeSpy).toHaveBeenCalledWith('visibilitychange', handler)
+    clearSpy.mockRestore()
+    removeSpy.mockRestore()
+  })
+
   it('skips polling while page hidden', async() => {
     const wrapper = factory()
     await flush()

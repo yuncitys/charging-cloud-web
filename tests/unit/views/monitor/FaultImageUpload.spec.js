@@ -14,7 +14,10 @@ const factory = (value = []) => shallowMount(FaultImageUpload, {
 })
 
 describe('FaultImageUpload', () => {
-  beforeEach(() => jest.clearAllMocks())
+  beforeEach(() => {
+    jest.clearAllMocks()
+    upload.mockReset()
+  })
 
   it('rejects non-image and oversized files', () => {
     const wrapper = factory()
@@ -82,6 +85,48 @@ describe('FaultImageUpload', () => {
 
     expect(wrapper.emitted().input).toBeUndefined()
     expect(wrapper.emitted().uploading).toEqual([[true], [false]])
+  })
+
+  it('rejects, shows error and emits nothing when upload fails', async() => {
+    upload.mockResolvedValueOnce({ code: 500, msg: '存储异常' }).mockResolvedValueOnce({ code: 200, data: {}})
+    const wrapper = factory()
+
+    await expect(wrapper.vm.doUpload({ file: { name: 'a.png' }})).rejects.toThrow('upload failed')
+    await expect(wrapper.vm.doUpload({ file: { name: 'b.png' }})).rejects.toThrow('upload failed')
+
+    expect(wrapper.vm.$message.error).toHaveBeenNthCalledWith(1, '存储异常')
+    expect(wrapper.vm.$message.error).toHaveBeenNthCalledWith(2, '上传失败')
+    expect(wrapper.emitted().input).toBeUndefined()
+    expect(wrapper.vm.pending).toBe(0)
+  })
+
+  it('counts in-flight uploads toward the limit', () => {
+    upload.mockReturnValue(new Promise(() => {}))
+    const value = Array.from({ length: 7 }, (v, i) => ({ fileUrl: `/api/${i}.png` }))
+    const wrapper = factory(value)
+    const file = { name: 'a.png', size: 1024 }
+
+    expect(wrapper.vm.beforeUpload(file)).toBe(true)
+    wrapper.vm.doUpload({ file })
+    expect(wrapper.vm.full).toBe(false)
+    expect(wrapper.vm.beforeUpload(file)).toBe(true)
+    wrapper.vm.doUpload({ file })
+
+    expect(wrapper.vm.full).toBe(true)
+    expect(wrapper.vm.beforeUpload(file)).toBe(false)
+    expect(wrapper.vm.$message.warning).toHaveBeenCalledWith('最多上传 9 张图片')
+  })
+
+  it('hides the upload button when value plus pending reaches the limit', async() => {
+    upload.mockReturnValue(new Promise(() => {}))
+    const value = Array.from({ length: 8 }, (v, i) => ({ fileUrl: `/api/${i}.png` }))
+    const wrapper = factory(value)
+    expect(wrapper.classes()).not.toContain('is-full')
+
+    wrapper.vm.doUpload({ file: { name: 'a.png' }})
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.classes()).toContain('is-full')
   })
 
   it('removes by fileUrl and builds preview urls', () => {

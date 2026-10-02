@@ -1,5 +1,5 @@
 <template>
-  <div class="fault-image-upload" :class="{ 'is-full': value.length >= limit }">
+  <div class="fault-image-upload" :class="{ 'is-full': full }">
     <el-upload
       action=""
       list-type="picture-card"
@@ -36,6 +36,9 @@ export default {
     }
   },
   computed: {
+    full() {
+      return this.value.length + this.pending >= this.limit
+    },
     fileList() {
       return this.value.map(item => ({
         name: item.fileName || item.fileUrl,
@@ -59,6 +62,10 @@ export default {
       return ((this.Global && this.Global.APIURl) || '') + url
     },
     beforeUpload(file) {
+      if (this.full) {
+        this.handleExceed()
+        return false
+      }
       if (!/\.(jpe?g|png)$/i.test(file.name || '')) {
         this.$message.error('仅支持 jpg / png 图片')
         return false

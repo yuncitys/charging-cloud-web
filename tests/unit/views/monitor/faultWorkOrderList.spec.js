@@ -13,8 +13,11 @@ import {
   getFaultWorkOrderStatusCounts,
   reopenFaultWorkOrder,
   batchCloseFaultWorkOrders,
+  batchAssignFaultWorkOrders,
+  batchCancelFaultWorkOrders,
   remarkFaultWorkOrder,
-  closeFaultWorkOrder
+  closeFaultWorkOrder,
+  cancelFaultWorkOrder
 } from '@/api/monitor/faultMonitor'
 
 jest.mock('@/api/monitor/faultMonitor', () => ({
@@ -646,5 +649,136 @@ describe('FaultWorkOrderList attachment uploading', () => {
     wrapper.vm.submitAction()
 
     expect(closeFaultWorkOrder).toHaveBeenCalledWith(6, { closeRemark: '已修复', attachments: [] })
+  })
+
+  it('cancel sends trimmed closeRemark', async() => {
+    cancelFaultWorkOrder.mockResolvedValue({ code: 200 })
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openFinish({ id: 6, status: 'OPEN' }, 'cancel')
+    wrapper.vm.actionDialog.form.remark = '  误报  '
+
+    wrapper.vm.submitAction()
+
+    expect(cancelFaultWorkOrder).toHaveBeenCalledWith(6, { closeRemark: '误报' })
+  })
+
+  it('action remark textarea limits input to 500 chars', async() => {
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.openRemark({ id: 5, status: 'OPEN' })
+    await wrapper.vm.$nextTick()
+
+    const textarea = wrapper.findAll('el-input-stub').wrappers
+      .find(w => w.attributes('placeholder') === wrapper.vm.remarkField.placeholder)
+    expect(textarea).toBeTruthy()
+    expect(textarea.attributes('maxlength')).toBe('500')
+    expect(textarea.attributes('show-word-limit')).toBeDefined()
+  })
+})
+
+describe('FaultWorkOrderList status counts refresh', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: { ALL: 1 }})
+  })
+
+  it('loads counts on init but not on pagination or tab switch', async() => {
+    const wrapper = factory()
+    await flush()
+    expect(getFaultWorkOrderStatusCounts).toHaveBeenCalledTimes(1)
+
+    wrapper.vm.handleCurrentChange(2)
+    wrapper.vm.handleSizeChange(20)
+    wrapper.vm.activeStatus = 'OPEN'
+    wrapper.vm.handleStatusTab()
+    await flush()
+
+    expect(pageFaultWorkOrders).toHaveBeenCalledTimes(4)
+    expect(getFaultWorkOrderStatusCounts).toHaveBeenCalledTimes(1)
+  })
+
+  it('reloads counts on filter, reset and after a successful action', async() => {
+    const wrapper = factory()
+    await flush()
+    getFaultWorkOrderStatusCounts.mockClear()
+
+    wrapper.vm.handleFilter()
+    wrapper.vm.handleReset()
+    wrapper.vm.afterAction({ code: 200 })
+    wrapper.vm.afterAction({ code: 500 })
+
+    expect(getFaultWorkOrderStatusCounts).toHaveBeenCalledTimes(3)
+  })
+
+  it('reloads counts after batch completes', async() => {
+    batchCancelFaultWorkOrders.mockResolvedValue({ code: 200, data: { successCount: 1, failures: [] }})
+    const wrapper = factory()
+    await flush()
+    getFaultWorkOrderStatusCounts.mockClear()
+    wrapper.vm.handleSelectionChange([{ id: 1, status: 'OPEN' }])
+    wrapper.vm.openBatch('cancel')
+    wrapper.vm.actionDialog.form.remark = '误报'
+
+    wrapper.vm.submitAction()
+    await flush()
+
+    expect(getFaultWorkOrderStatusCounts).toHaveBeenCalledTimes(1)
+  })
+
+  it('ignores a stale counts response', async() => {
+    const wrapper = factory()
+    await flush()
+    let resolveOld
+    getFaultWorkOrderStatusCounts
+      .mockReturnValueOnce(new Promise(resolve => { resolveOld = resolve }))
+      .mockResolvedValueOnce({ code: 200, data: { ALL: 9 }})
+
+    wrapper.vm.handleFilter()
+    wrapper.vm.handleFilter()
+    await flush()
+    resolveOld({ code: 200, data: { ALL: 2 }})
+    await flush()
+
+    expect(wrapper.vm.statusCounts.ALL).toBe(9)
+  })
+})
+
+describe('FaultWorkOrderList batch payloads', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
+    getAssigneeCandidates.mockResolvedValue({ code: 200, data: [{ adminId: 11 }] })
+  })
+
+  it('batch assign sends ids and assigneeUserId', async() => {
+    batchAssignFaultWorkOrders.mockResolvedValue({ code: 200, data: { successCount: 2, failures: [] }})
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.handleSelectionChange([{ id: 1, stationId: 100, status: 'OPEN' }, { id: 2, stationId: 100, status: 'OPEN' }])
+    wrapper.vm.openBatch('assign')
+    await flush()
+
+    wrapper.vm.actionDialog.form.assigneeUserId = '11'
+    wrapper.vm.submitAction()
+    await flush()
+
+    expect(batchAssignFaultWorkOrders).toHaveBeenCalledWith({ ids: [1, 2], assigneeUserId: '11' })
+  })
+
+  it('batch cancel sends ids and trimmed closeRemark', async() => {
+    batchCancelFaultWorkOrders.mockResolvedValue({ code: 200, data: { successCount: 2, failures: [] }})
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.handleSelectionChange([{ id: 1, status: 'OPEN' }, { id: 2, status: 'IN_PROGRESS' }])
+    wrapper.vm.openBatch('cancel')
+
+    wrapper.vm.actionDialog.form.remark = ' 重复工单 '
+    wrapper.vm.submitAction()
+    await flush()
+
+    expect(batchCancelFaultWorkOrders).toHaveBeenCalledWith({ ids: [1, 2], closeRemark: '重复工单' })
   })
 })
