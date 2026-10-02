@@ -775,6 +775,7 @@ export default {
       })
       if (q.start && q.end) {
         this.dateRange = [String(q.start).slice(0, 10), String(q.end).slice(0, 10)]
+        this.syncDateQuery()
       }
       this.listQuery.mine = q.mine === true || q.mine === 'true'
       this.listQuery.overdue = q.overdue === true || q.overdue === 'true'

@@ -466,6 +466,15 @@ describe('FaultWorkOrderList status tabs and filters', () => {
     expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'CLOSED' }))
   })
 
+  it('first load sends normalized route dates to both list and counts', async() => {
+    factory({ mocks: { $route: { query: { start: '2026-10-01', end: '2026-10-02' }}}})
+    await flush()
+
+    const range = { start: '2026-10-01 00:00:00', end: '2026-10-02 23:59:59' }
+    expect(pageFaultWorkOrders).toHaveBeenCalledWith(expect.objectContaining(range))
+    expect(getFaultWorkOrderStatusCounts).toHaveBeenCalledWith(expect.objectContaining(range))
+  })
+
   it('tab switch and clearing statusIn normalize route dates', async() => {
     const wrapper = factory({ mocks: { $route: { query: { start: '2026-10-01', end: '2026-10-02', statusIn: 'OPEN,IN_PROGRESS' }}}})
     await flush()
