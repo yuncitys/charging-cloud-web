@@ -489,6 +489,7 @@ import {
 } from '@/api/monitor/faultMonitor'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import { parseTime } from '@/utils/index'
+import { fullFileUrl } from '@/utils/fileUrl'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import FaultImageUpload from './components/FaultImageUpload.vue'
 import { orderDurationMs, isOverdue, formatDuration } from './faultWorkOrderMeta'
@@ -1287,9 +1288,7 @@ export default {
       return ACTION_LABELS[actionType] || this.disp(actionType)
     },
     fileUrl(url) {
-      if (!url) return ''
-      if (/^https?:/i.test(url)) return url
-      return ((this.Global && this.Global.APIURl) || '') + url
+      return fullFileUrl(url)
     },
     disp(v) {
       if (v === null || v === undefined || v === '') return '-'

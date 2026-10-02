@@ -4,12 +4,13 @@ import FaultImageUpload from '@/views/monitor/components/FaultImageUpload.vue'
 import { upload } from '@/api/upload/file'
 
 jest.mock('@/api/upload/file', () => ({ upload: jest.fn() }))
+jest.mock('@/utils/global_variable', () => ({ __esModule: true, default: { APIURl: 'http://gw' }}))
 
 const flush = () => new Promise(resolve => setTimeout(resolve, 0))
 
 const factory = (value = []) => shallowMount(FaultImageUpload, {
   propsData: { value },
-  mocks: { $message: { error: jest.fn(), warning: jest.fn() }, Global: { APIURl: 'http://gw' }},
+  mocks: { $message: { error: jest.fn(), warning: jest.fn() }},
   stubs: { 'el-upload': true }
 })
 

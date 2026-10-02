@@ -19,6 +19,7 @@
 
 <script>
 import { upload } from '@/api/upload/file'
+import { fullFileUrl } from '@/utils/fileUrl'
 
 const MAX_SIZE = 10 * 1024 * 1024
 
@@ -42,7 +43,7 @@ export default {
     fileList() {
       return this.value.map(item => ({
         name: item.fileName || item.fileUrl,
-        url: this.fullUrl(item.fileUrl),
+        url: fullFileUrl(item.fileUrl),
         fileUrl: item.fileUrl
       }))
     }
@@ -56,11 +57,6 @@ export default {
     this.resetSession()
   },
   methods: {
-    fullUrl(url) {
-      if (!url) return ''
-      if (/^https?:/i.test(url)) return url
-      return ((this.Global && this.Global.APIURl) || '') + url
-    },
     beforeUpload(file) {
       if (this.full) {
         this.handleExceed()
