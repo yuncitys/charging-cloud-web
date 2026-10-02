@@ -9,7 +9,8 @@ import {
   listFaultStationDevices,
   checkOpenWorkOrders,
   getAssigneeCandidates,
-  exportFaultWorkOrders
+  exportFaultWorkOrders,
+  getFaultWorkOrderStatusCounts
 } from '@/api/monitor/faultMonitor'
 
 jest.mock('@/api/monitor/faultMonitor', () => ({
@@ -24,7 +25,8 @@ jest.mock('@/api/monitor/faultMonitor', () => ({
   listFaultStationDevices: jest.fn(),
   checkOpenWorkOrders: jest.fn(),
   getAssigneeCandidates: jest.fn(),
-  exportFaultWorkOrders: jest.fn()
+  exportFaultWorkOrders: jest.fn(),
+  getFaultWorkOrderStatusCounts: jest.fn()
 }))
 
 jest.mock('@/components/Common/downloadProgress.vue', () => ({
@@ -74,6 +76,9 @@ const factory = (options = {}) => {
       'el-dialog': true,
       'el-form': true,
       'el-form-item': true,
+      'el-tabs': true,
+      'el-tab-pane': true,
+      'el-checkbox': true,
       'download-progress': true
     },
     ...options
@@ -84,6 +89,7 @@ describe('FaultWorkOrderList route detail opening', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
     getFaultWorkOrder.mockResolvedValue({ code: 200, data: { workOrder: { id: 99 }, actions: [] }})
   })
 
@@ -119,6 +125,7 @@ describe('FaultWorkOrderList list and detail fields', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
   })
 
   it('prefers backend stationName', async() => {
@@ -170,6 +177,7 @@ describe('FaultWorkOrderList manual create', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
     listFaultStationDevices.mockResolvedValue({
       code: 200,
       data: [{ deviceCode: 'D1', deviceName: '一号桩', guns: [{ gunNumber: 1 }, { gunNumber: 2 }] }]
@@ -265,6 +273,7 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: {}})
   })
 
   it('hides actions without button permission', async() => {
@@ -380,6 +389,9 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
         'el-dialog': true,
         'el-form': true,
         'el-form-item': true,
+        'el-tabs': true,
+        'el-tab-pane': true,
+        'el-checkbox': true,
         'download-progress': { render(h) { return h('div') }, methods: { open }}
       }
     })
@@ -392,5 +404,66 @@ describe('FaultWorkOrderList assign, permissions and export', () => {
     expect(exportFaultWorkOrders).toHaveBeenCalledWith(expect.objectContaining({ status: 'OPEN' }))
     expect(exportFaultWorkOrders.mock.calls[0][0].page).toBeUndefined()
     expect(open).toHaveBeenCalledWith(777)
+  })
+})
+
+describe('FaultWorkOrderList status tabs and filters', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    pageFaultWorkOrders.mockResolvedValue({ code: 200, data: [], count: 0 })
+    getFaultWorkOrderStatusCounts.mockResolvedValue({ code: 200, data: { ALL: 7, OPEN: 3 }})
+  })
+
+  it('loads status counts without status filters', async() => {
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.listQuery.assigneeName = '张三'
+    wrapper.vm.listQuery.status = 'OPEN'
+
+    wrapper.vm.handleFilter()
+    await flush()
+
+    const params = getFaultWorkOrderStatusCounts.mock.calls[getFaultWorkOrderStatusCounts.mock.calls.length - 1][0]
+    expect(params.assigneeName).toBe('张三')
+    expect(params.status).toBeUndefined()
+    expect(params.page).toBeUndefined()
+    expect(wrapper.vm.statusCounts.ALL).toBe(7)
+  })
+
+  it('tab switch sets status and clears statusIn', async() => {
+    const wrapper = factory({ mocks: { $route: { query: { statusIn: 'OPEN,IN_PROGRESS' }}}})
+    await flush()
+    expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ statusIn: 'OPEN,IN_PROGRESS' }))
+
+    wrapper.vm.activeStatus = 'CLOSED'
+    wrapper.vm.handleStatusTab()
+
+    expect(wrapper.vm.listQuery.statusIn).toBe('')
+    expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'CLOSED' }))
+  })
+
+  it('sends mine/overdue only when checked and reads them from route', async() => {
+    const wrapper = factory({ mocks: { $route: { query: { mine: 'true' }}}})
+    await flush()
+    expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ mine: true }))
+    expect(pageFaultWorkOrders.mock.calls[0][0].overdue).toBeUndefined()
+
+    wrapper.vm.listQuery.overdue = true
+    wrapper.vm.handleFilter()
+    expect(pageFaultWorkOrders).toHaveBeenLastCalledWith(expect.objectContaining({ overdue: true }))
+
+    wrapper.vm.handleReset()
+    expect(wrapper.vm.listQuery.mine).toBe(false)
+    expect(wrapper.vm.activeStatus).toBe('ALL')
+  })
+
+  it('shows duration and overdue flag', async() => {
+    const wrapper = factory()
+    await flush()
+    wrapper.vm.now = new Date('2026/10/02 12:00:00').getTime()
+
+    const row = { status: 'OPEN', openedAt: '2026-10-02 09:00:00' }
+    expect(wrapper.vm.duration(row)).toBe('3小时0分')
+    expect(wrapper.vm.overdue(row)).toBe(true)
   })
 })

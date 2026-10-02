@@ -41,13 +41,21 @@
 
     <div v-loading="loading">
       <div class="kpi-grid">
-        <el-card v-for="item in kpiCards" :key="item.key" class="kpi-card" shadow="never">
+        <el-card
+          v-for="item in kpiCards"
+          :key="item.key"
+          class="kpi-card"
+          :class="{ 'kpi-card--link': item.link }"
+          shadow="never"
+          @click.native="goKpi(item)"
+        >
           <div class="kpi-card__label">{{ item.label }}</div>
           <div class="kpi-card__value">
             <span>{{ item.value }}</span>
             <em v-if="item.unit">{{ item.unit }}</em>
           </div>
           <div class="kpi-card__hint">{{ item.hint }}</div>
+          <div v-if="item.link" class="kpi-card__more">查看工单<i class="el-icon-arrow-right" /></div>
         </el-card>
       </div>
 
@@ -145,11 +153,11 @@ export default {
     },
     kpiCards() {
       return [
-        { key: 'openedCount', label: '新增故障工单', value: this.num(this.kpi.openedCount), unit: '单', hint: '统计周期内新建且未取消' },
-        { key: 'openCount', label: '待处理工单', value: this.num(this.kpi.openCount), unit: '单', hint: '待处理 + 处理中' },
+        { key: 'openedCount', label: '新增故障工单', value: this.num(this.kpi.openedCount), unit: '单', hint: '统计周期内新建且未取消', link: { statusIn: 'OPEN,IN_PROGRESS,CLOSED' }},
+        { key: 'openCount', label: '待处理工单', value: this.num(this.kpi.openCount), unit: '单', hint: '待处理 + 处理中', link: { statusIn: 'OPEN,IN_PROGRESS' }},
         { key: 'rate', label: '故障发生率', value: this.percent(this.kpi.rate), unit: '', hint: `枪数 ${this.num(this.kpi.gunCount)} / 天数 ${this.num(this.kpi.dayCount)}` },
         { key: 'orderSuccessRate', label: '订单成功率', value: this.percent(this.kpi.orderSuccessRate), unit: '', hint: `无响应 ${this.num(this.kpi.faultNoResponseCount)} 单` },
-        { key: 'avgCloseHours', label: '平均结案时长', value: this.decimal(this.kpi.avgCloseHours), unit: '小时', hint: '已结案工单平均处理时长' }
+        { key: 'avgCloseHours', label: '平均结案时长', value: this.decimal(this.kpi.avgCloseHours), unit: '小时', hint: '已结案工单平均处理时长', link: { status: 'CLOSED' }}
       ]
     }
   },
@@ -321,6 +329,18 @@ export default {
         })
       })
     },
+    goKpi(item) {
+      if (!item || !item.link) return
+      this.$router.push({
+        path: '/device/faultWorkOrders',
+        query: this.cleanQuery(Object.assign({
+          start: this.listQuery.start,
+          end: this.listQuery.end,
+          merchantId: this.listQuery.merchantId,
+          stationId: this.listQuery.stationId
+        }, item.link))
+      })
+    },
     statusLabel(status) {
       return STATUS_MAP[status] ? STATUS_MAP[status].label : (status || '-')
     },
@@ -355,6 +375,18 @@ export default {
 }
 .kpi-card {
   min-height: 118px;
+}
+.kpi-card--link {
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+.kpi-card--link:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+.kpi-card__more {
+  margin-top: 8px;
+  color: #409eff;
+  font-size: 12px;
 }
 .kpi-card__label {
   color: #909399;

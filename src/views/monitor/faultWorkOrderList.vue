@@ -10,16 +10,6 @@
         @keyup.enter.native="handleFilter"
         @clear="handleFilter"
       />
-      <el-select
-        v-model="listQuery.status"
-        class="filter-item"
-        style="width: 140px; margin-right: 20px;"
-        clearable
-        placeholder="处理状态"
-        @change="handleFilter"
-      >
-        <el-option v-for="item in statusOptions" :key="item.value" :label="item.label" :value="item.value" />
-      </el-select>
       <el-input
         v-model="listQuery.deviceCode"
         class="filter-item"
@@ -49,6 +39,17 @@
       >
         <el-option v-for="item in alarmOptions" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>
+      <el-input
+        v-model="listQuery.assigneeName"
+        class="filter-item"
+        style="width: 140px; margin-right: 20px;"
+        placeholder="指派人"
+        clearable
+        @keyup.enter.native="handleFilter"
+        @clear="handleFilter"
+      />
+      <el-checkbox v-model="listQuery.mine" class="filter-item" style="margin-right: 20px;" @change="handleFilter">只看我的</el-checkbox>
+      <el-checkbox v-model="listQuery.overdue" class="filter-item" style="margin-right: 20px;" @change="handleFilter">只看超时</el-checkbox>
       <el-select
         v-model="listQuery.stationId"
         class="filter-item"
@@ -75,6 +76,15 @@
       <el-button size="mini" class="filter-item" icon="el-icon-refresh" @click="handleReset">重置</el-button>
       <el-button v-if="hasPerm('create')" size="mini" class="filter-item" icon="el-icon-plus" @click="openCreateDialog">手工建单</el-button>
       <el-button v-if="hasPerm('export')" size="mini" class="filter-item" icon="el-icon-download" :loading="exporting" @click="exportList">导出</el-button>
+    </div>
+
+    <el-tabs v-model="activeStatus" class="status-tabs" @tab-click="handleStatusTab">
+      <el-tab-pane v-for="tab in statusTabs" :key="tab.name" :name="tab.name">
+        <span slot="label">{{ tab.label }}<em class="status-tabs__count">{{ statusCounts[tab.name] || 0 }}</em></span>
+      </el-tab-pane>
+    </el-tabs>
+    <div v-if="listQuery.statusIn" class="status-in-tag">
+      <el-tag size="small" closable @close="clearStatusIn">{{ statusInLabel }}</el-tag>
     </div>
 
     <el-table
@@ -113,6 +123,12 @@
       </el-table-column>
       <el-table-column prop="openedAt" label="打开时间" min-width="160" show-overflow-tooltip>
         <template slot-scope="scope">{{ time(scope.row.openedAt || scope.row.createTime) }}</template>
+      </el-table-column>
+      <el-table-column label="已持续" min-width="130" align="center">
+        <template slot-scope="scope">
+          <span :class="{ 'duration--overdue': overdue(scope.row) }">{{ duration(scope.row) }}</span>
+          <el-tag v-if="overdue(scope.row)" size="mini" type="danger" effect="plain" class="duration__tag">超时</el-tag>
+        </template>
       </el-table-column>
       <el-table-column label="操作" align="center" width="230" fixed="right">
         <template slot-scope="scope">
@@ -420,11 +436,13 @@ import {
   listFaultStationDevices,
   checkOpenWorkOrders,
   getAssigneeCandidates,
-  exportFaultWorkOrders
+  exportFaultWorkOrders,
+  getFaultWorkOrderStatusCounts
 } from '@/api/monitor/faultMonitor'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import { parseTime } from '@/utils/index'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
+import { orderDurationMs, isOverdue, formatDuration } from './faultWorkOrderMeta'
 
 const STATUS_OPTIONS = [
   { value: 'OPEN', label: '待处理', type: 'warning' },
@@ -432,6 +450,11 @@ const STATUS_OPTIONS = [
   { value: 'CLOSED', label: '已结案', type: 'success' },
   { value: 'CANCELLED', label: '已取消', type: 'info' }
 ]
+
+const STATUS_IN_LABELS = {
+  'OPEN,IN_PROGRESS': '未关闭（待处理 + 处理中）',
+  'OPEN,IN_PROGRESS,CLOSED': '不含已取消'
+}
 
 const SOURCE_OPTIONS = [
   { value: 'AUTO_ALARM', label: '自动告警' },
@@ -488,14 +511,21 @@ export default {
         limit: 10,
         workOrderNo: '',
         status: '',
+        statusIn: '',
         deviceCode: '',
         source: '',
         alarmCode: '',
+        assigneeName: '',
+        mine: false,
+        overdue: false,
         merchantId: '',
         stationId: '',
         start: '',
         end: ''
       },
+      activeStatus: 'ALL',
+      statusCounts: {},
+      now: Date.now(),
       detailVisible: false,
       detail: {
         workOrder: null,
@@ -532,12 +562,19 @@ export default {
         visible: false,
         list: []
       },
-      statusOptions: STATUS_OPTIONS,
       sourceOptions: SOURCE_OPTIONS,
       alarmOptions: ALARM_OPTIONS
     }
   },
   computed: {
+    statusTabs() {
+      return [{ name: 'ALL', label: '全部' }].concat(STATUS_OPTIONS.map(item => ({ name: item.value, label: item.label })))
+    },
+    statusInLabel() {
+      const key = this.listQuery.statusIn
+      if (STATUS_IN_LABELS[key]) return STATUS_IN_LABELS[key]
+      return '状态：' + String(key || '').split(',').map(s => this.statusLabel(s)).join(' / ')
+    },
     detailActions() {
       return Array.isArray(this.detail.actions) ? this.detail.actions : []
     },
@@ -660,6 +697,9 @@ export default {
       if (q.start && q.end) {
         this.dateRange = [String(q.start).slice(0, 10), String(q.end).slice(0, 10)]
       }
+      this.listQuery.mine = q.mine === true || q.mine === 'true'
+      this.listQuery.overdue = q.overdue === true || q.overdue === 'true'
+      this.activeStatus = this.listQuery.status || 'ALL'
     },
     routeWorkOrderId() {
       const q = (this.$route && this.$route.query) || {}
@@ -699,14 +739,19 @@ export default {
         limit: 10,
         workOrderNo: '',
         status: '',
+        statusIn: '',
         deviceCode: '',
         source: '',
         alarmCode: '',
+        assigneeName: '',
+        mine: false,
+        overdue: false,
         merchantId: this.routeMerchantId(),
         stationId: '',
         start: '',
         end: ''
       }
+      this.activeStatus = 'ALL'
       this.getList()
     },
     handleSizeChange(limit) {
@@ -719,6 +764,8 @@ export default {
       this.getList()
     },
     getList() {
+      this.now = Date.now()
+      this.loadStatusCounts()
       this.listLoading = true
       pageFaultWorkOrders(this.cleanQuery(this.listQuery)).then(res => {
         this.listLoading = false
@@ -733,6 +780,31 @@ export default {
       }).catch(() => {
         this.listLoading = false
       })
+    },
+    loadStatusCounts() {
+      const params = this.cleanQuery(Object.assign({}, this.listQuery))
+      delete params.page
+      delete params.limit
+      delete params.status
+      delete params.statusIn
+      getFaultWorkOrderStatusCounts(params).then(res => {
+        this.statusCounts = res && Number(res.code) === 200 && res.data ? res.data : {}
+      }).catch(() => {})
+    },
+    handleStatusTab() {
+      this.listQuery.status = this.activeStatus === 'ALL' ? '' : this.activeStatus
+      this.listQuery.statusIn = ''
+      this.handleFilter()
+    },
+    clearStatusIn() {
+      this.listQuery.statusIn = ''
+      this.handleFilter()
+    },
+    duration(row) {
+      return formatDuration(orderDurationMs(row, this.now))
+    },
+    overdue(row) {
+      return isOverdue(row, this.now)
     },
     openDetail(row) {
       if (!row || !row.id) return
@@ -1012,7 +1084,7 @@ export default {
     cleanQuery(query) {
       const result = {}
       Object.keys(query).forEach(key => {
-        if (query[key] !== '' && query[key] !== null && query[key] !== undefined) {
+        if (query[key] !== '' && query[key] !== null && query[key] !== undefined && query[key] !== false) {
           result[key] = query[key]
         }
       })
@@ -1064,6 +1136,25 @@ export default {
 <style scoped>
 .fault-work-orders .filter-container {
   margin-bottom: 16px;
+}
+.status-tabs {
+  margin-bottom: 4px;
+}
+.status-tabs__count {
+  margin-left: 4px;
+  color: #909399;
+  font-size: 12px;
+  font-style: normal;
+}
+.status-in-tag {
+  margin-bottom: 12px;
+}
+.duration--overdue {
+  color: #f56c6c;
+  font-weight: 600;
+}
+.duration__tag {
+  margin-left: 4px;
 }
 .fault-order-drawer {
   flex: 1;

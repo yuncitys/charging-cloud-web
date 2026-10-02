@@ -16,6 +16,14 @@ export function pageFaultWorkOrders(params) {
   })
 }
 
+export function getFaultWorkOrderStatusCounts(params) {
+  return request({
+    url: '/api/web/monitor/fault/work-orders/status-counts',
+    method: 'get',
+    params
+  })
+}
+
 export function getFaultWorkOrder(id, params) {
   return request({
     url: `/api/web/monitor/fault/work-orders/${id}`,
