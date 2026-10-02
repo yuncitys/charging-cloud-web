@@ -4,7 +4,7 @@
       <el-tabs v-model="activeTab" class="admin-message-list__tabs" @tab-click="handleTab">
         <el-tab-pane v-for="tab in tabs" :key="tab.name" :name="tab.name" :label="tab.label" />
       </el-tabs>
-      <el-button size="mini" icon="el-icon-finished" :loading="readingAll" @click="readAll">全部已读</el-button>
+      <el-button size="mini" icon="el-icon-finished" :loading="readingAll" :disabled="!unreadCount" @click="readAll">全部已读</el-button>
     </div>
 
     <el-table
@@ -54,7 +54,7 @@
 </template>
 
 <script>
-import { pageAdminMessages, readAdminMessage, readAllAdminMessages } from '@/api/message/adminMessage'
+import { getUnreadMessageCount, pageAdminMessages, readAdminMessage, readAllAdminMessages } from '@/api/message/adminMessage'
 import { parseTime } from '@/utils/index'
 import { adminMessageRoute, ADMIN_MESSAGE_CHANGED } from '@/utils/adminMessageRoute'
 
@@ -73,6 +73,7 @@ export default {
       listLoading: false,
       readingAll: false,
       readingIds: [],
+      unreadCount: 0,
       activatedOnce: false,
       listSeq: 0,
       list: [],
@@ -101,6 +102,7 @@ export default {
       if (tab && tab.readFlag !== undefined) params.readFlag = tab.readFlag
       const seq = ++this.listSeq
       this.listLoading = true
+      this.loadUnreadCount()
       return pageAdminMessages(params).then(res => {
         if (seq !== this.listSeq) return
         this.listLoading = false
@@ -115,6 +117,11 @@ export default {
       }).catch(() => {
         if (seq === this.listSeq) this.listLoading = false
       })
+    },
+    loadUnreadCount() {
+      getUnreadMessageCount().then(res => {
+        if (res && Number(res.code) === 200) this.unreadCount = Number(res.data) || 0
+      }).catch(() => {})
     },
     handleTab() {
       this.listQuery.page = 1

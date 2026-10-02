@@ -201,6 +201,19 @@ describe('AdminMessageList', () => {
     expect(wrapper.vm.$router.push).not.toHaveBeenCalled()
   })
 
+  it('tracks unread count with each list load', async() => {
+    getUnreadMessageCount.mockResolvedValue({ code: 200, data: 3 })
+    const wrapper = factory()
+    await flush()
+    expect(wrapper.vm.unreadCount).toBe(3)
+
+    getUnreadMessageCount.mockResolvedValue({ code: 200, data: 0 })
+    wrapper.vm.$root.$emit('admin-message:changed')
+    await flush()
+    expect(getUnreadMessageCount).toHaveBeenCalledTimes(2)
+    expect(wrapper.vm.unreadCount).toBe(0)
+  })
+
   it('read all reloads list and notifies', async() => {
     const wrapper = factory()
     await flush()
