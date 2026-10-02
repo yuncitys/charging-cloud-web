@@ -58,6 +58,9 @@
 					taskId
 				}
 				getTask(data).then(res => {
+					if (!this.showDialog) {
+						return
+					}
 					if (res.code == 200) {
 						if (Number(res.data && res.data.status) === 2) {
 							this.close()
