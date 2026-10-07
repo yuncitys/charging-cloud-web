@@ -12,4 +12,19 @@ var BaseConfig = {
     { id: '2', title: '新能源汽车', visible: true },
     { id: '1', title: '电动单车', visible: true },
   ],
+  /**
+   * 登录页展示内容。任一项不填或留空时使用内置默认值。
+   * logo / illustration 可填完整 URL，或相对站点根目录的路径（如 'static/login/logo.png'，文件放在 public 下）。
+   * slogan 为口号分段数组，段与段之间显示圆点，最后一段使用品牌渐变色。
+   */
+  VUE_LOGIN: {
+    brandName: '云创智城',
+    logo: '',
+    slogan: ['万桩互联', '智慧运营'],
+    subTitle: '欢迎使用智慧充电综合管理平台',
+    illustration: '',
+    panelTitle: '欢迎登录',
+    panelSubTitle: '请使用管理员分配的账号登录',
+    copyright: 'Copyright© 2021 深圳市云创智城科技有限公司 All Rights Reserved 粤ICP备2022076347号',
+  },
 }

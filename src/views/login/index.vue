@@ -2,25 +2,26 @@
   <div class="login-page">
     <div class="login-orbit" />
     <header class="login-header">
-      <img class="login-header__logo" src="@/assets/logo.png" alt="logo">
-      <span class="login-header__name">云创智城</span>
+      <img class="login-header__logo" :src="config.logo" alt="logo">
+      <span v-if="config.brandName" class="login-header__name">{{ config.brandName }}</span>
     </header>
 
     <section class="login-hero">
-      <h1 class="login-hero__title">
-        <span class="login-hero__word">万桩互联</span>
-        <i class="login-hero__dot" />
-        <span class="login-hero__word login-hero__word--brand">智慧运营</span>
+      <h1 v-if="sloganWords.length" class="login-hero__title">
+        <template v-for="item in sloganWords">
+          <i v-if="item.index > 0" :key="'dot' + item.index" class="login-hero__dot" />
+          <span :key="'word' + item.index" class="login-hero__word" :class="item.cls">{{ item.text }}</span>
+        </template>
       </h1>
-      <p class="login-hero__sub">欢迎使用{{ systemTitle }}</p>
-      <img class="login-hero__art" src="@/assets/login/login_content.jpg" alt="">
+      <p v-if="config.subTitle" class="login-hero__sub">{{ config.subTitle }}</p>
+      <img class="login-hero__art" :src="config.illustration" alt="">
     </section>
 
     <div class="login-card">
       <section class="login-panel">
         <div class="login-panel__head">
-          <h2 class="login-panel__title">欢迎登录</h2>
-          <p class="login-panel__sub">请使用管理员分配的账号登录</p>
+          <h2 class="login-panel__title">{{ config.panelTitle }}</h2>
+          <p v-if="config.panelSubTitle" class="login-panel__sub">{{ config.panelSubTitle }}</p>
         </div>
 
         <el-form ref="loginForm" class="login-form" :model="loginForm" :rules="loginRules" autocomplete="on" @submit.native.prevent>
@@ -73,20 +74,43 @@
       </section>
     </div>
 
-    <footer class="login-footer">{{ Copyright }}</footer>
+    <footer v-if="config.copyright" class="login-footer">{{ config.copyright }}</footer>
   </div>
 </template>
 
 <script>
 import { getRouter } from '@/api/user'
 import { findFirstLeafHref } from '@/utils/menuNav'
+import defaultLogo from '@/assets/logo.png'
+import defaultIllustration from '@/assets/login/login_content.jpg'
+
+const DEFAULT_CONFIG = {
+  brandName: '云创智城',
+  logo: defaultLogo,
+  slogan: ['万桩互联', '智慧运营'],
+  subTitle: '欢迎使用智慧充电综合管理平台',
+  illustration: defaultIllustration,
+  panelTitle: '欢迎登录',
+  panelSubTitle: '请使用管理员分配的账号登录',
+  copyright: 'Copyright© 2021 深圳市云创智城科技有限公司 All Rights Reserved 粤ICP备2022076347号'
+}
+
+// 合并 public/BaseConfig.js 中的 VUE_LOGIN，空值回退默认
+function resolveLoginConfig() {
+  const custom = (window.BaseConfig && window.BaseConfig.VUE_LOGIN) || {}
+  return Object.keys(DEFAULT_CONFIG).reduce((acc, key) => {
+    const value = custom[key]
+    const empty = value === undefined || value === null || value === '' || (Array.isArray(value) && !value.length)
+    acc[key] = empty ? DEFAULT_CONFIG[key] : value
+    return acc
+  }, {})
+}
 
 export default {
   name: 'Login',
   data() {
     return {
-      systemTitle: '智慧充电综合管理平台',
-      Copyright: 'Copyright© 2021 深圳市云创智城科技有限公司 All Rights Reserved 粤ICP备2022076347号',
+      config: resolveLoginConfig(),
       loginForm: {
         account: '',
         password: '',
@@ -102,6 +126,16 @@ export default {
       loading: false,
       redirect: undefined,
       otherQuery: {}
+    }
+  },
+  computed: {
+    sloganWords() {
+      const words = [].concat(this.config.slogan).filter(Boolean)
+      return words.map((text, index) => ({
+        text,
+        index,
+        cls: words.length > 1 && index === words.length - 1 ? 'login-hero__word--brand' : ''
+      }))
     }
   },
   watch: {
