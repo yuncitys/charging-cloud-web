@@ -145,7 +145,7 @@
 			}
 		},
 		mounted() {
-			this.$dict.getSelectorOptions('device_rule', { numeric: true }).then(list => {
+			this.$dict.getDeviceRuleOptions().then(list => {
 				this.ruleIds = (list || []).map(item => ({ id: item.value, title: item.label }))
 			})
 			this.$dict.getSelectorOptions('electric_out_type', { numeric: true }).then(list => {

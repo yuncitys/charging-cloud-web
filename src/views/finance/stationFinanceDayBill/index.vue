@@ -405,7 +405,7 @@ export default {
     }
   },
   created() {
-    this.$dict.getSelectorOptions('device_rule', { numeric: true }).then(list => {
+    this.$dict.getDeviceRuleOptions().then(list => {
       this.ruleIdOptions = list || []
     })
     this.initMerchant()

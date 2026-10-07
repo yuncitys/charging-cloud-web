@@ -1,5 +1,6 @@
 import Vue from 'vue'
 import { getDictionarySelector } from '@/api/permission/dictionaryData'
+import { filterRuleOptions } from './ruleIdConfig'
 
 const CACHE_TTL_MS = 5 * 60 * 1000
 const cache = new Map()
@@ -195,6 +196,23 @@ export function formatDictLabel(typeEnCode, code) {
 	}
 	const key = String(code)
 	return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : String(code)
+}
+
+/**
+ * 同步取标签；未加载或无此编码时返回空串，便于调用方自行兜底。
+ * 与 formatDictLabel 一样会在渲染期建立依赖并触发加载。
+ * @param {string} typeEnCode
+ * @param {string|number} code
+ */
+export function peekDictLabel(typeEnCode, code) {
+	void dictState.version
+	const map = labelMaps.get(typeEnCode)
+	if (!map) {
+		getSelector(typeEnCode)
+		return ''
+	}
+	const key = String(code)
+	return Object.prototype.hasOwnProperty.call(map, key) ? map[key] : ''
 }
 
 export function getOrderStatus(val) {
@@ -617,8 +635,9 @@ export function formatTcecEquipmentType(val) {
 	return formatDictLabel('tcec_equipment_type', val)
 }
 
+/** 产品类型选项，按 BaseConfig.VUE_RULE_ID_TABS 过滤隐藏项并排序 */
 export function getDeviceRuleOptions() {
-	return getSelectorOptions('device_rule', { numeric: true })
+	return getSelectorOptions('device_rule', { numeric: true }).then(filterRuleOptions)
 }
 
 export function getPriceTypeOptions() {
@@ -650,6 +669,7 @@ const dictApi = {
 	getSelectorCascaderOptions,
 	getBankNoOptions,
 	formatDictLabel,
+	peekDictLabel,
 	getOrderStatus,
 	formatOrderType,
 	formatElectricOutType,

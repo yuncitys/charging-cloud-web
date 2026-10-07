@@ -6,7 +6,10 @@ var BaseConfig = {
   VUE_MAP_KEY: 'd9f3969bc9d54afb5b8fbf6f82885a77',
   VUE_LARGE_SCREEN_DATA_SOURCE: 'mock',//real 或 mock
   /**
-   * 订单列表、设备列表等页的「电动单车 / 新能源汽车」Tab：按顺序展示；visible: false 可隐藏某项；id 对应接口 ruleId。
+   * 本部署启用的产品类型（id 对应 ruleId / 字典 device_rule 的编码）。
+   * 作用于订单、设备等列表页的「电动单车 / 新能源汽车」Tab，以及表单、筛选中的产品类型选项：
+   * 按数组顺序展示，第一项为默认 Tab；visible: false 或未列出的类型会被隐藏。
+   * 名称以字典 device_rule 为准，title 仅在字典未加载时兜底显示，可不填。
    */
   VUE_RULE_ID_TABS: [
     { id: '2', title: '新能源汽车', visible: true },
