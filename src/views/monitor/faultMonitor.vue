@@ -74,7 +74,7 @@
           <el-card class="chart-card" shadow="never">
             <div slot="header" class="chart-card__head">
               <span>故障趋势</span>
-              <span class="chart-card__hint">新建工单数 / 成功率</span>
+              <span class="chart-card__hint">新建工单数 / 启动成功率</span>
             </div>
             <div v-show="hasTrendData" ref="trendChart" class="chart-canvas" />
             <div v-show="!hasTrendData" class="chart-empty">暂无趋势数据</div>
@@ -90,10 +90,10 @@
         <el-table :data="dailyTrends" size="small" fit highlight-current-row>
           <el-table-column prop="day" label="日期" min-width="120" />
           <el-table-column prop="openedCount" label="新建工单" min-width="100" align="center" />
+          <el-table-column prop="totalCount" label="总订单" min-width="100" align="center" />
           <el-table-column prop="faultNoResponseCount" label="无响应订单" min-width="110" align="center" />
-          <el-table-column prop="startedCount" label="启动订单" min-width="100" align="center" />
-          <el-table-column prop="completedCount" label="成功订单" min-width="100" align="center" />
-          <el-table-column prop="orderSuccessRate" label="成功率" min-width="100" align="center">
+          <el-table-column prop="startedCount" label="启动成功订单" min-width="120" align="center" />
+          <el-table-column prop="orderSuccessRate" label="启动成功率" min-width="110" align="center">
             <template slot-scope="scope">{{ percent(scope.row.orderSuccessRate) }}</template>
           </el-table-column>
         </el-table>
@@ -148,7 +148,7 @@ export default {
       return Object.keys(dist).some(key => Number(dist[key]) > 0)
     },
     hasTrendData() {
-      const keys = ['openedCount', 'startedCount', 'completedCount', 'faultNoResponseCount', 'orderSuccessRate']
+      const keys = ['openedCount', 'totalCount', 'startedCount', 'faultNoResponseCount', 'orderSuccessRate']
       return this.dailyTrends.some(item => keys.some(key => Number(item[key]) > 0))
     },
     kpiCards() {
@@ -156,7 +156,7 @@ export default {
         { key: 'openedCount', label: '新增故障工单', value: this.num(this.kpi.openedCount), unit: '单', hint: '统计周期内新建且未取消', link: { statusIn: 'OPEN,IN_PROGRESS,CLOSED' }},
         { key: 'openCount', label: '待处理工单', value: this.num(this.kpi.openCount), unit: '单', hint: '待处理 + 处理中', link: { statusIn: 'OPEN,IN_PROGRESS' }},
         { key: 'rate', label: '故障发生率', value: this.percent(this.kpi.rate), unit: '', hint: `枪数 ${this.num(this.kpi.gunCount)} / 天数 ${this.num(this.kpi.dayCount)}` },
-        { key: 'orderSuccessRate', label: '订单成功率', value: this.percent(this.kpi.orderSuccessRate), unit: '', hint: `无响应 ${this.num(this.kpi.faultNoResponseCount)} 单` },
+        { key: 'orderSuccessRate', label: '订单启动成功率', value: this.percent(this.kpi.orderSuccessRate), unit: '', hint: `含充电中订单，无响应 ${this.num(this.kpi.faultNoResponseCount)} 单` },
         { key: 'avgCloseHours', label: '平均结案时长', value: this.decimal(this.kpi.avgCloseHours), unit: '小时', hint: '已结案工单平均处理时长', link: { status: 'CLOSED' }}
       ]
     }
@@ -280,12 +280,12 @@ export default {
       const days = this.dailyTrends.map(item => item.day)
       this.trendChart.setOption({
         tooltip: { trigger: 'axis' },
-        legend: { data: ['新建工单', '成功率'] },
+        legend: { data: ['新建工单', '启动成功率'] },
         grid: { left: 48, right: 56, top: 48, bottom: 36 },
         xAxis: { type: 'category', boundaryGap: false, data: days },
         yAxis: [
           { type: 'value', name: '工单数', minInterval: 1 },
-          { type: 'value', name: '成功率', axisLabel: { formatter: '{value}%' }}
+          { type: 'value', name: '启动成功率', axisLabel: { formatter: '{value}%' }}
         ],
         series: [
           {
@@ -295,7 +295,7 @@ export default {
             data: this.dailyTrends.map(item => Number(item.openedCount) || 0)
           },
           {
-            name: '成功率',
+            name: '启动成功率',
             type: 'line',
             smooth: true,
             yAxisIndex: 1,
