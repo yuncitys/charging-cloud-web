@@ -635,6 +635,14 @@ export default {
       this.$emit('update:visible', false)
     },
     confirm() {
+      if (this.form.channelCode === 'huifu') {
+        this.form.serviceProviderId = 'huifu'
+        const required = ['sysId', 'productId', 'huifuId', 'rsaPrivateKey', 'huifuPublicKey', 'wxAppId', 'callbackDomain']
+        if (required.some(k => !this.huifuConfig[k] || !String(this.huifuConfig[k]).trim())) {
+          this.$message.warning('请完整填写汇付配置（请求域名、延迟入账除外）')
+          return
+        }
+      }
       this.$refs.form.validate(valid => {
         const code = this.form.channelCode
         this.syncChannelNameFromCode()
@@ -649,7 +657,6 @@ export default {
         } else if (code === 'tzbank') {
           this.form.configStr = JSON.stringify(this.tzbankConfig)
         } else if (code === 'huifu') {
-          this.form.serviceProviderId = 'huifu'
           this.form.configStr = JSON.stringify(this.huifuConfig)
         }
         if (valid) {
