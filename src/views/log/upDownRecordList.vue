@@ -1,6 +1,46 @@
 <template>
 	<div class="app-container">
 		<div class="filter-container">
+			<el-select
+				v-model="listQuery.networkDotId"
+				class="filter-item"
+				style="width: 220px; margin-right: 20px;"
+				filterable
+				remote
+				clearable
+				reserve-keyword
+				placeholder="请选择充电站"
+				:remote-method="searchStations"
+				:loading="stationLoading"
+				@visible-change="onStationVisible"
+				@change="handleFilter"
+				@clear="handleFilter"
+			>
+				<el-option
+					v-for="item in stationOptions"
+					:key="item.id"
+					:label="item.networkName"
+					:value="item.id"
+				/>
+			</el-select>
+			<el-input
+				v-model="listQuery.alarmCode"
+				class="filter-item"
+				style="width: 180px; margin-right: 20px;"
+				placeholder="请输入日志编号"
+				clearable
+				@keyup.enter.native="handleFilter"
+				@clear="handleFilter"
+			/>
+			<el-input
+				v-model="listQuery.connectorCode"
+				class="filter-item"
+				style="width: 180px; margin-right: 20px;"
+				placeholder="请输入终端编号"
+				clearable
+				@keyup.enter.native="handleFilter"
+				@clear="handleFilter"
+			/>
 			<el-input v-model="listQuery.deviceCode" style="width: 200px;margin-right: 20px ;" class="filter-item"
 				placeholder="请输入设备号" clearable @keyup.enter.native="handleFilter" @clear="handleFilter()" />
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
@@ -57,6 +97,7 @@
 	import {
 		getList,
 	} from '@/api/upDownRecord/upDownRecordList.js'
+	import { getList as getNetworkDotPage } from '@/api/netWorkDot/netWorkDotList'
 	import {
 		parseTime
 	} from '@/utils/index'
@@ -78,8 +119,13 @@
 					limit: 10,
 					deviceCode: '',
 					createTimeStart: '',
-					createTimeEnd: ''
+					createTimeEnd: '',
+					networkDotId: null,
+					alarmCode: '',
+					connectorCode: ''
 				},
+				stationOptions: [],
+				stationLoading: false,
 				tableKey: 0,
 				time: ''
 			}
@@ -96,6 +142,28 @@
 
 		},
 		methods: {
+			searchStations(query) {
+				this.stationLoading = true
+				return getNetworkDotPage({
+					page: 1,
+					limit: 20,
+					type: 1,
+					ruleId: 2,
+					networkName: (query || '').trim()
+				}).then(res => {
+					this.stationLoading = false
+					if (res && Number(res.code) === 200) {
+						this.stationOptions = Array.isArray(res.data) ? res.data : []
+					}
+				}).catch(() => {
+					this.stationLoading = false
+				})
+			},
+			onStationVisible(visible) {
+				if (visible && !this.stationOptions.length) {
+					this.searchStations('')
+				}
+			},
 			dateChange(e) {
 				if (e) {
 					this.listQuery.createTimeStart = e[0]
@@ -118,6 +186,10 @@
 				}
 				if (listQuery.createTimeEnd == null) {
 					listQuery.createTimeEnd = ''
+				}
+				// form-urlencoded 会把 null 编成字符串 "null"，Integer 绑定失败
+				if (listQuery.networkDotId == null || listQuery.networkDotId === '') {
+					delete listQuery.networkDotId
 				}
 				getList(listQuery).then(res => {
 					if (res.code == 200) {

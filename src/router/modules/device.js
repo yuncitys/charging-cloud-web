@@ -24,6 +24,42 @@ export default [
       }
     },
 {
+      path: '/device/stationMonitor',
+      component: () => import('@/views/monitor/stationMonitor'),
+      name: 'stationMonitor',
+      meta: {
+        title: '电站监控',
+        icon: 'el-icon-view',
+      }
+    },
+{
+      path: '/device/faultMonitor',
+      component: () => import('@/views/monitor/faultMonitor'),
+      name: 'faultMonitor',
+      meta: {
+        title: '故障监控',
+        icon: 'el-icon-warning-outline',
+      }
+    },
+{
+      path: '/device/faultWorkOrders',
+      component: () => import('@/views/monitor/faultWorkOrderList'),
+      name: 'faultWorkOrders',
+      meta: {
+        title: '故障工单',
+        icon: 'el-icon-tickets',
+      }
+    },
+  {
+    path: '/device/stationMap',
+    component: () => import('@/views/monitor/stationMap'),
+    name: 'stationMap',
+    meta: {
+      title: '站点地图',
+      icon: 'el-icon-map-location'
+    }
+  },
+{
       path: '/device/warehousing',
       component: () => import('@/views/device/warehousing'),
       name: 'warehousing',

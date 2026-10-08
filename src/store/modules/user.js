@@ -76,8 +76,9 @@ const actions = {
             type: 'error',
             duration: 5 * 1000
           })
+          reject(new Error(response.msg))
         }
-      })
+      }).catch(reject)
     })
   },
 

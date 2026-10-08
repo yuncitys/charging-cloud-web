@@ -85,41 +85,98 @@
         style="width: 100%;"
         align="center"
       >
-        <el-table-column type="index" width="55" label="序号" align="center">
+        <el-table-column label="电站信息" min-width="260" align="left">
           <template slot-scope="scope">
-            <span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span>
+            <div class="station-list-cell">
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">名称：</span>
+                <span class="station-list-cell__value" :title="disp(scope.row.networkName)">{{ disp(scope.row.networkName) }}</span>
+              </div>
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">ID：</span>
+                <span class="station-list-cell__value" :title="disp(scope.row.externalStationId)">{{ disp(scope.row.externalStationId) }}</span>
+              </div>
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">内部ID：</span>
+                <span class="station-list-cell__value">{{ disp(scope.row.id) }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
         <el-table-column
           prop="merchantName"
           label="运营商户"
+          min-width="120"
           align="center"
           :show-overflow-tooltip="isPc"
         />
-        <el-table-column
-          prop="networkName"
-          label="充电站名称"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="networkAddress"
-          label="投放地"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="networkLongitude"
-          label="地址经度"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="networkLatitude"
-          label="地址纬度"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
+        <el-table-column label="设备数" width="100" align="left">
+          <template slot-scope="scope">
+            <div class="station-list-cell">
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">直：</span>
+                <span class="station-list-cell__value">{{ countOrZero(scope.row.dcGunCount) }}</span>
+              </div>
+              <div class="station-list-cell__row">
+                <span class="station-list-cell__label">交：</span>
+                <span class="station-list-cell__value">{{ countOrZero(scope.row.acGunCount) }}</span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column label="枪总数" width="90" align="center">
+          <template slot-scope="scope">
+            <span>{{ countOrZero(scope.row.gunTotalCount) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="额定功率" width="110" align="center">
+          <template slot-scope="scope">
+            <span>{{ formatRatedPower(scope.row.ratedPowerKw) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="建设状态" width="130" align="center">
+          <template slot-scope="scope">
+            <el-tooltip
+              v-if="Number(scope.row.type) === 2"
+              content="互联站状态由同步更新"
+              placement="top"
+            >
+              <el-tag
+                size="small"
+                effect="plain"
+                :type="operateStatusTagType(scope.row.operateStatus)"
+              >
+                {{ operateStatusText(scope.row.operateStatus) }}
+              </el-tag>
+            </el-tooltip>
+            <el-select
+              v-else-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')"
+              :value="scope.row.operateStatus"
+              size="small"
+              class="operate-status-select"
+              :class="'operate-status-select--' + (operateStatusTagType(scope.row.operateStatus) || 'info')"
+              placeholder="建设状态"
+              :disabled="!!operateStatusUpdating[scope.row.id]"
+              @change="handleOperateStatusChange(scope.row, $event)"
+            >
+              <el-option
+                v-for="opt in operateStatusOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              >
+              </el-option>
+            </el-select>
+            <el-tag
+              v-else
+              size="small"
+              effect="plain"
+              :type="operateStatusTagType(scope.row.operateStatus)"
+            >
+              {{ operateStatusText(scope.row.operateStatus) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="App展示" align="center" width="110">
           <template slot-scope="scope">
             <el-switch
@@ -129,40 +186,6 @@
               :disabled="!btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit') || !!appDisplayUpdating[scope.row.id]"
               @change="handleAppDisplayChange(scope.row, $event)"
             />
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="createUser"
-          label="创建用户"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="updateUser"
-          label="更新用户"
-          align="center"
-          :show-overflow-tooltip="isPc"
-        />
-        <el-table-column
-          prop="createTime"
-          label="创建时间"
-          align="center"
-          :show-overflow-tooltip="isPc"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span>{{ scope.row.createTime | formatDate }}</span>
-          </template>
-        </el-table-column>
-        <el-table-column
-          prop="updateTime"
-          label="更新时间"
-          align="center"
-          :show-overflow-tooltip="isPc"
-          sortable
-        >
-          <template slot-scope="scope">
-            <span>{{ scope.row.updateTime | formatDate }}</span>
           </template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="180" fixed="right">
@@ -200,7 +223,7 @@
 </template>
 
 <script>
-import { getList, updateSwitch, deleteNetworkDot } from '@/api/netWorkDot/netWorkDotList.js'
+import { getList, updateSwitch, updateOperateStatus, deleteNetworkDot } from '@/api/netWorkDot/netWorkDotList.js'
 import { getMerchant } from '@/api/merchant/merchant'
 import { parseTime } from '@/utils/index'
 import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
@@ -223,6 +246,8 @@ export default {
       total: 10,
       merchantList: [],
       appDisplayUpdating: {},
+      operateStatusUpdating: {},
+      operateStatusOptions: [],
       listQuery: {
         page: 1,
         limit: 10,
@@ -245,11 +270,47 @@ export default {
   created() {
     this.getLists()
     this.getMerchantList()
+    this.loadOperateStatusOptions()
   },
   methods: {
+    loadOperateStatusOptions() {
+      this.$dict.getOperateStatusOptions().then(list => {
+        this.operateStatusOptions = list || []
+      }).catch(() => {
+        this.operateStatusOptions = []
+      })
+    },
     normalizeFlag01(val) {
       if (val === 1 || val === '1' || val === true) return 1
       return 0
+    },
+    disp(val) {
+      if (val === null || val === undefined || val === '') return '-'
+      return val
+    },
+    countOrZero(val) {
+      const n = Number(val)
+      return isNaN(n) ? 0 : n
+    },
+    formatRatedPower(val) {
+      if (val === null || val === undefined || val === '') return '-'
+      const n = Number(val)
+      if (isNaN(n)) return '-'
+      const text = Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000)
+      return text + 'kW'
+    },
+    operateStatusText(status) {
+      if (status === null || status === undefined || status === '') return '-'
+      const label = this.$dict.formatOperateStatus(status)
+      return label === '-' ? String(status) : label
+    },
+    operateStatusTagType(status) {
+      const key = Number(status)
+      if (key === 50) return 'success'
+      if (key === 1) return 'warning'
+      if (key === 6) return 'warning'
+      if (key === 5) return 'info'
+      return 'info'
     },
     handleAppDisplayChange(row, val) {
       if (!row || !row.id) return
@@ -269,6 +330,29 @@ export default {
         this.$message.error('更新失败')
       }).finally(() => {
         this.$delete(this.appDisplayUpdating, row.id)
+      })
+    },
+    handleOperateStatusChange(row, val) {
+      if (!row || !row.id) return
+      if (Number(row.type) === 2) return
+      const nextVal = Number(val)
+      const prevVal = row.operateStatus
+      if (nextVal === Number(prevVal)) return
+
+      this.$set(this.operateStatusUpdating, row.id, true)
+      row.operateStatus = nextVal
+      updateOperateStatus({ id: row.id, operateStatus: nextVal }).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success(res.msg || '更新成功')
+        } else {
+          row.operateStatus = prevVal
+          this.$message.error((res && res.msg) || '更新失败')
+        }
+      }).catch(() => {
+        row.operateStatus = prevVal
+        this.$message.error('更新失败')
+      }).finally(() => {
+        this.$delete(this.operateStatusUpdating, row.id)
       })
     },
     toStationSetting(row) {
@@ -320,7 +404,10 @@ export default {
           const list = Array.isArray(res.data) ? res.data : []
           this.list = list.map(item => {
             const isAppDisplay = this.normalizeFlag01(item.isAppDisplay ?? item.is_app_display)
-            return { ...item, isAppDisplay }
+            const operateStatus = (item.operateStatus === null || item.operateStatus === undefined || item.operateStatus === '')
+              ? item.operateStatus
+              : Number(item.operateStatus)
+            return { ...item, isAppDisplay, operateStatus }
           })
           this.total = res.count || 0
         } else {
@@ -657,5 +744,73 @@ export default {
 		font-size: 13px;
 		color: #909399;
 		line-height: 20px;
+	}
+
+	.station-list-cell {
+		line-height: 1.7;
+		padding: 2px 0;
+	}
+
+	.station-list-cell__row {
+		display: flex;
+		align-items: flex-start;
+		word-break: break-all;
+	}
+
+	.station-list-cell__label {
+		flex: none;
+		color: #909399;
+	}
+
+	.station-list-cell__value {
+		color: #303133;
+	}
+
+	.operate-status-select {
+		width: 108px;
+		max-width: 100%;
+		vertical-align: middle;
+		margin: 0;
+	}
+
+	.operate-status-select .el-input__inner {
+		border-radius: 4px;
+		font-weight: 500;
+		text-align: left;
+		padding-left: 10px;
+		padding-right: 28px;
+	}
+
+	.operate-status-select--success .el-input__inner {
+		color: #67c23a;
+		border-color: #c2e7b0;
+		background-color: #f0f9eb;
+	}
+
+	.operate-status-select--warning .el-input__inner {
+		color: #e6a23c;
+		border-color: #f5dab1;
+		background-color: #fdf6ec;
+	}
+
+	.operate-status-select--info .el-input__inner {
+		color: #909399;
+		border-color: #d3d4d6;
+		background-color: #f4f4f5;
+	}
+
+	.operate-status-select .el-input.is-focus .el-input__inner,
+	.operate-status-select .el-input__inner:hover {
+		border-color: #409eff;
+	}
+
+	.operate-status-select--success .el-input.is-focus .el-input__inner,
+	.operate-status-select--success .el-input__inner:hover {
+		border-color: #67c23a;
+	}
+
+	.operate-status-select--warning .el-input.is-focus .el-input__inner,
+	.operate-status-select--warning .el-input__inner:hover {
+		border-color: #e6a23c;
 	}
 </style>

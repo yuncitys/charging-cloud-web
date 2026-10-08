@@ -58,7 +58,15 @@
 					taskId
 				}
 				getTask(data).then(res => {
+					if (!this.showDialog) {
+						return
+					}
 					if (res.code == 200) {
+						if (Number(res.data && res.data.status) === 2) {
+							this.close()
+							this.$message.error('文件生成失败，请稍后重试')
+							return
+						}
 						this.percentage = res.data.percentage
 						let result = res.data.result
 						if (result) {

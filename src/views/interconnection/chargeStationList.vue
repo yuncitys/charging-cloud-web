@@ -37,30 +37,78 @@
 				</el-tab-pane>
 			</el-tabs>
 
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
-				<el-table-column type="index" width="55" label="序号" align="center">
-					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
-				</el-table-column>
-				<!-- <el-table-column prop="ruleId" label="充电站类型" align="center" :show-overflow-tooltip="isPc">
+			<el-table
+				id="tableBox"
+				:key="tableKey"
+				v-loading="listLoading"
+				:data="list"
+				element-loading-text="拼命加载中......"
+				fit
+				highlight-current-row
+				style="width: 100%;"
+				align="center"
+			>
+				<el-table-column label="电站信息" min-width="260" align="left">
 					<template slot-scope="scope">
-						{{ $dict.formatDeviceRule(scope.row.ruleId) }}充电站
+						<div class="station-list-cell">
+							<div class="station-list-cell__row">
+								<span class="station-list-cell__label">名称：</span>
+								<span class="station-list-cell__value" :title="disp(scope.row.networkName)">{{ disp(scope.row.networkName) }}</span>
+							</div>
+							<div class="station-list-cell__row">
+								<span class="station-list-cell__label">ID：</span>
+								<span class="station-list-cell__value" :title="disp(scope.row.externalStationId)">{{ disp(scope.row.externalStationId) }}</span>
+							</div>
+							<div class="station-list-cell__row">
+								<span class="station-list-cell__label">内部ID：</span>
+								<span class="station-list-cell__value">{{ disp(scope.row.id) }}</span>
+							</div>
+						</div>
 					</template>
-				</el-table-column> -->
-				<el-table-column prop="merchantName" label="运营商户" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<el-table-column prop="networkName" label="充电站名称" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column
+					prop="merchantName"
+					label="运营商户"
+					min-width="120"
+					align="center"
+					:show-overflow-tooltip="true"
+				/>
+				<el-table-column label="设备数" width="100" align="left">
+					<template slot-scope="scope">
+						<div class="station-list-cell">
+							<div class="station-list-cell__row">
+								<span class="station-list-cell__label">直：</span>
+								<span class="station-list-cell__value">{{ countOrZero(scope.row.dcGunCount) }}</span>
+							</div>
+							<div class="station-list-cell__row">
+								<span class="station-list-cell__label">交：</span>
+								<span class="station-list-cell__value">{{ countOrZero(scope.row.acGunCount) }}</span>
+							</div>
+						</div>
+					</template>
 				</el-table-column>
-				<!-- <el-table-column prop="networkProvince" label="省" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="枪总数" width="90" align="center">
+					<template slot-scope="scope">
+						<span>{{ countOrZero(scope.row.gunTotalCount) }}</span>
+					</template>
 				</el-table-column>
-				<el-table-column prop="networkCity" label="市" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="额定功率" width="110" align="center">
+					<template slot-scope="scope">
+						<span>{{ formatRatedPower(scope.row.ratedPowerKw) }}</span>
+					</template>
 				</el-table-column>
-				<el-table-column prop="networkRegion" label="区" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column> -->
-				<el-table-column prop="networkAddress" label="投放地" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="networkLongitude" label="地址经度" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="networkLatitude" label="地址纬度" align="center" :show-overflow-tooltip='isPc'>
+				<el-table-column label="建设状态" width="130" align="center">
+					<template slot-scope="scope">
+						<el-tooltip content="互联站状态由同步更新" placement="top">
+							<el-tag
+								size="small"
+								effect="plain"
+								:type="operateStatusTagType(scope.row.operateStatus)"
+							>
+								{{ operateStatusText(scope.row.operateStatus) }}
+							</el-tag>
+						</el-tooltip>
+					</template>
 				</el-table-column>
 				<el-table-column label="App展示" align="center" width="110">
 					<template slot-scope="scope">
@@ -73,36 +121,18 @@
 						/>
 					</template>
 				</el-table-column>
-				<el-table-column prop="createUser" label="创建用户" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="updateUser" label="更新用户" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip='isPc' sortable>
-					<template slot-scope="scope">
-						<span>{{ scope.row.createTime | formatDate }}</span>
-					</template>
-				</el-table-column>
-				<el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip='isPc' sortable>
-					<template slot-scope="scope">
-						<span>{{ scope.row.updateTime | formatDate }}</span>
-					</template>
-				</el-table-column>
 				<el-table-column label="操作" align="center" width="180" fixed="right">
 					<template slot-scope="scope">
-						<!-- 设置分成 -->
-						<!-- <set-split-account-page :row_data="scope.row" @getLists="getLists"/> -->
-						<!-- 抽成规则 -->
 						<el-button type="primary" size="mini" @click="toStationSetting(scope.row)">设置</el-button>
-						<!-- 编辑 -->
-						<!-- <charge-station-form :row_data="scope.row" @getLists="getLists" /> -->
-						<!-- <el-button type="primary" style="margin-left: 10px;" size = "mini" @click="addOrUpdateHandle(scope.row,false)" 
-							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:edit')">编辑
-						</el-button> -->
-						<!-- 详情 -->
-						<!-- <el-button type="primary" size = "mini" @click="addOrUpdateHandle(scope.row,true)">详情</el-button> -->
-						<!-- 删除 -->
-						<el-button style="margin-left: 10px;" type="danger" size="mini" icon="el-icon-delete"  @click="del(scope.row.id)"
-							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')">删除
+						<el-button
+							v-if="btnAuthen.permsVerifAuthention(':netWorkDot:netWorkDotList:delete')"
+							style="margin-left: 10px;"
+							type="danger"
+							size="mini"
+							icon="el-icon-delete"
+							@click="del(scope.row.id)"
+						>
+							删除
 						</el-button>
 					</template>
 				</el-table-column>
@@ -166,6 +196,7 @@
 				total: 10,
 				merchantList: [],
 				appDisplayUpdating: {},
+				operateStatusOptions: [],
 				listQuery: {
 					page: 1,
 					limit: 10,
@@ -209,10 +240,50 @@
 		mounted() {
 
 		},
+		created() {
+			this.getLists()
+			this.getMerchantList()
+			this.loadOperateStatusOptions()
+		},
 		methods: {
+			loadOperateStatusOptions() {
+				this.$dict.getOperateStatusOptions().then(list => {
+					this.operateStatusOptions = list || []
+				}).catch(() => {
+					this.operateStatusOptions = []
+				})
+			},
 			normalizeFlag01(val) {
 				if (val === 1 || val === '1' || val === true) return 1
 				return 0
+			},
+			disp(val) {
+				if (val === null || val === undefined || val === '') return '-'
+				return val
+			},
+			countOrZero(val) {
+				const n = Number(val)
+				return isNaN(n) ? 0 : n
+			},
+			formatRatedPower(val) {
+				if (val === null || val === undefined || val === '') return '-'
+				const n = Number(val)
+				if (isNaN(n)) return '-'
+				const text = Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000)
+				return text + 'kW'
+			},
+			operateStatusText(status) {
+				if (status === null || status === undefined || status === '') return '-'
+				const label = this.$dict.formatOperateStatus(status)
+				return label === '-' ? String(status) : label
+			},
+			operateStatusTagType(status) {
+				const key = Number(status)
+				if (key === 50) return 'success'
+				if (key === 1) return 'warning'
+				if (key === 6) return 'warning'
+				if (key === 5) return 'info'
+				return 'info'
 			},
 			handleAppDisplayChange(row, val) {
 				if (!row || !row.id) return
@@ -296,7 +367,10 @@
 						const list = Array.isArray(res.data) ? res.data : []
 						this.list = list.map(item => {
 							const isAppDisplay = this.normalizeFlag01(item.isAppDisplay ?? item.is_app_display)
-							return { ...item, isAppDisplay }
+							const operateStatus = (item.operateStatus === null || item.operateStatus === undefined || item.operateStatus === '')
+								? item.operateStatus
+								: Number(item.operateStatus)
+							return { ...item, isAppDisplay, operateStatus }
 						})
 						this.total = res.count
 						this.listLoading = false
@@ -343,10 +417,6 @@
 					this.merchantList = []
 				})
 			},
-		},
-		created() {
-			this.getLists()
-			this.getMerchantList()
 		},
 	}
 </script>
@@ -436,5 +506,25 @@
 		-webkit-transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 		transition: border-color 0.2s cubic-bezier(0.645, 0.045, 0.355, 1);
 		width: 100%;
+	}
+
+	.station-list-cell {
+		line-height: 1.7;
+		padding: 2px 0;
+	}
+
+	.station-list-cell__row {
+		display: flex;
+		align-items: flex-start;
+		word-break: break-all;
+	}
+
+	.station-list-cell__label {
+		flex: none;
+		color: #909399;
+	}
+
+	.station-list-cell__value {
+		color: #303133;
 	}
 </style>

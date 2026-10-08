@@ -1,480 +1,510 @@
 <template>
-  <div class="login-bg">
-    <div class="login-box-wrap">
-      <div class="login-logo img">
-      </div>
-      <!-- 国际化 -->
-      <!-- <div class="login-logo lang">
-        <lang-select class="set-language" />
-      </div> -->
-      <div class="login-form-item">
-        <el-form ref="loginForm" :model="loginForm" :rules="loginRules" autocomplete="on" label-position="left">
-          <!-- 标题 -->
-          <div class="title-container">
-            <h3 class="title" style="color:#4d8cfd;font-size: 24px;line-height: 33px">
-              {{ $t('login.systemTitle') }}
-            </h3>
-          </div>
-          <!--账号-->
-          <el-form-item prop="account" style="background-color: #FFFFFF;border-radius: 5px;">
-            <el-input ref="account" v-model="loginForm.account" :placeholder="$t('login.username')" name="account"
-              type="text" tabindex="1" autocomplete="off">
-              <template slot="prepend">
-                <svg-icon icon-class="user" />
-              </template>
+  <div class="login-page">
+    <div class="login-orbit" />
+    <header class="login-header">
+      <img class="login-header__logo" :src="config.logo" alt="logo">
+      <span v-if="config.brandName" class="login-header__name">{{ config.brandName }}</span>
+    </header>
+
+    <section class="login-hero">
+      <h1 v-if="sloganWords.length" class="login-hero__title">
+        <template v-for="item in sloganWords">
+          <i v-if="item.index > 0" :key="'dot' + item.index" class="login-hero__dot" />
+          <span :key="'word' + item.index" class="login-hero__word" :class="item.cls">{{ item.text }}</span>
+        </template>
+      </h1>
+      <p v-if="config.subTitle" class="login-hero__sub">{{ config.subTitle }}</p>
+      <img class="login-hero__art" :src="config.illustration" alt="">
+    </section>
+
+    <div class="login-card">
+      <section class="login-panel">
+        <div class="login-panel__head">
+          <h2 class="login-panel__title">{{ config.panelTitle }}</h2>
+          <p v-if="config.panelSubTitle" class="login-panel__sub">{{ config.panelSubTitle }}</p>
+        </div>
+
+        <el-form ref="loginForm" class="login-form" :model="loginForm" :rules="loginRules" autocomplete="on" @submit.native.prevent>
+          <el-form-item prop="account">
+            <el-input
+              ref="account"
+              v-model="loginForm.account"
+              placeholder="请输入账号"
+              name="account"
+              type="text"
+              tabindex="1"
+              autocomplete="off"
+              @keyup.enter.native="focusPassword"
+            >
+              <svg-icon slot="prefix" icon-class="user" class="login-form__icon" />
             </el-input>
           </el-form-item>
-          <!--密码-->
-          <el-tooltip v-model="capsTooltip" content="Caps lock is On" placement="right" manual
-            style="background-color: #FFFFFF;border-radius: 5px;">
+
+          <el-tooltip v-model="capsTooltip" content="大写锁定已开启" placement="right" manual>
             <el-form-item prop="password">
-              <el-input :key="passwordType" ref="password" v-model="loginForm.password" :type="passwordType"
-                :placeholder="$t('login.password')" name="password" tabindex="2" autocomplete="on"
-                @keyup.native="checkCapslock" @blur="capsTooltip = false" @keyup.enter.native="handleLogin">
-                <template slot="prepend">
-                  <svg-icon icon-class="password" />
-                </template>
-                <span class="show-pwd" @click="showPwd" slot="append">
+              <el-input
+                :key="passwordType"
+                ref="password"
+                v-model="loginForm.password"
+                :type="passwordType"
+                placeholder="请输入密码"
+                name="password"
+                tabindex="2"
+                autocomplete="on"
+                @keyup.native="checkCapslock"
+                @blur="capsTooltip = false"
+                @keyup.enter.native="handleLogin"
+              >
+                <svg-icon slot="prefix" icon-class="password" class="login-form__icon" />
+                <span slot="suffix" class="login-form__eye" @click="showPwd">
                   <svg-icon :icon-class="passwordType === 'password' ? 'eye' : 'eye-open'" />
                 </span>
               </el-input>
             </el-form-item>
           </el-tooltip>
-          <!-- 记住我 @change="checked=>isCheckRow(checked)"-->
-          <el-form-item prop="rememberMe">
-            <el-checkbox v-model="loginForm.rememberMe" class="rememberMe">{{ $t('login.rememberMe') }}</el-checkbox>
-          </el-form-item>
-          
-          <el-button :loading="loading" type="primary" style="width:100%;margin-bottom:30px;background-color: #4d8cfd;color: #FFFFFF;border: none;height: 45px;font-size: 16px;"
-            @click.native.prevent="handleLogin">
-            {{ $t('login.logIn') }}
+
+          <div class="login-form__extra">
+            <el-checkbox v-model="loginForm.rememberMe">7 天内自动登录</el-checkbox>
+          </div>
+
+          <el-button :loading="loading" type="primary" class="login-form__submit" @click.native.prevent="handleLogin">
+            {{ loading ? '登录中…' : '登录' }}
           </el-button>
         </el-form>
-      </div>
+      </section>
     </div>
-    <div style="color: #000;font-size: 14px; position: absolute; bottom: 0; background: rgba(0, 0,0, 0.1); width: 100%; text-align: center; line-height: 3">
-      {{Copyright}}
-    </div>
+
+    <footer v-if="config.copyright" class="login-footer">{{ config.copyright }}</footer>
   </div>
 </template>
 
 <script>
-  import {
-    validUsername
-  } from '@/utils/validate'
-  import LangSelect from '@/components/LangSelect'
-  import SocialSign from './components/SocialSignin'
-  import Frame from '@/components/Common/Frame'
-  import {
-    getRouter
-  } from '@/api/user'
-  import { findFirstLeafHref } from '@/utils/menuNav'
-  export default {
-    name: 'Login',
-    components: {
-      LangSelect,
-      SocialSign,
-      Frame
-    },
-    data() {
-      return {
-        SystemTitle: '智慧充电综合管理平台',
-        Copyright: 'Copyright© 2021 深圳市云创智城科技有限公司 All Rights Reserved 粤ICP备2022076347号',
-        loginForm: {
-          account: '',
-          password: '',
-          rememberMe: false,
-          grant_type: "password"
-        },
-        loginRules: {
-          account: [{
-            required: true,
-            trigger: 'blur',
-            message: '请填写账户',
-          }],
-          password: [{
-            required: true,
-            trigger: 'blur',
-            message: '请填写密码',
-          }]
-        },
-        passwordType: 'password',
-        capsTooltip: false,
-        loading: false,
-        showDialog: false,
-        redirect: undefined,
-        otherQuery: {}
-      }
-    },
-    watch: {
-      $route: {
-        handler: function (route) {
-          const query = route.query
-          if (query) {
-            this.redirect = query.redirect
-            this.otherQuery = this.getOtherQuery(query)
-          }
-        },
-        immediate: true
-      }
-    },
-    created() {
+import { getRouter } from '@/api/user'
+import { findFirstLeafHref } from '@/utils/menuNav'
+import defaultLogo from '@/assets/logo.png'
+import defaultIllustration from '@/assets/login/login_content.jpg'
 
-    },
-    mounted() {
-      // if (this.loginForm.username === '') {
-      // 	this.$refs.userName.focus()
-      // } else if (this.loginForm.password === '') {
-      // 	this.$refs.passWord.focus()
-      // }
-    },
-    destroyed() {
+const DEFAULT_CONFIG = {
+  brandName: '云创智城',
+  logo: defaultLogo,
+  slogan: ['万桩互联', '智慧运营'],
+  subTitle: '欢迎使用智慧充电综合管理平台',
+  illustration: defaultIllustration,
+  panelTitle: '欢迎登录',
+  panelSubTitle: '请使用管理员分配的账号登录',
+  copyright: 'Copyright© 2021 深圳市云创智城科技有限公司 All Rights Reserved 粤ICP备2022076347号'
+}
 
-    },
-    methods: {
-      // isCheckRow(checked){
-      //   // this.loginForm.rememberMe = checked
-      //   // console.log(this.loginForm)
-      // },
-      checkCapslock(e) {
-        const {
-          key
-        } = e
-        this.capsTooltip = key && key.length === 1 && (key >= 'A' && key <= 'Z')
+// 合并 public/BaseConfig.js 中的 VUE_LOGIN，空值回退默认
+function resolveLoginConfig() {
+  const custom = (window.BaseConfig && window.BaseConfig.VUE_LOGIN) || {}
+  return Object.keys(DEFAULT_CONFIG).reduce((acc, key) => {
+    const value = custom[key]
+    const empty = value === undefined || value === null || value === '' || (Array.isArray(value) && !value.length)
+    acc[key] = empty ? DEFAULT_CONFIG[key] : value
+    return acc
+  }, {})
+}
+
+export default {
+  name: 'Login',
+  data() {
+    return {
+      config: resolveLoginConfig(),
+      loginForm: {
+        account: '',
+        password: '',
+        rememberMe: false,
+        grant_type: 'password'
       },
-      showPwd() {
-        if (this.passwordType === 'password') {
-          this.passwordType = ''
-        } else {
-          this.passwordType = 'password'
+      loginRules: {
+        account: [{ required: true, trigger: 'blur', message: '请填写账户' }],
+        password: [{ required: true, trigger: 'blur', message: '请填写密码' }]
+      },
+      passwordType: 'password',
+      capsTooltip: false,
+      loading: false,
+      redirect: undefined,
+      otherQuery: {}
+    }
+  },
+  computed: {
+    sloganWords() {
+      const words = [].concat(this.config.slogan).filter(Boolean)
+      return words.map((text, index) => ({
+        text,
+        index,
+        cls: words.length > 1 && index === words.length - 1 ? 'login-hero__word--brand' : ''
+      }))
+    }
+  },
+  watch: {
+    $route: {
+      handler: function(route) {
+        const query = route.query
+        if (query) {
+          this.redirect = query.redirect
+          this.otherQuery = this.getOtherQuery(query)
         }
-        this.$nextTick(() => {
-          this.$refs.password.focus()
-        })
       },
-      handleLogin() {
-        this.$refs.loginForm.validate(valid => {
-          if (valid) {
-            this.loading = false
-            let loginForm = {
-              account: this.loginForm.account.trim(),
-              password: this.loginForm.password.trim(),
-              rememberMe: this.loginForm.rememberMe,
-              grant_type: this.loginForm.grant_type.trim(),
+      immediate: true
+    }
+  },
+  mounted() {
+    this.$nextTick(() => {
+      const target = this.loginForm.account ? this.$refs.password : this.$refs.account
+      target && target.focus()
+    })
+  },
+  methods: {
+    checkCapslock(e) {
+      const { key } = e
+      this.capsTooltip = key && key.length === 1 && (key >= 'A' && key <= 'Z')
+    },
+    showPwd() {
+      this.passwordType = this.passwordType === 'password' ? '' : 'password'
+      this.$nextTick(() => {
+        this.$refs.password.focus()
+      })
+    },
+    focusPassword() {
+      this.$refs.password.focus()
+    },
+    handleLogin() {
+      if (this.loading) return
+      this.$refs.loginForm.validate(valid => {
+        if (!valid) return false
+        this.loading = true
+        const loginForm = {
+          account: this.loginForm.account.trim(),
+          password: this.loginForm.password.trim(),
+          rememberMe: this.loginForm.rememberMe,
+          grant_type: this.loginForm.grant_type.trim()
+        }
+        this.$store.dispatch('permission/resetPermission')
+        this.$store.dispatch('user/login', loginForm)
+          .then(() => {
+            window.localStorage.setItem('pActiveMenu', '首页')
+            window.localStorage.setItem('activeMenu', '')
+            window.localStorage.setItem('leftMeunList', '')
+            return getRouter()
+          })
+          .then(res => {
+            if (Number(res.code) !== 200) return
+            const menuList = res.data.menuList
+            const hasDashboard = menuList.some(item => item.href === '/dashboard')
+            if (hasDashboard || !menuList.length) {
+              this.$router.push({ path: '/' })
+            } else {
+              this.$router.push({ path: findFirstLeafHref(menuList[0]) || '/' })
             }
-            this.$store.dispatch('permission/resetPermission')
-            this.$store.dispatch('user/login', loginForm)
-              .then((res) => {
-                this.loading = false
-                window.localStorage.setItem("pActiveMenu", "首页");
-                window.localStorage.setItem("activeMenu", "");
-                window.localStorage.setItem("leftMeunList", "");
-                getRouter().then(res => {
-                  if (res.code == 200) {
-                    let menuList = res.data.menuList
-                    let flag = false
-                    menuList.forEach((item) => {
-                      if (item.href === '/dashboard') {
-                        flag = true
-                      }
-                    })
-                    if (flag) {
-                      this.$router.push({ path: '/' })
-                    } else if (menuList.length) {
-                      const path = findFirstLeafHref(menuList[0]) || '/'
-                      this.$router.push({ path })
-                    } else {
-                      this.$router.push({ path: '/' })
-                    }
-                  }
-                })
-              })
-          } else {
-            console.log('error submit!!')
-            return false
-          }
-        })
-      },
-      getOtherQuery(query) {
-        return Object.keys(query).reduce((acc, cur) => {
-          if (cur !== 'redirect') {
-            acc[cur] = query[cur]
-          }
-          return acc
-        }, {})
-      }
+          })
+          .catch(() => {})
+          .then(() => {
+            this.loading = false
+          })
+      })
+    },
+    getOtherQuery(query) {
+      return Object.keys(query).reduce((acc, cur) => {
+        if (cur !== 'redirect') {
+          acc[cur] = query[cur]
+        }
+        return acc
+      }, {})
     }
   }
-
+}
 </script>
 
-<style lang="scss">
-  /* 修复input 背景不协调 和光标变色 */
-  /* Detail see https://github.com/PanJiaChen/vue-element-admin/pull/927 */
-
-  $bg:#283443;
-  $light_gray:#000;
-  $cursor: #000;
-
-  @supports (-webkit-mask: none) and (not (cater-color: $cursor)) {
-    .login-container .el-input input {
-      color: $cursor;
-    }
-  }
-
-  .login-container .el-input input {
-    color: #000 !important;
-  }
-
-  .inputBox {
-    background-color: rgba(0, 0, 0, 0.3);
-
-  }
-
-  .url {
-    position: absolute;
-    left: 50%;
-    bottom: 80px;
-    transform: translateX(-50%);
-    color: #FFFFFF;
-    font-weight: bolder;
-  }
-
-  .url:hover {
-    color: blue;
-  }
-
-  /* reset element-ui css */
-  .login-container {
-    .el-input {
-      display: inline-block;
-      height: 47px;
-      width: 85%;
-
-      input {
-        background: transparent;
-        border: 0px;
-        -webkit-appearance: none;
-        border-radius: 0px;
-        padding: 12px 5px 12px 15px;
-        color: $light_gray;
-        height: 47px;
-        caret-color: $cursor;
-      }
-    }
-
-    .el-form-item {
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      background: rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
-      color: #454545;
-      margin-bottom: 40px;
-    }
-  }
-
-</style>
-
 <style lang="scss" scoped>
-  $bg:#2d3a4b;
-  $dark_gray:#889aa4;
-  $light_gray:#eee;
+$primary: #0184ff;
+$primary-2: #1fc7d6;
+$text: #1f2d3d;
+$muted: #8a94a6;
+$card-width: 420px;
+$card-right: 8vw;
+$card-center-x: calc(100% - #{$card-right} - #{$card-width} / 2);
 
-  .login-bg {
-    width: 100vw;
-    min-width: 1366px;
-    height: 100vh;
-    overflow: hidden;
-    background-image: url("../../assets/login/bg1.png");
-    background-repeat: no-repeat;
-    background-position: 50%;
-    background-size: cover;
-  }
+.login-page {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100vw;
+  min-width: 1200px;
+  height: 100vh;
+  min-height: 680px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at #{$card-center-x} 50%, rgba(1, 132, 255, 0.16) 0, rgba(1, 132, 255, 0) 420px),
+    radial-gradient(ellipse 46vw 38vh at 30% 64%, rgba(35, 214, 222, 0.16) 0, rgba(35, 214, 222, 0) 100%),
+    linear-gradient(135deg, #f7faff 0%, #eef5ff 48%, #e5efff 100%);
 
-  .login-bg .login-box-wrap {
-    position: relative;
-    width: 83%;
-    height: 76%;
-    min-height: 646px;
-    background-image: url("../../assets/login-box-bg.png");
-    background-size: 100% 100%;
-    background-position: 50%;
-    margin: 5% auto 0;
-    background-repeat: no-repeat;
-    position: relative;
-  }
-
-  .login-bg .login-box-wrap .login-logo {
+  // 点阵纹理，四周淡出
+  &::before {
+    content: '';
     position: absolute;
-    margin: 5.8% 0 0 12.8%;
+    inset: 0;
+    background-image: radial-gradient(rgba(1, 132, 255, 0.14) 1px, transparent 1.4px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 100%);
+    mask-image: radial-gradient(ellipse 70% 70% at 50% 50%, #000 30%, transparent 100%);
+    pointer-events: none;
   }
+}
 
-  .login-bg .login-box-wrap .login-logo.lang {
-      color: #fff;
-      position: absolute;
-      top: 0px;
-      right: 180px;
-      cursor: pointer;
-  }
+// 以登录卡片为圆心的两道细环，把卡片和背景连成一体
+.login-orbit {
+  position: absolute;
+  top: 50%;
+  right: calc(#{$card-right} + #{$card-width} / 2);
+  width: 680px;
+  height: 680px;
+  border: 1px solid rgba(1, 132, 255, 0.12);
+  border-radius: 50%;
+  transform: translate(50%, -50%);
+  pointer-events: none;
 
-  .login-bg .login-box-wrap .login-logo.img {
-    width: 60px;
-    height: 60px;
-    background-image: url("../../assets/logo.png");
-    background-repeat: no-repeat;
-    background-size: 60px;
-  }
-
-  .login-form-item {
+  &::after {
+    content: '';
     position: absolute;
-    top: 16%;
-    right: 16%;
-    width: 360px;
-    height: 500px;
+    inset: -110px;
+    border: 1px dashed rgba(35, 214, 222, 0.22);
+    border-radius: 50%;
+  }
+}
+
+.login-header {
+  position: absolute;
+  top: 28px;
+  left: 4.5vw;
+  display: flex;
+  align-items: center;
+
+  &__logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(1, 132, 255, 0.2);
   }
 
-  .title-container {
-    position: relative;
+  &__name {
+    margin-left: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #12324a;
+  }
+}
 
-    .titles {
-      font-size: 15px;
-      color: rgb(25, 126, 220);
-      margin: 0px auto 0px auto;
-      text-align: center;
-      font-weight: bold;
+/* 左侧主视觉 */
+.login-hero {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  padding: 0 0 0 4.5vw;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    font-family: "PingFang SC", "HarmonyOS Sans SC", "Source Han Sans SC", "Microsoft YaHei", sans-serif;
+    font-size: 54px;
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 6px;
+    transform: skewX(-6deg);
+    transform-origin: left bottom;
+  }
+
+  &__word {
+    color: #0d2b45;
+    text-shadow: 0 6px 18px rgba(13, 43, 69, 0.12);
+
+    &--brand {
+      background: linear-gradient(90deg, $primary 0%, #12b5e0 55%, $primary-2 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(0 6px 14px rgba(1, 132, 255, 0.22));
+    }
+  }
+
+  &__dot {
+    flex-shrink: 0;
+    width: 12px;
+    height: 12px;
+    margin: 0 18px 0 12px;
+    border-radius: 50%;
+    background: $primary-2;
+    box-shadow: 0 0 0 5px rgba(31, 199, 214, 0.18), 0 0 14px rgba(31, 199, 214, 0.6);
+  }
+
+  &__sub {
+    display: flex;
+    align-items: center;
+    margin: 18px 0 0;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    color: #3a5068;
+
+    &::before {
+      content: '';
+      width: 28px;
+      height: 4px;
+      margin-right: 12px;
+      border-radius: 2px;
+      background: $primary;
+    }
+  }
+
+  &__art {
+    display: block;
+    width: min(54vw, 860px);
+    margin: 2vh 0 0 -1vw;
+    // 插画是白底，正片叠底后白色与背景融合
+    mix-blend-mode: multiply;
+    user-select: none;
+    pointer-events: none;
+  }
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  flex: 0 0 $card-width;
+  margin-right: $card-right;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px);
+  box-shadow:
+    0 30px 70px rgba(1, 92, 200, 0.14),
+    0 0 0 8px rgba(255, 255, 255, 0.35);
+}
+
+/* 右侧表单区 */
+.login-panel {
+  padding: 44px 40px 40px;
+
+  &__title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    color: $text;
+  }
+
+  &__sub {
+    margin: 10px 0 0;
+    font-size: 14px;
+    color: $muted;
+  }
+}
+
+.login-form {
+  margin-top: 36px;
+
+  ::v-deep .el-form-item {
+    margin-bottom: 24px;
+  }
+
+  ::v-deep .el-input__inner {
+    height: 48px;
+    line-height: 48px;
+    padding-left: 44px;
+    border-radius: 10px;
+    border-color: #e4e8f0;
+    background: #f7f9fc;
+    font-size: 15px;
+    color: $text;
+    transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+
+    &:hover {
+      border-color: #c9d6f2;
     }
 
-    // .set-language {
-    //   color: #fff;
-    //   position: absolute;
-    //   top: 3px;
-    //   font-size: 18px;
-    //   right: 0px;
-    //   cursor: pointer;
-    // }
+    &:focus {
+      border-color: $primary-2;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(77, 140, 253, 0.15);
+    }
   }
 
-  // .login-container {
-  // 	width: 100%;
-  // 	height: 100%;
-  // 	// background-image: url("../../assets/login/20230110161727.png");
-  // 	background-image: url("../../assets/login/bg.png");
-  // 	background-size: cover;
-  // 	background-position: center;
-  // 	position: absolute;
-
-  // 	.header {
-  // 		position: absolute;
-  // 		top: 50%;
-  // 		left: 80%;
-  // 		transform: translate(-80%, -50%);
-  // 		display: flex;
-  // 	}
-
-  // 	.bgLeftBox {
-  // 		position: absolute;
-  // 		top: 45%;
-  // 		left: 22%;
-  // 		transform: translate(-22%, -40%);
-  // 	}
-
-  // 	.bgLeft {
-  // 		width: 844px;
-  // 		height: 512px;
-  // 	}
-
-  // 	.bgLeft img {
-  // 		width: 100%;
-  // 		height: 100%;
-  // 	}
-
-  // 	.login-form {
-  // 		max-width: 100%;
-  // 		padding: 45px;
-  // 		margin: 0 auto;
-  // 		overflow: hidden;
-  // 		background-color: #FFFFFF;
-  // 		display: flex;
-  // 		justify-content: center;
-  // 		align-items: center;
-  // 		border-radius: 14px;
-  // 	}
-
-  // 	.loginForm {
-  // 		width: 320px;
-  // 	}
-
-  // 	.borderBg {
-  // 		width: 100%;
-  // 		height: 1px;
-  // 		background-color: #EEEEEE;
-  // 	}
-
-  // 	.tips {
-  // 		font-size: 14px;
-  // 		color: #fff;
-  // 		margin-bottom: 10px;
-
-  // 		span {
-  // 			&:first-of-type {
-  // 				margin-right: 16px;
-  // 			}
-  // 		}
-  // 	}
-  .el-input__prefix {
-    display: flex !important;
-    align-items: center !important;
+  ::v-deep .el-input__prefix,
+  ::v-deep .el-input__suffix {
+    display: flex;
+    align-items: center;
   }
 
-  .svg-container {
-    // padding: 6px 5px 6px 15px;
-    color: $dark_gray;
-    // vertical-align: middle;
-    // width: 30px;
-    // display: inline-block;
+  ::v-deep .el-input__prefix {
+    left: 14px;
   }
 
-  // 	.title-container {
-  // 		position: relative;
+  ::v-deep .el-input__suffix {
+    right: 12px;
+  }
 
-  // 		.title {
-  // 			font-size: 26px;
-  // 			color: #108FEB;
-  // 			margin: 0px auto 40px auto;
-  // 			text-align: center;
-  // 			font-weight: bold;
-  // 		}
+  &__icon {
+    font-size: 18px;
+    color: #a0aec0;
+  }
 
-  // 		.set-language {
-  // 			color: #fff;
-  // 			position: absolute;
-  // 			top: 3px;
-  // 			font-size: 18px;
-  // 			right: 0px;
-  // 			cursor: pointer;
-  // 		}
-  // 	}
+  &__eye {
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    font-size: 16px;
+    color: #a0aec0;
+    cursor: pointer;
+    user-select: none;
 
-  // 	.show-pwd {
-  // 		position: absolute;
-  // 		right: 10px;
-  // 		top: 7px;
-  // 		font-size: 16px;
-  // 		color: $dark_gray;
-  // 		cursor: pointer;
-  // 		user-select: none;
-  // 	}
+    &:hover {
+      color: $primary-2;
+    }
+  }
 
-  // 	.thirdparty-button {
-  // 		position: absolute;
-  // 		right: 0;
-  // 		bottom: 6px;
-  // 	}
+  &__extra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: -4px 0 28px;
+  }
 
-  // 	@media only screen and (max-width: 470px) {
-  // 		.thirdparty-button {
-  // 			display: none;
-  // 		}
-  // 	}
-  // }
+  // 全局把 .el-button--primary 设成了带 !important 的主题绿，这里需要同样用 !important 覆盖
+  &__submit.el-button--primary {
+    width: 100%;
+    height: 48px;
+    border: none !important;
+    border-radius: 10px;
+    font-size: 16px;
+    letter-spacing: 2px;
+    background: $primary !important;
+    box-shadow: 0 10px 24px rgba(1, 132, 255, 0.26);
+    transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
 
+    &:hover,
+    &:focus {
+      background: #1a92ff !important;
+      box-shadow: 0 12px 28px rgba(1, 132, 255, 0.34);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      background: #0070db !important;
+      transform: translateY(0);
+    }
+  }
+}
+
+.login-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  text-align: center;
+  font-size: 12px;
+  color: rgba(31, 45, 61, 0.55);
+}
 </style>

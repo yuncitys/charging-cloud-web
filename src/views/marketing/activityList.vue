@@ -185,6 +185,7 @@ import ActivityDetailDrawer from './components/ActivityDetailDrawer'
 import DiscountActivityFormDrawer from './components/DiscountActivityFormDrawer'
 import DiscountActivityDetailDrawer from './components/DiscountActivityDetailDrawer'
 import { parseTime } from '@/utils/index'
+import { fullFileUrl } from '@/utils/fileUrl'
 import './styles/marketing.scss'
 
 export default {
@@ -270,10 +271,7 @@ export default {
       if (this.qrcodeData.qrcodeBase64) {
         return `data:image/png;base64,${this.qrcodeData.qrcodeBase64}`
       }
-      const url = this.qrcodeData.qrcodeUrl
-      if (!url) return ''
-      if (/^https?:\/\//.test(url)) return url
-      return (this.Global && this.Global.APIURl ? this.Global.APIURl : '') + url
+      return fullFileUrl(this.qrcodeData.qrcodeUrl)
     }
   },
   watch: {

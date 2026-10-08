@@ -44,6 +44,7 @@
           </div>
         </el-tooltip>
       </template>
+      <admin-message-bell class="right-menu-item hover-effect" />
       <header-search id="header-search" class="right-menu-item hover-effect" />
       <lang-select class="right-menu-item hover-effect" />
       <screenfull id="screenfull" class="right-menu-item hover-effect" />
@@ -93,6 +94,7 @@
   import Screenfull from '@/components/Screenfull'
   import LangSelect from '@/components/LangSelect'
   import HeaderSearch from '@/components/HeaderSearch'
+  import AdminMessageBell from './AdminMessageBell.vue'
   import {
     mapGetters
   } from 'vuex';
@@ -105,7 +107,8 @@
     components: {
       Screenfull,
       LangSelect,
-      HeaderSearch
+      HeaderSearch,
+      AdminMessageBell
     },
     data() {
       return {
