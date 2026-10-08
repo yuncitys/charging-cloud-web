@@ -224,6 +224,63 @@
             </el-col>
           </el-row>
         </div>
+        <div class="huifuConfig" v-else-if="form.channelCode === 'huifu'">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="渠道商号">
+                <el-input v-model="huifuConfig.sysId" clearable placeholder="sys_id，如 6666000245654642"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="产品号">
+                <el-input v-model="huifuConfig.productId" clearable placeholder="product_id"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="收款子商户号">
+                <el-input v-model="huifuConfig.huifuId" clearable placeholder="huifu_id"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="小程序AppId">
+                <el-input v-model="huifuConfig.wxAppId" clearable placeholder="已在汇付绑定的小程序appid"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="渠道商私钥">
+                <el-input v-model="huifuConfig.rsaPrivateKey" show-password clearable placeholder="RSA私钥(PKCS8)"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="汇付公钥">
+                <el-input v-model="huifuConfig.huifuPublicKey" show-password clearable placeholder="汇付RSA公钥"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="回调域名">
+                <el-input v-model="huifuConfig.callbackDomain" clearable placeholder="https://域名/api/payment/Notify"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="请求域名">
+                <el-input v-model="huifuConfig.requestDomain" clearable placeholder="默认 https://api.huifu.com"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="延迟入账">
+                <el-switch v-model="huifuConfig.delayAcctFlag"></el-switch>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
         <div class="aliConfig" v-else-if="form.channelCode === 'alipay'">
           <el-row>
             <el-col :span="12">
@@ -433,6 +490,17 @@ export default {
         callbackDomain: '',
         requestDomain: '',
       },
+      huifuConfig: {
+        sysId: '',
+        productId: '',
+        huifuId: '',
+        rsaPrivateKey: '',
+        huifuPublicKey: '',
+        wxAppId: '',
+        callbackDomain: '',
+        requestDomain: 'https://api.huifu.com',
+        delayAcctFlag: false
+      },
       serviceProviderList: [],
       channelRule: {
         channelCode: [
@@ -483,6 +551,8 @@ export default {
           this.aliConfig = JSON.parse(this.form.configStr)
         } else if (code === 'tzbank') {
           this.tzbankConfig = JSON.parse(this.form.configStr)
+        } else if (code === 'huifu') {
+          this.huifuConfig = Object.assign({}, this.huifuConfig, JSON.parse(this.form.configStr))
         }
       })
     }
@@ -578,6 +648,9 @@ export default {
           this.form.configStr = JSON.stringify(this.aliConfig)
         } else if (code === 'tzbank') {
           this.form.configStr = JSON.stringify(this.tzbankConfig)
+        } else if (code === 'huifu') {
+          this.form.serviceProviderId = 'huifu'
+          this.form.configStr = JSON.stringify(this.huifuConfig)
         }
         if (valid) {
           if (this.param.id) {
