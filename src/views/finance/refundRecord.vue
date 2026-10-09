@@ -11,6 +11,10 @@
 				placeholder="请选择状态" clearable @change="handleFilter">
 				<el-option v-for="item in tags" :key="item.value" :label="item.label" :value="item.value" />
 			</el-select>
+			<el-select v-model="listQuery.reconcileStatus" style="width: 200px;margin-right: 20px ;" class="filter-item"
+				placeholder="请选择对账状态" clearable @change="handleFilter">
+				<el-option v-for="item in reconcileOptions" :key="item.value" :label="item.label" :value="item.value" />
+			</el-select>
 			<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
 				style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
 				format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
@@ -69,6 +73,22 @@
 				</el-table-column>
 				<el-table-column prop="result" label="处理结果" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
+				<el-table-column prop="reconcileStatus" label="对账状态" align="center" width="110">
+					<template slot-scope="scope">
+						<span v-if="!scope.row.reconcileStatus">—</span>
+						<el-tooltip v-else-if="scope.row.reconcileStatus !== 'PENDING'" placement="top">
+							<div slot="content">
+								处理人：{{ scope.row.reconcileBy || '—' }}<br />
+								处理时间：{{ scope.row.reconcileTime | formatDate }}<br />
+								说明：{{ scope.row.reconcileRemark || '—' }}
+							</div>
+							<el-tag size="small" :type="reconcileTagType(scope.row.reconcileStatus)">
+								{{ reconcileLabel(scope.row.reconcileStatus) }}
+							</el-tag>
+						</el-tooltip>
+						<el-tag v-else size="small" type="danger">{{ reconcileLabel(scope.row.reconcileStatus) }}</el-tag>
+					</template>
+				</el-table-column>
 				<el-table-column prop="remark" label="退款说明" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column prop="createTime" label="退款时间" align="center" sortable :show-overflow-tooltip='isPc'>
@@ -81,6 +101,12 @@
 						<span>{{ scope.row.updateTime | formatDate }}</span>
 					</template>
 				</el-table-column>
+				<el-table-column v-if="canReconcile" label="操作" align="center" width="90" fixed="right">
+					<template slot-scope="scope">
+						<el-button v-if="scope.row.reconcileStatus === 'PENDING'" type="text" size="small"
+							@click="openReconcile(scope.row)">对账处理</el-button>
+					</template>
+				</el-table-column>
 			</el-table>
 			<div class="pagination-container">
 				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
@@ -89,13 +115,37 @@
 			</div>
 		</div>
 		<downloadProgress ref="downloadProgress" />
+		<el-dialog title="人工对账处理" :visible.sync="reconcileVisible" width="520px" :close-on-click-modal="false">
+			<div style="margin-bottom: 15px; line-height: 1.8;">
+				<div>退款编号：{{ reconcileRow.refundCode }}</div>
+				<div>退款金额：{{ reconcileRow.refundMoney }}</div>
+				<div style="word-break: break-all;">处理结果：{{ reconcileRow.result }}</div>
+			</div>
+			<el-form ref="reconcileForm" :model="reconcileForm" :rules="reconcileRules" label-width="90px">
+				<el-form-item label="处理结论" prop="reconcileStatus">
+					<el-radio-group v-model="reconcileForm.reconcileStatus">
+						<el-radio label="DONE">已处理</el-radio>
+						<el-radio label="IGNORED">无需处理</el-radio>
+					</el-radio-group>
+				</el-form-item>
+				<el-form-item label="处理说明" prop="reconcileRemark">
+					<el-input v-model="reconcileForm.reconcileRemark" type="textarea" :rows="4" maxlength="255"
+						show-word-limit placeholder="请填写核实情况与处理方式，如：已在后台扣回用户余额 30 元" />
+				</el-form-item>
+			</el-form>
+			<div slot="footer">
+				<el-button @click="reconcileVisible = false">取消</el-button>
+				<el-button type="primary" :loading="reconcileSubmitting" @click="submitReconcile">确定</el-button>
+			</div>
+		</el-dialog>
 	</div>
 </template>
 
 <script>
 	import {
 		getList,
-		downloadExcel
+		downloadExcel,
+		reconcileRefund
 	} from '@/api/finance/refundRecord.js'
 	import {
 		parseTime
@@ -125,14 +175,36 @@
 					refundCode:'',
 					userCode: '',
 					status: '',
+					reconcileStatus: '',
 					createTimeStart: '',
 					createTimeEnd: ''
 				},
 				tableKey: 0,
 
 				tags: [],
+				reconcileOptions: [
+					{ value: 'PENDING', label: '待处理' },
+					{ value: 'DONE', label: '已处理' },
+					{ value: 'IGNORED', label: '无需处理' }
+				],
+				reconcileVisible: false,
+				reconcileSubmitting: false,
+				reconcileRow: {},
+				reconcileForm: {
+					reconcileStatus: 'DONE',
+					reconcileRemark: ''
+				},
+				reconcileRules: {
+					reconcileStatus: [{ required: true, message: '请选择处理结论', trigger: 'change' }],
+					reconcileRemark: [{ required: true, whitespace: true, message: '请填写处理说明', trigger: 'blur' }]
+				},
 
 				time: ''
+			}
+		},
+		computed: {
+			canReconcile() {
+				return this.btnAuthen.permsVerifAuthention(':finance:refundRecord:reconcile')
 			}
 		},
 		filters: {
@@ -158,6 +230,42 @@
 			refundStatusLabel(value) {
 				if (value == null || value === '') return '—'
 				return formatDictLabel('finance_refund_status', value)
+			},
+			reconcileLabel(value) {
+				const item = this.reconcileOptions.find(o => o.value === value)
+				return item ? item.label : value
+			},
+			reconcileTagType(value) {
+				return value === 'DONE' ? 'success' : 'info'
+			},
+			openReconcile(row) {
+				this.reconcileRow = row
+				this.reconcileForm = { reconcileStatus: 'DONE', reconcileRemark: '' }
+				this.reconcileVisible = true
+				this.$nextTick(() => {
+					this.$refs.reconcileForm && this.$refs.reconcileForm.clearValidate()
+				})
+			},
+			submitReconcile() {
+				this.$refs.reconcileForm.validate(valid => {
+					if (!valid) return
+					this.reconcileSubmitting = true
+					reconcileRefund({
+						id: this.reconcileRow.id,
+						reconcileStatus: this.reconcileForm.reconcileStatus,
+						reconcileRemark: this.reconcileForm.reconcileRemark.trim()
+					}).then(res => {
+						if (res.code == 200) {
+							this.$message.success(res.msg || '处理成功')
+							this.reconcileVisible = false
+							this.getLists()
+						} else {
+							this.$message.error(res.msg)
+						}
+					}).finally(() => {
+						this.reconcileSubmitting = false
+					})
+				})
 			},
 			getLists() {
 				this.listLoading = true
@@ -209,6 +317,7 @@
 					refundCode: this.listQuery.refundCode,
 					userCode: this.listQuery.userCode,
 					status: this.listQuery.status,
+					reconcileStatus: this.listQuery.reconcileStatus,
 					createTimeStart: this.listQuery.createTimeStart,
 					createTimeEnd: this.listQuery.createTimeEnd
 				}
