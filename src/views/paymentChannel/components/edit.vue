@@ -227,43 +227,43 @@
         <div class="huifuConfig" v-else-if="form.channelCode === 'huifu'">
           <el-row>
             <el-col :span="12">
-              <el-form-item label="渠道商号">
-                <el-input v-model="huifuConfig.sysId" clearable placeholder="sys_id，如 6666000245654642"></el-input>
+              <el-form-item label="系统号(sys_id)" required>
+                <el-input v-model="huifuConfig.sysId" clearable placeholder="渠道商号，如 6666000245654642"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="产品号">
-                <el-input v-model="huifuConfig.productId" clearable placeholder="product_id"></el-input>
+              <el-form-item label="产品号(product_id)" required>
+                <el-input v-model="huifuConfig.productId" clearable placeholder="汇付分配的产品号"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="收款子商户号">
-                <el-input v-model="huifuConfig.huifuId" clearable placeholder="huifu_id"></el-input>
+              <el-form-item label="收款商户号(huifu_id)" required>
+                <el-input v-model="huifuConfig.huifuId" clearable placeholder="租户收款子商户号"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="小程序AppId">
+              <el-form-item label="小程序AppId" required>
                 <el-input v-model="huifuConfig.wxAppId" clearable placeholder="已在汇付绑定的小程序appid"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="渠道商私钥">
+              <el-form-item label="商户私钥" required>
                 <el-input v-model="huifuConfig.rsaPrivateKey" show-password clearable placeholder="RSA私钥(PKCS8)"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="汇付公钥">
+              <el-form-item label="汇付公钥" required>
                 <el-input v-model="huifuConfig.huifuPublicKey" show-password clearable placeholder="汇付RSA公钥"></el-input>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="回调域名">
+              <el-form-item label="回调域名" required>
                 <el-input v-model="huifuConfig.callbackDomain" clearable placeholder="https://域名/api/payment/Notify"></el-input>
               </el-form-item>
             </el-col>
