@@ -82,4 +82,16 @@ h3{
   line-height: 1;
   font-size: 14px;
 }
+.code pre{
+  margin: 0;
+  max-height: 50vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  code{
+    white-space: inherit;
+    word-break: inherit;
+  }
+}
 </style>
