@@ -156,7 +156,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="商户编号">
-                <el-input v-model="form.merchantNo" />
+                <el-input v-model="form.merchantNo" placeholder="默认渠道留空则审核通过时自动生成；汇付分账方填运营商 huifu_id" />
               </el-form-item>
             </el-col>
             <el-col :span="12">

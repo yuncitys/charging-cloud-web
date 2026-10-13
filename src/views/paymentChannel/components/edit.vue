@@ -277,6 +277,13 @@
             <el-col :span="12">
               <el-form-item label="延迟入账">
                 <el-switch v-model="huifuConfig.delayAcctFlag"></el-switch>
+                <span class="huifu-tip">开启后参与分账的订单资金先冻结，结算后再分给运营商</span>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12" v-if="huifuConfig.delayAcctFlag">
+              <el-form-item label="超期兜底天数">
+                <el-input-number v-model="huifuConfig.delayConfirmMaxDays" :min="1" :max="179" :step="1" controls-position="right"></el-input-number>
+                <span class="huifu-tip">超过该天数仍未分完的资金确认到收款商户，默认 150</span>
               </el-form-item>
             </el-col>
           </el-row>
@@ -499,7 +506,8 @@ export default {
         wxAppId: '',
         callbackDomain: '',
         requestDomain: 'https://api.huifu.com',
-        delayAcctFlag: false
+        delayAcctFlag: false,
+        delayConfirmMaxDays: 150
       },
       serviceProviderList: [],
       channelRule: {
@@ -680,6 +688,11 @@ export default {
 }
 </script>
 <style lang="scss" scoped>
+.huifu-tip {
+  margin-left: 10px;
+  color: #909399;
+  font-size: 12px;
+}
 >>> .el-form {
   .el-form-item {
     display: flex;
