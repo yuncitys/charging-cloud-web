@@ -66,20 +66,59 @@ import PendingActionCard from './PendingActionCard.vue'
 const SESSION_KEY = 'ops_agent_session_id'
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
 
+function readStoredSession() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY)
+    if (!raw) {
+      return { adminId: null, sessionId: null }
+    }
+    const parsed = JSON.parse(raw)
+    if (parsed && typeof parsed === 'object' && parsed.sessionId) {
+      return {
+        adminId: parsed.adminId != null ? parsed.adminId : null,
+        sessionId: parsed.sessionId
+      }
+    }
+    return { adminId: null, sessionId: raw }
+  } catch (e) {
+    return { adminId: null, sessionId: null }
+  }
+}
+
+function writeStoredSession(adminId, sessionId) {
+  if (!sessionId) {
+    sessionStorage.removeItem(SESSION_KEY)
+    return
+  }
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ adminId, sessionId }))
+}
+
 export default {
   name: 'OpsAgentChat',
   components: { PendingActionCard },
   data() {
+    const stored = readStoredSession()
+    const adminUser = this.$store && this.$store.getters ? this.$store.getters.adminUser : null
+    const currentAdminId = adminUser && adminUser.id != null ? adminUser.id : null
+    let sessionId = stored.sessionId
+    if (stored.adminId != null && currentAdminId != null && stored.adminId !== currentAdminId) {
+      sessionStorage.removeItem(SESSION_KEY)
+      sessionId = null
+    }
     return {
       panelOpen: false,
       inputText: '',
       sending: false,
-      sessionId: sessionStorage.getItem(SESSION_KEY) || null,
+      sessionId,
       messages: [],
       pendingActions: []
     }
   },
   methods: {
+    currentAdminId() {
+      const adminUser = this.$store.getters.adminUser
+      return adminUser && adminUser.id != null ? adminUser.id : null
+    },
     buildPageContext() {
       const route = this.$route
       const ctx = {}
@@ -126,7 +165,7 @@ export default {
           }
           if (res.sessionId) {
             this.sessionId = res.sessionId
-            sessionStorage.setItem(SESSION_KEY, res.sessionId)
+            writeStoredSession(this.currentAdminId(), res.sessionId)
           }
           if (res.assistantText) {
             this.messages.push({ role: 'assistant', text: res.assistantText })
