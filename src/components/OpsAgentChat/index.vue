@@ -1,6 +1,6 @@
 <template>
   <div class="ops-agent-chat">
-    <!-- minimized dock: reopen any conversation -->
+    <!-- minimized dock -->
     <div v-show="!panelOpen" class="ops-agent-chat__dock">
       <div
         v-for="item in minimizedList"
@@ -16,11 +16,7 @@
           @click.stop="closeConversationWindow(item.id)"
         />
       </div>
-      <div
-        class="ops-agent-chat__fab"
-        title="运维助手"
-        @click="openPanel"
-      >
+      <div class="ops-agent-chat__fab" title="运维助手" @click="openPanel">
         <i class="el-icon-chat-dot-round" />
         <span v-if="conversations.length > 1" class="ops-agent-chat__fab-badge">
           {{ conversations.length }}
@@ -29,28 +25,40 @@
     </div>
 
     <transition name="ops-agent-chat-slide">
-      <div v-show="panelOpen" class="ops-agent-chat__panel">
-        <!-- history sidebar -->
+      <div
+        v-show="panelOpen"
+        ref="panel"
+        class="ops-agent-chat__panel"
+        tabindex="0"
+        :style="panelStyle"
+        @keydown.esc.stop.prevent="panelOpen = false"
+      >
+        <!-- resize handle (bottom-left; panel is anchored bottom-right) -->
+        <div
+          class="ops-agent-chat__resize"
+          title="拖拽调整大小"
+          @mousedown.prevent="startResize"
+        />
+
         <div :class="['ops-agent-chat__sidebar', { 'is-collapsed': !sidebarOpen }]">
           <div class="ops-agent-chat__sidebar-head">
-            <el-button
-              type="primary"
+            <el-input
+              v-model="searchQuery"
               size="mini"
-              icon="el-icon-plus"
-              class="ops-agent-chat__new-btn"
-              @click="createConversation"
-            >
-              新建
-            </el-button>
+              clearable
+              prefix-icon="el-icon-search"
+              placeholder="搜索会话"
+              class="ops-agent-chat__search"
+            />
             <i
               class="el-icon-s-fold ops-agent-chat__icon-btn"
               title="收起列表"
-              @click="sidebarOpen = false"
+              @click="toggleSidebar(false)"
             />
           </div>
           <div class="ops-agent-chat__conv-list">
             <div
-              v-for="c in sortedConversations"
+              v-for="c in filteredConversations"
               :key="c.id"
               :class="['ops-agent-chat__conv-item', { 'is-active': c.id === activeId }]"
               @click="switchConversation(c.id)"
@@ -74,7 +82,9 @@
                 <i class="el-icon-delete ops-agent-chat__mini-icon" title="删除" @click="deleteConversation(c.id)" />
               </div>
             </div>
-            <div v-if="!sortedConversations.length" class="ops-agent-chat__empty">暂无会话</div>
+            <div v-if="!filteredConversations.length" class="ops-agent-chat__empty">
+              {{ searchQuery.trim() ? '无匹配会话' : '暂无会话' }}
+            </div>
           </div>
         </div>
 
@@ -85,19 +95,32 @@
                 v-if="!sidebarOpen"
                 class="el-icon-s-unfold ops-agent-chat__icon-btn"
                 title="会话列表"
-                @click="sidebarOpen = true"
+                @click="toggleSidebar(true)"
               />
-              <span class="ops-agent-chat__title-text">{{ activeConversation.title }}</span>
+              <span class="ops-agent-chat__title-text" :title="activeConversation.title">
+                {{ activeConversation.title }}
+              </span>
               <el-tag v-if="activeConversation.mockMode" size="mini" type="warning" effect="plain">Mock</el-tag>
             </div>
             <div class="ops-agent-chat__header-actions">
               <el-tooltip content="新建对话" placement="top">
-                <i class="el-icon-plus ops-agent-chat__icon-btn" @click="createConversation" />
+                <i class="el-icon-plus ops-agent-chat__icon-btn ops-agent-chat__new-btn" @click="createConversation" />
               </el-tooltip>
-              <el-tooltip content="收起到底部（可继续打开）" placement="top">
+              <el-dropdown trigger="click" @command="applySizePreset">
+                <span class="ops-agent-chat__icon-btn" title="窗口大小">
+                  <i class="el-icon-full-screen" />
+                </span>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item command="compact">紧凑</el-dropdown-item>
+                  <el-dropdown-item command="default">标准</el-dropdown-item>
+                  <el-dropdown-item command="large">宽松</el-dropdown-item>
+                  <el-dropdown-item command="auto" divided>按屏幕自适应</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+              <el-tooltip content="收起到底部" placement="top">
                 <i class="el-icon-minus ops-agent-chat__icon-btn" @click="minimizePanel" />
               </el-tooltip>
-              <el-tooltip content="关闭面板（会话保留在列表）" placement="top">
+              <el-tooltip content="关闭（Esc）" placement="top">
                 <i class="el-icon-close ops-agent-chat__close" @click="panelOpen = false" />
               </el-tooltip>
             </div>
@@ -125,37 +148,42 @@
           </div>
 
           <div v-if="showShortcuts" class="ops-agent-chat__shortcuts">
-            <el-button
+            <button
               v-for="item in shortcuts"
               :key="item.label"
-              size="mini"
-              round
+              type="button"
+              class="ops-agent-chat__chip"
               :disabled="sending"
               @click="useShortcut(item)"
             >
               {{ item.label }}
-            </el-button>
+            </button>
           </div>
 
           <div class="ops-agent-chat__footer">
-            <el-input
-              v-model="inputText"
-              type="textarea"
-              :rows="2"
-              placeholder="描述问题，例如：帮我看看这个订单（Enter 发送）"
-              :disabled="sending"
-              @keydown.native.enter.exact.prevent="sendMessage"
-            />
-            <el-button
-              type="primary"
-              size="small"
-              class="ops-agent-chat__send"
-              :loading="sending"
-              :disabled="!inputText.trim()"
-              @click="sendMessage"
-            >
-              发送
-            </el-button>
+            <div class="ops-agent-chat__composer">
+              <textarea
+                ref="composer"
+                v-model="inputText"
+                class="ops-agent-chat__input"
+                rows="1"
+                :disabled="sending"
+                placeholder="输入问题，Enter 发送，Shift+Enter 换行"
+                @keydown="onComposerKeydown"
+                @input="autoGrowComposer"
+              />
+              <el-button
+                type="primary"
+                size="small"
+                class="ops-agent-chat__send"
+                :loading="sending"
+                :disabled="!inputText.trim()"
+                @click="sendMessage"
+              >
+                发送
+              </el-button>
+            </div>
+            <div class="ops-agent-chat__hint">可拖拽左下角调整窗口大小</div>
           </div>
         </div>
       </div>
@@ -173,6 +201,9 @@ import {
   createEmptyConversation,
   titleFromMessage,
   sortConversations,
+  loadUiPrefs,
+  saveUiPrefs,
+  suggestPanelSize
 } from './sessionStore'
 
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
@@ -184,30 +215,61 @@ const SHORTCUTS = [
   { label: '远程停充', text: '订单ORD20240101001关不掉，帮我停充' }
 ]
 
+const SIZE_PRESETS = {
+  compact: { panelWidth: 380, panelHeight: 480 },
+  default: { panelWidth: 440, panelHeight: 580 },
+  large: { panelWidth: 640, panelHeight: 720 }
+}
+
 export default {
   name: 'OpsAgentChat',
   components: { PendingActionCard, MessageBubble },
   data() {
     const adminId = this.resolveAdminId()
     const store = loadStore(adminId)
+    const ui = loadUiPrefs()
     return {
       panelOpen: false,
-      sidebarOpen: true,
+      sidebarOpen: ui.sidebarOpen,
+      panelWidth: ui.panelWidth,
+      panelHeight: ui.panelHeight,
+      searchQuery: '',
       inputText: '',
       sending: false,
       adminId,
       activeId: store.activeId,
       conversations: store.conversations,
-      /** conversation ids currently shown as dock chips when panel minimized */
       dockedIds: [],
       renamingId: null,
       renameDraft: '',
-      shortcuts: SHORTCUTS
+      shortcuts: SHORTCUTS,
+      resizing: false,
+      resizeStart: null
     }
   },
   computed: {
+    panelStyle() {
+      return {
+        width: this.panelWidth + 'px',
+        height: this.panelHeight + 'px'
+      }
+    },
     sortedConversations() {
       return sortConversations(this.conversations)
+    },
+    filteredConversations() {
+      const q = (this.searchQuery || '').trim().toLowerCase()
+      if (!q) {
+        return this.sortedConversations
+      }
+      return this.sortedConversations.filter(c => {
+        const title = (c.title || '').toLowerCase()
+        if (title.includes(q)) {
+          return true
+        }
+        const msgs = c.messages || []
+        return msgs.some(m => m && m.text && String(m.text).toLowerCase().includes(q))
+      })
     },
     activeConversation() {
       const found = this.conversations.find(c => c.id === this.activeId)
@@ -233,7 +295,16 @@ export default {
     activeId() {
       this.persist()
       this.scrollToBottom()
+      this.focusComposer()
+    },
+    panelOpen(val) {
+      if (val) {
+        this.focusComposer()
+      }
     }
+  },
+  beforeDestroy() {
+    this.unbindResize()
   },
   methods: {
     resolveAdminId() {
@@ -250,6 +321,74 @@ export default {
         conversations: this.conversations
       })
     },
+    persistUi() {
+      saveUiPrefs({
+        panelWidth: this.panelWidth,
+        panelHeight: this.panelHeight,
+        sidebarOpen: this.sidebarOpen
+      })
+    },
+    toggleSidebar(open) {
+      this.sidebarOpen = open
+      this.persistUi()
+    },
+    applySizePreset(cmd) {
+      if (cmd === 'auto') {
+        const s = suggestPanelSize()
+        this.panelWidth = s.panelWidth
+        this.panelHeight = s.panelHeight
+      } else {
+        const p = SIZE_PRESETS[cmd] || SIZE_PRESETS.default
+        this.panelWidth = p.panelWidth
+        this.panelHeight = p.panelHeight
+      }
+      this.clampToViewport()
+      this.persistUi()
+    },
+    clampToViewport() {
+      const maxW = Math.max(360, window.innerWidth - 48)
+      const maxH = Math.max(400, window.innerHeight - 48)
+      this.panelWidth = Math.min(this.panelWidth, maxW)
+      this.panelHeight = Math.min(this.panelHeight, maxH)
+      this.panelWidth = Math.max(360, this.panelWidth)
+      this.panelHeight = Math.max(400, this.panelHeight)
+    },
+    startResize(e) {
+      this.resizing = true
+      this.resizeStart = {
+        x: e.clientX,
+        y: e.clientY,
+        w: this.panelWidth,
+        h: this.panelHeight
+      }
+      document.addEventListener('mousemove', this.onResizeMove)
+      document.addEventListener('mouseup', this.onResizeEnd)
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'nwse-resize'
+    },
+    onResizeMove(e) {
+      if (!this.resizing || !this.resizeStart) {
+        return
+      }
+      // anchored bottom-right: drag left-up grows
+      const dw = this.resizeStart.x - e.clientX
+      const dh = this.resizeStart.y - e.clientY
+      this.panelWidth = this.resizeStart.w + dw
+      this.panelHeight = this.resizeStart.h + dh
+      this.clampToViewport()
+    },
+    onResizeEnd() {
+      this.resizing = false
+      this.resizeStart = null
+      this.unbindResize()
+      this.persistUi()
+    },
+    unbindResize() {
+      document.removeEventListener('mousemove', this.onResizeMove)
+      document.removeEventListener('mouseup', this.onResizeEnd)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+    },
     patchActive(mutator) {
       const idx = this.conversations.findIndex(c => c.id === this.activeId)
       if (idx < 0) {
@@ -264,9 +403,11 @@ export default {
       if (!this.conversations.length) {
         this.createConversation()
       }
+      this.clampToViewport()
       this.panelOpen = true
       this.dockedIds = []
       this.scrollToBottom()
+      this.focusComposer()
     },
     minimizePanel() {
       if (!this.dockedIds.includes(this.activeId)) {
@@ -288,9 +429,13 @@ export default {
       this.conversations = [conv].concat(this.conversations)
       this.activeId = conv.id
       this.inputText = ''
+      this.searchQuery = ''
       this.panelOpen = true
       this.sidebarOpen = true
+      this.persistUi()
+      this.resetComposerHeight()
       this.scrollToBottom()
+      this.focusComposer()
     },
     switchConversation(id) {
       if (id === this.activeId) {
@@ -302,7 +447,39 @@ export default {
       }
       this.activeId = id
       this.inputText = ''
+      this.resetComposerHeight()
       this.scrollToBottom()
+    },
+    focusComposer() {
+      this.$nextTick(() => {
+        const el = this.$refs.composer
+        if (el && el.focus) {
+          el.focus()
+        }
+      })
+    },
+    autoGrowComposer() {
+      const el = this.$refs.composer
+      if (!el) {
+        return
+      }
+      el.style.height = 'auto'
+      const next = Math.min(120, Math.max(36, el.scrollHeight))
+      el.style.height = next + 'px'
+    },
+    resetComposerHeight() {
+      this.$nextTick(() => {
+        const el = this.$refs.composer
+        if (el) {
+          el.style.height = '36px'
+        }
+      })
+    },
+    onComposerKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        this.sendMessage()
+      }
     },
     startRename(c) {
       this.renamingId = c.id
@@ -385,7 +562,10 @@ export default {
     },
     useShortcut(item) {
       this.inputText = item.text
-      this.sendMessage()
+      this.$nextTick(() => {
+        this.autoGrowComposer()
+        this.sendMessage()
+      })
     },
     sendMessage() {
       const text = this.inputText.trim()
@@ -408,6 +588,7 @@ export default {
         }
       })
       this.inputText = ''
+      this.resetComposerHeight()
       this.sending = true
       this.scrollToBottom()
 
@@ -417,7 +598,6 @@ export default {
         pageContext: this.buildPageContext()
       })
         .then(res => {
-          // ensure we still patch the same conversation even if user switched UI intent
           const targetId = convId
           const apply = mutator => {
             const idx = this.conversations.findIndex(c => c.id === targetId)
@@ -482,6 +662,7 @@ export default {
         .finally(() => {
           this.sending = false
           this.scrollToBottom()
+          this.focusComposer()
         })
     },
     dismissPending(id) {
@@ -601,21 +782,40 @@ export default {
   }
 
   &__panel {
-    width: 560px;
-    height: 560px;
+    position: relative;
+    max-width: calc(100vw - 48px);
     max-height: calc(100vh - 48px);
     background: #fff;
-    border-radius: 10px;
-    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14);
+    border-radius: 12px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.16);
     display: flex;
     overflow: hidden;
   }
 
+  &__resize {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    z-index: 3;
+    background:
+      linear-gradient(135deg, transparent 50%, #c0c4cc 50%, #c0c4cc 60%, transparent 60%),
+      linear-gradient(135deg, transparent 70%, #c0c4cc 70%, #c0c4cc 80%, transparent 80%);
+
+    &:hover {
+      background:
+        linear-gradient(135deg, transparent 50%, #909399 50%, #909399 60%, transparent 60%),
+        linear-gradient(135deg, transparent 70%, #909399 70%, #909399 80%, transparent 80%);
+    }
+  }
+
   &__sidebar {
-    width: 168px;
+    width: 176px;
     flex-shrink: 0;
     border-right: 1px solid #ebeef5;
-    background: #fafbfc;
+    background: #f7f8fa;
     display: flex;
     flex-direction: column;
     transition: width 0.15s ease;
@@ -630,13 +830,13 @@ export default {
   &__sidebar-head {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 10px 8px;
-    gap: 4px;
+    gap: 6px;
+    padding: 10px 8px 8px;
   }
 
-  &__new-btn {
+  &__search {
     flex: 1;
+    min-width: 0;
   }
 
   &__conv-list {
@@ -718,7 +918,7 @@ export default {
     text-align: center;
     color: #c0c4cc;
     font-size: 12px;
-    padding: 16px 0;
+    padding: 16px 8px;
   }
 
   &__main {
@@ -726,13 +926,14 @@ export default {
     min-width: 0;
     display: flex;
     flex-direction: column;
+    background: #fff;
   }
 
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: 10px 12px;
     border-bottom: 1px solid #ebeef5;
     font-weight: 600;
     font-size: 14px;
@@ -749,13 +950,13 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    max-width: 180px;
+    max-width: 200px;
   }
 
   &__header-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-shrink: 0;
   }
 
@@ -764,6 +965,7 @@ export default {
     cursor: pointer;
     font-size: 16px;
     color: #909399;
+    line-height: 1;
 
     &:hover {
       color: #606266;
@@ -775,6 +977,7 @@ export default {
     overflow-y: auto;
     padding: 12px 14px;
     min-height: 0;
+    background: #fafbfc;
   }
 
   &__typing {
@@ -803,17 +1006,81 @@ export default {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    padding: 0 12px 8px;
+    padding: 8px 12px 0;
+  }
+
+  &__chip {
+    border: 1px solid #dcdfe6;
+    background: #fff;
+    color: #606266;
+    border-radius: 14px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    line-height: 1.4;
+
+    &:hover:not(:disabled) {
+      border-color: #409eff;
+      color: #409eff;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
   &__footer {
-    padding: 10px 14px 12px;
+    padding: 10px 12px 8px;
     border-top: 1px solid #ebeef5;
+    background: #fff;
+  }
+
+  &__composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    min-height: 36px;
+    max-height: 120px;
+    resize: none;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #303133;
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+    background: #fff;
+
+    &:focus {
+      border-color: #409eff;
+    }
+
+    &:disabled {
+      background: #f5f7fa;
+      color: #c0c4cc;
+    }
   }
 
   &__send {
-    margin-top: 8px;
-    float: right;
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 14px;
+    margin: 0;
+  }
+
+  &__hint {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #c0c4cc;
+    line-height: 1.2;
   }
 }
 

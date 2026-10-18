@@ -4,7 +4,14 @@
  */
 
 const STORE_KEY = 'ops_agent_conversations_v2'
+const UI_KEY = 'ops_agent_ui_prefs_v1'
 const LEGACY_SESSION_KEY = 'ops_agent_session_id'
+
+const DEFAULT_UI = {
+  panelWidth: 420,
+  panelHeight: 560,
+  sidebarOpen: true
+}
 
 export const WELCOME_TEXT =
   '我是运维助手。可以查单、排障退款、查 SOP、建议远程停充（高风险需确认）。\n点下方快捷场景，或直接粘贴订单号。'
@@ -135,4 +142,43 @@ export function titleFromMessage(text) {
 
 export function sortConversations(list) {
   return list.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+}
+
+/** Prefer a readable size that fits the viewport; caller may override with saved prefs. */
+export function suggestPanelSize() {
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 1440
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 900
+  const width = Math.min(520, Math.max(360, Math.round(vw * 0.36)))
+  const height = Math.min(680, Math.max(420, Math.round(vh * 0.72)))
+  return { panelWidth: width, panelHeight: height }
+}
+
+export function loadUiPrefs() {
+  try {
+    const raw = localStorage.getItem(UI_KEY)
+    if (!raw) {
+      return Object.assign({}, DEFAULT_UI, suggestPanelSize())
+    }
+    const parsed = JSON.parse(raw)
+    const suggested = suggestPanelSize()
+    return {
+      panelWidth: clamp(parsed.panelWidth || suggested.panelWidth, 360, 900),
+      panelHeight: clamp(parsed.panelHeight || suggested.panelHeight, 400, 900),
+      sidebarOpen: parsed.sidebarOpen !== false
+    }
+  } catch (e) {
+    return Object.assign({}, DEFAULT_UI, suggestPanelSize())
+  }
+}
+
+export function saveUiPrefs(prefs) {
+  localStorage.setItem(UI_KEY, JSON.stringify({
+    panelWidth: prefs.panelWidth,
+    panelHeight: prefs.panelHeight,
+    sidebarOpen: prefs.sidebarOpen !== false
+  }))
+}
+
+function clamp(n, min, max) {
+  return Math.min(max, Math.max(min, Number(n) || min))
 }

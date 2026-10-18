@@ -109,11 +109,18 @@ async function main() {
     if (await sidebar.isVisible()) ok('sidebar-visible')
     else fail('sidebar-visible')
 
-    await page.locator('.ops-agent-chat__new-btn').click()
+    // header "+" is the only new-chat entry (sidebar is search)
+    await page.locator('.ops-agent-chat__header-actions .ops-agent-chat__new-btn').click()
     await page.waitForTimeout(400)
     const convCount1 = await page.locator('.ops-agent-chat__conv-item').count()
     if (convCount1 >= 2) ok('create-conversation', `count=${convCount1}`)
     else fail('create-conversation', `count=${convCount1}`)
+    const searchVisible = await page.locator('.ops-agent-chat__search').isVisible().catch(() => false)
+    if (searchVisible) ok('sidebar-search')
+    else fail('sidebar-search')
+    const composerRow = await page.locator('.ops-agent-chat__composer').count()
+    if (composerRow) ok('composer-same-row')
+    else fail('composer-same-row')
 
     // --- Shortcut: 枪离线SOP (knowledge, no order HTTP) ---
     await clickShortcut(page, '枪离线SOP')
@@ -164,7 +171,7 @@ async function main() {
     }
 
     // --- Shortcut: 查单 ---
-    await page.locator('.ops-agent-chat__new-btn').click()
+    await page.locator('.ops-agent-chat__header-actions .ops-agent-chat__new-btn').click()
     await page.waitForTimeout(300)
     await clickShortcut(page, '查单')
     await waitAssistantReply(page, 35000)
@@ -232,7 +239,7 @@ async function main() {
     else fail('rename-conversation', renamed)
 
     // --- Refund shortcut (pending card) ---
-    await page.locator('.ops-agent-chat__new-btn').click()
+    await page.locator('.ops-agent-chat__header-actions .ops-agent-chat__new-btn').click()
     await page.waitForTimeout(300)
     await clickShortcut(page, '退款排障')
     await waitAssistantReply(page, 40000)
@@ -246,7 +253,7 @@ async function main() {
     }
 
     // --- Remote stop shortcut ---
-    await page.locator('.ops-agent-chat__new-btn').click()
+    await page.locator('.ops-agent-chat__header-actions .ops-agent-chat__new-btn').click()
     await page.waitForTimeout(300)
     await clickShortcut(page, '远程停充')
     await waitAssistantReply(page, 40000)
