@@ -1278,9 +1278,11 @@ export default {
           })
           this.scrollToBottom()
         } else {
-          this.$message.error((res && res.msg) || '取消失败')
+          const msg = res && res.msg
+          // 英文/技术性报错不直接展示给运维
+          this.$message.error(msg && /[\u4e00-\u9fff]/.test(msg) ? msg : '取消失败，请稍后重试')
         }
-      }).catch(() => this.$message.error('取消失败'))
+      }).catch(() => this.$message.error('取消失败，请稍后重试'))
     },
     onActionConfirmed({ action, result }) {
       this.dismissPending(action.id)

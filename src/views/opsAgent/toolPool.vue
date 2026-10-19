@@ -139,12 +139,8 @@
 			markDirty(row) {
 				this.$set(row, '_dirty', (row.requiredPerm || '') !== row._orig.requiredPerm)
 			},
-			doUpdate(row, onFail) {
+			doUpdate(row, payload, onFail) {
 				row._saving = true
-				const payload = {
-					enabled: row.enabled,
-					requiredPerm: (row.requiredPerm || '').trim()
-				}
 				// 成功返回更新后的条目（无 code 包装）；未知工具为 HTTP 400，走 catch
 				return updateToolPool(row.toolName, payload).then(res => {
 					if (res && res.code !== undefined && res.code !== 200) {
@@ -152,9 +148,14 @@
 						this.$message.error(res.msg || '保存失败')
 						return
 					}
-					row.requiredPerm = payload.requiredPerm
-					row._orig = { requiredPerm: payload.requiredPerm, enabled: row.enabled }
-					row._dirty = false
+					if (payload.requiredPerm !== undefined) {
+						row.requiredPerm = payload.requiredPerm
+						row._orig.requiredPerm = payload.requiredPerm
+						row._dirty = false
+					}
+					if (payload.enabled !== undefined) {
+						row._orig.enabled = payload.enabled
+					}
 					this.$message.success('保存成功')
 				}).catch(e => {
 					onFail()
@@ -164,12 +165,16 @@
 				})
 			},
 			toggle(row) {
-				this.doUpdate(row, () => {
+				// 仅提交 enabled，避免把未保存的权限码草稿一并写入
+				this.doUpdate(row, { enabled: row.enabled }, () => {
 					row.enabled = row._orig.enabled
 				})
 			},
 			savePerm(row) {
-				this.doUpdate(row, () => {})
+				this.doUpdate(row, {
+					enabled: row.enabled,
+					requiredPerm: (row.requiredPerm || '').trim()
+				}, () => {})
 			},
 			sync() {
 				this.syncing = true
