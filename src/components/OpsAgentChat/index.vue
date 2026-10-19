@@ -63,7 +63,7 @@
               :class="['ops-agent-chat__conv-item', { 'is-active': c.id === activeId }]"
               @click="switchConversation(c.id)"
             >
-              <div class="ops-agent-chat__conv-main">
+              <div class="ops-agent-chat__conv-title-wrap">
                 <input
                   v-if="renamingId === c.id"
                   ref="renameInput"
@@ -74,19 +74,41 @@
                   @keydown.esc.prevent="renamingId = null"
                   @blur="commitRename(c)"
                 >
-                <span v-else class="ops-agent-chat__conv-title" :title="c.title">{{ c.title }}</span>
                 <span
-                  class="ops-agent-chat__conv-time"
-                  :title="formatAbsoluteDateTime(c.updatedAt)"
+                  v-else
+                  class="ops-agent-chat__conv-title"
+                  :title="c.title"
+                >{{ c.title }}</span>
+                <el-dropdown
+                  v-if="renamingId !== c.id"
+                  trigger="click"
+                  placement="bottom-end"
+                  class="ops-agent-chat__conv-more"
+                  @command="cmd => onConvMenuCommand(cmd, c)"
                 >
-                  <span class="ops-agent-chat__conv-rel">{{ formatRelativeTime(c.updatedAt) }}</span>
-                  <span class="ops-agent-chat__conv-abs">{{ formatDateYmd(c.updatedAt) }}</span>
-                </span>
+                  <button
+                    type="button"
+                    class="ops-agent-chat__conv-more-btn"
+                    title="更多"
+                    @click.stop
+                  >
+                    <i class="el-icon-more" />
+                  </button>
+                  <el-dropdown-menu slot="dropdown">
+                    <el-dropdown-item command="rename">重命名</el-dropdown-item>
+                    <el-dropdown-item command="delete" divided>
+                      <span class="ops-agent-chat__conv-menu-danger">删除</span>
+                    </el-dropdown-item>
+                  </el-dropdown-menu>
+                </el-dropdown>
               </div>
-              <div class="ops-agent-chat__conv-actions" @click.stop>
-                <i class="el-icon-edit ops-agent-chat__mini-icon" title="重命名" @click="startRename(c)" />
-                <i class="el-icon-delete ops-agent-chat__mini-icon" title="删除" @click="deleteConversation(c.id)" />
-              </div>
+              <span
+                class="ops-agent-chat__conv-time"
+                :title="formatAbsoluteDateTime(c.updatedAt)"
+              >
+                <span class="ops-agent-chat__conv-rel">{{ formatRelativeTime(c.updatedAt) }}</span>
+                <span class="ops-agent-chat__conv-abs">{{ formatDateYmd(c.updatedAt) }}</span>
+              </span>
             </div>
             <div v-if="!filteredConversations.length" class="ops-agent-chat__empty">
               {{ searchQuery.trim() ? '无匹配会话' : '暂无会话' }}
@@ -541,6 +563,16 @@ export default {
         this.sendMessage()
       }
     },
+    onConvMenuCommand(cmd, c) {
+      if (!c) {
+        return
+      }
+      if (cmd === 'rename') {
+        this.startRename(c)
+      } else if (cmd === 'delete') {
+        this.deleteConversation(c.id)
+      }
+    },
     startRename(c) {
       this.renamingId = c.id
       this.renameDraft = c.title
@@ -958,6 +990,9 @@ export default {
 
   &__conv-item {
     position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
     padding: 8px 8px 8px 10px;
     border-radius: 6px;
     cursor: pointer;
@@ -966,29 +1001,55 @@ export default {
     &:hover {
       background: #eef2f7;
 
-      .ops-agent-chat__conv-actions {
+      .ops-agent-chat__conv-more {
         opacity: 1;
+        pointer-events: auto;
+      }
+
+      .ops-agent-chat__conv-title {
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+      }
+
+      .ops-agent-chat__conv-more-btn {
+        background: linear-gradient(90deg, rgba(238, 242, 247, 0), #eef2f7 36%);
       }
     }
 
     &.is-active {
       background: #ecf5ff;
+
+      .ops-agent-chat__conv-more {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .ops-agent-chat__conv-title {
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+      }
+
+      .ops-agent-chat__conv-more-btn {
+        background: linear-gradient(90deg, rgba(236, 245, 255, 0), #ecf5ff 36%);
+      }
     }
   }
 
-  &__conv-main {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding-right: 28px;
+  &__conv-title-wrap {
+    position: relative;
+    min-width: 0;
+    width: 100%;
   }
 
   &__conv-title {
+    display: block;
     font-size: 12px;
     color: #303133;
     overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.4;
+    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
   }
 
   &__conv-time {
@@ -1009,24 +1070,39 @@ export default {
     white-space: nowrap;
   }
 
-  &__conv-actions {
+  &__conv-more {
     position: absolute;
-    right: 6px;
-    top: 8px;
-    display: flex;
-    gap: 4px;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
     opacity: 0;
+    pointer-events: none;
     transition: opacity 0.15s;
+    line-height: 1;
+    z-index: 1;
   }
 
-  &__mini-icon {
-    font-size: 12px;
+  &__conv-more-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 28px;
+    height: 22px;
+    padding: 0 2px 0 14px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
     color: #909399;
     cursor: pointer;
+    font-size: 14px;
 
     &:hover {
       color: #409eff;
     }
+  }
+
+  &__conv-menu-danger {
+    color: #f56c6c;
   }
 
   &__rename-input {
