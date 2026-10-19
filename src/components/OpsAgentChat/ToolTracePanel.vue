@@ -26,17 +26,20 @@
           />
         </div>
         <div v-show="stepOpen[idx]" class="tool-trace__step-body">
+          <div v-if="plainOutcome(step)" class="tool-trace__plain">
+            {{ plainOutcome(step) }}
+          </div>
           <json-block
             v-if="hasArgs(step)"
             :value="step.arguments"
             label="参数"
-            :default-collapsed="false"
+            :default-collapsed="true"
           />
           <json-block
             v-if="hasContent(step)"
             :value="step.content"
             label="返回"
-            :default-collapsed="false"
+            :default-collapsed="true"
           />
           <div v-if="step.pendingActionId" class="tool-trace__pending">
             待确认操作 ID：{{ step.pendingActionId }}
@@ -94,6 +97,42 @@ export default {
     },
     hasContent(step) {
       return step && step.content != null && step.content !== ''
+    },
+    plainOutcome(step) {
+      if (!step) {
+        return ''
+      }
+      const raw = step.content == null ? '' : String(step.content)
+      if (!raw) {
+        return step.ok === false ? '这一步没有成功' : ''
+      }
+      const msg = this.extractMsg(raw)
+      if (msg) {
+        if (/订单不存在|不存在|未找到/.test(msg)) {
+          return '说明：没有找到对应订单/账单'
+        }
+        if (/交易账单不存在|账单不存在/.test(msg)) {
+          return '说明：找不到对应的交易账单'
+        }
+        return '说明：' + msg
+      }
+      if (step.ok === false) {
+        if (/idempotency|already used/i.test(raw)) {
+          return '说明：该操作之前已经处理过，不能重复提交'
+        }
+        if (/failed/i.test(raw)) {
+          return '说明：这一步执行失败，可展开下方技术详情'
+        }
+        return '说明：这一步没有成功'
+      }
+      if (/^\s*[{\[]/.test(raw)) {
+        return '说明：已返回数据（技术详情默认收起）'
+      }
+      return ''
+    },
+    extractMsg(text) {
+      const m = /"msg"\s*:\s*"([^"]+)"/.exec(text)
+      return m ? m[1] : ''
     }
   }
 }
@@ -167,6 +206,16 @@ export default {
 
   &__step-body {
     padding: 6px 8px 8px;
+  }
+
+  &__plain {
+    margin-bottom: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #606266;
+    background: #f5f7fa;
+    border-radius: 6px;
   }
 
   &__pending {
