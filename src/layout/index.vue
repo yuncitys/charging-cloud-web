@@ -20,7 +20,7 @@
 
 		    <app-main />
 		  </div>
-		  <ops-agent-chat />
+		  <ops-agent-chat v-if="canUseOpsAgent" />
 		</div>
 	</div>
 </template>
@@ -57,6 +57,9 @@ export default {
       fixedHeader: state => state.settings.fixedHeader
     }),
     ...mapGetters(['menuLayout']),
+    canUseOpsAgent() {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':agent:chat'))
+    },
     classObj() {
       return {
         hideSidebar: !this.sidebar.opened,

@@ -94,5 +94,14 @@ export default [
         title: '下载中心',
         icon: 'el-icon-s-custom',
       }
+    },
+{
+      path: '/opsAgent/toolPool',
+      component: () => import('@/views/opsAgent/toolPool'),
+      name: 'opsAgentToolPool',
+      meta: {
+        title: 'Ops Agent 工具池',
+        icon: 'el-icon-set-up',
+      }
     }
 ]
