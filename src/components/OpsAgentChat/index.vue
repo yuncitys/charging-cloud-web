@@ -238,20 +238,32 @@
 </template>
 
 <script>
-import { sendChat } from '@/api/opsAgent/chat'
+import {
+  sendChat,
+  listSessions,
+  createSession,
+  listSessionMessages,
+  renameSession,
+  deleteSession
+} from '@/api/opsAgent/chat'
 import PendingActionCard from './PendingActionCard.vue'
 import MessageBubble from './MessageBubble.vue'
 import { actionLabel, formatConfirmResult } from './friendlyText'
 import {
-  loadStore,
-  saveStore,
   createEmptyConversation,
+  fromSessionSummary,
+  mapServerMessages,
   titleFromMessage,
   displayConversationTitle,
+  isDefaultConversationTitle,
   sortConversations,
   loadUiPrefs,
   saveUiPrefs,
-  suggestPanelSize
+  suggestPanelSize,
+  loadActiveId,
+  saveActiveId,
+  clearLegacyLocalConversations,
+  WELCOME_TEXT
 } from './sessionStore'
 
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
@@ -298,8 +310,8 @@ export default {
   components: { PendingActionCard, MessageBubble },
   data() {
     const adminId = this.resolveAdminId()
-    const store = loadStore(adminId)
     const ui = loadUiPrefs()
+    clearLegacyLocalConversations()
     return {
       panelOpen: false,
       sidebarOpen: ui.sidebarOpen,
@@ -309,9 +321,11 @@ export default {
       searchQuery: '',
       inputText: '',
       sending: false,
+      sessionsLoading: false,
+      messagesLoadingIds: {},
       adminId,
-      activeId: store.activeId,
-      conversations: store.conversations,
+      activeId: loadActiveId(adminId),
+      conversations: [],
       dockedIds: [],
       renamingId: null,
       renameDraft: '',
@@ -377,19 +391,17 @@ export default {
     }
   },
   watch: {
-    conversations: {
-      deep: true,
-      handler() {
-        this.persist()
-      }
-    },
-    activeId() {
-      this.persist()
+    activeId(val) {
+      this.persistActive()
       this.scrollToBottom()
       this.focusComposer()
+      if (val && this.panelOpen) {
+        this.ensureMessagesLoaded(val)
+      }
     },
     panelOpen(val) {
       if (val) {
+        this.syncSessionsFromServer()
         this.focusComposer()
         this.startTimeTick()
         this.scheduleMeasureTitles()
@@ -465,12 +477,107 @@ export default {
     currentAdminId() {
       return this.resolveAdminId()
     },
-    persist() {
-      saveStore({
-        adminId: this.adminId != null ? this.adminId : this.currentAdminId(),
-        activeId: this.activeId,
-        conversations: this.conversations
-      })
+    persistActive() {
+      saveActiveId(this.adminId != null ? this.adminId : this.currentAdminId(), this.activeId)
+    },
+    syncSessionsFromServer() {
+      if (this.sessionsLoading) {
+        return Promise.resolve()
+      }
+      this.sessionsLoading = true
+      return listSessions()
+        .then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.warning((res && res.msg) || '加载会话列表失败')
+            return
+          }
+          const rows = Array.isArray(res.data) ? res.data : []
+          const prevById = {}
+          this.conversations.forEach(c => {
+            if (c && c.id) {
+              prevById[c.id] = c
+            }
+          })
+          const next = rows.map(row => {
+            const summary = fromSessionSummary(row)
+            const prev = prevById[summary.id]
+            if (prev && prev.messagesLoaded) {
+              summary.messages = prev.messages
+              summary.messagesLoaded = true
+              summary.pendingActions = prev.pendingActions || []
+              summary.mockMode = prev.mockMode
+            }
+            return summary
+          })
+          this.conversations = next
+          if (!next.length) {
+            return this.createConversation()
+          }
+          const preferred = this.activeId && next.some(c => c.id === this.activeId)
+            ? this.activeId
+            : next[0].id
+          this.activeId = preferred
+          return this.ensureMessagesLoaded(preferred)
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('加载会话列表失败，请稍后重试')
+        })
+        .finally(() => {
+          this.sessionsLoading = false
+          this.scheduleMeasureTitles()
+        })
+    },
+    ensureMessagesLoaded(id) {
+      const conv = this.conversations.find(c => c.id === id)
+      if (!conv || conv.messagesLoaded || this.messagesLoadingIds[id]) {
+        return Promise.resolve()
+      }
+      this.$set(this.messagesLoadingIds, id, true)
+      return listSessionMessages(id)
+        .then(res => {
+          if (!res || res.code !== 200) {
+            return
+          }
+          const idx = this.conversations.findIndex(c => c.id === id)
+          if (idx < 0) {
+            return
+          }
+          const next = Object.assign({}, this.conversations[idx])
+          next.messages = mapServerMessages(res.data)
+          next.messagesLoaded = true
+          // pending cards are ephemeral; reload does not restore open confirms
+          next.pendingActions = next.pendingActions || []
+          if (isDefaultConversationTitle(next.title)) {
+            const derived = this.deriveTitleFromMessages(next.messages)
+            if (derived) {
+              next.title = derived
+              renameSession(id, derived).catch(() => {})
+            }
+          }
+          this.$set(this.conversations, idx, next)
+          if (this.activeId === id) {
+            this.scrollToBottom()
+          }
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('加载会话消息失败')
+        })
+        .finally(() => {
+          this.$delete(this.messagesLoadingIds, id)
+        })
+    },
+    deriveTitleFromMessages(messages) {
+      if (!Array.isArray(messages)) {
+        return ''
+      }
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i]
+        if (m && m.role === 'user' && m.text) {
+          const t = titleFromMessage(m.text)
+          return isDefaultConversationTitle(t) ? '' : t
+        }
+      }
+      return ''
     },
     persistUi() {
       saveUiPrefs({
@@ -599,9 +706,6 @@ export default {
       this.$set(this.conversations, idx, next)
     },
     openPanel() {
-      if (!this.conversations.length) {
-        this.createConversation()
-      }
       this.clampToViewport()
       this.panelOpen = true
       this.dockedIds = []
@@ -624,17 +728,35 @@ export default {
       this.dockedIds = this.dockedIds.filter(x => x !== id)
     },
     createConversation() {
-      const conv = createEmptyConversation()
-      this.conversations = [conv].concat(this.conversations)
-      this.activeId = conv.id
-      this.inputText = ''
-      this.searchQuery = ''
-      this.panelOpen = true
-      this.sidebarOpen = true
-      this.persistUi()
-      this.resetComposerHeight()
-      this.scrollToBottom()
-      this.focusComposer()
+      return createSession()
+        .then(res => {
+          if (!res || res.code !== 200 || !res.data || !res.data.id) {
+            this.$message && this.$message.error((res && res.msg) || '新建会话失败')
+            return
+          }
+          const conv = fromSessionSummary(res.data)
+          conv.messages = [{
+            role: 'assistant',
+            text: WELCOME_TEXT,
+            toolTrace: null,
+            traceOpen: false
+          }]
+          conv.messagesLoaded = true
+          this.conversations = [conv].concat(this.conversations.filter(c => c.id !== conv.id))
+          this.activeId = conv.id
+          this.inputText = ''
+          this.searchQuery = ''
+          this.panelOpen = true
+          this.sidebarOpen = true
+          this.persistUi()
+          this.persistActive()
+          this.resetComposerHeight()
+          this.scrollToBottom()
+          this.focusComposer()
+        })
+        .catch(() => {
+          this.$message && this.$message.error('新建会话失败，请稍后重试')
+        })
     },
     switchConversation(id) {
       if (id === this.activeId) {
@@ -647,6 +769,7 @@ export default {
       this.activeId = id
       this.inputText = ''
       this.resetComposerHeight()
+      this.ensureMessagesLoaded(id)
       this.scrollToBottom()
     },
     focusComposer() {
@@ -710,6 +833,7 @@ export default {
         return
       }
       const title = (this.renameDraft || '').trim() || c.title
+      this.renamingId = null
       const idx = this.conversations.findIndex(x => x.id === c.id)
       if (idx >= 0) {
         this.$set(this.conversations, idx, Object.assign({}, this.conversations[idx], {
@@ -717,24 +841,45 @@ export default {
           updatedAt: Date.now()
         }))
       }
-      this.renamingId = null
+      renameSession(c.id, title)
+        .then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.warning((res && res.msg) || '重命名失败')
+            return
+          }
+          if (res.data && idx >= 0) {
+            this.$set(this.conversations, idx, Object.assign({}, this.conversations[idx], {
+              title: res.data.title || title,
+              updatedAt: Date.now()
+            }))
+          }
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('重命名失败')
+        })
     },
     deleteConversation(id) {
-      this.$confirm('删除后无法从本机恢复该会话记录，确定删除？', '删除会话', {
+      this.$confirm('删除后各端都无法再打开该会话，确定删除？', '删除会话', {
         type: 'warning',
         confirmButtonText: '删除',
         cancelButtonText: '取消'
       }).then(() => {
-        this.conversations = this.conversations.filter(c => c.id !== id)
-        this.dockedIds = this.dockedIds.filter(x => x !== id)
-        if (!this.conversations.length) {
-          const conv = createEmptyConversation()
-          this.conversations = [conv]
-          this.activeId = conv.id
-        } else if (this.activeId === id) {
-          this.activeId = this.sortedConversations[0].id
-        }
-        this.$message && this.$message.success('已删除')
+        return deleteSession(id).then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.error((res && res.msg) || '删除失败')
+            return
+          }
+          this.conversations = this.conversations.filter(c => c.id !== id)
+          this.dockedIds = this.dockedIds.filter(x => x !== id)
+          if (!this.conversations.length) {
+            return this.createConversation()
+          }
+          if (this.activeId === id) {
+            this.activeId = this.sortedConversations[0].id
+            this.ensureMessagesLoaded(this.activeId)
+          }
+          this.$message && this.$message.success('已删除')
+        })
       }).catch(() => {})
     },
     buildPageContext() {
@@ -826,98 +971,118 @@ export default {
       if (!text || this.sending) {
         return
       }
-      const convId = this.activeId
-      const before = this.conversations.find(c => c.id === convId)
-      const sessionId = before && before.sessionId ? before.sessionId : null
-      const isFirstUser = !((before && before.messages) || []).some(m => m.role === 'user')
-
-      this.patchActive(c => {
-        c.messages = c.messages.concat([{
-          role: 'user',
-          text,
-          toolTrace: null
-        }])
-        if (isFirstUser || !c.title || c.title === '新对话') {
-          c.title = titleFromMessage(text)
-        }
-      })
+      this.sending = true
       this.inputText = ''
       this.resetComposerHeight()
-      this.sending = true
-      this.scrollToBottom()
+      const ensureReady = (!this.activeId || !this.conversations.some(c => c.id === this.activeId))
+        ? this.createConversation()
+        : Promise.resolve()
 
-      sendChat({
-        sessionId,
-        message: text,
-        pageContext: this.buildPageContext()
-      })
-        .then(res => {
-          const targetId = convId
-          const apply = mutator => {
-            const idx = this.conversations.findIndex(c => c.id === targetId)
-            if (idx < 0) {
+      Promise.resolve(ensureReady).then(() => {
+        const convId = this.activeId
+        const before = this.conversations.find(c => c.id === convId)
+        if (!before || !before.id) {
+          this.sending = false
+          this.inputText = text
+          this.$message && this.$message.error('会话未就绪，请稍后重试')
+          return
+        }
+        const sessionId = before.sessionId || before.id
+        const isFirstUser = !((before.messages) || []).some(m => m.role === 'user')
+
+        this.patchActive(c => {
+          c.messages = c.messages.concat([{
+            role: 'user',
+            text,
+            toolTrace: null
+          }])
+          if (isFirstUser || !c.title || c.title === '新对话') {
+            c.title = titleFromMessage(text)
+          }
+          c.messagesLoaded = true
+        })
+        this.scrollToBottom()
+
+        sendChat({
+          sessionId,
+          message: text,
+          pageContext: this.buildPageContext()
+        })
+          .then(res => {
+            const targetId = convId
+            const apply = mutator => {
+              const idx = this.conversations.findIndex(c => c.id === targetId)
+              if (idx < 0) {
+                return
+              }
+              const next = Object.assign({}, this.conversations[idx])
+              mutator(next)
+              next.updatedAt = Date.now()
+              this.$set(this.conversations, idx, next)
+            }
+
+            if (res.code !== 200) {
+              apply(c => {
+                c.messages = c.messages.concat([{
+                  role: 'assistant',
+                  text: res.msg || '请求失败，请稍后重试',
+                  toolTrace: null
+                }])
+              })
               return
             }
-            const next = Object.assign({}, this.conversations[idx])
-            mutator(next)
-            next.updatedAt = Date.now()
-            this.$set(this.conversations, idx, next)
-          }
-
-          if (res.code !== 200) {
             apply(c => {
-              c.messages = c.messages.concat([{
+              if (res.sessionId) {
+                c.sessionId = res.sessionId
+                // server id is source of truth; keep local id aligned
+                if (c.id !== res.sessionId) {
+                  c.id = res.sessionId
+                  if (this.activeId === targetId) {
+                    this.activeId = res.sessionId
+                  }
+                }
+              }
+              if (typeof res.mockMode === 'boolean') {
+                c.mockMode = res.mockMode
+              }
+              if (res.assistantText) {
+                c.messages = c.messages.concat([{
+                  role: 'assistant',
+                  text: res.assistantText,
+                  toolTrace: Array.isArray(res.toolTrace) ? res.toolTrace : null
+                }])
+              }
+              if (Array.isArray(res.pendingActions) && res.pendingActions.length) {
+                const existing = c.pendingActions || []
+                const merged = existing.slice()
+                res.pendingActions.forEach(pa => {
+                  if (!merged.some(x => x.id === pa.id)) {
+                    merged.push(pa)
+                  }
+                })
+                c.pendingActions = merged
+              }
+            })
+          })
+          .catch(() => {
+            const idx = this.conversations.findIndex(c => c.id === convId)
+            if (idx >= 0) {
+              const next = Object.assign({}, this.conversations[idx])
+              next.messages = next.messages.concat([{
                 role: 'assistant',
-                text: res.msg || '请求失败，请稍后重试',
+                text: '网络异常，请检查连接后重试',
                 toolTrace: null
               }])
-            })
-            return
-          }
-          apply(c => {
-            if (res.sessionId) {
-              c.sessionId = res.sessionId
-            }
-            if (typeof res.mockMode === 'boolean') {
-              c.mockMode = res.mockMode
-            }
-            if (res.assistantText) {
-              c.messages = c.messages.concat([{
-                role: 'assistant',
-                text: res.assistantText,
-                toolTrace: Array.isArray(res.toolTrace) ? res.toolTrace : null
-              }])
-            }
-            if (Array.isArray(res.pendingActions) && res.pendingActions.length) {
-              const existing = c.pendingActions || []
-              const merged = existing.slice()
-              res.pendingActions.forEach(pa => {
-                if (!merged.some(x => x.id === pa.id)) {
-                  merged.push(pa)
-                }
-              })
-              c.pendingActions = merged
+              next.updatedAt = Date.now()
+              this.$set(this.conversations, idx, next)
             }
           })
-        })
-        .catch(() => {
-          const idx = this.conversations.findIndex(c => c.id === convId)
-          if (idx >= 0) {
-            const next = Object.assign({}, this.conversations[idx])
-            next.messages = next.messages.concat([{
-              role: 'assistant',
-              text: '网络异常，请检查连接后重试',
-              toolTrace: null
-            }])
-            next.updatedAt = Date.now()
-            this.$set(this.conversations, idx, next)
-          }
-        })
-        .finally(() => {
-          this.sending = false
-          this.scrollToBottom()
-          this.focusComposer()
-        })
+          .finally(() => {
+            this.sending = false
+            this.scrollToBottom()
+            this.focusComposer()
+          })
+      })
     },
     dismissPending(id) {
       this.patchActive(c => {

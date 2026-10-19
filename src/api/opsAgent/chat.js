@@ -14,3 +14,40 @@ export function confirmAction(id) {
 		method: 'post'
 	})
 }
+
+export function listSessions() {
+	return request({
+		url: '/api/agent/sessions',
+		method: 'get'
+	})
+}
+
+export function createSession() {
+	return request({
+		url: '/api/agent/sessions',
+		method: 'post'
+	})
+}
+
+export function listSessionMessages(id, limit) {
+	return request({
+		url: `/api/agent/sessions/${id}/messages`,
+		method: 'get',
+		params: { limit: limit || 200 }
+	})
+}
+
+export function renameSession(id, title) {
+	return request({
+		url: `/api/agent/sessions/${id}`,
+		method: 'patch',
+		data: { title }
+	})
+}
+
+export function deleteSession(id) {
+	return request({
+		url: `/api/agent/sessions/${id}`,
+		method: 'delete'
+	})
+}

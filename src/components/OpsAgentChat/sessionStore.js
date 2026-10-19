@@ -1,10 +1,12 @@
 /**
- * Local multi-conversation store for Ops Agent floating chat.
- * Backend sessionId is kept per conversation so reopen continues the same thread.
+ * Ops Agent chat helpers.
+ * Conversations are server-owned; localStorage only keeps UI prefs + last activeId.
  */
 
-const STORE_KEY = 'ops_agent_conversations_v2'
 const UI_KEY = 'ops_agent_ui_prefs_v1'
+const ACTIVE_KEY = 'ops_agent_active_session_v1'
+/** Legacy multi-conversation blob — cleared on sync so it cannot override server. */
+const LEGACY_STORE_KEY = 'ops_agent_conversations_v2'
 const LEGACY_SESSION_KEY = 'ops_agent_session_id'
 
 const DEFAULT_UI = {
@@ -17,16 +19,13 @@ const DEFAULT_UI = {
 export const WELCOME_TEXT =
   '我是运维助手。可以查单、排障退款、查 SOP、建议远程停充（高风险需确认）。\n点下方快捷场景，或直接粘贴订单号。'
 
-function uid() {
-  return 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8)
-}
-
 export function createEmptyConversation(partial) {
   const now = Date.now()
+  const id = partial && partial.id ? partial.id : null
   return Object.assign(
     {
-      id: uid(),
-      sessionId: null,
+      id,
+      sessionId: id,
       title: '新对话',
       updatedAt: now,
       createdAt: now,
@@ -39,95 +38,81 @@ export function createEmptyConversation(partial) {
         }
       ],
       pendingActions: [],
-      mockMode: true
+      mockMode: true,
+      messagesLoaded: false
     },
-    partial || {}
+    partial || {},
+    {
+      // keep id / sessionId aligned when server id is known
+      id: (partial && (partial.id || partial.sessionId)) || id,
+      sessionId: (partial && (partial.sessionId || partial.id)) || id
+    }
   )
 }
 
-function readRaw() {
-  try {
-    const raw = localStorage.getItem(STORE_KEY)
-    if (!raw) {
-      return null
+export function fromSessionSummary(row) {
+  const id = row && row.id != null ? String(row.id) : null
+  const updatedAt = toMillis(row && (row.updateTime || row.updatedAt))
+  const createdAt = toMillis(row && (row.createTime || row.createdAt)) || updatedAt
+  return createEmptyConversation({
+    id,
+    sessionId: id,
+    title: (row && row.title) || '新对话',
+    updatedAt: updatedAt || Date.now(),
+    createdAt: createdAt || Date.now(),
+    messages: [],
+    messagesLoaded: false,
+    pendingActions: []
+  })
+}
+
+export function mapServerMessages(rows) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return [
+      {
+        role: 'assistant',
+        text: WELCOME_TEXT,
+        toolTrace: null,
+        traceOpen: false
+      }
+    ]
+  }
+  return rows.map(row => {
+    const toolTrace = parseToolTrace(row && row.toolTraceJson)
+    return {
+      role: row.role === 'user' ? 'user' : 'assistant',
+      text: row.content != null ? String(row.content) : '',
+      toolTrace,
+      traceOpen: false,
+      createdAt: toMillis(row.createTime)
     }
-    return JSON.parse(raw)
+  })
+}
+
+function parseToolTrace(raw) {
+  if (!raw) {
+    return null
+  }
+  if (Array.isArray(raw)) {
+    return raw
+  }
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return Array.isArray(parsed) ? parsed : null
   } catch (e) {
     return null
   }
 }
 
-function writeRaw(payload) {
-  localStorage.setItem(STORE_KEY, JSON.stringify(payload))
-}
-
-/**
- * Load store for current admin. Migrates legacy single-session key once.
- */
-export function loadStore(adminId) {
-  const data = readRaw()
-  if (data && Array.isArray(data.conversations)) {
-    if (data.adminId != null && adminId != null && data.adminId !== adminId) {
-      return resetForAdmin(adminId)
-    }
-    if (!data.conversations.length) {
-      const conv = createEmptyConversation()
-      return {
-        adminId,
-        activeId: conv.id,
-        conversations: [conv]
-      }
-    }
-    return {
-      adminId: data.adminId != null ? data.adminId : adminId,
-      activeId: data.activeId || data.conversations[0].id,
-      conversations: data.conversations
-    }
+function toMillis(v) {
+  if (v == null || v === '') {
+    return 0
   }
-
-  // migrate legacy single session
-  let legacySessionId = null
-  try {
-    const legacy = sessionStorage.getItem(LEGACY_SESSION_KEY)
-    if (legacy) {
-      const parsed = JSON.parse(legacy)
-      legacySessionId = parsed && parsed.sessionId ? parsed.sessionId : legacy
-      sessionStorage.removeItem(LEGACY_SESSION_KEY)
-    }
-  } catch (e) {
-    /* ignore */
+  if (typeof v === 'number') {
+    return v
   }
-
-  const conv = createEmptyConversation({
-    sessionId: legacySessionId,
-    title: legacySessionId ? '上次会话' : '新对话'
-  })
-  const store = {
-    adminId,
-    activeId: conv.id,
-    conversations: [conv]
-  }
-  saveStore(store)
-  return store
-}
-
-export function saveStore(store) {
-  writeRaw({
-    adminId: store.adminId,
-    activeId: store.activeId,
-    conversations: store.conversations
-  })
-}
-
-function resetForAdmin(adminId) {
-  const conv = createEmptyConversation()
-  const store = {
-    adminId,
-    activeId: conv.id,
-    conversations: [conv]
-  }
-  saveStore(store)
-  return store
+  const t = new Date(v).getTime()
+  return Number.isNaN(t) ? 0 : t
 }
 
 /**
@@ -142,14 +127,21 @@ export function titleFromMessage(text) {
   if (!t) {
     return '新对话'
   }
-  // soft cap for storage / rename defaults; UI handles overflow with fade
   return t.length > 120 ? t.slice(0, 120) : t
 }
 
-/** Prefer first user message so old titles truncated with "…" show full text after widen. */
+/**
+ * Prefer persisted server title. Only fall back to first user message when title is
+ * still the default (legacy rows / not yet saved) so the sidebar does not "jump"
+ * after opening a conversation.
+ */
 export function displayConversationTitle(conv) {
   if (!conv) {
     return '新对话'
+  }
+  const stored = normalizeStoredTitle(conv.title)
+  if (stored) {
+    return stored
   }
   const msgs = conv.messages || []
   for (let i = 0; i < msgs.length; i++) {
@@ -158,11 +150,60 @@ export function displayConversationTitle(conv) {
       return titleFromMessage(m.text)
     }
   }
-  return conv.title || '新对话'
+  return '新对话'
+}
+
+export function isDefaultConversationTitle(title) {
+  if (title == null || !String(title).trim()) {
+    return true
+  }
+  const t = String(title).trim()
+  return t === '新对话' || t === 'ops chat'
+}
+
+function normalizeStoredTitle(title) {
+  if (isDefaultConversationTitle(title)) {
+    return ''
+  }
+  return String(title).trim()
 }
 
 export function sortConversations(list) {
   return list.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+}
+
+export function loadActiveId(adminId) {
+  try {
+    const raw = localStorage.getItem(ACTIVE_KEY)
+    if (!raw) {
+      return null
+    }
+    const parsed = JSON.parse(raw)
+    if (adminId != null && parsed.adminId != null && parsed.adminId !== adminId) {
+      return null
+    }
+    return parsed.activeId || null
+  } catch (e) {
+    return null
+  }
+}
+
+export function saveActiveId(adminId, activeId) {
+  try {
+    localStorage.setItem(ACTIVE_KEY, JSON.stringify({ adminId, activeId }))
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** Drop legacy local conversation blobs so they cannot fight the server. */
+export function clearLegacyLocalConversations() {
+  try {
+    localStorage.removeItem(LEGACY_STORE_KEY)
+    sessionStorage.removeItem(LEGACY_SESSION_KEY)
+  } catch (e) {
+    /* ignore */
+  }
 }
 
 /** Prefer a readable size that fits the viewport; caller may override with saved prefs. */
