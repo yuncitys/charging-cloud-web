@@ -78,14 +78,14 @@ export function humanizeOpsError(raw, action) {
       return label + '处理超时了，请稍后再试一次。'
     }
     if (/idempotency|already used|terminal/i.test(msg) || /idempotency|already used|terminal/i.test(text)) {
-      return '这个操作之前已经处理过了（不能重复提交）。\n如需再试，请换一个订单号，或在订单页确认当前状态。'
+      return '这个操作已经成功执行过了，不能再重复提交。\n请到订单页确认当前状态；若确需再操作，请换订单号或联系运维。'
     }
     // Generic business msg — still plain language wrapper
     return label + '没有成功：' + msg + '\n如有疑问，请到订单/财务页面核对，或联系运维同事。'
   }
 
   if (/idempotency|already used|terminal/i.test(text)) {
-    return '这个操作之前已经处理过了（不能重复提交）。\n如需再试，请换一个订单号。'
+    return '这个操作已经成功执行过了，不能再重复提交。\n请到订单页确认当前状态；若确需再操作，请换订单号。'
   }
   if (/timeout|超时/i.test(text)) {
     return label + '处理超时了，请稍后再试。'
