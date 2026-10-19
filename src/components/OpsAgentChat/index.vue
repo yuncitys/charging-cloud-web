@@ -264,6 +264,7 @@
 <script>
 import {
   sendChat,
+  cancelAction,
   listSessions,
   createSession,
   listSessionMessages,
@@ -1265,16 +1266,21 @@ export default {
     },
     onPendingCancel(action) {
       const id = action && action.id != null ? action.id : action
-      this.dismissPending(id)
-      const label = actionLabel(typeof action === 'object' ? action : null)
-      this.patchActive(c => {
-        c.messages = c.messages.concat([{
-          role: 'assistant',
-          text: '好的，已取消「' + label + '」，没有执行任何操作。',
-          toolTrace: null
-        }])
-      })
-      this.scrollToBottom()
+      cancelAction(id).then(res => {
+        if (res && res.code === 200) {
+          this.dismissPending(id)
+          this.patchActive(c => {
+            c.messages = c.messages.concat([{
+              role: 'assistant',
+              text: '好的，已取消「' + actionLabel(typeof action === 'object' ? action : null) + '」，没有执行任何操作。',
+              toolTrace: null
+            }])
+          })
+          this.scrollToBottom()
+        } else {
+          this.$message.error((res && res.msg) || '取消失败')
+        }
+      }).catch(() => this.$message.error('取消失败'))
     },
     onActionConfirmed({ action, result }) {
       this.dismissPending(action.id)

@@ -15,6 +15,13 @@ export function confirmAction(id) {
 	})
 }
 
+export function cancelAction(id) {
+	return request({
+		url: `/api/agent/actions/${id}/cancel`,
+		method: 'post'
+	})
+}
+
 export function listSessions() {
 	return request({
 		url: '/api/agent/sessions',
