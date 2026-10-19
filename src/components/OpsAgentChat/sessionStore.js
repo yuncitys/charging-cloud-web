@@ -10,7 +10,8 @@ const LEGACY_SESSION_KEY = 'ops_agent_session_id'
 const DEFAULT_UI = {
   panelWidth: 420,
   panelHeight: 560,
-  sidebarOpen: true
+  sidebarOpen: true,
+  sidebarWidth: 176
 }
 
 export const WELCOME_TEXT =
@@ -164,7 +165,8 @@ export function loadUiPrefs() {
     return {
       panelWidth: clamp(parsed.panelWidth || suggested.panelWidth, 360, 900),
       panelHeight: clamp(parsed.panelHeight || suggested.panelHeight, 400, 900),
-      sidebarOpen: parsed.sidebarOpen !== false
+      sidebarOpen: parsed.sidebarOpen !== false,
+      sidebarWidth: clamp(parsed.sidebarWidth != null ? parsed.sidebarWidth : DEFAULT_UI.sidebarWidth, 120, 320)
     }
   } catch (e) {
     return Object.assign({}, DEFAULT_UI, suggestPanelSize())
@@ -175,7 +177,8 @@ export function saveUiPrefs(prefs) {
   localStorage.setItem(UI_KEY, JSON.stringify({
     panelWidth: prefs.panelWidth,
     panelHeight: prefs.panelHeight,
-    sidebarOpen: prefs.sidebarOpen !== false
+    sidebarOpen: prefs.sidebarOpen !== false,
+    sidebarWidth: clamp(prefs.sidebarWidth != null ? prefs.sidebarWidth : DEFAULT_UI.sidebarWidth, 120, 320)
   }))
 }
 

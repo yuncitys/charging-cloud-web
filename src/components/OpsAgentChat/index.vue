@@ -40,7 +40,10 @@
           @mousedown.prevent="startResize"
         />
 
-        <div :class="['ops-agent-chat__sidebar', { 'is-collapsed': !sidebarOpen }]">
+        <div
+          :class="['ops-agent-chat__sidebar', { 'is-collapsed': !sidebarOpen }]"
+          :style="sidebarStyle"
+        >
           <div class="ops-agent-chat__sidebar-head">
             <el-input
               v-model="searchQuery"
@@ -56,6 +59,12 @@
               @click="toggleSidebar(false)"
             />
           </div>
+          <div
+            v-show="sidebarOpen"
+            class="ops-agent-chat__sidebar-resize"
+            title="拖拽调整会话区宽度"
+            @mousedown.prevent="startSidebarResize"
+          />
           <div class="ops-agent-chat__conv-list">
             <div
               v-for="c in filteredConversations"
@@ -94,10 +103,10 @@
                   >
                     <i class="el-icon-more" />
                   </button>
-                  <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-menu slot="dropdown" class="ops-agent-chat-conv-menu">
                     <el-dropdown-item command="rename">重命名</el-dropdown-item>
-                    <el-dropdown-item command="delete" divided>
-                      <span class="ops-agent-chat__conv-menu-danger">删除</span>
+                    <el-dropdown-item command="delete">
+                      <span class="ops-agent-chat-conv-menu__danger">删除</span>
                     </el-dropdown-item>
                   </el-dropdown-menu>
                 </el-dropdown>
@@ -291,6 +300,7 @@ export default {
     return {
       panelOpen: false,
       sidebarOpen: ui.sidebarOpen,
+      sidebarWidth: ui.sidebarWidth,
       panelWidth: ui.panelWidth,
       panelHeight: ui.panelHeight,
       searchQuery: '',
@@ -305,6 +315,8 @@ export default {
       shortcuts: SHORTCUTS,
       resizing: false,
       resizeStart: null,
+      sidebarResizing: false,
+      sidebarResizeStart: null,
       /** bumps every minute so relative times stay fresh while panel is open */
       timeTick: 0,
       timeTickTimer: null
@@ -315,6 +327,14 @@ export default {
       return {
         width: this.panelWidth + 'px',
         height: this.panelHeight + 'px'
+      }
+    },
+    sidebarStyle() {
+      if (!this.sidebarOpen) {
+        return {}
+      }
+      return {
+        width: this.sidebarWidth + 'px'
       }
     },
     sortedConversations() {
@@ -374,6 +394,7 @@ export default {
   beforeDestroy() {
     this.stopTimeTick()
     this.unbindResize()
+    this.unbindSidebarResize()
   },
   methods: {
     startTimeTick() {
@@ -407,12 +428,57 @@ export default {
       saveUiPrefs({
         panelWidth: this.panelWidth,
         panelHeight: this.panelHeight,
-        sidebarOpen: this.sidebarOpen
+        sidebarOpen: this.sidebarOpen,
+        sidebarWidth: this.sidebarWidth
       })
     },
     toggleSidebar(open) {
       this.sidebarOpen = open
+      if (open) {
+        this.sidebarWidth = this.clampSidebarWidth(this.sidebarWidth)
+      }
       this.persistUi()
+    },
+    clampSidebarWidth(w) {
+      const min = 120
+      const maxByPanel = Math.max(min, this.panelWidth - 240)
+      const max = Math.min(320, maxByPanel)
+      return Math.min(max, Math.max(min, Number(w) || min))
+    },
+    startSidebarResize(e) {
+      if (!this.sidebarOpen) {
+        return
+      }
+      this.sidebarResizing = true
+      this.sidebarResizeStart = {
+        x: e.clientX,
+        w: this.sidebarWidth
+      }
+      document.addEventListener('mousemove', this.onSidebarResizeMove)
+      document.addEventListener('mouseup', this.onSidebarResizeEnd)
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'col-resize'
+    },
+    onSidebarResizeMove(e) {
+      if (!this.sidebarResizing || !this.sidebarResizeStart) {
+        return
+      }
+      const dw = e.clientX - this.sidebarResizeStart.x
+      this.sidebarWidth = this.clampSidebarWidth(this.sidebarResizeStart.w + dw)
+    },
+    onSidebarResizeEnd() {
+      this.sidebarResizing = false
+      this.sidebarResizeStart = null
+      this.unbindSidebarResize()
+      this.persistUi()
+    },
+    unbindSidebarResize() {
+      document.removeEventListener('mousemove', this.onSidebarResizeMove)
+      document.removeEventListener('mouseup', this.onSidebarResizeEnd)
+      if (!this.resizing) {
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
     },
     applySizePreset(cmd) {
       if (cmd === 'auto') {
@@ -434,6 +500,7 @@ export default {
       this.panelHeight = Math.min(this.panelHeight, maxH)
       this.panelWidth = Math.max(360, this.panelWidth)
       this.panelHeight = Math.max(400, this.panelHeight)
+      this.sidebarWidth = this.clampSidebarWidth(this.sidebarWidth)
     },
     startResize(e) {
       this.resizing = true
@@ -955,18 +1022,33 @@ export default {
   }
 
   &__sidebar {
-    width: 176px;
+    position: relative;
     flex-shrink: 0;
     border-right: 1px solid #ebeef5;
     background: #f7f8fa;
     display: flex;
     flex-direction: column;
-    transition: width 0.15s ease;
+    min-width: 0;
 
     &.is-collapsed {
-      width: 0;
+      width: 0 !important;
       border-right: none;
       overflow: hidden;
+    }
+  }
+
+  &__sidebar-resize {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 4;
+    background: transparent;
+
+    &:hover {
+      background: rgba(64, 158, 255, 0.28);
     }
   }
 
@@ -1099,10 +1181,6 @@ export default {
     &:hover {
       color: #409eff;
     }
-  }
-
-  &__conv-menu-danger {
-    color: #f56c6c;
   }
 
   &__rename-input {
@@ -1386,5 +1464,25 @@ export default {
 .ops-agent-chat-slide-leave-to {
   opacity: 0;
   transform: translateY(12px);
+}
+</style>
+
+<!-- dropdown menu is teleported to body; keep compact spacing like device list -->
+<style lang="scss">
+.ops-agent-chat-conv-menu {
+  min-width: 96px !important;
+  padding: 4px 0 !important;
+
+  .el-dropdown-menu__item,
+  .el-dropdown-item {
+    padding: 0 14px !important;
+    line-height: 28px !important;
+    font-size: 12px !important;
+    color: #606266;
+  }
+
+  .ops-agent-chat-conv-menu__danger {
+    color: #f56c6c;
+  }
 }
 </style>
