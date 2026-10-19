@@ -75,7 +75,13 @@
                   @blur="commitRename(c)"
                 >
                 <span v-else class="ops-agent-chat__conv-title" :title="c.title">{{ c.title }}</span>
-                <span class="ops-agent-chat__conv-time">{{ formatTime(c.updatedAt) }}</span>
+                <span
+                  class="ops-agent-chat__conv-time"
+                  :title="formatAbsoluteDateTime(c.updatedAt)"
+                >
+                  <span class="ops-agent-chat__conv-rel">{{ formatRelativeTime(c.updatedAt) }}</span>
+                  <span class="ops-agent-chat__conv-abs">{{ formatDateYmd(c.updatedAt) }}</span>
+                </span>
               </div>
               <div class="ops-agent-chat__conv-actions" @click.stop>
                 <i class="el-icon-edit ops-agent-chat__mini-icon" title="重命名" @click="startRename(c)" />
@@ -276,7 +282,10 @@ export default {
       renameDraft: '',
       shortcuts: SHORTCUTS,
       resizing: false,
-      resizeStart: null
+      resizeStart: null,
+      /** bumps every minute so relative times stay fresh while panel is open */
+      timeTick: 0,
+      timeTickTimer: null
     }
   },
   computed: {
@@ -287,6 +296,8 @@ export default {
       }
     },
     sortedConversations() {
+      // touch timeTick so relative labels recompute
+      void this.timeTick
       return sortConversations(this.conversations)
     },
     filteredConversations() {
@@ -332,13 +343,30 @@ export default {
     panelOpen(val) {
       if (val) {
         this.focusComposer()
+        this.startTimeTick()
+      } else {
+        this.stopTimeTick()
       }
     }
   },
   beforeDestroy() {
+    this.stopTimeTick()
     this.unbindResize()
   },
   methods: {
+    startTimeTick() {
+      this.stopTimeTick()
+      this.timeTick += 1
+      this.timeTickTimer = setInterval(() => {
+        this.timeTick += 1
+      }, 60 * 1000)
+    },
+    stopTimeTick() {
+      if (this.timeTickTimer) {
+        clearInterval(this.timeTickTimer)
+        this.timeTickTimer = null
+      }
+    },
     resolveAdminId() {
       const adminUser = this.$store && this.$store.getters ? this.$store.getters.adminUser : null
       return adminUser && adminUser.id != null ? adminUser.id : null
@@ -570,19 +598,61 @@ export default {
       })
       return Object.keys(ctx).length ? ctx : null
     },
-    formatTime(ts) {
+    formatRelativeTime(ts) {
+      if (!ts) {
+        return ''
+      }
+      void this.timeTick
+      const diffMs = Date.now() - Number(ts)
+      if (Number.isNaN(diffMs)) {
+        return ''
+      }
+      if (diffMs < 60 * 1000) {
+        return '刚刚'
+      }
+      const mins = Math.floor(diffMs / (60 * 1000))
+      if (mins < 60) {
+        return mins + '分钟前'
+      }
+      const hours = Math.floor(mins / 60)
+      if (hours < 24) {
+        return hours + '小时前'
+      }
+      const days = Math.floor(hours / 24)
+      if (days < 30) {
+        return days + '天前'
+      }
+      const months = Math.floor(days / 30)
+      if (months < 12) {
+        return months + '个月前'
+      }
+      return Math.floor(months / 12) + '年前'
+    },
+    formatDateYmd(ts) {
       if (!ts) {
         return ''
       }
       const d = new Date(ts)
-      const now = new Date()
-      const sameDay = d.toDateString() === now.toDateString()
+      if (Number.isNaN(d.getTime())) {
+        return ''
+      }
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return y + '/' + m + '/' + day
+    },
+    formatAbsoluteDateTime(ts) {
+      if (!ts) {
+        return ''
+      }
+      const d = new Date(ts)
+      if (Number.isNaN(d.getTime())) {
+        return ''
+      }
+      const ymd = this.formatDateYmd(ts)
       const hh = String(d.getHours()).padStart(2, '0')
       const mm = String(d.getMinutes()).padStart(2, '0')
-      if (sameDay) {
-        return hh + ':' + mm
-      }
-      return (d.getMonth() + 1) + '/' + d.getDate()
+      return ymd + ' ' + hh + ':' + mm
     },
     scrollToBottom() {
       this.$nextTick(() => {
@@ -922,8 +992,21 @@ export default {
   }
 
   &__conv-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 10px;
     color: #c0c4cc;
+    line-height: 1.3;
+  }
+
+  &__conv-rel {
+    flex-shrink: 0;
+  }
+
+  &__conv-abs {
+    color: #d3d4d6;
+    white-space: nowrap;
   }
 
   &__conv-actions {
@@ -1190,8 +1273,11 @@ export default {
   &__send {
     flex-shrink: 0;
     height: 36px;
+    min-width: 56px;
     padding: 0 14px;
     margin: 0;
+    border-radius: 8px !important;
+    font-size: 13px;
   }
 
   &__hint {
