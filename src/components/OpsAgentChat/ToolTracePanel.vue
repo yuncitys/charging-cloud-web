@@ -12,7 +12,7 @@
       >
         <div class="tool-trace__step-head" @click="toggleStep(idx)">
           <span class="tool-trace__idx">{{ idx + 1 }}</span>
-          <span class="tool-trace__name">{{ step.tool || 'tool' }}</span>
+          <span class="tool-trace__name" :title="step.tool || ''">{{ toolLabel(step.tool) }}</span>
           <el-tag
             size="mini"
             :type="step.ok === false ? 'danger' : 'success'"
@@ -53,6 +53,16 @@
 <script>
 import JsonBlock from './JsonBlock.vue'
 
+const TOOL_LABELS = {
+  lookup_order: '查订单',
+  lookup_pay_refund: '查支付/退款',
+  propose_refund: '提议退款',
+  propose_remote_stop: '提议远程停充',
+  search_knowledge: '查操作说明',
+  refund: '退款',
+  remote_stop: '远程停充'
+}
+
 export default {
   name: 'ToolTracePanel',
   components: { JsonBlock },
@@ -69,10 +79,10 @@ export default {
   data() {
     const stepOpen = {}
     ;(this.steps || []).forEach((_, i) => {
-      stepOpen[i] = i === (this.steps.length - 1)
+      stepOpen[i] = false
     })
     return {
-      open: this.defaultOpen || (this.steps && this.steps.length <= 2),
+      open: !!this.defaultOpen,
       stepOpen
     }
   },
@@ -82,13 +92,23 @@ export default {
       handler(list) {
         const next = {}
         ;(list || []).forEach((_, i) => {
-          next[i] = this.stepOpen[i] != null ? this.stepOpen[i] : i === list.length - 1
+          next[i] = false
         })
         this.stepOpen = next
+        // keep panel collapsed for non-dev users unless explicitly opened
+        if (!this.defaultOpen) {
+          this.open = false
+        }
       }
     }
   },
   methods: {
+    toolLabel(name) {
+      if (!name) {
+        return '工具'
+      }
+      return TOOL_LABELS[name] || name
+    },
     toggleStep(idx) {
       this.$set(this.stepOpen, idx, !this.stepOpen[idx])
     },
@@ -192,7 +212,7 @@ export default {
 
   &__name {
     flex: 1;
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
     color: #303133;
     overflow: hidden;
     text-overflow: ellipsis;
