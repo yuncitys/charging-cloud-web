@@ -5,6 +5,7 @@
 
 const UI_KEY = 'ops_agent_ui_prefs_v1'
 const ACTIVE_KEY = 'ops_agent_active_session_v1'
+const DOCK_KEY = 'ops_agent_docked_sessions_v1'
 /** Legacy multi-conversation blob — cleared on sync so it cannot override server. */
 const LEGACY_STORE_KEY = 'ops_agent_conversations_v2'
 const LEGACY_SESSION_KEY = 'ops_agent_session_id'
@@ -191,6 +192,34 @@ export function loadActiveId(adminId) {
 export function saveActiveId(adminId, activeId) {
   try {
     localStorage.setItem(ACTIVE_KEY, JSON.stringify({ adminId, activeId }))
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** Minimized dock chips (session ids), scoped by admin. */
+export function loadDockedIds(adminId) {
+  try {
+    const raw = localStorage.getItem(DOCK_KEY)
+    if (!raw) {
+      return []
+    }
+    const parsed = JSON.parse(raw)
+    if (adminId != null && parsed.adminId != null && parsed.adminId !== adminId) {
+      return []
+    }
+    return Array.isArray(parsed.dockedIds) ? parsed.dockedIds.filter(Boolean) : []
+  } catch (e) {
+    return []
+  }
+}
+
+export function saveDockedIds(adminId, dockedIds) {
+  try {
+    localStorage.setItem(DOCK_KEY, JSON.stringify({
+      adminId,
+      dockedIds: Array.isArray(dockedIds) ? dockedIds.filter(Boolean).slice(0, 5) : []
+    }))
   } catch (e) {
     /* ignore */
   }

@@ -10,7 +10,7 @@
         @click="reopenConversation(item.id)"
       >
         <i class="el-icon-chat-dot-round" />
-        <span class="ops-agent-chat__dock-title">{{ item.title }}</span>
+        <span class="ops-agent-chat__dock-title">{{ displayTitle(item) }}</span>
         <i
           class="el-icon-close ops-agent-chat__dock-close"
           @click.stop="closeConversationWindow(item.id)"
@@ -286,6 +286,8 @@ import {
   suggestPanelSize,
   loadActiveId,
   saveActiveId,
+  loadDockedIds,
+  saveDockedIds,
   clearLegacyLocalConversations,
   WELCOME_TEXT
 } from './sessionStore'
@@ -351,7 +353,7 @@ export default {
       adminId,
       activeId: loadActiveId(adminId),
       conversations: [],
-      dockedIds: [],
+      dockedIds: loadDockedIds(adminId),
       renamingId: null,
       renameDraft: '',
       shortcuts: SHORTCUTS,
@@ -415,6 +417,10 @@ export default {
       return msgs.length <= 2
     }
   },
+  mounted() {
+    // Prefetch summaries so FAB badge / dock chips survive refresh without opening panel
+    this.prefetchSessionSummaries()
+  },
   watch: {
     activeId(val) {
       this.persistActive()
@@ -422,6 +428,12 @@ export default {
       this.focusComposer()
       if (val && this.panelOpen) {
         this.ensureMessagesLoaded(val)
+      }
+    },
+    dockedIds: {
+      deep: true,
+      handler(val) {
+        saveDockedIds(this.adminId != null ? this.adminId : this.currentAdminId(), val)
       }
     },
     panelOpen(val) {
@@ -505,6 +517,59 @@ export default {
     persistActive() {
       saveActiveId(this.adminId != null ? this.adminId : this.currentAdminId(), this.activeId)
     },
+    prefetchSessionSummaries() {
+      return listSessions()
+        .then(res => {
+          if (!res || res.code !== 200) {
+            return
+          }
+          this.applySessionRows(Array.isArray(res.data) ? res.data : [], {
+            createIfEmpty: false,
+            loadActiveMessages: false
+          })
+        })
+        .catch(() => {
+          /* dock/badge stay empty until user opens panel */
+        })
+    },
+    applySessionRows(rows, options) {
+      const opts = options || {}
+      const prevById = {}
+      this.conversations.forEach(c => {
+        if (c && c.id) {
+          prevById[c.id] = c
+        }
+      })
+      const next = (rows || []).map(row => {
+        const summary = fromSessionSummary(row)
+        const prev = prevById[summary.id]
+        if (prev && prev.messagesLoaded) {
+          summary.messages = prev.messages
+          summary.messagesLoaded = true
+          summary.pendingActions = prev.pendingActions || []
+          summary.mockMode = prev.mockMode
+        }
+        return summary
+      })
+      this.conversations = next
+      this.dockedIds = (this.dockedIds || []).filter(id => next.some(c => c.id === id))
+      if (!next.length) {
+        if (opts.createIfEmpty) {
+          return this.createConversation()
+        }
+        return Promise.resolve()
+      }
+      const preferred = this.activeId && next.some(c => c.id === this.activeId)
+        ? this.activeId
+        : next[0].id
+      if (preferred !== this.activeId) {
+        this.activeId = preferred
+      }
+      if (opts.loadActiveMessages) {
+        return this.ensureMessagesLoaded(preferred)
+      }
+      return Promise.resolve()
+    },
     syncSessionsFromServer(force) {
       if (this._sessionsSyncPromise && !force) {
         return this._sessionsSyncPromise
@@ -522,34 +587,11 @@ export default {
             this.$message && this.$message.warning((res && res.msg) || '加载会话列表失败')
             return
           }
-          const rows = Array.isArray(res.data) ? res.data : []
-          const prevById = {}
-          this.conversations.forEach(c => {
-            if (c && c.id) {
-              prevById[c.id] = c
-            }
-          })
-          const next = rows.map(row => {
-            const summary = fromSessionSummary(row)
-            const prev = prevById[summary.id]
-            if (prev && prev.messagesLoaded) {
-              summary.messages = prev.messages
-              summary.messagesLoaded = true
-              summary.pendingActions = prev.pendingActions || []
-              summary.mockMode = prev.mockMode
-            }
-            return summary
-          })
-          this.conversations = next
           this.sessionsLoadError = false
-          if (!next.length) {
-            return this.createConversation()
-          }
-          const preferred = this.activeId && next.some(c => c.id === this.activeId)
-            ? this.activeId
-            : next[0].id
-          this.activeId = preferred
-          return this.ensureMessagesLoaded(preferred)
+          return this.applySessionRows(Array.isArray(res.data) ? res.data : [], {
+            createIfEmpty: true,
+            loadActiveMessages: true
+          })
         })
         .catch(() => {
           if (syncGen !== this._sessionsSyncGen) {
