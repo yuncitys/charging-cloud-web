@@ -1,0 +1,13 @@
+{
+  "name": "ops-agent-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Ops Agent Playwright UX smoke tests (cancel confirm, plain failure, sidebar resize)",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.48.0"
+  }
+}
