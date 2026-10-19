@@ -66,64 +66,88 @@
             @mousedown.prevent="startSidebarResize"
           />
           <div class="ops-agent-chat__conv-list">
-            <div
-              v-for="c in filteredConversations"
-              :key="c.id"
-              :class="['ops-agent-chat__conv-item', { 'is-active': c.id === activeId }]"
-              @click="switchConversation(c.id)"
-            >
-              <div class="ops-agent-chat__conv-title-wrap">
-                <input
-                  v-if="renamingId === c.id"
-                  ref="renameInput"
-                  v-model="renameDraft"
-                  class="ops-agent-chat__rename-input"
-                  @click.stop
-                  @keydown.enter.prevent="commitRename(c)"
-                  @keydown.esc.prevent="renamingId = null"
-                  @blur="commitRename(c)"
-                >
-                <span
-                  v-else
-                  ref="convTitles"
-                  :data-cid="c.id"
-                  :class="['ops-agent-chat__conv-title', { 'is-overflow': !!titleOverflowMap[c.id] }]"
-                  :title="displayTitle(c)"
-                >{{ displayTitle(c) }}</span>
-                <el-dropdown
-                  v-if="renamingId !== c.id"
-                  trigger="click"
-                  placement="bottom-end"
-                  class="ops-agent-chat__conv-more"
-                  @command="cmd => onConvMenuCommand(cmd, c)"
-                >
-                  <button
-                    type="button"
-                    class="ops-agent-chat__conv-more-btn"
-                    title="更多"
-                    @click.stop
-                  >
-                    <i class="el-icon-more" />
-                  </button>
-                  <el-dropdown-menu slot="dropdown" class="ops-agent-chat-conv-menu">
-                    <el-dropdown-item command="rename">重命名</el-dropdown-item>
-                    <el-dropdown-item command="delete">
-                      <span class="ops-agent-chat-conv-menu__danger">删除</span>
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </el-dropdown>
-              </div>
-              <span
-                class="ops-agent-chat__conv-time"
-                :title="formatAbsoluteDateTime(c.updatedAt)"
+            <div v-if="sessionsLoading && !conversations.length" class="ops-agent-chat__conv-loading">
+              <div
+                v-for="n in 4"
+                :key="'sk-' + n"
+                class="ops-agent-chat__conv-skeleton"
               >
-                <span class="ops-agent-chat__conv-rel">{{ formatRelativeTime(c.updatedAt) }}</span>
-                <span class="ops-agent-chat__conv-abs">{{ formatDateYmd(c.updatedAt) }}</span>
-              </span>
+                <div class="ops-agent-chat__skel-line ops-agent-chat__skel-line--title" />
+                <div class="ops-agent-chat__skel-line ops-agent-chat__skel-line--meta" />
+              </div>
+              <div class="ops-agent-chat__conv-loading-tip">
+                <i class="el-icon-loading" />
+                <span>正在加载会话…</span>
+              </div>
             </div>
-            <div v-if="!filteredConversations.length" class="ops-agent-chat__empty">
-              {{ searchQuery.trim() ? '无匹配会话' : '暂无会话' }}
-            </div>
+            <template v-else>
+              <div
+                v-for="c in filteredConversations"
+                :key="c.id"
+                :class="['ops-agent-chat__conv-item', { 'is-active': c.id === activeId }]"
+                @click="switchConversation(c.id)"
+              >
+                <div class="ops-agent-chat__conv-title-wrap">
+                  <input
+                    v-if="renamingId === c.id"
+                    ref="renameInput"
+                    v-model="renameDraft"
+                    class="ops-agent-chat__rename-input"
+                    @click.stop
+                    @keydown.enter.prevent="commitRename(c)"
+                    @keydown.esc.prevent="renamingId = null"
+                    @blur="commitRename(c)"
+                  >
+                  <span
+                    v-else
+                    ref="convTitles"
+                    :data-cid="c.id"
+                    :class="['ops-agent-chat__conv-title', { 'is-overflow': !!titleOverflowMap[c.id] }]"
+                    :title="displayTitle(c)"
+                  >{{ displayTitle(c) }}</span>
+                  <el-dropdown
+                    v-if="renamingId !== c.id"
+                    trigger="click"
+                    placement="bottom-end"
+                    class="ops-agent-chat__conv-more"
+                    @command="cmd => onConvMenuCommand(cmd, c)"
+                  >
+                    <button
+                      type="button"
+                      class="ops-agent-chat__conv-more-btn"
+                      title="更多"
+                      @click.stop
+                    >
+                      <i class="el-icon-more" />
+                    </button>
+                    <el-dropdown-menu slot="dropdown" class="ops-agent-chat-conv-menu">
+                      <el-dropdown-item command="rename">重命名</el-dropdown-item>
+                      <el-dropdown-item command="delete">
+                        <span class="ops-agent-chat-conv-menu__danger">删除</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </el-dropdown>
+                </div>
+                <span
+                  class="ops-agent-chat__conv-time"
+                  :title="formatAbsoluteDateTime(c.updatedAt)"
+                >
+                  <span class="ops-agent-chat__conv-rel">{{ formatRelativeTime(c.updatedAt) }}</span>
+                  <span class="ops-agent-chat__conv-abs">{{ formatDateYmd(c.updatedAt) }}</span>
+                </span>
+              </div>
+              <div v-if="!filteredConversations.length" class="ops-agent-chat__empty">
+                <template v-if="sessionsLoadError">
+                  <div>会话加载失败</div>
+                  <button type="button" class="ops-agent-chat__empty-retry" @click="syncSessionsFromServer(true)">
+                    点击重试
+                  </button>
+                </template>
+                <template v-else>
+                  {{ searchQuery.trim() ? '无匹配会话' : '暂无会话' }}
+                </template>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -322,6 +346,7 @@ export default {
       inputText: '',
       sending: false,
       sessionsLoading: false,
+      sessionsLoadError: false,
       messagesLoadingIds: {},
       adminId,
       activeId: loadActiveId(adminId),
@@ -480,14 +505,20 @@ export default {
     persistActive() {
       saveActiveId(this.adminId != null ? this.adminId : this.currentAdminId(), this.activeId)
     },
-    syncSessionsFromServer() {
-      if (this.sessionsLoading) {
-        return Promise.resolve()
+    syncSessionsFromServer(force) {
+      if (this._sessionsSyncPromise && !force) {
+        return this._sessionsSyncPromise
       }
       this.sessionsLoading = true
-      return listSessions()
+      this.sessionsLoadError = false
+      const syncGen = (this._sessionsSyncGen = (this._sessionsSyncGen || 0) + 1)
+      this._sessionsSyncPromise = listSessions()
         .then(res => {
+          if (syncGen !== this._sessionsSyncGen) {
+            return
+          }
           if (!res || res.code !== 200) {
+            this.sessionsLoadError = true
             this.$message && this.$message.warning((res && res.msg) || '加载会话列表失败')
             return
           }
@@ -510,6 +541,7 @@ export default {
             return summary
           })
           this.conversations = next
+          this.sessionsLoadError = false
           if (!next.length) {
             return this.createConversation()
           }
@@ -520,12 +552,20 @@ export default {
           return this.ensureMessagesLoaded(preferred)
         })
         .catch(() => {
+          if (syncGen !== this._sessionsSyncGen) {
+            return
+          }
+          this.sessionsLoadError = true
           this.$message && this.$message.warning('加载会话列表失败，请稍后重试')
         })
         .finally(() => {
-          this.sessionsLoading = false
-          this.scheduleMeasureTitles()
+          if (syncGen === this._sessionsSyncGen) {
+            this.sessionsLoading = false
+            this._sessionsSyncPromise = null
+            this.scheduleMeasureTitles()
+          }
         })
+      return this._sessionsSyncPromise
     },
     ensureMessagesLoaded(id) {
       const conv = this.conversations.find(c => c.id === id)
@@ -706,6 +746,11 @@ export default {
       this.$set(this.conversations, idx, next)
     },
     openPanel() {
+      // Mark loading before paint so empty list never flashes「暂无会话」
+      if (!this.conversations.length) {
+        this.sessionsLoading = true
+        this.sessionsLoadError = false
+      }
       this.clampToViewport()
       this.panelOpen = true
       this.dockedIds = []
@@ -1423,6 +1468,62 @@ export default {
     padding: 16px 8px;
   }
 
+  &__empty-retry {
+    margin-top: 8px;
+    border: none;
+    background: transparent;
+    color: #409eff;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__conv-loading {
+    padding: 8px 6px 12px;
+  }
+
+  &__conv-skeleton {
+    padding: 8px 6px;
+    margin-bottom: 4px;
+  }
+
+  &__skel-line {
+    height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8eb 37%, #f0f2f5 63%);
+    background-size: 400% 100%;
+    animation: ops-agent-skel 1.2s ease infinite;
+
+    &--title {
+      width: 72%;
+      margin-bottom: 8px;
+    }
+
+    &--meta {
+      width: 42%;
+      height: 8px;
+    }
+  }
+
+  &__conv-loading-tip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #909399;
+
+    .el-icon-loading {
+      font-size: 14px;
+      color: #409eff;
+    }
+  }
+
   &__main {
     flex: 1;
     min-width: 0;
@@ -1688,6 +1789,15 @@ export default {
 .ops-agent-chat-slide-leave-to {
   opacity: 0;
   transform: translateY(12px);
+}
+
+@keyframes ops-agent-skel {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
 }
 </style>
 
