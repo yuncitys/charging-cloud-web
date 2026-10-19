@@ -85,9 +85,11 @@
                 >
                 <span
                   v-else
-                  class="ops-agent-chat__conv-title"
-                  :title="c.title"
-                >{{ c.title }}</span>
+                  ref="convTitles"
+                  :data-cid="c.id"
+                  :class="['ops-agent-chat__conv-title', { 'is-overflow': !!titleOverflowMap[c.id] }]"
+                  :title="displayTitle(c)"
+                >{{ displayTitle(c) }}</span>
                 <el-dropdown
                   v-if="renamingId !== c.id"
                   trigger="click"
@@ -134,8 +136,8 @@
                 title="会话列表"
                 @click="toggleSidebar(true)"
               />
-              <span class="ops-agent-chat__title-text" :title="activeConversation.title">
-                {{ activeConversation.title }}
+              <span class="ops-agent-chat__title-text" :title="displayTitle(activeConversation)">
+                {{ displayTitle(activeConversation) }}
               </span>
               <el-tag v-if="activeConversation.mockMode" size="mini" type="warning" effect="plain">Mock</el-tag>
             </div>
@@ -245,6 +247,7 @@ import {
   saveStore,
   createEmptyConversation,
   titleFromMessage,
+  displayConversationTitle,
   sortConversations,
   loadUiPrefs,
   saveUiPrefs,
@@ -319,7 +322,10 @@ export default {
       sidebarResizeStart: null,
       /** bumps every minute so relative times stay fresh while panel is open */
       timeTick: 0,
-      timeTickTimer: null
+      timeTickTimer: null,
+      /** cid -> whether title overflows current sidebar width */
+      titleOverflowMap: {},
+      titleMeasureTimer: null
     }
   },
   computed: {
@@ -348,7 +354,7 @@ export default {
         return this.sortedConversations
       }
       return this.sortedConversations.filter(c => {
-        const title = (c.title || '').toLowerCase()
+        const title = (this.displayTitle(c) || '').toLowerCase()
         if (title.includes(q)) {
           return true
         }
@@ -386,17 +392,59 @@ export default {
       if (val) {
         this.focusComposer()
         this.startTimeTick()
+        this.scheduleMeasureTitles()
       } else {
         this.stopTimeTick()
       }
+    },
+    sidebarWidth() {
+      this.scheduleMeasureTitles()
+    },
+    sidebarOpen() {
+      this.scheduleMeasureTitles()
+    },
+    filteredConversations() {
+      this.scheduleMeasureTitles()
+    },
+    renamingId() {
+      this.scheduleMeasureTitles()
     }
   },
   beforeDestroy() {
     this.stopTimeTick()
     this.unbindResize()
     this.unbindSidebarResize()
+    if (this.titleMeasureTimer) {
+      clearTimeout(this.titleMeasureTimer)
+      this.titleMeasureTimer = null
+    }
   },
   methods: {
+    scheduleMeasureTitles() {
+      if (this.titleMeasureTimer) {
+        clearTimeout(this.titleMeasureTimer)
+      }
+      this.titleMeasureTimer = setTimeout(() => {
+        this.titleMeasureTimer = null
+        this.measureTitleOverflow()
+      }, 40)
+    },
+    measureTitleOverflow() {
+      const els = this.$refs.convTitles
+      const list = !els ? [] : Array.isArray(els) ? els : [els]
+      const map = {}
+      list.forEach(el => {
+        if (!el || !el.getAttribute) {
+          return
+        }
+        const id = el.getAttribute('data-cid')
+        if (!id) {
+          return
+        }
+        map[id] = el.scrollWidth > el.clientWidth + 1
+      })
+      this.titleOverflowMap = map
+    },
     startTimeTick() {
       this.stopTimeTick()
       this.timeTick += 1
@@ -465,12 +513,14 @@ export default {
       }
       const dw = e.clientX - this.sidebarResizeStart.x
       this.sidebarWidth = this.clampSidebarWidth(this.sidebarResizeStart.w + dw)
+      this.scheduleMeasureTitles()
     },
     onSidebarResizeEnd() {
       this.sidebarResizing = false
       this.sidebarResizeStart = null
       this.unbindSidebarResize()
       this.persistUi()
+      this.scheduleMeasureTitles()
     },
     unbindSidebarResize() {
       document.removeEventListener('mousemove', this.onSidebarResizeMove)
@@ -630,6 +680,9 @@ export default {
         this.sendMessage()
       }
     },
+    displayTitle(c) {
+      return displayConversationTitle(c)
+    },
     onConvMenuCommand(cmd, c) {
       if (!c) {
         return
@@ -642,7 +695,7 @@ export default {
     },
     startRename(c) {
       this.renamingId = c.id
-      this.renameDraft = c.title
+      this.renameDraft = this.displayTitle(c)
       this.$nextTick(() => {
         const el = this.$refs.renameInput
         const input = Array.isArray(el) ? el[0] : el
@@ -1130,8 +1183,14 @@ export default {
     overflow: hidden;
     white-space: nowrap;
     line-height: 1.4;
-    -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
-    mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+    /* full text when it fits; fade only when overflowing (or hover/active above) */
+    -webkit-mask-image: none;
+    mask-image: none;
+
+    &.is-overflow {
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+      mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+    }
   }
 
   &__conv-time {

@@ -130,15 +130,35 @@ function resetForAdmin(adminId) {
   return store
 }
 
+/**
+ * Build a conversation title from the first user message.
+ * Do NOT append ellipsis — the sidebar fades visually when width is insufficient.
+ */
 export function titleFromMessage(text) {
   if (!text) {
     return '新对话'
   }
   const t = String(text).replace(/\s+/g, ' ').trim()
-  if (t.length <= 18) {
-    return t
+  if (!t) {
+    return '新对话'
   }
-  return t.slice(0, 18) + '…'
+  // soft cap for storage / rename defaults; UI handles overflow with fade
+  return t.length > 120 ? t.slice(0, 120) : t
+}
+
+/** Prefer first user message so old titles truncated with "…" show full text after widen. */
+export function displayConversationTitle(conv) {
+  if (!conv) {
+    return '新对话'
+  }
+  const msgs = conv.messages || []
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i]
+    if (m && m.role === 'user' && m.text) {
+      return titleFromMessage(m.text)
+    }
+  }
+  return conv.title || '新对话'
 }
 
 export function sortConversations(list) {
