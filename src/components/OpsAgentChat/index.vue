@@ -120,10 +120,10 @@
                     >
                       <i class="el-icon-more" />
                     </button>
-                    <el-dropdown-menu slot="dropdown" class="ops-agent-chat-conv-menu">
+                    <el-dropdown-menu slot="dropdown" class="ops-agent-chat-menu">
                       <el-dropdown-item command="rename">重命名</el-dropdown-item>
                       <el-dropdown-item command="delete">
-                        <span class="ops-agent-chat-conv-menu__danger">删除</span>
+                        <span class="ops-agent-chat-menu__danger">删除</span>
                       </el-dropdown-item>
                     </el-dropdown-menu>
                   </el-dropdown>
@@ -173,7 +173,7 @@
                 <span class="ops-agent-chat__icon-btn" title="窗口大小">
                   <i class="el-icon-full-screen" />
                 </span>
-                <el-dropdown-menu slot="dropdown">
+                <el-dropdown-menu slot="dropdown" class="ops-agent-chat-menu">
                   <el-dropdown-item command="compact">紧凑</el-dropdown-item>
                   <el-dropdown-item command="default">标准</el-dropdown-item>
                   <el-dropdown-item command="large">宽松</el-dropdown-item>
@@ -1843,9 +1843,9 @@ export default {
 }
 </style>
 
-<!-- dropdown menu is teleported to body; keep compact spacing like device list -->
+<!-- dropdown menus are teleported to body; keep compact spacing consistent -->
 <style lang="scss">
-.ops-agent-chat-conv-menu {
+.ops-agent-chat-menu {
   min-width: 96px !important;
   padding: 4px 0 !important;
 
@@ -1857,7 +1857,18 @@ export default {
     color: #606266;
   }
 
-  .ops-agent-chat-conv-menu__danger {
+  .el-dropdown-menu__item--divided,
+  .el-dropdown-item--divided {
+    margin-top: 4px !important;
+
+    &::before {
+      margin: 0 8px !important;
+      height: 0 !important;
+      border-top: 1px solid #ebeef5 !important;
+    }
+  }
+
+  .ops-agent-chat-menu__danger {
     color: #f56c6c;
   }
 }
