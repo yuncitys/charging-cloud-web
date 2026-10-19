@@ -1,6 +1,14 @@
 <template>
-  <div :class="['msg-bubble', `msg-bubble--${message.role}`]">
+  <div :class="['msg-bubble', 'msg-bubble--' + message.role]">
     <div class="msg-bubble__inner">
+      <button
+        type="button"
+        class="msg-bubble__copy"
+        :title="copied ? '已复制' : '复制'"
+        @click="copyMessage"
+      >
+        <i :class="copied ? 'el-icon-check' : 'el-icon-document-copy'" />
+      </button>
       <template v-for="(seg, i) in segments">
         <div
           v-if="seg.type === 'text' && seg.value && message.role === 'user'"
@@ -31,8 +39,13 @@
 <script>
 import { splitTextAndJson } from './jsonPretty'
 import { renderMarkdown } from './renderMarkdown'
+import { humanizeOpsError } from './friendlyText'
 import JsonBlock from './JsonBlock.vue'
 import ToolTracePanel from './ToolTracePanel.vue'
+
+function isTechnicalFailure(text) {
+  return /downstream rejected|idempotency key already used/i.test(text || '')
+}
 
 export default {
   name: 'MessageBubble',
@@ -43,17 +56,79 @@ export default {
       required: true
     }
   },
+  data() {
+    return {
+      copied: false,
+      copyTimer: null
+    }
+  },
   computed: {
+    rawText() {
+      return this.message.text || ''
+    },
+    isFailureDump() {
+      return this.message.role === 'assistant' && isTechnicalFailure(this.rawText)
+    },
     segments() {
       if (this.message.role === 'user') {
-        return [{ type: 'text', value: this.message.text }]
+        return [{ type: 'text', value: this.rawText }]
       }
-      return splitTextAndJson(this.message.text)
+      if (this.isFailureDump) {
+        return [{ type: 'text', value: humanizeOpsError(this.rawText, null) }]
+      }
+      return splitTextAndJson(this.rawText)
+    },
+    copySource() {
+      if (this.isFailureDump) {
+        return humanizeOpsError(this.rawText, null)
+      }
+      return this.rawText
+    }
+  },
+  beforeDestroy() {
+    if (this.copyTimer) {
+      clearTimeout(this.copyTimer)
     }
   },
   methods: {
     renderMd(text) {
       return renderMarkdown(text)
+    },
+    copyMessage() {
+      const text = this.copySource
+      if (!text) {
+        return
+      }
+      const done = () => {
+        this.copied = true
+        if (this.copyTimer) {
+          clearTimeout(this.copyTimer)
+        }
+        this.copyTimer = setTimeout(() => {
+          this.copied = false
+        }, 1500)
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => this.fallbackCopy(text, done))
+      } else {
+        this.fallbackCopy(text, done)
+      }
+    },
+    fallbackCopy(text, done) {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.left = '-9999px'
+      document.body.appendChild(ta)
+      ta.select()
+      try {
+        document.execCommand('copy')
+        done()
+      } catch (e) {
+        /* ignore */
+      }
+      document.body.removeChild(ta)
     }
   }
 }
@@ -70,6 +145,16 @@ export default {
     .msg-bubble__inner {
       background: #409eff;
       color: #fff;
+      border-radius: 14px 4px 14px 14px;
+    }
+
+    .msg-bubble__copy {
+      color: rgba(255, 255, 255, 0.85);
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.18);
+        color: #fff;
+      }
     }
   }
 
@@ -79,16 +164,46 @@ export default {
     .msg-bubble__inner {
       background: #f4f4f5;
       color: #303133;
+      border-radius: 4px 14px 14px 14px;
+      border: 1px solid #ebeef5;
     }
   }
 
   &__inner {
-    max-width: 92%;
-    padding: 8px 12px;
-    border-radius: 8px;
+    position: relative;
+    max-width: min(92%, 520px);
+    padding: 10px 36px 10px 14px;
     font-size: 13px;
-    line-height: 1.5;
+    line-height: 1.55;
     word-break: break-word;
+  }
+
+  &__copy {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #909399;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.15s;
+
+    &:hover {
+      background: rgba(0, 0, 0, 0.06);
+      color: #606266;
+    }
+  }
+
+  &:hover .msg-bubble__copy,
+  &__copy:focus {
+    opacity: 1;
   }
 
   &__text {
@@ -96,66 +211,45 @@ export default {
   }
 
   &__md {
-    ::v-deep .md-h {
-      margin: 8px 0 4px;
-      font-size: 13px;
-      font-weight: 600;
-      line-height: 1.4;
-    }
+    ::v-deep {
+      p {
+        margin: 0 0 8px;
 
-    ::v-deep h1.md-h {
-      font-size: 15px;
-    }
+        &:last-child {
+          margin-bottom: 0;
+        }
+      }
 
-    ::v-deep h2.md-h {
-      font-size: 14px;
-    }
+      ul, ol {
+        margin: 4px 0 8px;
+        padding-left: 1.3em;
+      }
 
-    ::v-deep h3.md-h {
-      font-size: 13px;
-    }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        background: rgba(0, 0, 0, 0.06);
+        padding: 1px 5px;
+        border-radius: 4px;
+      }
 
-    ::v-deep .md-p {
-      margin: 0 0 6px;
-    }
+      pre {
+        margin: 8px 0;
+        padding: 10px;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        border-radius: 8px;
+        overflow: auto;
+        font-size: 12px;
+      }
 
-    ::v-deep .md-ul,
-    ::v-deep .md-ol {
-      margin: 4px 0 8px;
-      padding-left: 1.3em;
-    }
+      strong {
+        font-weight: 600;
+      }
 
-    ::v-deep li {
-      margin: 2px 0;
-    }
-
-    ::v-deep code {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 12px;
-      background: rgba(0, 0, 0, 0.06);
-      padding: 1px 4px;
-      border-radius: 3px;
-    }
-
-    ::v-deep .md-pre {
-      margin: 6px 0;
-      padding: 8px;
-      background: #1e1e2e;
-      color: #cdd6f4;
-      border-radius: 6px;
-      overflow: auto;
-      font-size: 11px;
-      line-height: 1.45;
-    }
-
-    ::v-deep .md-pre code {
-      background: transparent;
-      padding: 0;
-      color: inherit;
-    }
-
-    ::v-deep a {
-      color: #409eff;
+      a {
+        color: #409eff;
+      }
     }
   }
 }

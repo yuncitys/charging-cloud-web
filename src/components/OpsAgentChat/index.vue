@@ -141,22 +141,30 @@
               v-for="item in activeConversation.pendingActions"
               :key="'pa-' + item.id"
               :action="item"
-              @cancel="dismissPending"
+              @cancel="onPendingCancel"
               @confirmed="onActionConfirmed"
               @confirm-failed="onActionConfirmFailed"
             />
           </div>
 
           <div v-if="showShortcuts" class="ops-agent-chat__shortcuts">
+            <div class="ops-agent-chat__shortcuts-label">试试这样问</div>
             <button
               v-for="item in shortcuts"
               :key="item.label"
               type="button"
-              class="ops-agent-chat__chip"
+              class="ops-agent-chat__suggest"
               :disabled="sending"
               @click="useShortcut(item)"
             >
-              {{ item.label }}
+              <span class="ops-agent-chat__suggest-icon" :class="'is-' + item.tone">
+                <i :class="item.icon" />
+              </span>
+              <span class="ops-agent-chat__suggest-body">
+                <span class="ops-agent-chat__suggest-title">{{ item.label }}</span>
+                <span class="ops-agent-chat__suggest-desc">{{ item.desc }}</span>
+              </span>
+              <i class="el-icon-arrow-right ops-agent-chat__suggest-arrow" />
             </button>
           </div>
 
@@ -183,7 +191,6 @@
                 发送
               </el-button>
             </div>
-            <div class="ops-agent-chat__hint">可拖拽左下角调整窗口大小</div>
           </div>
         </div>
       </div>
@@ -195,6 +202,7 @@
 import { sendChat } from '@/api/opsAgent/chat'
 import PendingActionCard from './PendingActionCard.vue'
 import MessageBubble from './MessageBubble.vue'
+import { actionLabel, formatConfirmResult } from './friendlyText'
 import {
   loadStore,
   saveStore,
@@ -209,10 +217,34 @@ import {
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
 
 const SHORTCUTS = [
-  { label: '查单', text: '查一下订单ORD20240101001' },
-  { label: '退款排障', text: '订单ORD20240101001扣了钱没启动，能不能退' },
-  { label: '枪离线SOP', text: '枪离线怎么处理' },
-  { label: '远程停充', text: '订单ORD20240101001关不掉，帮我停充' }
+  {
+    label: '查单',
+    desc: '按订单号看状态和金额',
+    icon: 'el-icon-search',
+    tone: 'blue',
+    text: '查一下订单ORD20240101001'
+  },
+  {
+    label: '退款排障',
+    desc: '扣款未启动时走确认退款',
+    icon: 'el-icon-wallet',
+    tone: 'amber',
+    text: '订单ORD20240101001扣了钱没启动，能不能退'
+  },
+  {
+    label: '枪离线 SOP',
+    desc: '逐步排查枪不在线',
+    icon: 'el-icon-document',
+    tone: 'green',
+    text: '枪离线怎么处理'
+  },
+  {
+    label: '远程停充',
+    desc: '订单关不掉时远程停止',
+    icon: 'el-icon-switch-button',
+    tone: 'red',
+    text: '订单ORD20240101001关不掉，帮我停充'
+  }
 ]
 
 const SIZE_PRESETS = {
@@ -670,16 +702,25 @@ export default {
         c.pendingActions = (c.pendingActions || []).filter(p => p.id !== id)
       })
     },
-    onActionConfirmed({ action, result }) {
-      this.dismissPending(action.id)
-      const ok = result && result.code === 200
-      const status = result && result.status ? result.status : ''
+    onPendingCancel(action) {
+      const id = action && action.id != null ? action.id : action
+      this.dismissPending(id)
+      const label = actionLabel(typeof action === 'object' ? action : null)
       this.patchActive(c => {
         c.messages = c.messages.concat([{
           role: 'assistant',
-          text: ok
-            ? `操作已执行${status ? '（' + status + '）' : ''}`
-            : (result && result.error) || (result && result.msg) || '操作失败',
+          text: '好的，已取消「' + label + '」，没有执行任何操作。',
+          toolTrace: null
+        }])
+      })
+      this.scrollToBottom()
+    },
+    onActionConfirmed({ action, result }) {
+      this.dismissPending(action.id)
+      this.patchActive(c => {
+        c.messages = c.messages.concat([{
+          role: 'assistant',
+          text: formatConfirmResult(action, result),
           toolTrace: null
         }])
       })
@@ -689,7 +730,7 @@ export default {
       this.patchActive(c => {
         c.messages = c.messages.concat([{
           role: 'assistant',
-          text: `「${action.summary}」确认失败，请稍后重试`,
+          text: '「' + actionLabel(action) + '」确认请求失败，请稍后重试。',
           toolTrace: null
         }])
       })
@@ -1004,30 +1045,107 @@ export default {
 
   &__shortcuts {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 6px;
-    padding: 8px 12px 0;
+    padding: 4px 12px 10px;
   }
 
-  &__chip {
-    border: 1px solid #dcdfe6;
-    background: #fff;
-    color: #606266;
-    border-radius: 14px;
-    padding: 4px 10px;
+  &__shortcuts-label {
     font-size: 12px;
+    color: #909399;
+    padding: 2px 2px 4px;
+  }
+
+  &__suggest {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid #ebeef5;
+    background: #fafbfc;
+    border-radius: 10px;
+    padding: 8px 10px;
     cursor: pointer;
-    line-height: 1.4;
+    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 
     &:hover:not(:disabled) {
-      border-color: #409eff;
-      color: #409eff;
+      border-color: #c6e2ff;
+      background: #f5f9ff;
+      box-shadow: 0 1px 4px rgba(64, 158, 255, 0.1);
+
+      .ops-agent-chat__suggest-arrow {
+        color: #409eff;
+        transform: translateX(2px);
+      }
     }
 
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
+  }
+
+  &__suggest-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+
+    &.is-blue {
+      background: #ecf5ff;
+      color: #409eff;
+    }
+
+    &.is-amber {
+      background: #fdf6ec;
+      color: #e6a23c;
+    }
+
+    &.is-green {
+      background: #f0f9eb;
+      color: #67c23a;
+    }
+
+    &.is-red {
+      background: #fef0f0;
+      color: #f56c6c;
+    }
+  }
+
+  &__suggest-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__suggest-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #303133;
+    line-height: 1.3;
+  }
+
+  &__suggest-desc {
+    font-size: 11px;
+    color: #909399;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__suggest-arrow {
+    flex-shrink: 0;
+    color: #c0c4cc;
+    font-size: 12px;
+    transition: color 0.15s, transform 0.15s;
   }
 
   &__footer {
