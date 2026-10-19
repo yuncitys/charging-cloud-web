@@ -15,6 +15,12 @@
           :key="'t-' + i"
           class="msg-bubble__text"
         >{{ seg.value }}</div>
+        <!-- While SSE is mid-flight, incomplete Markdown would flicker raw ** / # — show plain text -->
+        <div
+          v-else-if="seg.type === 'text' && seg.value && message.streaming"
+          :key="'s-' + i"
+          class="msg-bubble__text"
+        >{{ seg.value }}</div>
         <div
           v-else-if="seg.type === 'text' && seg.value"
           :key="'md-' + i"

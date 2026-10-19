@@ -270,6 +270,7 @@ import {
   renameSession,
   deleteSession
 } from '@/api/opsAgent/chat'
+import { sendChatStream } from '@/api/opsAgent/chatStream'
 import PendingActionCard from './PendingActionCard.vue'
 import MessageBubble from './MessageBubble.vue'
 import { actionLabel, formatConfirmResult } from './friendlyText'
@@ -1090,85 +1091,171 @@ export default {
         })
         this.scrollToBottom()
 
-        sendChat({
+        const payload = {
           sessionId,
           message: text,
           pageContext: this.buildPageContext()
-        })
-          .then(res => {
-            const targetId = convId
-            const apply = mutator => {
-              const idx = this.conversations.findIndex(c => c.id === targetId)
-              if (idx < 0) {
-                return
-              }
-              const next = Object.assign({}, this.conversations[idx])
-              mutator(next)
-              next.updatedAt = Date.now()
-              this.$set(this.conversations, idx, next)
-            }
-
-            if (res.code !== 200) {
-              apply(c => {
-                c.messages = c.messages.concat([{
-                  role: 'assistant',
-                  text: res.msg || '请求失败，请稍后重试',
-                  toolTrace: null
-                }])
-              })
-              return
-            }
-            apply(c => {
-              if (res.sessionId) {
-                c.sessionId = res.sessionId
-                // server id is source of truth; keep local id aligned
-                if (c.id !== res.sessionId) {
-                  c.id = res.sessionId
-                  if (this.activeId === targetId) {
-                    this.activeId = res.sessionId
-                  }
-                }
-              }
-              if (typeof res.mockMode === 'boolean') {
-                c.mockMode = res.mockMode
-              }
-              if (res.assistantText) {
-                c.messages = c.messages.concat([{
-                  role: 'assistant',
-                  text: res.assistantText,
-                  toolTrace: Array.isArray(res.toolTrace) ? res.toolTrace : null
-                }])
-              }
-              if (Array.isArray(res.pendingActions) && res.pendingActions.length) {
-                const existing = c.pendingActions || []
-                const merged = existing.slice()
-                res.pendingActions.forEach(pa => {
-                  if (!merged.some(x => x.id === pa.id)) {
-                    merged.push(pa)
-                  }
-                })
-                c.pendingActions = merged
-              }
-            })
-          })
-          .catch(() => {
-            const idx = this.conversations.findIndex(c => c.id === convId)
-            if (idx >= 0) {
-              const next = Object.assign({}, this.conversations[idx])
-              next.messages = next.messages.concat([{
-                role: 'assistant',
-                text: '网络异常，请检查连接后重试',
-                toolTrace: null
-              }])
-              next.updatedAt = Date.now()
-              this.$set(this.conversations, idx, next)
-            }
-          })
+        }
+        this.deliverAssistantReply(convId, payload)
           .finally(() => {
             this.sending = false
             this.scrollToBottom()
             this.focusComposer()
           })
+      })
+    },
+    applyConversation(targetId, mutator) {
+      const idx = this.conversations.findIndex(c => c.id === targetId)
+      if (idx < 0) {
+        return
+      }
+      const next = Object.assign({}, this.conversations[idx])
+      mutator(next)
+      next.updatedAt = Date.now()
+      this.$set(this.conversations, idx, next)
+    },
+    alignSessionId(targetId, sessionId) {
+      if (!sessionId) {
+        return targetId
+      }
+      this.applyConversation(targetId, c => {
+        c.sessionId = sessionId
+        if (c.id !== sessionId) {
+          c.id = sessionId
+        }
+      })
+      if (this.activeId === targetId && targetId !== sessionId) {
+        this.activeId = sessionId
+      }
+      return sessionId
+    },
+    mergePendingActions(targetId, pendingActions) {
+      if (!Array.isArray(pendingActions) || !pendingActions.length) {
+        return
+      }
+      this.applyConversation(targetId, c => {
+        const existing = c.pendingActions || []
+        const merged = existing.slice()
+        pendingActions.forEach(pa => {
+          if (!merged.some(x => x.id === pa.id)) {
+            merged.push(pa)
+          }
+        })
+        c.pendingActions = merged
+      })
+    },
+    deliverAssistantReply(convId, payload) {
+      // Prefer SSE for typing feel; fall back to JSON chat if stream fails
+      let liveId = convId
+      let gotToken = false
+      return sendChatStream(payload, {
+        onMeta: meta => {
+          if (meta && meta.sessionId) {
+            liveId = this.alignSessionId(liveId, meta.sessionId)
+          }
+        },
+        onToken: chunk => {
+          if (!chunk) {
+            return
+          }
+          if (!gotToken) {
+            gotToken = true
+            this.applyConversation(liveId, c => {
+              c.messages = c.messages.concat([{
+                role: 'assistant',
+                text: chunk,
+                toolTrace: null,
+                streaming: true
+              }])
+            })
+          } else {
+            this.applyConversation(liveId, c => {
+              const msgs = c.messages.slice()
+              const last = msgs[msgs.length - 1]
+              if (last && last.role === 'assistant' && last.streaming) {
+                msgs[msgs.length - 1] = Object.assign({}, last, {
+                  text: (last.text || '') + chunk
+                })
+                c.messages = msgs
+              }
+            })
+          }
+          this.scrollToBottom()
+        },
+        onPending: list => {
+          const arr = Array.isArray(list) ? list : []
+          this.mergePendingActions(liveId, arr)
+        },
+        onTrace: trace => {
+          this.applyConversation(liveId, c => {
+            const msgs = c.messages.slice()
+            const last = msgs[msgs.length - 1]
+            if (last && last.role === 'assistant') {
+              msgs[msgs.length - 1] = Object.assign({}, last, {
+                toolTrace: Array.isArray(trace) ? trace : null,
+                streaming: false
+              })
+              c.messages = msgs
+            }
+          })
+        },
+        onDonePayload: done => {
+          this.applyConversation(liveId, c => {
+            if (done && typeof done.mockMode === 'boolean') {
+              c.mockMode = done.mockMode
+            }
+            if (done && done.sessionId) {
+              c.sessionId = done.sessionId
+            }
+            const msgs = c.messages.slice()
+            const last = msgs[msgs.length - 1]
+            if (last && last.role === 'assistant' && last.streaming) {
+              msgs[msgs.length - 1] = Object.assign({}, last, { streaming: false })
+              c.messages = msgs
+            }
+          })
+          if (done && done.sessionId) {
+            liveId = this.alignSessionId(liveId, done.sessionId)
+          }
+        }
+      }).catch(() => {
+        // Stream unavailable → classic JSON chat
+        return sendChat(payload).then(res => {
+          if (res.code !== 200) {
+            this.applyConversation(liveId, c => {
+              c.messages = c.messages.concat([{
+                role: 'assistant',
+                text: res.msg || '请求失败，请稍后重试',
+                toolTrace: null
+              }])
+            })
+            return
+          }
+          if (res.sessionId) {
+            liveId = this.alignSessionId(liveId, res.sessionId)
+          }
+          this.applyConversation(liveId, c => {
+            if (typeof res.mockMode === 'boolean') {
+              c.mockMode = res.mockMode
+            }
+            if (res.assistantText) {
+              c.messages = c.messages.concat([{
+                role: 'assistant',
+                text: res.assistantText,
+                toolTrace: Array.isArray(res.toolTrace) ? res.toolTrace : null
+              }])
+            }
+          })
+          this.mergePendingActions(liveId, res.pendingActions)
+        }).catch(() => {
+          this.applyConversation(liveId, c => {
+            c.messages = c.messages.concat([{
+              role: 'assistant',
+              text: '网络异常，请检查连接后重试',
+              toolTrace: null
+            }])
+          })
+        })
       })
     },
     dismissPending(id) {
