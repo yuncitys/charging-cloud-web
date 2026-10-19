@@ -7,7 +7,8 @@ const ACTION_LABELS = {
   remote_stop: '远程停充',
   propose_refund: '退款',
   propose_remote_stop: '远程停充',
-  lookup_order: '查单'
+  lookup_order: '查单',
+  lookup_pay_refund: '查支付/退款'
 }
 
 export function actionLabel(action) {
@@ -71,8 +72,8 @@ export function humanizeOpsError(raw, action) {
     if (/交易账单不存在|账单不存在|订单不存在|不存在/.test(msg)) {
       return '没有查到对应的交易/账单记录，所以无法完成' + label + '。\n请确认订单号是否正确，或到订单列表核对后再试。'
     }
-    if (/权限|无权限|forbidden|401|403/i.test(msg)) {
-      return '当前账号没有权限执行' + label + '，请联系管理员开通后再试。'
+    if (isPermissionDenied(msg) || isPermissionDenied(text)) {
+      return '当前账号没有「' + label + '」权限，请联系管理员开通后再试。'
     }
     if (/超时|timeout/i.test(msg)) {
       return label + '处理超时了，请稍后再试一次。'
@@ -84,6 +85,9 @@ export function humanizeOpsError(raw, action) {
     return label + '没有成功：' + msg + '\n如有疑问，请到订单/财务页面核对，或联系运维同事。'
   }
 
+  if (isPermissionDenied(text)) {
+    return '当前账号没有「' + label + '」权限，请联系管理员开通后再试。'
+  }
   if (/idempotency|already used|terminal/i.test(text)) {
     return '这个操作已经成功执行过了，不能再重复提交。\n请到订单页确认当前状态；若确需再操作，请换订单号。'
   }
@@ -92,6 +96,14 @@ export function humanizeOpsError(raw, action) {
   }
 
   return label + '没有成功。请稍后重试；若一直失败，请把订单号发给运维同事协助排查。'
+}
+
+export function isPermissionDenied(raw) {
+  if (raw == null || raw === '') {
+    return false
+  }
+  const text = String(raw)
+  return /没有访问权限|无权限|权限不足|未授权|请联系管理员授权|权限|forbidden|unauthorized|"code"\s*:\s*401|"code"\s*:\s*403/i.test(text)
 }
 
 function extractMsg(text) {

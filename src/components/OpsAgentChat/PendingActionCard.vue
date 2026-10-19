@@ -65,8 +65,12 @@ export default {
 
 <style lang="scss" scoped>
 .pending-card {
+  /* Keep same width rhythm as assistant message bubbles */
+  width: 100%;
+  max-width: min(92%, 520px);
   margin: 4px 0 14px;
   padding: 14px 16px;
+  box-sizing: border-box;
   border-radius: 12px;
   background: linear-gradient(180deg, #fffbf5 0%, #fff8ee 100%);
   border: 1px solid #f5e0c0;
