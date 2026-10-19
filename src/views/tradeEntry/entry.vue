@@ -815,6 +815,9 @@ export default {
     isWxPartner() {
       return this.form.serviceProviderId === 'wxpay_partner'
     },
+    isHuifu() {
+      return this.form.serviceProviderId === 'huifu'
+    },
     isLocal() {
       return this.form.serviceProviderId === 'local'
     },

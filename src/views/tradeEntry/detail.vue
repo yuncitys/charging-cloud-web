@@ -156,7 +156,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="商户编号">
-                <el-input v-model="form.merchantNo" placeholder="默认渠道留空则审核通过时自动生成；汇付分账方填运营商 huifu_id" />
+                <el-input v-model="form.merchantNo" :placeholder="merchantNoPlaceholder" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -741,8 +741,20 @@ export default {
     isWxPartner() {
       return this.form.serviceProviderId === 'wxpay_partner'
     },
+    isHuifu() {
+      return this.form.serviceProviderId === 'huifu'
+    },
     isLocal() {
       return isLocalChannel(this.form.serviceProviderId)
+    },
+    merchantNoPlaceholder() {
+      if (this.isHuifu) {
+        return '渠道审核通过后自动回写 huifu_id，勿手工乱填'
+      }
+      if (this.isLocal) {
+        return '默认渠道留空则审核通过时自动生成'
+      }
+      return '渠道商户号由支付渠道回写，勿手工乱填'
     },
     merchantName() {
       const id = this.form && this.form.merchantId
