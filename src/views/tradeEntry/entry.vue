@@ -42,6 +42,9 @@
             <el-col :span="12">
               <el-form-item label="管理员手机号" prop="managerMobile">
                 <el-input v-model="form.managerMobile" placeholder="请输入管理员手机号" />
+                <div v-if="isHuifu && isEdit" class="ocr-tip-text">
+                  <i class="el-icon-info"></i> 汇付通道：管理员需为法人本人，汇付将向此手机号发送电子协议签约短信
+                </div>
               </el-form-item>
             </el-col>
             <el-col :span="12" v-if="isWxPartner || isHuifu">
@@ -1361,7 +1364,9 @@ export default {
                 (data && data.tradeEntry && data.tradeEntry.busTradeMerNo) || ''
               if (merNoFromResp) this.$set(this.form, 'busTradeMerNo', merNoFromResp)
               this.$message({
-                message: '保存成功，请等待平台审核通过后再提交进件',
+                message: (isUpdate && this.isHuifu)
+                  ? '修改已提交，请法人查收汇付签约短信完成签约'
+                  : '保存成功，请等待平台审核通过后再提交进件',
                 type: 'success',
                 duration: 5000
               })
