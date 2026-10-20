@@ -104,7 +104,7 @@
                 <el-input v-model="form.managerMobile" />
               </el-form-item>
             </el-col>
-            <el-col v-if="isWxPartner" :span="12">
+            <el-col v-if="isWxPartner || isHuifu" :span="12">
               <el-form-item label="联系邮箱">
                 <el-input v-model="form.managerEmail" />
               </el-form-item>

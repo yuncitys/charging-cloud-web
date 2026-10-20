@@ -44,7 +44,7 @@
                 <el-input v-model="form.managerMobile" placeholder="请输入管理员手机号" />
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="isWxPartner">
+            <el-col :span="12" v-if="isWxPartner || isHuifu">
               <el-form-item label="联系邮箱" prop="managerEmail">
                 <el-input v-model="form.managerEmail" placeholder="用于接收微信开户邮件及业务通知" />
               </el-form-item>
@@ -959,7 +959,7 @@ export default {
   methods: {
     applyChannelRules() {
       const val = this.form.serviceProviderId
-      if (val === 'wxpay_partner') {
+      if (val === 'wxpay_partner' || val === 'huifu') {
         this.rules.managerEmail = [
           { required: true, message: '请输入联系邮箱', trigger: 'blur' },
           { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
