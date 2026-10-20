@@ -402,17 +402,28 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$set(row, '_submitting', true)
+        const loading = this.$loading({
+          lock: true,
+          text: '正在提交渠道进件，请稍候…（渠道需上传证照图片，可能需要十几秒，请勿重复点击）',
+          spinner: 'el-icon-loading',
+          background: 'rgba(0, 0, 0, 0.5)'
+        })
         submitTradeEntry(row.busTradeMerNo).then(res => {
-          this.$set(row, '_submitting', false)
           if (res && res.code === 200) {
-            this.$message.success('提交进件成功')
+            this.$message({ type: 'success', message: '提交进件成功', duration: 5000 })
             this.getList()
           } else {
-            this.$message.error((res && res.msg) || '提交进件失败')
+            this.$message({
+              type: 'error',
+              message: (res && res.msg) || '提交进件失败',
+              duration: 5000
+            })
           }
         }).catch(() => {
+          this.$message({ type: 'error', message: '提交进件失败', duration: 5000 })
+        }).finally(() => {
+          loading.close()
           this.$set(row, '_submitting', false)
-          this.$message.error('提交进件失败')
         })
       }).catch(() => {})
     },
