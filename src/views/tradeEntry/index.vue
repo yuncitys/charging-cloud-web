@@ -173,6 +173,15 @@
     </el-table>
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
+
+    <!-- 提交渠道等待：轻遮罩 + 白卡片，避免全屏深灰 -->
+    <div v-if="submitOverlayVisible" class="trade-entry-submit-mask">
+      <div class="trade-entry-submit-card">
+        <i class="el-icon-loading trade-entry-submit-spinner" />
+        <div class="trade-entry-submit-title">正在提交渠道进件</div>
+        <div class="trade-entry-submit-desc">渠道需上传证照图片，通常十几秒内完成，请勿重复点击</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -225,6 +234,7 @@ export default {
       list: null,
       total: 0,
       listLoading: true,
+      submitOverlayVisible: false,
       dateRange: [],
       statusOptions: [],
       auditStatusOptions: [],
@@ -402,12 +412,7 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$set(row, '_submitting', true)
-        const loading = this.$loading({
-          lock: true,
-          text: '正在提交渠道进件，请稍候…（渠道需上传证照图片，可能需要十几秒，请勿重复点击）',
-          spinner: 'el-icon-loading',
-          background: 'rgba(0, 0, 0, 0.5)'
-        })
+        this.submitOverlayVisible = true
         submitTradeEntry(row.busTradeMerNo).then(res => {
           if (res && res.code === 200) {
             this.$message({ type: 'success', message: '提交进件成功', duration: 5000 })
@@ -422,7 +427,7 @@ export default {
         }).catch(() => {
           this.$message({ type: 'error', message: '提交进件失败', duration: 5000 })
         }).finally(() => {
-          loading.close()
+          this.submitOverlayVisible = false
           this.$set(row, '_submitting', false)
         })
       }).catch(() => {})
@@ -470,6 +475,47 @@ export default {
 }
 .filter-item {
   margin: 0 12px 12px 0 !important;
+}
+
+.trade-entry-submit-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(2px);
+}
+
+.trade-entry-submit-card {
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  padding: 28px 24px 24px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  text-align: center;
+}
+
+.trade-entry-submit-spinner {
+  font-size: 32px;
+  color: #409eff;
+  margin-bottom: 12px;
+}
+
+.trade-entry-submit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.trade-entry-submit-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #909399;
+  line-height: 1.6;
 }
 
 </style>
