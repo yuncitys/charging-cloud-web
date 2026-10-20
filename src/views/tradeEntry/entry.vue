@@ -65,11 +65,11 @@
               <div class="el-upload__text">将营业执照拖到此处，或<em>点击上传</em></div>
               <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过5MB</div>
             </el-upload>
-            <div v-if="!isWxPartner && !isLocal" class="ocr-tip-text">
+            <div v-if="!isWxPartner && !isLocal && !isHuifu" class="ocr-tip-text">
               <i class="el-icon-info"></i> 上传营业执照可自动识别并填充下方信息
             </div>
             <div v-else class="ocr-tip-text">
-              <i class="el-icon-info"></i> {{ isLocal ? '本地渠道仅保存图片，不支持 OCR 自动识别' : '上传营业执照图片（微信通道不支持 OCR 自动识别）' }}
+              <i class="el-icon-info"></i> {{ isLocal ? '本地渠道仅保存图片，不支持 OCR 自动识别' : isHuifu ? '上传营业执照图片（汇付通道不支持 OCR 自动识别）' : '上传营业执照图片（微信通道不支持 OCR 自动识别）' }}
             </div>
             <div v-if="form.corLicenseImg" class="ocr-preview">
               <el-image
@@ -1137,7 +1137,7 @@ export default {
 
       const loading = this.$loading({
         lock: true,
-        text: this.isWxPartner ? '正在上传...' : '正在上传并识别中...',
+        text: (this.isWxPartner || this.isLocal || this.isHuifu) ? '正在上传...' : '正在上传并识别中...',
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
@@ -1151,7 +1151,7 @@ export default {
           throw new Error('文件上传失败，未获取到URL')
         }
 
-        if (this.isWxPartner || this.isLocal) {
+        if (this.isWxPartner || this.isLocal || this.isHuifu) {
           loading.close()
           this.$message.success('上传成功')
           this.fillAttachment(type, fileUrl, null, file.name, multiple)
