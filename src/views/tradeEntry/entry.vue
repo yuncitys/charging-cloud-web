@@ -120,9 +120,9 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="证件类型" prop="merCertType">
-                <el-select v-model="form.merCertType" placeholder="请选择证件类型" style="width: 100%" :disabled="isEdit">
+                <el-select v-model="form.merCertType" placeholder="请选择证件类型" style="width: 100%" :disabled="isEdit || merCertTypeSelectOptions.length <= 1">
                   <el-option
-                    v-for="item in merCertTypeOptions"
+                    v-for="item in merCertTypeSelectOptions"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
@@ -220,9 +220,10 @@
               <el-form-item label="经营类目" prop="busKindCode">
                 <el-cascader
                   v-model="form.busKindCode"
-                  :options="busKindOptions"
+                  :options="busKindSelectOptions"
                   :props="{ label: 'label', value: 'code', emitPath: false }"
-                  placeholder="请选择经营类目"
+                  :placeholder="form.tradeMerType ? '请选择经营类目' : '请先选择交易商户类型'"
+                  :disabled="!form.tradeMerType"
                   style="width: 100%"
                   filterable
                 />
@@ -834,6 +835,22 @@ export default {
         return list.filter(o => String(o.value) !== '2')
       }
       return list
+    },
+    // 企业(1)只能营业执照(11)；自然人(2)只能身份证(22)；个体工商户(0)两者皆可
+    merCertTypeSelectOptions() {
+      const list = this.merCertTypeOptions || []
+      const type = String(this.form.tradeMerType || '')
+      if (type === '1') {
+        return list.filter(o => String(o.value) === '11')
+      }
+      if (type === '2') {
+        return list.filter(o => String(o.value) === '22')
+      }
+      return list
+    },
+    // 企业(1)用「企业」类目子树；个体工商户(0)/自然人(2)用「个体工商户」子树
+    busKindSelectOptions() {
+      return this.busKindOptionsForType(this.form.tradeMerType)
     }
   },
   watch: {
@@ -1299,11 +1316,45 @@ export default {
       })
     },
     handleTradeMerTypeChange(val) {
-      if (val === '2') {
+      const type = String(val || '')
+      if (type === '1') {
+        this.form.merCertType = '11'
+      } else if (type === '2') {
         this.form.merCertType = '22'
-      } else {
+      } else if (type === '0' && !['11', '22'].includes(String(this.form.merCertType || ''))) {
         this.form.merCertType = '11'
       }
+      // 已选经营类目不在新类型的类目分支内时清空，避免提交到错误分支的类目
+      if (type && this.form.busKindCode) {
+        const branch = this.busKindOptionsForType(type)
+        if (branch.length && !this.busKindInOptions(this.form.busKindCode, branch)) {
+          this.form.busKindCode = ''
+        }
+      }
+    },
+    busKindOptionsForType(type) {
+      const list = this.busKindOptions || []
+      const t = String(type || '')
+      if (!t || !list.length) {
+        return list
+      }
+      const rootLabel = t === '1' ? '企业' : '个体工商户'
+      const root = list.find(o => String(o.label || '') === rootLabel || String(o.value || '') === `node:${rootLabel}`)
+      return root && Array.isArray(root.children) ? root.children : list
+    },
+    busKindInOptions(code, options) {
+      const target = String(code || '')
+      const stack = [...(options || [])]
+      while (stack.length) {
+        const node = stack.pop()
+        if (String(node.code || '') === target) {
+          return true
+        }
+        if (Array.isArray(node.children)) {
+          stack.push(...node.children)
+        }
+      }
+      return false
     },
     next() {
       if (this.active++ > 2) this.active = 0
