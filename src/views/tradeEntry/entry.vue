@@ -1220,10 +1220,9 @@ export default {
           // 尝试格式化日期，假设返回格式可能多样，这里做简单处理或者直接赋值如果格式匹配
           // 假设返回 yyyy年MM月dd日 或 yyyy-MM-dd
           let dateStr = data.licenceDateEnd.replace(/年|月/g, '-').replace(/日/g, '')
-          // 如果是 "长期"，可能需要特殊处理，这里暂且保留原值或者设为特定值
+          // OCR 识别为「长期」时统一回填平台长期标识，watcher 会自动勾选「永久」
           if (dateStr.includes('长期')) {
-             // Handle long term if needed, maybe leave empty or set a far future date
-             // this.form.corIdExaDate = '9999-12-31'
+             this.form.corIdExaDate = '9999-12-31'
           } else {
              this.form.corIdExaDate = dateStr
           }
@@ -1252,7 +1251,12 @@ export default {
           // 这里假设返回的是结束日期
           let dateStr = data.exDate.replace(/\./g, '-')
           if (dateStr.includes('长期')) {
-             // Handle long term
+             // 如 "2010-01-01-长期"：开始日期取识别到的日期，截止日期用平台长期标识
+             const beginMatch = dateStr.match(/\d{4}-\d{2}-\d{2}/)
+             if (beginMatch) {
+               this.form.corLegIdEffectDate = beginMatch[0]
+             }
+             this.form.corLegIdExaDate = '9999-12-31'
           } else {
              // 如果是范围，取后半部分
              if (dateStr.includes('-')) {
