@@ -693,7 +693,57 @@
                 <el-input v-model="form.mobileNo" placeholder="用于短信验证" />
               </el-form-item>
             </el-col>
+            <template v-if="isHuifu">
+              <el-col :span="8">
+                <el-form-item label="开户省" prop="settBankProvinceId">
+                  <el-select v-model="form.settBankProvinceId" placeholder="请选择省" @change="handleSettBankProvinceChange" style="width: 100%">
+                    <el-option v-for="item in provinceList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户市" prop="settBankRegionId">
+                  <el-select v-model="form.settBankRegionId" placeholder="请选择市" @change="handleSettBankCityChange" style="width: 100%">
+                    <el-option v-for="item in settBankCityList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户区" prop="settBankCountyId">
+                  <el-select v-model="form.settBankCountyId" placeholder="请选择区" style="width: 100%">
+                    <el-option v-for="item in settBankAreaList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </template>
           </el-row>
+          <div v-if="isHuifu && isIndividualMerchant" class="ocr-upload-container" style="margin-top: 16px;">
+            <el-upload
+              class="ocr-uploader"
+              drag
+              action=""
+              :show-file-list="false"
+              :http-request="(params) => handleUpload(params, '12')"
+              accept=".jpg,.jpeg,.png"
+            >
+              <i class="el-icon-upload"></i>
+              <div class="el-upload__text">将结算银行卡<strong style="color: #409EFF">正面</strong>拖到此处，或<em>点击上传</em></div>
+              <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过5MB；汇付小微进件必填</div>
+            </el-upload>
+            <div v-if="form.settBankCardImg" class="ocr-preview">
+              <el-image
+                class="ocr-preview-image"
+                :src="form.settBankCardImg"
+                :preview-src-list="[form.settBankCardImg]"
+                fit="contain"
+              >
+                <div slot="error" class="ocr-preview-error">
+                  <i class="el-icon-picture-outline"></i>
+                </div>
+              </el-image>
+              <div class="ocr-preview-label">结算银行卡正面预览</div>
+            </div>
+          </div>
         </div>
 
         <div style="margin-top: 40px; text-align: center;">
@@ -729,6 +779,8 @@ export default {
       areaList: [],
       legCityList: [],
       legAreaList: [],
+      settBankCityList: [],
+      settBankAreaList: [],
       busKindOptions: [],
       bankList: [],
       merchantList: [],
@@ -795,6 +847,10 @@ export default {
         settBankAccNo: '',
         identityNo: '',
         mobileNo: '',
+        settBankProvinceId: '',
+        settBankRegionId: '',
+        settBankCountyId: '',
+        settBankCardImg: '',
         // Attachments
         attchList: [],
         tradeEntryWx: defaultWxTradeEntryWx()
@@ -991,6 +1047,15 @@ export default {
       } else {
         this.$delete(this.rules, 'managerEmail')
       }
+      if (val === 'huifu') {
+        this.rules.settBankProvinceId = [{ required: true, message: '请选择开户省', trigger: 'change' }]
+        this.rules.settBankRegionId = [{ required: true, message: '请选择开户市', trigger: 'change' }]
+        this.rules.settBankCountyId = [{ required: true, message: '请选择开户区', trigger: 'change' }]
+      } else {
+        this.$delete(this.rules, 'settBankProvinceId')
+        this.$delete(this.rules, 'settBankRegionId')
+        this.$delete(this.rules, 'settBankCountyId')
+      }
     },
     normalizeWxExt(wxExt) {
       return flattenTradeEntryWx(wxExt)
@@ -1078,6 +1143,8 @@ export default {
           this.$set(this.form, 'storeEntranceImg', url)
         } else if (ft === '06') {
           this.$set(this.form, 'storeInteriorImg', url)
+        } else if (ft === '12') {
+          this.$set(this.form, 'settBankCardImg', url)
         }
       })
     },
@@ -1101,6 +1168,36 @@ export default {
       getAreaSelector(val).then(res => {
         this.areaList = this.normalizeAreaList(res)
       })
+    },
+    handleSettBankProvinceChange(val) {
+      this.form.settBankRegionId = ''
+      this.form.settBankCountyId = ''
+      this.settBankCityList = []
+      this.settBankAreaList = []
+      if (!val) return
+      getAreaSelector(val).then(res => {
+        this.settBankCityList = this.normalizeAreaList(res)
+      })
+    },
+    handleSettBankCityChange(val) {
+      this.form.settBankCountyId = ''
+      this.settBankAreaList = []
+      if (!val) return
+      getAreaSelector(val).then(res => {
+        this.settBankAreaList = this.normalizeAreaList(res)
+      })
+    },
+    loadSettBankAreaOptions() {
+      if (this.form.settBankProvinceId) {
+        getAreaSelector(this.form.settBankProvinceId).then(res => {
+          this.settBankCityList = this.normalizeAreaList(res)
+        })
+      }
+      if (this.form.settBankRegionId) {
+        getAreaSelector(this.form.settBankRegionId).then(res => {
+          this.settBankAreaList = this.normalizeAreaList(res)
+        })
+      }
     },
     handleLegProvinceChange(val) {
       this.form.corLegCity = ''
@@ -1139,6 +1236,7 @@ export default {
           this.legAreaList = this.normalizeAreaList(res)
         })
       }
+      this.loadSettBankAreaOptions()
     },
     handleBankChange(val) {
       if (!val) {
@@ -1228,6 +1326,7 @@ export default {
       if (type === '02') this.form.corLegIdBackImg = fileUrl
       if (type === '05') this.form.storeEntranceImg = fileUrl
       if (type === '06') this.form.storeInteriorImg = fileUrl
+      if (type === '12') this.form.settBankCardImg = fileUrl
     },
     fillFormData(data, type) {
       // 04: 营业执照
@@ -1385,6 +1484,20 @@ export default {
       }).catch(() => {})
     },
     save() {
+      if (this.isHuifu) {
+        if (!this.form.managerEmail) {
+          this.$message.error('请输入联系邮箱')
+          return
+        }
+        const requiredTypes = this.isIndividualMerchant ? ['1', '2', '12'] : ['4', '1', '2']
+        const uploaded = (this.form.attchList || []).map(a => String(a.fileType))
+        const missing = requiredTypes.filter(t => !uploaded.includes(t) && !uploaded.includes(String(Number(t))))
+        if (missing.length) {
+          const labels = { '4': '营业执照', '1': '身份证正面', '2': '身份证反面', '12': '结算银行卡正面' }
+          this.$message.error('请上传：' + missing.map(t => labels[t]).join('、'))
+          return
+        }
+      }
       if (this.isWxPartner) {
         if (!this.form.managerEmail) {
           this.$message.error('请输入联系邮箱')

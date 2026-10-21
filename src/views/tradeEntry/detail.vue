@@ -620,6 +620,43 @@
                 <el-input v-model="form.mobileNo" />
               </el-form-item>
             </el-col>
+            <template v-if="isHuifu">
+              <el-col :span="8">
+                <el-form-item label="开户省">
+                  <el-select v-model="form.settBankProvinceId" style="width: 100%" disabled>
+                    <el-option v-for="item in provinceList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户市">
+                  <el-select v-model="form.settBankRegionId" style="width: 100%" disabled>
+                    <el-option v-for="item in settBankCityList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户区">
+                  <el-select v-model="form.settBankCountyId" style="width: 100%" disabled>
+                    <el-option v-for="item in settBankAreaList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </template>
+            <el-col v-if="isHuifu && String(form.tradeMerType) === '2'" :span="24">
+              <el-form-item label="结算银行卡正面">
+                <el-image
+                  style="width: 200px; height: 120px"
+                  :src="form.settBankCardImg"
+                  :preview-src-list="[form.settBankCardImg]"
+                  fit="contain"
+                >
+                  <div slot="error" class="image-slot">
+                    <i class="el-icon-picture-outline"></i>
+                  </div>
+                </el-image>
+              </el-form-item>
+            </el-col>
           </el-row>
         </div>
       </el-form>
@@ -670,6 +707,8 @@ export default {
       areaList: [],
       legCityList: [],
       legAreaList: [],
+      settBankCityList: [],
+      settBankAreaList: [],
       busKindOptions: [],
       merchantList: [],
       merTypeOptions: [],
@@ -873,6 +912,8 @@ export default {
           this.$set(this.form, 'storeEntranceImg', url)
         } else if (ft === '06') {
           this.$set(this.form, 'storeInteriorImg', url)
+        } else if (ft === '12') {
+          this.$set(this.form, 'settBankCardImg', url)
         }
       })
     },
@@ -908,6 +949,16 @@ export default {
         if (this.form.corLegCity) {
           getAreaSelector(this.form.corLegCity).then(res => {
             this.legAreaList = res.data
+          })
+        }
+        if (this.form.settBankProvinceId) {
+          getAreaSelector(this.form.settBankProvinceId).then(res => {
+            this.settBankCityList = res.data
+          })
+        }
+        if (this.form.settBankRegionId) {
+          getAreaSelector(this.form.settBankRegionId).then(res => {
+            this.settBankAreaList = res.data
           })
         }
       }).catch(err => {
