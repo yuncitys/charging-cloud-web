@@ -187,7 +187,7 @@
 
 <script>
 import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
-import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel, loadServiceProviderDict, supportsEntryEdit } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 import { formatDictLabel } from '@/utils/dictionary'
 
@@ -339,6 +339,9 @@ export default {
       return Number(row && row.status) === 0 && Number(row && row.auditStatus) === 10
     },
     canEditEntry(row) {
+      if (!supportsEntryEdit(row && row.serviceProviderId)) {
+        return false
+      }
       const status = Number(row && row.status)
       return [30, 32].includes(status)
     },

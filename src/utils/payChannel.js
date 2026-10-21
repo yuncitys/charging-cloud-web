@@ -54,3 +54,10 @@ export function formatServiceProvider(code) {
 export function isLocalChannel(code) {
   return code === 'local'
 }
+
+/** 资料修改在渠道商户控台完成，平台不提供修改进件入口（后端能力保留） */
+const EDIT_IN_CHANNEL_CONSOLE = ['huifu', 'wxpay_partner']
+
+export function supportsEntryEdit(code) {
+  return !EDIT_IN_CHANNEL_CONSOLE.includes(code)
+}
