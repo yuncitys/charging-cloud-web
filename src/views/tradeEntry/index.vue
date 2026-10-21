@@ -85,7 +85,8 @@
           <span>{{ row.managerMobile }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="入驻状态" width="100" align="center">
+      <!-- 最长文案如「待签署协议」；100px 会被 cell 省略号裁成末尾小点 -->
+      <el-table-column label="入驻状态" width="130" align="center">
         <template slot-scope="{row}">
           <el-tag :type="row.status | statusTypeFilter">{{ row.status | statusFilter }}</el-tag>
         </template>
