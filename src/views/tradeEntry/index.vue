@@ -162,6 +162,7 @@
                   command="cancel"
                   icon="el-icon-circle-close"
                   divided
+                  :disabled="row._cancelling"
                 >
                   注销进件
                 </el-dropdown-item>
@@ -174,12 +175,12 @@
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
 
-    <!-- 提交渠道等待：轻遮罩 + 白卡片，避免全屏深灰 -->
-    <div v-if="submitOverlayVisible" class="trade-entry-submit-mask">
+    <!-- 渠道操作等待：轻遮罩 + 白卡片，避免全屏深灰 -->
+    <div v-if="channelOverlayVisible" class="trade-entry-submit-mask">
       <div class="trade-entry-submit-card">
         <i class="el-icon-loading trade-entry-submit-spinner" />
-        <div class="trade-entry-submit-title">正在提交渠道进件</div>
-        <div class="trade-entry-submit-desc">渠道需上传证照图片，通常十几秒内完成，请勿重复点击</div>
+        <div class="trade-entry-submit-title">{{ channelOverlayTitle }}</div>
+        <div class="trade-entry-submit-desc">{{ channelOverlayDesc }}</div>
       </div>
     </div>
   </div>
@@ -234,7 +235,9 @@ export default {
       list: null,
       total: 0,
       listLoading: true,
-      submitOverlayVisible: false,
+      channelOverlayVisible: false,
+      channelOverlayTitle: '',
+      channelOverlayDesc: '',
       dateRange: [],
       statusOptions: [],
       auditStatusOptions: [],
@@ -415,7 +418,10 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$set(row, '_submitting', true)
-        this.submitOverlayVisible = true
+        this.showChannelOverlay(
+          '正在提交渠道进件',
+          '渠道需上传证照图片，通常十几秒内完成，请勿重复点击'
+        )
         submitTradeEntry(row.busTradeMerNo).then(res => {
           if (res && res.code === 200) {
             this.$message({ type: 'success', message: '提交进件成功', duration: 5000 })
@@ -430,25 +436,54 @@ export default {
         }).catch(() => {
           this.$message({ type: 'error', message: '提交进件失败', duration: 5000 })
         }).finally(() => {
-          this.submitOverlayVisible = false
+          this.hideChannelOverlay()
           this.$set(row, '_submitting', false)
         })
       }).catch(() => {})
     },
+    showChannelOverlay(title, desc) {
+      this.channelOverlayTitle = title
+      this.channelOverlayDesc = desc
+      this.channelOverlayVisible = true
+    },
+    hideChannelOverlay() {
+      this.channelOverlayVisible = false
+      this.channelOverlayTitle = ''
+      this.channelOverlayDesc = ''
+    },
     handleCancel(row) {
-      this.$confirm('确认注销该商户？注销后该账户将无法使用，是否继续？', '提示', {
-        confirmButtonText: '确定',
+      this.$confirm('确认注销该商户？注销后该账户将无法使用，是否继续？', '注销进件', {
+        confirmButtonText: '确定注销',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        delTradeEntry(row.id).then(() => {
-          this.$message({
-            type: 'success',
-            message: '注销成功'
-          })
-          this.getList()
+        this.$set(row, '_cancelling', true)
+        this.showChannelOverlay(
+          '正在向渠道申请注销',
+          '渠道可能需要审核，请勿重复点击；完成后请查询状态确认结果'
+        )
+        delTradeEntry(row.id).then(res => {
+          if (res && res.code === 200) {
+            this.$message({
+              type: 'success',
+              message: (res && res.msg) || '注销成功',
+              duration: 5000
+            })
+            this.getList()
+          } else {
+            this.$message({
+              type: 'error',
+              message: (res && res.msg) || '注销失败',
+              duration: 5000
+            })
+          }
+        }).catch(() => {
+          this.$message({ type: 'error', message: '注销失败', duration: 5000 })
+        }).finally(() => {
+          this.hideChannelOverlay()
+          this.$set(row, '_cancelling', false)
         })
-      })
+      }).catch(() => {})
     },
     handleRemove(row) {
       this.$confirm('此操作将永久删除该商户，是否继续？', '警告', {
