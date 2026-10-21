@@ -605,7 +605,7 @@
                 <el-input v-model="form.settBankBranchId" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="银行账号">
                 <el-input v-model="form.settBankAccNo" />
               </el-form-item>

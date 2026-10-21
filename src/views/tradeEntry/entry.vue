@@ -641,7 +641,7 @@
               <el-form-item label="结算账户类型" prop="settBankAccType">
                 <el-select v-model="form.settBankAccType" placeholder="请选择" style="width: 100%">
                   <el-option
-                    v-for="item in settBankAccTypeOptions"
+                    v-for="item in settBankAccTypeSelectOptions"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
@@ -678,7 +678,7 @@
                 <el-input v-model="form.settBankBranchId" placeholder="12位联行号" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="银行账号" prop="settBankAccNo">
                 <el-input v-model="form.settBankAccNo" placeholder="结算银行卡号" />
               </el-form-item>
@@ -911,6 +911,14 @@ export default {
     // 企业(1)用「企业」类目子树；个体工商户(0)/自然人(2)用「个体工商户」子树
     busKindSelectOptions() {
       return this.busKindOptionsForType(this.form.tradeMerType)
+    },
+    // 小微(2)仅借记(0010)；企业(1)/个体(0)可选借记或对公
+    settBankAccTypeSelectOptions() {
+      const list = this.settBankAccTypeOptions || []
+      if (String(this.form.tradeMerType || '') === '2') {
+        return list.filter(o => String(o.value) === '0010')
+      }
+      return list
     }
   },
   watch: {
@@ -1427,6 +1435,14 @@ export default {
         this.clearLicenseAttachment()
       } else if (type === '0' && !['11', '22'].includes(String(this.form.merCertType || ''))) {
         this.form.merCertType = '11'
+      }
+      // 小微仅借记：已选对公则切回借记并清开户行
+      if (type === '2' && this.form.settBankAccType === '0030') {
+        this.form.settBankAccType = '0010'
+        this.form.settBankBranchName = ''
+        this.form.settBankBranchId = ''
+      } else if (type === '2' && !this.form.settBankAccType) {
+        this.form.settBankAccType = '0010'
       }
       // 已选经营类目不在新类型的类目分支内时清空，避免提交到错误分支的类目
       if (type && this.form.busKindCode) {
