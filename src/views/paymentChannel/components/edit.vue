@@ -1,6 +1,17 @@
 <template>
-  <el-dialog :title="param.title" :visible.sync="propVisible" :before-close="close">
-    <el-form class="dialog-form" ref="form" :model="form" :rules="channelRule" :inline="true" label-width="auto">
+  <el-drawer
+    :title="param.title"
+    :visible.sync="propVisible"
+    direction="rtl"
+    size="880px"
+    :wrapper-closable="false"
+    append-to-body
+    custom-class="payment-channel-drawer"
+    :before-close="close"
+  >
+    <div class="payment-channel-drawer__body">
+    <!-- 固定 label 宽，避免汇付长字段把输入顶到下一行；双列用 el-row 排布，不用 inline -->
+    <el-form class="drawer-form" ref="form" :model="form" :rules="channelRule" label-width="158px" label-position="right">
       <el-row>
         <el-col :span="12">
           <el-form-item label="渠道名称" prop="channelCode">
@@ -274,16 +285,22 @@
             </el-col>
           </el-row>
           <el-row>
-            <el-col :span="12">
-              <el-form-item label="延迟入账">
-                <el-switch v-model="huifuConfig.delayAcctFlag"></el-switch>
-                <span class="huifu-tip">开启后参与分账的订单资金先冻结，结算后再分给运营商</span>
+            <el-col :span="24">
+              <el-form-item label="延迟入账" class="huifu-delay-item">
+                <div class="huifu-delay-control">
+                  <el-switch v-model="huifuConfig.delayAcctFlag"></el-switch>
+                  <span class="huifu-tip">开启后参与分账的订单资金先冻结，结算后再分给运营商</span>
+                </div>
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="huifuConfig.delayAcctFlag">
-              <el-form-item label="超期兜底天数">
-                <el-input-number v-model="huifuConfig.delayConfirmMaxDays" :min="1" :max="179" :step="1" controls-position="right"></el-input-number>
-                <span class="huifu-tip">超过该天数仍未分完的资金确认到收款商户，默认 150</span>
+          </el-row>
+          <el-row v-if="huifuConfig.delayAcctFlag">
+            <el-col :span="24">
+              <el-form-item label="超期兜底天数" class="huifu-delay-item">
+                <div class="huifu-delay-control">
+                  <el-input-number v-model="huifuConfig.delayConfirmMaxDays" :min="1" :max="179" :step="1" controls-position="right"></el-input-number>
+                  <span class="huifu-tip">超过该天数仍未分完的资金确认到收款商户，默认 150</span>
+                </div>
               </el-form-item>
             </el-col>
           </el-row>
@@ -395,11 +412,12 @@
         </div>
       </div>
     </el-form>
-    <div slot="footer" class="dialog-footer">
+    </div>
+    <div class="payment-channel-drawer__footer">
       <el-button @click="close">取 消</el-button>
       <el-button type="primary" @click="confirm">确定</el-button>
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script>
@@ -639,8 +657,11 @@ export default {
     async init() {
       
     },
-    close() {
+    close(done) {
       this.$emit('update:visible', false)
+      if (typeof done === 'function') {
+        done()
+      }
     },
     confirm() {
       if (this.form.channelCode === 'huifu') {
@@ -687,27 +708,99 @@ export default {
   }
 }
 </script>
+<style lang="scss">
+.payment-channel-drawer .el-drawer__body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #f5f7fa;
+}
+.payment-channel-drawer .el-drawer__header {
+  margin-bottom: 0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #ebeef5;
+  background: #fff;
+  flex-shrink: 0;
+}
+</style>
+
 <style lang="scss" scoped>
+.payment-channel-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  background: #fff;
+}
+.payment-channel-drawer__footer {
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border-top: 1px solid #ebeef5;
+  text-align: right;
+  background: #fff;
+}
+
+.huifu-delay-control {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 32px;
+}
+
 .huifu-tip {
   margin-left: 10px;
   color: #909399;
   font-size: 12px;
+  line-height: 1.4;
 }
->>> .el-form {
-  .el-form-item {
+
+.huifu-delay-item {
+  >>> .el-form-item__content {
     display: flex;
+    align-items: center;
+  }
+}
+
+.drawer-form {
+  >>> .el-form-item {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
     width: 100%;
-    padding-right: 10px;
+    margin-right: 0;
+    padding-right: 8px;
+    box-sizing: border-box;
+
+    .el-form-item__label {
+      flex: 0 0 158px;
+      float: none;
+      text-align: right;
+      line-height: 36px;
+      padding-right: 12px;
+      box-sizing: border-box;
+      white-space: nowrap;
+    }
 
     .el-form-item__label-wrap {
-      margin-left: 0;
+      margin-left: 0 !important;
+      flex: 0 0 auto;
+    }
+
+    .el-form-item__content {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto !important;
+      margin-left: 0 !important;
+      line-height: 36px;
     }
 
     .el-date-editor,
     .el-select,
-    .el-form-item__content {
+    .el-input,
+    .el-input-number {
       width: 100%;
-      flex: 1;
     }
   }
 }
