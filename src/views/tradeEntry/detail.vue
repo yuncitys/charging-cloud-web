@@ -172,7 +172,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="交易商户类型">
+              <el-form-item label="主体类型">
                 <el-select v-model="form.tradeMerType" style="width: 100%">
                   <el-option
                     v-for="item in tradeMerTypeOptions"
@@ -231,7 +231,7 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="String(form.tradeMerType) !== '2'">
             <el-col :span="24">
               <el-form-item label="营业执照">
                 <el-image

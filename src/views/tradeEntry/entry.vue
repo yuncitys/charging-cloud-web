@@ -55,7 +55,7 @@
           </el-row>
 
           <el-divider content-position="left">商户主体信息</el-divider>
-          <div class="ocr-upload-container">
+          <div v-if="!isIndividualMerchant" class="ocr-upload-container">
             <el-upload
               class="ocr-uploader"
               drag
@@ -107,8 +107,8 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="交易商户类型" prop="tradeMerType">
-                <el-select v-model="form.tradeMerType" placeholder="请选择交易商户类型" style="width: 100%" :disabled="isEdit" @change="handleTradeMerTypeChange">
+              <el-form-item label="主体类型" prop="tradeMerType">
+                <el-select v-model="form.tradeMerType" placeholder="请选择主体类型" style="width: 100%" :disabled="isEdit" @change="handleTradeMerTypeChange">
                   <el-option
                     v-for="item in tradeMerTypeSelectOptions"
                     :key="item.value"
@@ -222,7 +222,7 @@
                   v-model="form.busKindCode"
                   :options="busKindSelectOptions"
                   :props="{ label: 'label', value: 'code', emitPath: false }"
-                  :placeholder="form.tradeMerType ? '请选择经营类目' : '请先选择交易商户类型'"
+                  :placeholder="form.tradeMerType ? '请选择经营类目' : '请先选择主体类型'"
                   :disabled="!form.tradeMerType"
                   style="width: 100%"
                   filterable
@@ -805,7 +805,7 @@ export default {
         serviceProviderId: [{ required: true, message: '请输入渠道代码', trigger: 'blur' }],
         busTradeMerNo: [{ required: true, message: '请输入业务方交易商户编号', trigger: 'blur' }],
         merType: [{ required: true, message: '请选择商户类型', trigger: 'change' }],
-        tradeMerType: [{ required: true, message: '请选择交易商户类型', trigger: 'change' }],
+        tradeMerType: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
         merName: [{ required: true, message: '请输入商户名称', trigger: 'blur' }],
         merCertNo: [{ required: true, message: '请输入证件号码', trigger: 'blur' }],
         managerMobile: [{ required: true, message: '请输入管理员手机号', trigger: 'blur' }],
@@ -824,6 +824,10 @@ export default {
     },
     isLocal() {
       return this.form.serviceProviderId === 'local'
+    },
+    /** 主体类型=小微商户(自然人)，无营业执照 */
+    isIndividualMerchant() {
+      return String(this.form.tradeMerType || '') === '2'
     },
     merTypeFormOptions() {
       // 新建表单原仅开放「交易商户」
@@ -1321,6 +1325,7 @@ export default {
         this.form.merCertType = '11'
       } else if (type === '2') {
         this.form.merCertType = '22'
+        this.clearLicenseAttachment()
       } else if (type === '0' && !['11', '22'].includes(String(this.form.merCertType || ''))) {
         this.form.merCertType = '11'
       }
@@ -1331,6 +1336,13 @@ export default {
           this.form.busKindCode = ''
         }
       }
+    },
+    /** 自然人无营业执照：清空上传预览、批次号及附件列表中的执照项 */
+    clearLicenseAttachment() {
+      this.form.corLicenseImg = ''
+      this.form.corLicenseBatchNo = ''
+      const list = this.form.attchList || []
+      this.$set(this.form, 'attchList', list.filter(item => Number(item.fileType) !== 4))
     },
     busKindOptionsForType(type) {
       const list = this.busKindOptions || []
@@ -1386,11 +1398,12 @@ export default {
           this.$message.error('请输入所属行业')
           return
         }
-        const requiredTypes = ["4", "1", "2"]
-        const uploaded = (this.form.attchList || []).map(a => a.fileType)
-        const missing = requiredTypes.filter(t => !uploaded.includes(t))
+        // 自然人无营业执照；企业/个体工商户仍需执照
+        const requiredTypes = this.isIndividualMerchant ? ['1', '2'] : ['4', '1', '2']
+        const uploaded = (this.form.attchList || []).map(a => String(a.fileType))
+        const missing = requiredTypes.filter(t => !uploaded.includes(t) && !uploaded.includes(String(Number(t))))
         if (missing.length) {
-          const labels = { "4": '营业执照', "1": '身份证正面', "2": '身份证反面' }
+          const labels = { '4': '营业执照', '1': '身份证正面', '2': '身份证反面' }
           this.$message.error('请上传：' + missing.map(t => labels[t]).join('、'))
           return
         }
@@ -1408,6 +1421,12 @@ export default {
           const payload = { ...this.form }
           if (!this.isWxPartner) {
             delete payload.tradeEntryWx
+          }
+          // 自然人：营业执照相关字段允许为空，不传附件类型 04
+          if (this.isIndividualMerchant) {
+            payload.corLicenseBatchNo = ''
+            payload.corLicenseImg = ''
+            payload.attchList = (payload.attchList || []).filter(item => Number(item.fileType) !== 4)
           }
           request(payload).then(res => {
             this.loading = false
