@@ -55,6 +55,7 @@ import JsonBlock from './JsonBlock.vue'
 
 const TOOL_LABELS = {
   lookup_order: '查订单',
+  lookup_gun_status: '查枪状态',
   lookup_pay_refund: '查支付/退款',
   propose_refund: '提议退款',
   propose_remote_stop: '提议远程停充',

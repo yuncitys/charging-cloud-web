@@ -8,6 +8,7 @@ const ACTION_LABELS = {
   propose_refund: '退款',
   propose_remote_stop: '远程停充',
   lookup_order: '查单',
+  lookup_gun_status: '查枪状态',
   lookup_pay_refund: '查支付/退款'
 }
 
