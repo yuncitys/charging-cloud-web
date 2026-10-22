@@ -147,6 +147,16 @@
                   {{ searchQuery.trim() ? '无匹配会话' : '暂无会话' }}
                 </template>
               </div>
+              <button
+                v-else-if="sessionsHasMore"
+                type="button"
+                class="ops-agent-chat__conv-more-load"
+                :disabled="sessionsLoadingMore"
+                @click="loadMoreConversations"
+              >
+                <i :class="sessionsLoadingMore ? 'el-icon-loading' : 'el-icon-arrow-down'" />
+                <span>更多</span>
+              </button>
             </template>
           </div>
         </div>
@@ -295,6 +305,9 @@ import {
 } from './sessionStore'
 
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
+/** 左侧会话列表：首屏条数；「更多」每次向服务端追加条数 */
+const SESSION_LIST_INITIAL = 15
+const SESSION_LIST_MORE = 5
 
 const SHORTCUTS = [
   {
@@ -350,7 +363,10 @@ export default {
       inputText: '',
       sending: false,
       sessionsLoading: false,
+      sessionsLoadingMore: false,
       sessionsLoadError: false,
+      sessionsHasMore: false,
+      sessionsTotal: 0,
       messagesLoadingIds: {},
       adminId,
       activeId: loadActiveId(adminId),
@@ -519,16 +535,71 @@ export default {
     persistActive() {
       saveActiveId(this.adminId != null ? this.adminId : this.currentAdminId(), this.activeId)
     },
+    parseSessionPage(res, loadedBefore) {
+      const list = res && Array.isArray(res.data) ? res.data : []
+      const totalRaw = res && res.count != null ? Number(res.count) : list.length
+      const total = Number.isFinite(totalRaw) ? totalRaw : 0
+      const before = loadedBefore != null ? loadedBefore : 0
+      const hasMore = res && typeof res.hasMore === 'boolean'
+        ? res.hasMore
+        : before + list.length < total
+      return { list, total, hasMore: !!hasMore }
+    },
+    loadMoreConversations() {
+      if (!this.sessionsHasMore || this.sessionsLoadingMore) {
+        return Promise.resolve()
+      }
+      this.sessionsLoadingMore = true
+      const offset = this.conversations.length
+      return listSessions({ offset, limit: SESSION_LIST_MORE })
+        .then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.warning((res && res.msg) || '加载更多会话失败')
+            return
+          }
+          const page = this.parseSessionPage(res, offset)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
+            append: true,
+            createIfEmpty: false,
+            loadActiveMessages: false
+          })
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('加载更多会话失败，请稍后重试')
+        })
+        .finally(() => {
+          this.sessionsLoadingMore = false
+          this.scheduleMeasureTitles()
+        })
+    },
+    /** 当前激活会话若不在已加载页内，继续向服务端拉页直到找到或没有更多 */
+    ensureActiveLoadedFromServer() {
+      if (!this.activeId || this.conversations.some(c => c.id === this.activeId)) {
+        return Promise.resolve()
+      }
+      if (!this.sessionsHasMore) {
+        if (this.conversations.length) {
+          this.activeId = this.conversations[0].id
+        }
+        return Promise.resolve()
+      }
+      return this.loadMoreConversations().then(() => this.ensureActiveLoadedFromServer())
+    },
     prefetchSessionSummaries() {
-      return listSessions()
+      return listSessions({ offset: 0, limit: SESSION_LIST_INITIAL })
         .then(res => {
           if (!res || res.code !== 200) {
             return
           }
-          this.applySessionRows(Array.isArray(res.data) ? res.data : [], {
+          const page = this.parseSessionPage(res, 0)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
             createIfEmpty: false,
             loadActiveMessages: false
-          })
+          }).then(() => this.ensureActiveLoadedFromServer())
         })
         .catch(() => {
           /* dock/badge stay empty until user opens panel */
@@ -542,7 +613,7 @@ export default {
           prevById[c.id] = c
         }
       })
-      const next = (rows || []).map(row => {
+      const mapped = (rows || []).map(row => {
         const summary = fromSessionSummary(row)
         const prev = prevById[summary.id]
         if (prev && prev.messagesLoaded) {
@@ -553,6 +624,25 @@ export default {
         }
         return summary
       })
+      let next
+      if (opts.append) {
+        const seen = {}
+        next = []
+        this.conversations.forEach(c => {
+          if (c && c.id && !seen[c.id]) {
+            seen[c.id] = true
+            next.push(c)
+          }
+        })
+        mapped.forEach(c => {
+          if (c && c.id && !seen[c.id]) {
+            seen[c.id] = true
+            next.push(c)
+          }
+        })
+      } else {
+        next = mapped
+      }
       this.conversations = next
       this.dockedIds = (this.dockedIds || []).filter(id => next.some(c => c.id === id))
       if (!next.length) {
@@ -563,12 +653,12 @@ export default {
       }
       const preferred = this.activeId && next.some(c => c.id === this.activeId)
         ? this.activeId
-        : next[0].id
-      if (preferred !== this.activeId) {
+        : (opts.append ? this.activeId : next[0].id)
+      if (preferred && preferred !== this.activeId) {
         this.activeId = preferred
       }
-      if (opts.loadActiveMessages) {
-        return this.ensureMessagesLoaded(preferred)
+      if (opts.loadActiveMessages && this.activeId) {
+        return this.ensureMessagesLoaded(this.activeId)
       }
       return Promise.resolve()
     },
@@ -579,7 +669,7 @@ export default {
       this.sessionsLoading = true
       this.sessionsLoadError = false
       const syncGen = (this._sessionsSyncGen = (this._sessionsSyncGen || 0) + 1)
-      this._sessionsSyncPromise = listSessions()
+      this._sessionsSyncPromise = listSessions({ offset: 0, limit: SESSION_LIST_INITIAL })
         .then(res => {
           if (syncGen !== this._sessionsSyncGen) {
             return
@@ -590,7 +680,10 @@ export default {
             return
           }
           this.sessionsLoadError = false
-          return this.applySessionRows(Array.isArray(res.data) ? res.data : [], {
+          const page = this.parseSessionPage(res, 0)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
             createIfEmpty: true,
             loadActiveMessages: true
           })
@@ -602,10 +695,16 @@ export default {
           this.sessionsLoadError = true
           this.$message && this.$message.warning('加载会话列表失败，请稍后重试')
         })
+        .then(() => {
+          if (syncGen !== this._sessionsSyncGen) {
+            return
+          }
+          this.sessionsLoading = false
+          this._sessionsSyncPromise = null
+          return this.ensureActiveLoadedFromServer()
+        })
         .finally(() => {
           if (syncGen === this._sessionsSyncGen) {
-            this.sessionsLoading = false
-            this._sessionsSyncPromise = null
             this.scheduleMeasureTitles()
           }
         })
@@ -831,7 +930,11 @@ export default {
             traceOpen: false
           }]
           conv.messagesLoaded = true
+          const existed = this.conversations.some(c => c.id === conv.id)
           this.conversations = [conv].concat(this.conversations.filter(c => c.id !== conv.id))
+          if (!existed) {
+            this.sessionsTotal = (this.sessionsTotal || 0) + 1
+          }
           this.activeId = conv.id
           this.inputText = ''
           this.searchQuery = ''
@@ -960,6 +1063,8 @@ export default {
           }
           this.conversations = this.conversations.filter(c => c.id !== id)
           this.dockedIds = this.dockedIds.filter(x => x !== id)
+          this.sessionsTotal = Math.max(0, (this.sessionsTotal || 0) - 1)
+          this.sessionsHasMore = this.conversations.length < this.sessionsTotal
           if (!this.conversations.length) {
             return this.createConversation()
           }
@@ -1616,6 +1721,37 @@ export default {
 
     &:hover {
       text-decoration: underline;
+    }
+  }
+
+  &__conv-more-load {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    margin: 4px 0 2px;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #909399;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+
+    &:hover:not(:disabled) {
+      background: #eef2f7;
+      color: #606266;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    i {
+      font-size: 12px;
     }
   }
 

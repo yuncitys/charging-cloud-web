@@ -22,10 +22,15 @@ export function cancelAction(id) {
 	})
 }
 
-export function listSessions() {
+export function listSessions(params) {
+	const p = params || {}
 	return request({
 		url: '/api/agent/sessions',
-		method: 'get'
+		method: 'get',
+		params: {
+			offset: p.offset != null ? p.offset : 0,
+			limit: p.limit != null ? p.limit : 15
+		}
 	})
 }
 
