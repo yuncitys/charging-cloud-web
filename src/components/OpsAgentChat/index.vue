@@ -166,9 +166,6 @@
               <el-tag v-if="activeConversation.mockMode" size="mini" type="warning" effect="plain">Mock</el-tag>
             </div>
             <div class="ops-agent-chat__header-actions">
-              <el-tooltip content="新建对话" placement="top">
-                <i class="el-icon-plus ops-agent-chat__icon-btn ops-agent-chat__new-btn" @click="createConversation" />
-              </el-tooltip>
               <el-dropdown trigger="click" @command="applySizePreset">
                 <span class="ops-agent-chat__icon-btn" title="窗口大小">
                   <i class="el-icon-full-screen" />
@@ -180,6 +177,9 @@
                   <el-dropdown-item command="auto" divided>按屏幕自适应</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
+              <el-tooltip content="新建对话" placement="top">
+                <i class="el-icon-plus ops-agent-chat__icon-btn ops-agent-chat__new-btn" @click="createConversation" />
+              </el-tooltip>
               <el-tooltip content="收起到底部" placement="top">
                 <i class="el-icon-minus ops-agent-chat__icon-btn" @click="minimizePanel" />
               </el-tooltip>
