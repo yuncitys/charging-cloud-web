@@ -42,9 +42,12 @@
             <el-col :span="12">
               <el-form-item label="管理员手机号" prop="managerMobile">
                 <el-input v-model="form.managerMobile" placeholder="请输入管理员手机号" />
+                <div v-if="isHuifu && isEdit" class="ocr-tip-text">
+                  <i class="el-icon-info"></i> 汇付通道：管理员需为法人本人，汇付将向此手机号发送电子协议签约短信
+                </div>
               </el-form-item>
             </el-col>
-            <el-col :span="12" v-if="isWxPartner">
+            <el-col :span="12" v-if="isWxPartner || isHuifu">
               <el-form-item label="联系邮箱" prop="managerEmail">
                 <el-input v-model="form.managerEmail" placeholder="用于接收微信开户邮件及业务通知" />
               </el-form-item>
@@ -52,7 +55,7 @@
           </el-row>
 
           <el-divider content-position="left">商户主体信息</el-divider>
-          <div class="ocr-upload-container">
+          <div v-if="!isIndividualMerchant" class="ocr-upload-container">
             <el-upload
               class="ocr-uploader"
               drag
@@ -65,11 +68,11 @@
               <div class="el-upload__text">将营业执照拖到此处，或<em>点击上传</em></div>
               <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过5MB</div>
             </el-upload>
-            <div v-if="!isWxPartner && !isLocal" class="ocr-tip-text">
+            <div v-if="!isWxPartner && !isLocal && !isHuifu" class="ocr-tip-text">
               <i class="el-icon-info"></i> 上传营业执照可自动识别并填充下方信息
             </div>
             <div v-else class="ocr-tip-text">
-              <i class="el-icon-info"></i> {{ isLocal ? '本地渠道仅保存图片，不支持 OCR 自动识别' : '上传营业执照图片（微信通道不支持 OCR 自动识别）' }}
+              <i class="el-icon-info"></i> {{ isLocal ? '本地渠道仅保存图片，不支持 OCR 自动识别' : isHuifu ? '上传营业执照图片（汇付通道不支持 OCR 自动识别）' : '上传营业执照图片（微信通道不支持 OCR 自动识别）' }}
             </div>
             <div v-if="form.corLicenseImg" class="ocr-preview">
               <el-image
@@ -104,8 +107,8 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="交易商户类型" prop="tradeMerType">
-                <el-select v-model="form.tradeMerType" placeholder="请选择交易商户类型" style="width: 100%" :disabled="isEdit" @change="handleTradeMerTypeChange">
+              <el-form-item label="主体类型" prop="tradeMerType">
+                <el-select v-model="form.tradeMerType" placeholder="请选择主体类型" style="width: 100%" :disabled="isEdit" @change="handleTradeMerTypeChange">
                   <el-option
                     v-for="item in tradeMerTypeSelectOptions"
                     :key="item.value"
@@ -117,9 +120,9 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="证件类型" prop="merCertType">
-                <el-select v-model="form.merCertType" placeholder="请选择证件类型" style="width: 100%" :disabled="isEdit">
+                <el-select v-model="form.merCertType" placeholder="请选择证件类型" style="width: 100%" :disabled="isEdit || merCertTypeSelectOptions.length <= 1">
                   <el-option
-                    v-for="item in merCertTypeOptions"
+                    v-for="item in merCertTypeSelectOptions"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
@@ -217,9 +220,10 @@
               <el-form-item label="经营类目" prop="busKindCode">
                 <el-cascader
                   v-model="form.busKindCode"
-                  :options="busKindOptions"
+                  :options="busKindSelectOptions"
                   :props="{ label: 'label', value: 'code', emitPath: false }"
-                  placeholder="请选择经营类目"
+                  :placeholder="form.tradeMerType ? '请选择经营类目' : '请先选择主体类型'"
+                  :disabled="!form.tradeMerType"
                   style="width: 100%"
                   filterable
                 />
@@ -637,7 +641,7 @@
               <el-form-item label="结算账户类型" prop="settBankAccType">
                 <el-select v-model="form.settBankAccType" placeholder="请选择" style="width: 100%">
                   <el-option
-                    v-for="item in settBankAccTypeOptions"
+                    v-for="item in settBankAccTypeSelectOptions"
                     :key="item.value"
                     :label="item.label"
                     :value="item.value"
@@ -674,7 +678,7 @@
                 <el-input v-model="form.settBankBranchId" placeholder="12位联行号" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="银行账号" prop="settBankAccNo">
                 <el-input v-model="form.settBankAccNo" placeholder="结算银行卡号" />
               </el-form-item>
@@ -689,7 +693,57 @@
                 <el-input v-model="form.mobileNo" placeholder="用于短信验证" />
               </el-form-item>
             </el-col>
+            <template v-if="isHuifu">
+              <el-col :span="8">
+                <el-form-item label="开户省" prop="settBankProvinceId">
+                  <el-select v-model="form.settBankProvinceId" placeholder="请选择省" @change="handleSettBankProvinceChange" style="width: 100%">
+                    <el-option v-for="item in provinceList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户市" prop="settBankRegionId">
+                  <el-select v-model="form.settBankRegionId" placeholder="请选择市" @change="handleSettBankCityChange" style="width: 100%">
+                    <el-option v-for="item in settBankCityList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户区" prop="settBankCountyId">
+                  <el-select v-model="form.settBankCountyId" placeholder="请选择区" style="width: 100%">
+                    <el-option v-for="item in settBankAreaList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </template>
           </el-row>
+          <div v-if="isHuifu && isIndividualMerchant" class="ocr-upload-container" style="margin-top: 16px;">
+            <el-upload
+              class="ocr-uploader"
+              drag
+              action=""
+              :show-file-list="false"
+              :http-request="(params) => handleUpload(params, '12')"
+              accept=".jpg,.jpeg,.png"
+            >
+              <i class="el-icon-upload"></i>
+              <div class="el-upload__text">将结算银行卡<strong style="color: #409EFF">正面</strong>拖到此处，或<em>点击上传</em></div>
+              <div class="el-upload__tip" slot="tip">只能上传jpg/png文件，且不超过5MB；汇付小微进件必填</div>
+            </el-upload>
+            <div v-if="form.settBankCardImg" class="ocr-preview">
+              <el-image
+                class="ocr-preview-image"
+                :src="form.settBankCardImg"
+                :preview-src-list="[form.settBankCardImg]"
+                fit="contain"
+              >
+                <div slot="error" class="ocr-preview-error">
+                  <i class="el-icon-picture-outline"></i>
+                </div>
+              </el-image>
+              <div class="ocr-preview-label">结算银行卡正面预览</div>
+            </div>
+          </div>
         </div>
 
         <div style="margin-top: 40px; text-align: center;">
@@ -725,6 +779,8 @@ export default {
       areaList: [],
       legCityList: [],
       legAreaList: [],
+      settBankCityList: [],
+      settBankAreaList: [],
       busKindOptions: [],
       bankList: [],
       merchantList: [],
@@ -791,6 +847,10 @@ export default {
         settBankAccNo: '',
         identityNo: '',
         mobileNo: '',
+        settBankProvinceId: '',
+        settBankRegionId: '',
+        settBankCountyId: '',
+        settBankCardImg: '',
         // Attachments
         attchList: [],
         tradeEntryWx: defaultWxTradeEntryWx()
@@ -801,7 +861,7 @@ export default {
         serviceProviderId: [{ required: true, message: '请输入渠道代码', trigger: 'blur' }],
         busTradeMerNo: [{ required: true, message: '请输入业务方交易商户编号', trigger: 'blur' }],
         merType: [{ required: true, message: '请选择商户类型', trigger: 'change' }],
-        tradeMerType: [{ required: true, message: '请选择交易商户类型', trigger: 'change' }],
+        tradeMerType: [{ required: true, message: '请选择主体类型', trigger: 'change' }],
         merName: [{ required: true, message: '请输入商户名称', trigger: 'blur' }],
         merCertNo: [{ required: true, message: '请输入证件号码', trigger: 'blur' }],
         managerMobile: [{ required: true, message: '请输入管理员手机号', trigger: 'blur' }],
@@ -815,8 +875,15 @@ export default {
     isWxPartner() {
       return this.form.serviceProviderId === 'wxpay_partner'
     },
+    isHuifu() {
+      return this.form.serviceProviderId === 'huifu'
+    },
     isLocal() {
       return this.form.serviceProviderId === 'local'
+    },
+    /** 主体类型=小微商户(自然人)，无营业执照 */
+    isIndividualMerchant() {
+      return String(this.form.tradeMerType || '') === '2'
     },
     merTypeFormOptions() {
       // 新建表单原仅开放「交易商户」
@@ -826,6 +893,30 @@ export default {
       const list = this.tradeMerTypeOptions || []
       if (this.isWxPartner) {
         return list.filter(o => String(o.value) !== '2')
+      }
+      return list
+    },
+    // 企业(1)只能营业执照(11)；自然人(2)只能身份证(22)；个体工商户(0)两者皆可
+    merCertTypeSelectOptions() {
+      const list = this.merCertTypeOptions || []
+      const type = String(this.form.tradeMerType || '')
+      if (type === '1') {
+        return list.filter(o => String(o.value) === '11')
+      }
+      if (type === '2') {
+        return list.filter(o => String(o.value) === '22')
+      }
+      return list
+    },
+    // 企业(1)用「企业」类目子树；个体工商户(0)/自然人(2)用「个体工商户」子树
+    busKindSelectOptions() {
+      return this.busKindOptionsForType(this.form.tradeMerType)
+    },
+    // 小微(2)仅借记(0010)；企业(1)/个体(0)可选借记或对公
+    settBankAccTypeSelectOptions() {
+      const list = this.settBankAccTypeOptions || []
+      if (String(this.form.tradeMerType || '') === '2') {
+        return list.filter(o => String(o.value) === '0010')
       }
       return list
     }
@@ -956,13 +1047,22 @@ export default {
   methods: {
     applyChannelRules() {
       const val = this.form.serviceProviderId
-      if (val === 'wxpay_partner') {
+      if (val === 'wxpay_partner' || val === 'huifu') {
         this.rules.managerEmail = [
           { required: true, message: '请输入联系邮箱', trigger: 'blur' },
           { type: 'email', message: '邮箱格式不正确', trigger: 'blur' }
         ]
       } else {
         this.$delete(this.rules, 'managerEmail')
+      }
+      if (val === 'huifu') {
+        this.rules.settBankProvinceId = [{ required: true, message: '请选择开户省', trigger: 'change' }]
+        this.rules.settBankRegionId = [{ required: true, message: '请选择开户市', trigger: 'change' }]
+        this.rules.settBankCountyId = [{ required: true, message: '请选择开户区', trigger: 'change' }]
+      } else {
+        this.$delete(this.rules, 'settBankProvinceId')
+        this.$delete(this.rules, 'settBankRegionId')
+        this.$delete(this.rules, 'settBankCountyId')
       }
     },
     normalizeWxExt(wxExt) {
@@ -1051,6 +1151,8 @@ export default {
           this.$set(this.form, 'storeEntranceImg', url)
         } else if (ft === '06') {
           this.$set(this.form, 'storeInteriorImg', url)
+        } else if (ft === '12') {
+          this.$set(this.form, 'settBankCardImg', url)
         }
       })
     },
@@ -1074,6 +1176,36 @@ export default {
       getAreaSelector(val).then(res => {
         this.areaList = this.normalizeAreaList(res)
       })
+    },
+    handleSettBankProvinceChange(val) {
+      this.form.settBankRegionId = ''
+      this.form.settBankCountyId = ''
+      this.settBankCityList = []
+      this.settBankAreaList = []
+      if (!val) return
+      getAreaSelector(val).then(res => {
+        this.settBankCityList = this.normalizeAreaList(res)
+      })
+    },
+    handleSettBankCityChange(val) {
+      this.form.settBankCountyId = ''
+      this.settBankAreaList = []
+      if (!val) return
+      getAreaSelector(val).then(res => {
+        this.settBankAreaList = this.normalizeAreaList(res)
+      })
+    },
+    loadSettBankAreaOptions() {
+      if (this.form.settBankProvinceId) {
+        getAreaSelector(this.form.settBankProvinceId).then(res => {
+          this.settBankCityList = this.normalizeAreaList(res)
+        })
+      }
+      if (this.form.settBankRegionId) {
+        getAreaSelector(this.form.settBankRegionId).then(res => {
+          this.settBankAreaList = this.normalizeAreaList(res)
+        })
+      }
     },
     handleLegProvinceChange(val) {
       this.form.corLegCity = ''
@@ -1112,6 +1244,7 @@ export default {
           this.legAreaList = this.normalizeAreaList(res)
         })
       }
+      this.loadSettBankAreaOptions()
     },
     handleBankChange(val) {
       if (!val) {
@@ -1134,7 +1267,7 @@ export default {
 
       const loading = this.$loading({
         lock: true,
-        text: this.isWxPartner ? '正在上传...' : '正在上传并识别中...',
+        text: (this.isWxPartner || this.isLocal || this.isHuifu) ? '正在上传...' : '正在上传并识别中...',
         spinner: 'el-icon-loading',
         background: 'rgba(0, 0, 0, 0.7)'
       })
@@ -1148,7 +1281,7 @@ export default {
           throw new Error('文件上传失败，未获取到URL')
         }
 
-        if (this.isWxPartner || this.isLocal) {
+        if (this.isWxPartner || this.isLocal || this.isHuifu) {
           loading.close()
           this.$message.success('上传成功')
           this.fillAttachment(type, fileUrl, null, file.name, multiple)
@@ -1201,6 +1334,7 @@ export default {
       if (type === '02') this.form.corLegIdBackImg = fileUrl
       if (type === '05') this.form.storeEntranceImg = fileUrl
       if (type === '06') this.form.storeInteriorImg = fileUrl
+      if (type === '12') this.form.settBankCardImg = fileUrl
     },
     fillFormData(data, type) {
       // 04: 营业执照
@@ -1214,10 +1348,9 @@ export default {
           // 尝试格式化日期，假设返回格式可能多样，这里做简单处理或者直接赋值如果格式匹配
           // 假设返回 yyyy年MM月dd日 或 yyyy-MM-dd
           let dateStr = data.licenceDateEnd.replace(/年|月/g, '-').replace(/日/g, '')
-          // 如果是 "长期"，可能需要特殊处理，这里暂且保留原值或者设为特定值
+          // OCR 识别为「长期」时统一回填平台长期标识，watcher 会自动勾选「永久」
           if (dateStr.includes('长期')) {
-             // Handle long term if needed, maybe leave empty or set a far future date
-             // this.form.corIdExaDate = '9999-12-31'
+             this.form.corIdExaDate = '9999-12-31'
           } else {
              this.form.corIdExaDate = dateStr
           }
@@ -1246,7 +1379,12 @@ export default {
           // 这里假设返回的是结束日期
           let dateStr = data.exDate.replace(/\./g, '-')
           if (dateStr.includes('长期')) {
-             // Handle long term
+             // 如 "2010-01-01-长期"：开始日期取识别到的日期，截止日期用平台长期标识
+             const beginMatch = dateStr.match(/\d{4}-\d{2}-\d{2}/)
+             if (beginMatch) {
+               this.form.corLegIdEffectDate = beginMatch[0]
+             }
+             this.form.corLegIdExaDate = '9999-12-31'
           } else {
              // 如果是范围，取后半部分
              if (dateStr.includes('-')) {
@@ -1289,11 +1427,61 @@ export default {
       })
     },
     handleTradeMerTypeChange(val) {
-      if (val === '2') {
+      const type = String(val || '')
+      if (type === '1') {
+        this.form.merCertType = '11'
+      } else if (type === '2') {
         this.form.merCertType = '22'
-      } else {
+        this.clearLicenseAttachment()
+      } else if (type === '0' && !['11', '22'].includes(String(this.form.merCertType || ''))) {
         this.form.merCertType = '11'
       }
+      // 小微仅借记：已选对公则切回借记并清开户行
+      if (type === '2' && this.form.settBankAccType === '0030') {
+        this.form.settBankAccType = '0010'
+        this.form.settBankBranchName = ''
+        this.form.settBankBranchId = ''
+      } else if (type === '2' && !this.form.settBankAccType) {
+        this.form.settBankAccType = '0010'
+      }
+      // 已选经营类目不在新类型的类目分支内时清空，避免提交到错误分支的类目
+      if (type && this.form.busKindCode) {
+        const branch = this.busKindOptionsForType(type)
+        if (branch.length && !this.busKindInOptions(this.form.busKindCode, branch)) {
+          this.form.busKindCode = ''
+        }
+      }
+    },
+    /** 自然人无营业执照：清空上传预览、批次号及附件列表中的执照项 */
+    clearLicenseAttachment() {
+      this.form.corLicenseImg = ''
+      this.form.corLicenseBatchNo = ''
+      const list = this.form.attchList || []
+      this.$set(this.form, 'attchList', list.filter(item => Number(item.fileType) !== 4))
+    },
+    busKindOptionsForType(type) {
+      const list = this.busKindOptions || []
+      const t = String(type || '')
+      if (!t || !list.length) {
+        return list
+      }
+      const rootLabel = t === '1' ? '企业' : '个体工商户'
+      const root = list.find(o => String(o.label || '') === rootLabel || String(o.value || '') === `node:${rootLabel}`)
+      return root && Array.isArray(root.children) ? root.children : list
+    },
+    busKindInOptions(code, options) {
+      const target = String(code || '')
+      const stack = [...(options || [])]
+      while (stack.length) {
+        const node = stack.pop()
+        if (String(node.code || '') === target) {
+          return true
+        }
+        if (Array.isArray(node.children)) {
+          stack.push(...node.children)
+        }
+      }
+      return false
     },
     next() {
       if (this.active++ > 2) this.active = 0
@@ -1312,6 +1500,20 @@ export default {
       }).catch(() => {})
     },
     save() {
+      if (this.isHuifu) {
+        if (!this.form.managerEmail) {
+          this.$message.error('请输入联系邮箱')
+          return
+        }
+        const requiredTypes = this.isIndividualMerchant ? ['1', '2', '12'] : ['4', '1', '2']
+        const uploaded = (this.form.attchList || []).map(a => String(a.fileType))
+        const missing = requiredTypes.filter(t => !uploaded.includes(t) && !uploaded.includes(String(Number(t))))
+        if (missing.length) {
+          const labels = { '4': '营业执照', '1': '身份证正面', '2': '身份证反面', '12': '结算银行卡正面' }
+          this.$message.error('请上传：' + missing.map(t => labels[t]).join('、'))
+          return
+        }
+      }
       if (this.isWxPartner) {
         if (!this.form.managerEmail) {
           this.$message.error('请输入联系邮箱')
@@ -1325,11 +1527,12 @@ export default {
           this.$message.error('请输入所属行业')
           return
         }
-        const requiredTypes = ["4", "1", "2"]
-        const uploaded = (this.form.attchList || []).map(a => a.fileType)
-        const missing = requiredTypes.filter(t => !uploaded.includes(t))
+        // 自然人无营业执照；企业/个体工商户仍需执照
+        const requiredTypes = this.isIndividualMerchant ? ['1', '2'] : ['4', '1', '2']
+        const uploaded = (this.form.attchList || []).map(a => String(a.fileType))
+        const missing = requiredTypes.filter(t => !uploaded.includes(t) && !uploaded.includes(String(Number(t))))
         if (missing.length) {
-          const labels = { "4": '营业执照', "1": '身份证正面', "2": '身份证反面' }
+          const labels = { '4': '营业执照', '1': '身份证正面', '2': '身份证反面' }
           this.$message.error('请上传：' + missing.map(t => labels[t]).join('、'))
           return
         }
@@ -1348,6 +1551,12 @@ export default {
           if (!this.isWxPartner) {
             delete payload.tradeEntryWx
           }
+          // 自然人：营业执照相关字段允许为空，不传附件类型 04
+          if (this.isIndividualMerchant) {
+            payload.corLicenseBatchNo = ''
+            payload.corLicenseImg = ''
+            payload.attchList = (payload.attchList || []).filter(item => Number(item.fileType) !== 4)
+          }
           request(payload).then(res => {
             this.loading = false
             if (res && res.code === 200) {
@@ -1358,7 +1567,9 @@ export default {
                 (data && data.tradeEntry && data.tradeEntry.busTradeMerNo) || ''
               if (merNoFromResp) this.$set(this.form, 'busTradeMerNo', merNoFromResp)
               this.$message({
-                message: '保存成功，请等待平台审核通过后再提交进件',
+                message: (isUpdate && this.isHuifu)
+                  ? '修改已提交，请法人查收汇付签约短信完成签约'
+                  : '保存成功，请等待平台审核通过后再提交进件',
                 type: 'success',
                 duration: 5000
               })

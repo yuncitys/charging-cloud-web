@@ -1,6 +1,17 @@
 <template>
-  <el-dialog :title="param.title" :visible.sync="propVisible" :before-close="close">
-    <el-form class="dialog-form" ref="form" :model="form" :rules="channelRule" :inline="true" label-width="auto">
+  <el-drawer
+    :title="param.title"
+    :visible.sync="propVisible"
+    direction="rtl"
+    size="880px"
+    :wrapper-closable="false"
+    append-to-body
+    custom-class="payment-channel-drawer"
+    :before-close="close"
+  >
+    <div class="payment-channel-drawer__body">
+    <!-- 固定 label 宽，避免汇付长字段把输入顶到下一行；双列用 el-row 排布，不用 inline -->
+    <el-form class="drawer-form" ref="form" :model="form" :rules="channelRule" label-width="158px" label-position="right">
       <el-row>
         <el-col :span="12">
           <el-form-item label="渠道名称" prop="channelCode">
@@ -224,6 +235,76 @@
             </el-col>
           </el-row>
         </div>
+        <div class="huifuConfig" v-else-if="form.channelCode === 'huifu'">
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="系统号(sys_id)" required>
+                <el-input v-model="huifuConfig.sysId" clearable placeholder="渠道商号，如 6666000245654642"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="产品号(product_id)" required>
+                <el-input v-model="huifuConfig.productId" clearable placeholder="汇付分配的产品号"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="收款商户号(huifu_id)" required>
+                <el-input v-model="huifuConfig.huifuId" clearable placeholder="租户收款子商户号"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="小程序AppId" required>
+                <el-input v-model="huifuConfig.wxAppId" clearable placeholder="已在汇付绑定的小程序appid"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="商户私钥" required>
+                <el-input v-model="huifuConfig.rsaPrivateKey" show-password clearable placeholder="RSA私钥(PKCS8)"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="汇付公钥" required>
+                <el-input v-model="huifuConfig.huifuPublicKey" show-password clearable placeholder="汇付RSA公钥"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="回调域名" required>
+                <el-input v-model="huifuConfig.callbackDomain" clearable placeholder="https://域名/api/payment/Notify"></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="请求域名">
+                <el-input v-model="huifuConfig.requestDomain" clearable placeholder="默认 https://api.huifu.com"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="24">
+              <el-form-item label="延迟入账" class="huifu-delay-item">
+                <div class="huifu-delay-control">
+                  <el-switch v-model="huifuConfig.delayAcctFlag"></el-switch>
+                  <span class="huifu-tip">开启后参与分账的订单资金先冻结，结算后再分给运营商</span>
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row v-if="huifuConfig.delayAcctFlag">
+            <el-col :span="24">
+              <el-form-item label="超期兜底天数" class="huifu-delay-item">
+                <div class="huifu-delay-control">
+                  <el-input-number v-model="huifuConfig.delayConfirmMaxDays" :min="1" :max="179" :step="1" controls-position="right"></el-input-number>
+                  <span class="huifu-tip">超过该天数仍未分完的资金确认到收款商户，默认 150</span>
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </div>
         <div class="aliConfig" v-else-if="form.channelCode === 'alipay'">
           <el-row>
             <el-col :span="12">
@@ -331,11 +412,12 @@
         </div>
       </div>
     </el-form>
-    <div slot="footer" class="dialog-footer">
+    </div>
+    <div class="payment-channel-drawer__footer">
       <el-button @click="close">取 消</el-button>
       <el-button type="primary" @click="confirm">确定</el-button>
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script>
@@ -433,6 +515,18 @@ export default {
         callbackDomain: '',
         requestDomain: '',
       },
+      huifuConfig: {
+        sysId: '',
+        productId: '',
+        huifuId: '',
+        rsaPrivateKey: '',
+        huifuPublicKey: '',
+        wxAppId: '',
+        callbackDomain: '',
+        requestDomain: 'https://api.huifu.com',
+        delayAcctFlag: false,
+        delayConfirmMaxDays: 150
+      },
       serviceProviderList: [],
       channelRule: {
         channelCode: [
@@ -483,6 +577,8 @@ export default {
           this.aliConfig = JSON.parse(this.form.configStr)
         } else if (code === 'tzbank') {
           this.tzbankConfig = JSON.parse(this.form.configStr)
+        } else if (code === 'huifu') {
+          this.huifuConfig = Object.assign({}, this.huifuConfig, JSON.parse(this.form.configStr))
         }
       })
     }
@@ -561,10 +657,21 @@ export default {
     async init() {
       
     },
-    close() {
+    close(done) {
       this.$emit('update:visible', false)
+      if (typeof done === 'function') {
+        done()
+      }
     },
     confirm() {
+      if (this.form.channelCode === 'huifu') {
+        this.form.serviceProviderId = 'huifu'
+        const required = ['sysId', 'productId', 'huifuId', 'rsaPrivateKey', 'huifuPublicKey', 'wxAppId', 'callbackDomain']
+        if (required.some(k => !this.huifuConfig[k] || !String(this.huifuConfig[k]).trim())) {
+          this.$message.warning('请完整填写汇付配置（请求域名、延迟入账除外）')
+          return
+        }
+      }
       this.$refs.form.validate(valid => {
         const code = this.form.channelCode
         this.syncChannelNameFromCode()
@@ -578,6 +685,8 @@ export default {
           this.form.configStr = JSON.stringify(this.aliConfig)
         } else if (code === 'tzbank') {
           this.form.configStr = JSON.stringify(this.tzbankConfig)
+        } else if (code === 'huifu') {
+          this.form.configStr = JSON.stringify(this.huifuConfig)
         }
         if (valid) {
           if (this.param.id) {
@@ -599,22 +708,99 @@ export default {
   }
 }
 </script>
+<style lang="scss">
+.payment-channel-drawer .el-drawer__body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #f5f7fa;
+}
+.payment-channel-drawer .el-drawer__header {
+  margin-bottom: 0;
+  padding: 16px 24px;
+  border-bottom: 1px solid #ebeef5;
+  background: #fff;
+  flex-shrink: 0;
+}
+</style>
+
 <style lang="scss" scoped>
->>> .el-form {
-  .el-form-item {
+.payment-channel-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 20px;
+  background: #fff;
+}
+.payment-channel-drawer__footer {
+  flex-shrink: 0;
+  padding: 12px 24px;
+  border-top: 1px solid #ebeef5;
+  text-align: right;
+  background: #fff;
+}
+
+.huifu-delay-control {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-height: 32px;
+}
+
+.huifu-tip {
+  margin-left: 10px;
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.huifu-delay-item {
+  >>> .el-form-item__content {
     display: flex;
+    align-items: center;
+  }
+}
+
+.drawer-form {
+  >>> .el-form-item {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
     width: 100%;
-    padding-right: 10px;
+    margin-right: 0;
+    padding-right: 8px;
+    box-sizing: border-box;
+
+    .el-form-item__label {
+      flex: 0 0 158px;
+      float: none;
+      text-align: right;
+      line-height: 36px;
+      padding-right: 12px;
+      box-sizing: border-box;
+      white-space: nowrap;
+    }
 
     .el-form-item__label-wrap {
-      margin-left: 0;
+      margin-left: 0 !important;
+      flex: 0 0 auto;
+    }
+
+    .el-form-item__content {
+      flex: 1 1 auto;
+      min-width: 0;
+      width: auto !important;
+      margin-left: 0 !important;
+      line-height: 36px;
     }
 
     .el-date-editor,
     .el-select,
-    .el-form-item__content {
+    .el-input,
+    .el-input-number {
       width: 100%;
-      flex: 1;
     }
   }
 }
