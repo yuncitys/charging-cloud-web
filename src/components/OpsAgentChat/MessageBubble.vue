@@ -226,6 +226,16 @@ export default {
         }
       }
 
+      h1, h2, h3, h4, h5, h6 {
+        margin: 10px 0 6px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+
+      h1 { font-size: 16px; }
+      h2 { font-size: 15px; }
+      h3 { font-size: 14px; }
+
       ul, ol {
         margin: 4px 0 8px;
         padding-left: 1.3em;
@@ -247,6 +257,12 @@ export default {
         border-radius: 8px;
         overflow: auto;
         font-size: 12px;
+
+        code {
+          background: transparent;
+          padding: 0;
+          color: inherit;
+        }
       }
 
       strong {
@@ -255,6 +271,47 @@ export default {
 
       a {
         color: #409eff;
+      }
+
+      blockquote {
+        margin: 8px 0;
+        padding: 4px 10px;
+        border-left: 3px solid #dcdfe6;
+        color: #606266;
+        background: rgba(0, 0, 0, 0.02);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0 10px;
+        font-size: 12px;
+        display: block;
+        overflow-x: auto;
+        max-width: 100%;
+      }
+
+      thead {
+        background: rgba(0, 0, 0, 0.04);
+      }
+
+      th, td {
+        border: 1px solid #e4e7ed;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+        white-space: nowrap;
+      }
+
+      th {
+        font-weight: 600;
+        color: #606266;
+      }
+
+      hr {
+        border: none;
+        border-top: 1px solid #ebeef5;
+        margin: 10px 0;
       }
     }
   }
