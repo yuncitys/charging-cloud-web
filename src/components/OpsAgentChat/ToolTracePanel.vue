@@ -2,7 +2,7 @@
   <div class="tool-trace">
     <div class="tool-trace__toggle" @click="open = !open">
       <i :class="open ? 'el-icon-arrow-down' : 'el-icon-arrow-right'" />
-      执行步骤 ({{ steps.length }})
+      排查过程 ({{ steps.length }})
     </div>
     <div v-show="open" class="tool-trace__list">
       <div
@@ -26,23 +26,11 @@
           />
         </div>
         <div v-show="stepOpen[idx]" class="tool-trace__step-body">
-          <div v-if="plainOutcome(step)" class="tool-trace__plain">
+          <div class="tool-trace__plain">
             {{ plainOutcome(step) }}
           </div>
-          <json-block
-            v-if="hasArgs(step)"
-            :value="step.arguments"
-            label="参数"
-            :default-collapsed="true"
-          />
-          <json-block
-            v-if="hasContent(step)"
-            :value="step.content"
-            label="返回"
-            :default-collapsed="true"
-          />
           <div v-if="step.pendingActionId" class="tool-trace__pending">
-            待确认操作 ID：{{ step.pendingActionId }}
+            待确认操作已生成，请在上方确认卡片中处理
           </div>
         </div>
       </div>
@@ -51,8 +39,6 @@
 </template>
 
 <script>
-import JsonBlock from './JsonBlock.vue'
-
 const TOOL_LABELS = {
   lookup_order: '查订单',
   lookup_gun_status: '查枪状态',
@@ -66,7 +52,6 @@ const TOOL_LABELS = {
 
 export default {
   name: 'ToolTracePanel',
-  components: { JsonBlock },
   props: {
     steps: {
       type: Array,
@@ -96,7 +81,6 @@ export default {
           next[i] = false
         })
         this.stepOpen = next
-        // keep panel collapsed for non-dev users unless explicitly opened
         if (!this.defaultOpen) {
           this.open = false
         }
@@ -113,47 +97,18 @@ export default {
     toggleStep(idx) {
       this.$set(this.stepOpen, idx, !this.stepOpen[idx])
     },
-    hasArgs(step) {
-      return step && step.arguments != null && step.arguments !== ''
-    },
-    hasContent(step) {
-      return step && step.content != null && step.content !== ''
-    },
     plainOutcome(step) {
       if (!step) {
-        return ''
+        return '暂无说明'
       }
-      const raw = step.content == null ? '' : String(step.content)
-      if (!raw) {
-        return step.ok === false ? '这一步没有成功' : ''
+      if (step.summary != null && String(step.summary).trim() !== '') {
+        return String(step.summary)
       }
-      const msg = this.extractMsg(raw)
-      if (msg) {
-        if (/订单不存在|不存在|未找到/.test(msg)) {
-          return '说明：没有找到对应订单/账单'
-        }
-        if (/交易账单不存在|账单不存在/.test(msg)) {
-          return '说明：找不到对应的交易账单'
-        }
-        return '说明：' + msg
-      }
+      // Legacy sessions may still have raw content — never render it as JSON.
       if (step.ok === false) {
-        if (/idempotency|already used/i.test(raw)) {
-          return '说明：该操作之前已经处理过，不能重复提交'
-        }
-        if (/failed/i.test(raw)) {
-          return '说明：这一步执行失败，可展开下方技术详情'
-        }
-        return '说明：这一步没有成功'
+        return '这一步没有成功'
       }
-      if (/^\s*[{\[]/.test(raw)) {
-        return '说明：已返回数据（技术详情默认收起）'
-      }
-      return ''
-    },
-    extractMsg(text) {
-      const m = /"msg"\s*:\s*"([^"]+)"/.exec(text)
-      return m ? m[1] : ''
+      return '已完成'
     }
   }
 }
