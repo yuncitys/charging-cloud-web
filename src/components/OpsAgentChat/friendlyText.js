@@ -2,7 +2,7 @@
  * Turn technical agent/ops errors into plain Chinese for non-dev users.
  */
 
-import { ACTION_LABELS, TOOL_LABELS } from './toolLabels'
+import { ACTION_LABELS, toolLabel } from './toolLabels'
 
 export function actionLabel(action) {
   if (!action) {
@@ -13,7 +13,7 @@ export function actionLabel(action) {
     return fromSummary
   }
   const key = action.toolName || action.tool || ''
-  return ACTION_LABELS[key] || TOOL_LABELS[key] || '该操作'
+  return ACTION_LABELS[key] || toolLabel(key) || '该操作'
 }
 
 export function summarizeAction(summary) {
@@ -76,7 +76,7 @@ export function parsePendingFields(summary) {
   const tool = obj.tool || obj.toolName || ''
   const order = obj.orderCode || obj.payId || obj.payCode || ''
   const amount = obj.amount != null && obj.amount !== '' ? String(obj.amount) : ''
-  const actionName = ACTION_LABELS[tool] || TOOL_LABELS[tool] || tool || ''
+  const actionName = ACTION_LABELS[tool] || toolLabel(tool) || tool || ''
   return { actionName, order: order ? String(order) : '', amount, raw: '' }
 }
 

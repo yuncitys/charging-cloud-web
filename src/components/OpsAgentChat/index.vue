@@ -54,7 +54,7 @@
               size="mini"
               clearable
               prefix-icon="el-icon-search"
-              placeholder="搜索会话"
+              placeholder="搜索标题或消息"
               class="ops-agent-chat__search"
             />
             <i
@@ -266,10 +266,18 @@
                 @input="autoGrowComposer"
               />
               <el-button
+                v-if="sending"
+                size="small"
+                class="ops-agent-chat__stop"
+                @click="stopGenerating"
+              >
+                停止
+              </el-button>
+              <el-button
+                v-else
                 type="primary"
                 size="small"
                 class="ops-agent-chat__send"
-                :loading="sending"
                 :disabled="!inputText.trim()"
                 @click="sendMessage"
               >
@@ -292,9 +300,24 @@ import {
   listSessionMessages,
   listSessionPending,
   renameSession,
-  deleteSession
+  deleteSession,
+  fetchAgentUiConfig
 } from '@/api/opsAgent/chat'
 import { sendChatStream } from '@/api/opsAgent/chatStream'
+import { listToolPool } from '@/api/opsAgent/toolPool'
+import { setToolLabelMap } from './toolLabels'
+import {
+  SIZE_PRESETS,
+  PANEL_MIN_W,
+  PANEL_MIN_H,
+  VIEWPORT_GUTTER,
+  SIDEBAR_MIN,
+  SIDEBAR_MAX,
+  COMPOSER_MIN_H,
+  COMPOSER_MAX_H,
+  SESSION_LIST_INITIAL,
+  SESSION_LIST_MORE
+} from './panelLayout'
 import PendingActionCard from './PendingActionCard.vue'
 import MessageBubble from './MessageBubble.vue'
 import { actionLabel, formatConfirmResult } from './friendlyText'
@@ -314,54 +337,18 @@ import {
   loadDockedIds,
   saveDockedIds,
   clearLegacyLocalConversations,
-  WELCOME_TEXT
+  WELCOME_TEXT,
+  setWelcomeText
 } from './sessionStore'
 
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
-/** 左侧会话列表：首屏条数；「更多」每次向服务端追加条数 */
-const SESSION_LIST_INITIAL = 15
-const SESSION_LIST_MORE = 5
 
-const SHORTCUTS = [
-  {
-    label: '查单',
-    desc: '按订单号看状态和金额',
-    icon: 'el-icon-search',
-    tone: 'blue',
-    // fillOnly：只填入输入框，需用户补上真实订单号后再发送，避免演示假单污染会话
-    fillOnly: true,
-    text: '查一下订单'
-  },
-  {
-    label: '退款排障',
-    desc: '扣款未启动时走确认退款',
-    icon: 'el-icon-wallet',
-    tone: 'amber',
-    fillOnly: true,
-    text: '订单扣了钱没启动，能不能退（请补上订单号）'
-  },
-  {
-    label: '枪离线 SOP',
-    desc: '逐步排查枪不在线',
-    icon: 'el-icon-document',
-    tone: 'green',
-    text: '枪离线怎么处理'
-  },
-  {
-    label: '远程停充',
-    desc: '订单关不掉时远程停止',
-    icon: 'el-icon-switch-button',
-    tone: 'red',
-    fillOnly: true,
-    text: '订单关不掉，帮我停充（请补上订单号）'
-  }
+const FALLBACK_SHORTCUTS = [
+  { label: '查单', desc: '按订单号看状态和金额', icon: 'el-icon-search', tone: 'blue', fillOnly: true, text: '查一下订单' },
+  { label: '退款排障', desc: '扣款未启动时走确认退款', icon: 'el-icon-wallet', tone: 'amber', fillOnly: true, text: '订单扣了钱没启动，能不能退（请补上订单号）' },
+  { label: '枪离线 SOP', desc: '逐步排查枪不在线', icon: 'el-icon-document', tone: 'green', text: '枪离线怎么处理' },
+  { label: '远程停充', desc: '订单关不掉时远程停止', icon: 'el-icon-switch-button', tone: 'red', fillOnly: true, text: '订单关不掉，帮我停充（请补上订单号）' }
 ]
-
-const SIZE_PRESETS = {
-  compact: { panelWidth: 380, panelHeight: 480 },
-  default: { panelWidth: 440, panelHeight: 580 },
-  large: { panelWidth: 640, panelHeight: 720 }
-}
 
 export default {
   name: 'OpsAgentChat',
@@ -391,7 +378,9 @@ export default {
       dockedIds: loadDockedIds(adminId),
       renamingId: null,
       renameDraft: '',
-      shortcuts: SHORTCUTS,
+      shortcuts: FALLBACK_SHORTCUTS.slice(),
+      searchTimer: null,
+      serverSearchActive: false,
       resizing: false,
       resizeStart: null,
       sidebarResizing: false,
@@ -454,6 +443,10 @@ export default {
       return sortConversations(this.conversations)
     },
     filteredConversations() {
+      // Server search (q param) already narrowed conversations; skip client re-filter.
+      if (this.serverSearchActive) {
+        return this.sortedConversations
+      }
       const q = (this.searchQuery || '').trim().toLowerCase()
       if (!q) {
         return this.sortedConversations
@@ -484,8 +477,17 @@ export default {
   mounted() {
     // Prefetch summaries so FAB badge / dock chips survive refresh without opening panel
     this.prefetchSessionSummaries()
+    this.loadAgentUiBootstrap()
   },
   watch: {
+    searchQuery() {
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer)
+      }
+      this.searchTimer = setTimeout(() => {
+        this.runServerSessionSearch()
+      }, 320)
+    },
     activeId(val) {
       this.persistActive()
       this.scrollToBottom()
@@ -524,6 +526,10 @@ export default {
     }
   },
   beforeDestroy() {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer)
+      this.searchTimer = null
+    }
     this.abortInFlightChat()
     this.stopTimeTick()
     this.unbindResize()
@@ -834,9 +840,9 @@ export default {
       this.persistUi()
     },
     clampSidebarWidth(w) {
-      const min = 120
+      const min = SIDEBAR_MIN
       const maxByPanel = Math.max(min, this.panelWidth - 240)
-      const max = Math.min(320, maxByPanel)
+      const max = Math.min(SIDEBAR_MAX, maxByPanel)
       return Math.min(max, Math.max(min, Number(w) || min))
     },
     startSidebarResize(e) {
@@ -890,12 +896,12 @@ export default {
       this.persistUi()
     },
     clampToViewport() {
-      const maxW = Math.max(360, window.innerWidth - 48)
-      const maxH = Math.max(400, window.innerHeight - 48)
+      const maxW = Math.max(PANEL_MIN_W, window.innerWidth - VIEWPORT_GUTTER)
+      const maxH = Math.max(PANEL_MIN_H, window.innerHeight - VIEWPORT_GUTTER)
       this.panelWidth = Math.min(this.panelWidth, maxW)
       this.panelHeight = Math.min(this.panelHeight, maxH)
-      this.panelWidth = Math.max(360, this.panelWidth)
-      this.panelHeight = Math.max(400, this.panelHeight)
+      this.panelWidth = Math.max(PANEL_MIN_W, this.panelWidth)
+      this.panelHeight = Math.max(PANEL_MIN_H, this.panelHeight)
       this.sidebarWidth = this.clampSidebarWidth(this.sidebarWidth)
     },
     startResize(e) {
@@ -1034,14 +1040,14 @@ export default {
         return
       }
       el.style.height = 'auto'
-      const next = Math.min(120, Math.max(36, el.scrollHeight))
+      const next = Math.min(COMPOSER_MAX_H, Math.max(COMPOSER_MIN_H, el.scrollHeight))
       el.style.height = next + 'px'
     },
     resetComposerHeight() {
       this.$nextTick(() => {
         const el = this.$refs.composer
         if (el) {
-          el.style.height = '36px'
+          el.style.height = COMPOSER_MIN_H + 'px'
         }
       })
     },
@@ -1320,6 +1326,91 @@ export default {
       }
       this._chatAbort = null
     },
+    stripStreamingAssistant(targetId) {
+      const id = targetId || this.activeId
+      if (!id) {
+        return
+      }
+      this.applyConversation(id, c => {
+        const msgs = (c.messages || []).slice()
+        const last = msgs[msgs.length - 1]
+        if (last && last.role === 'assistant' && last.streaming) {
+          msgs.pop()
+          c.messages = msgs
+        }
+      })
+    },
+    stopGenerating() {
+      const id = this.activeId
+      this.abortInFlightChat()
+      this.stripStreamingAssistant(id)
+      this.sending = false
+      this.focusComposer()
+    },
+    loadAgentUiBootstrap() {
+      fetchAgentUiConfig()
+        .then(res => {
+          if (!res || res.code !== 200 || !res.data) {
+            return
+          }
+          const data = res.data
+          if (data.welcomeText) {
+            setWelcomeText(data.welcomeText)
+          }
+          if (Array.isArray(data.shortcuts) && data.shortcuts.length) {
+            this.shortcuts = data.shortcuts.map(s => ({
+              label: s.label || '',
+              desc: s.desc || '',
+              text: s.text || '',
+              fillOnly: !!s.fillOnly,
+              icon: s.icon || 'el-icon-chat-dot-round',
+              tone: s.tone || 'blue'
+            }))
+          }
+        })
+        .catch(() => {})
+      listToolPool()
+        .then(res => {
+          let rows = null
+          if (Array.isArray(res)) {
+            rows = res
+          } else if (res && res.code === 200 && Array.isArray(res.data)) {
+            rows = res.data
+          }
+          if (rows) {
+            setToolLabelMap(rows)
+          }
+        })
+        .catch(() => {})
+    },
+    runServerSessionSearch() {
+      const q = (this.searchQuery || '').trim()
+      if (!q) {
+        this.serverSearchActive = false
+        return this.syncSessionsFromServer(true)
+      }
+      this.serverSearchActive = true
+      this.sessionsLoading = true
+      return listSessions({ offset: 0, limit: SESSION_LIST_INITIAL, q })
+        .then(res => {
+          if (!res || res.code !== 200) {
+            return
+          }
+          const page = this.parseSessionPage(res, 0)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
+            createIfEmpty: false,
+            loadActiveMessages: false
+          })
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('搜索会话失败')
+        })
+        .finally(() => {
+          this.sessionsLoading = false
+        })
+    },
     deliverAssistantReply(convId, payload) {
       // Prefer SSE for typing feel; fall back to JSON chat if stream fails
       this.abortInFlightChat()
@@ -1402,10 +1493,12 @@ export default {
         if (streamReq && typeof streamReq.abort === 'function') {
           streamReq.abort()
         }
+        this.stripStreamingAssistant(liveId)
       }
       this._chatAbort = abortFn
       return streamReq.catch(err => {
         if (aborted || (err && err.name === 'AbortError')) {
+          this.stripStreamingAssistant(liveId)
           return
         }
         // Stream unavailable → classic JSON chat

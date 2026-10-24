@@ -3,6 +3,17 @@
  * Conversations are server-owned; localStorage only keeps UI prefs + last activeId.
  */
 
+import {
+  DEFAULT_UI,
+  PANEL_MIN_W,
+  PANEL_MIN_H,
+  PANEL_MAX_W,
+  PANEL_MAX_H,
+  SIDEBAR_MIN,
+  SIDEBAR_MAX,
+  suggestPanelSize as suggestPanelSizeFromLayout
+} from './panelLayout'
+
 const UI_KEY = 'ops_agent_ui_prefs_v1'
 const ACTIVE_KEY = 'ops_agent_active_session_v1'
 const DOCK_KEY = 'ops_agent_docked_sessions_v1'
@@ -10,15 +21,14 @@ const DOCK_KEY = 'ops_agent_docked_sessions_v1'
 const LEGACY_STORE_KEY = 'ops_agent_conversations_v2'
 const LEGACY_SESSION_KEY = 'ops_agent_session_id'
 
-const DEFAULT_UI = {
-  panelWidth: 420,
-  panelHeight: 560,
-  sidebarOpen: true,
-  sidebarWidth: 176
-}
-
-export const WELCOME_TEXT =
+export let WELCOME_TEXT =
   '我是运维助手。可以查单、排障退款、查 SOP、建议远程停充（高风险需确认）。\n点下方快捷场景，或直接粘贴订单号。'
+
+export function setWelcomeText(text) {
+  if (text != null && String(text).trim()) {
+    WELCOME_TEXT = String(text)
+  }
+}
 
 export function createEmptyConversation(partial) {
   const now = Date.now()
@@ -237,11 +247,7 @@ export function clearLegacyLocalConversations() {
 
 /** Prefer a readable size that fits the viewport; caller may override with saved prefs. */
 export function suggestPanelSize() {
-  const vw = typeof window !== 'undefined' ? window.innerWidth : 1440
-  const vh = typeof window !== 'undefined' ? window.innerHeight : 900
-  const width = Math.min(520, Math.max(360, Math.round(vw * 0.36)))
-  const height = Math.min(680, Math.max(420, Math.round(vh * 0.72)))
-  return { panelWidth: width, panelHeight: height }
+  return suggestPanelSizeFromLayout()
 }
 
 export function loadUiPrefs() {
@@ -253,10 +259,14 @@ export function loadUiPrefs() {
     const parsed = JSON.parse(raw)
     const suggested = suggestPanelSize()
     return {
-      panelWidth: clamp(parsed.panelWidth || suggested.panelWidth, 360, 900),
-      panelHeight: clamp(parsed.panelHeight || suggested.panelHeight, 400, 900),
+      panelWidth: clamp(parsed.panelWidth || suggested.panelWidth, PANEL_MIN_W, PANEL_MAX_W),
+      panelHeight: clamp(parsed.panelHeight || suggested.panelHeight, PANEL_MIN_H, PANEL_MAX_H),
       sidebarOpen: parsed.sidebarOpen !== false,
-      sidebarWidth: clamp(parsed.sidebarWidth != null ? parsed.sidebarWidth : DEFAULT_UI.sidebarWidth, 120, 320)
+      sidebarWidth: clamp(
+        parsed.sidebarWidth != null ? parsed.sidebarWidth : DEFAULT_UI.sidebarWidth,
+        SIDEBAR_MIN,
+        SIDEBAR_MAX
+      )
     }
   } catch (e) {
     return Object.assign({}, DEFAULT_UI, suggestPanelSize())
@@ -268,7 +278,11 @@ export function saveUiPrefs(prefs) {
     panelWidth: prefs.panelWidth,
     panelHeight: prefs.panelHeight,
     sidebarOpen: prefs.sidebarOpen !== false,
-    sidebarWidth: clamp(prefs.sidebarWidth != null ? prefs.sidebarWidth : DEFAULT_UI.sidebarWidth, 120, 320)
+    sidebarWidth: clamp(
+      prefs.sidebarWidth != null ? prefs.sidebarWidth : DEFAULT_UI.sidebarWidth,
+      SIDEBAR_MIN,
+      SIDEBAR_MAX
+    )
   }))
 }
 

@@ -1,7 +1,8 @@
 /**
  * Shared Chinese labels for agent tools / pending actions.
- * Keep in sync with backend friendlyToolLabel where possible.
+ * Prefer tool-pool displayName when hydrated via setToolLabelMap().
  */
+
 export const TOOL_LABELS = {
   lookup_order: '查订单',
   lookup_gun_status: '查枪状态',
@@ -24,9 +25,32 @@ export const ACTION_LABELS = {
   lookup_pay_refund: '查支付/退款'
 }
 
+/** Runtime overrides from GET /api/agent/tool-pool displayName */
+let poolLabelMap = Object.create(null)
+
+export function setToolLabelMap(rows) {
+  const next = Object.create(null)
+  if (Array.isArray(rows)) {
+    rows.forEach(row => {
+      if (!row || !row.toolName) {
+        return
+      }
+      const name = String(row.toolName)
+      const dn = row.displayName != null ? String(row.displayName).trim() : ''
+      if (dn) {
+        next[name] = dn
+      }
+    })
+  }
+  poolLabelMap = next
+}
+
 export function toolLabel(name) {
   if (!name) {
     return '工具'
+  }
+  if (poolLabelMap[name]) {
+    return poolLabelMap[name]
   }
   return TOOL_LABELS[name] || name
 }

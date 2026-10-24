@@ -1,8 +1,9 @@
 import request from '@/utils/request'
+import { agentPath } from './paths'
 
 export function sendChat(data) {
 	return request({
-		url: '/api/agent/chat',
+		url: agentPath('/chat'),
 		method: 'post',
 		data
 	})
@@ -10,40 +11,44 @@ export function sendChat(data) {
 
 export function confirmAction(id) {
 	return request({
-		url: `/api/agent/actions/${id}/confirm`,
+		url: agentPath(`/actions/${id}/confirm`),
 		method: 'post'
 	})
 }
 
 export function cancelAction(id) {
 	return request({
-		url: `/api/agent/actions/${id}/cancel`,
+		url: agentPath(`/actions/${id}/cancel`),
 		method: 'post'
 	})
 }
 
 export function listSessions(params) {
 	const p = params || {}
+	const query = {
+		offset: p.offset != null ? p.offset : 0,
+		limit: p.limit != null ? p.limit : 15
+	}
+	if (p.q != null && String(p.q).trim() !== '') {
+		query.q = String(p.q).trim()
+	}
 	return request({
-		url: '/api/agent/sessions',
+		url: agentPath('/sessions'),
 		method: 'get',
-		params: {
-			offset: p.offset != null ? p.offset : 0,
-			limit: p.limit != null ? p.limit : 15
-		}
+		params: query
 	})
 }
 
 export function createSession() {
 	return request({
-		url: '/api/agent/sessions',
+		url: agentPath('/sessions'),
 		method: 'post'
 	})
 }
 
 export function listSessionMessages(id, limit) {
 	return request({
-		url: `/api/agent/sessions/${id}/messages`,
+		url: agentPath(`/sessions/${id}/messages`),
 		method: 'get',
 		params: { limit: limit || 200 }
 	})
@@ -51,14 +56,14 @@ export function listSessionMessages(id, limit) {
 
 export function listSessionPending(id) {
 	return request({
-		url: `/api/agent/sessions/${id}/pending`,
+		url: agentPath(`/sessions/${id}/pending`),
 		method: 'get'
 	})
 }
 
 export function renameSession(id, title) {
 	return request({
-		url: `/api/agent/sessions/${id}`,
+		url: agentPath(`/sessions/${id}`),
 		method: 'patch',
 		data: { title }
 	})
@@ -66,7 +71,14 @@ export function renameSession(id, title) {
 
 export function deleteSession(id) {
 	return request({
-		url: `/api/agent/sessions/${id}`,
+		url: agentPath(`/sessions/${id}`),
 		method: 'delete'
+	})
+}
+
+export function fetchAgentUiConfig() {
+	return request({
+		url: agentPath('/ui/config'),
+		method: 'get'
 	})
 }

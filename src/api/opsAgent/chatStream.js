@@ -1,4 +1,5 @@
 import { getToken } from '@/utils/auth'
+import { agentStreamUrl } from './paths'
 
 /**
  * POST SSE chat stream. Falls back to caller if unsupported.
@@ -8,8 +9,7 @@ import { getToken } from '@/utils/auth'
  */
 export function sendChatStream(data, handlers) {
   const h = handlers || {}
-  const base = process.env.VUE_APP_BASE_API || ''
-  const url = (base.replace(/\/$/, '') || '') + '/api/agent/chat/stream'
+  const url = agentStreamUrl()
   const headers = {
     'Content-Type': 'application/json',
     Accept: 'text/event-stream'
@@ -102,7 +102,6 @@ function dispatch(name, raw, h) {
   if (name === 'meta' && typeof h.onMeta === 'function') {
     h.onMeta(parsed)
   } else if (name === 'token' && typeof h.onToken === 'function') {
-    // Prefer JSON-string tokens (preserve \n); fall back to raw for legacy servers
     let text = raw || ''
     if (raw && raw.charAt(0) === '"') {
       try {
