@@ -2,15 +2,7 @@
  * Turn technical agent/ops errors into plain Chinese for non-dev users.
  */
 
-const ACTION_LABELS = {
-  refund: '退款',
-  remote_stop: '远程停充',
-  propose_refund: '退款',
-  propose_remote_stop: '远程停充',
-  lookup_order: '查单',
-  lookup_gun_status: '查枪状态',
-  lookup_pay_refund: '查支付/退款'
-}
+import { ACTION_LABELS, TOOL_LABELS } from './toolLabels'
 
 export function actionLabel(action) {
   if (!action) {
@@ -21,7 +13,7 @@ export function actionLabel(action) {
     return fromSummary
   }
   const key = action.toolName || action.tool || ''
-  return ACTION_LABELS[key] || '该操作'
+  return ACTION_LABELS[key] || TOOL_LABELS[key] || '该操作'
 }
 
 export function summarizeAction(summary) {
@@ -104,7 +96,8 @@ export function isPermissionDenied(raw) {
     return false
   }
   const text = String(raw)
-  return /没有访问权限|无权限|权限不足|未授权|请联系管理员授权|权限|forbidden|unauthorized|"code"\s*:\s*401|"code"\s*:\s*403/i.test(text)
+  // Do not match bare「权限」— many business msgs mention 权限 without being denials.
+  return /没有访问权限|无权限|权限不足|未授权|请联系管理员授权|forbidden|unauthorized|"code"\s*:\s*401|"code"\s*:\s*403/i.test(text)
 }
 
 function extractMsg(text) {

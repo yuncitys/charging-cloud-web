@@ -18,8 +18,12 @@
       </div>
       <div class="ops-agent-chat__fab" title="运维助手" @click="openPanel">
         <i class="el-icon-chat-dot-round" />
-        <span v-if="conversations.length > 1" class="ops-agent-chat__fab-badge">
-          {{ conversations.length }}
+        <span
+          v-if="fabPendingCount > 0"
+          class="ops-agent-chat__fab-badge"
+          :title="'有 ' + fabPendingCount + ' 项待确认'"
+        >
+          {{ fabPendingCount > 99 ? '99+' : fabPendingCount }}
         </span>
       </div>
     </div>
@@ -242,6 +246,14 @@
           </div>
 
           <div class="ops-agent-chat__footer">
+            <div
+              v-if="pageContextHint"
+              class="ops-agent-chat__ctx-hint"
+              title="当前页上下文会随本条消息一并发送，便于助手定位订单/站点"
+            >
+              <i class="el-icon-link" />
+              <span>将附带当前页：{{ pageContextHint }}</span>
+            </div>
             <div class="ops-agent-chat__composer">
               <textarea
                 ref="composer"
@@ -389,7 +401,9 @@ export default {
       timeTickTimer: null,
       /** cid -> whether title overflows current sidebar width */
       titleOverflowMap: {},
-      titleMeasureTimer: null
+      titleMeasureTimer: null,
+      /** Abort in-flight SSE when sending again / destroying */
+      _chatAbort: null
     }
   },
   computed: {
@@ -406,6 +420,33 @@ export default {
       return {
         width: this.sidebarWidth + 'px'
       }
+    },
+    /** FAB badge = pending L2 confirms, not session count */
+    fabPendingCount() {
+      let n = 0
+      ;(this.conversations || []).forEach(c => {
+        n += (c.pendingActions || []).length
+      })
+      return n
+    },
+    pageContextHint() {
+      const ctx = this.buildPageContext()
+      if (!ctx) {
+        return ''
+      }
+      const parts = []
+      if (ctx.orderCode) {
+        parts.push('订单 ' + ctx.orderCode)
+      } else if (ctx.orderId) {
+        parts.push('订单Id ' + ctx.orderId)
+      }
+      if (ctx.stationId) {
+        parts.push('站点 ' + ctx.stationId)
+      }
+      if (ctx.deviceCode) {
+        parts.push('设备 ' + ctx.deviceCode)
+      }
+      return parts.join(' · ')
     },
     sortedConversations() {
       // touch timeTick so relative labels recompute
@@ -483,6 +524,7 @@ export default {
     }
   },
   beforeDestroy() {
+    this.abortInFlightChat()
     this.stopTimeTick()
     this.unbindResize()
     this.unbindSidebarResize()
@@ -1268,11 +1310,23 @@ export default {
         c.pendingActions = merged
       })
     },
+    abortInFlightChat() {
+      if (typeof this._chatAbort === 'function') {
+        try {
+          this._chatAbort()
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      this._chatAbort = null
+    },
     deliverAssistantReply(convId, payload) {
       // Prefer SSE for typing feel; fall back to JSON chat if stream fails
+      this.abortInFlightChat()
       let liveId = convId
       let gotToken = false
-      return sendChatStream(payload, {
+      let aborted = false
+      const streamReq = sendChatStream(payload, {
         onMeta: meta => {
           if (meta && meta.sessionId) {
             liveId = this.alignSessionId(liveId, meta.sessionId)
@@ -1342,9 +1396,23 @@ export default {
             liveId = this.alignSessionId(liveId, done.sessionId)
           }
         }
-      }).catch(() => {
+      })
+      const abortFn = () => {
+        aborted = true
+        if (streamReq && typeof streamReq.abort === 'function') {
+          streamReq.abort()
+        }
+      }
+      this._chatAbort = abortFn
+      return streamReq.catch(err => {
+        if (aborted || (err && err.name === 'AbortError')) {
+          return
+        }
         // Stream unavailable → classic JSON chat
         return sendChat(payload).then(res => {
+          if (aborted) {
+            return
+          }
           if (res.code !== 200) {
             this.applyConversation(liveId, c => {
               c.messages = c.messages.concat([{
@@ -1372,6 +1440,9 @@ export default {
           })
           this.mergePendingActions(liveId, res.pendingActions)
         }).catch(() => {
+          if (aborted) {
+            return
+          }
           this.applyConversation(liveId, c => {
             c.messages = c.messages.concat([{
               role: 'assistant',
@@ -1380,6 +1451,10 @@ export default {
             }])
           })
         })
+      }).finally(() => {
+        if (this._chatAbort === abortFn) {
+          this._chatAbort = null
+        }
       })
     },
     dismissPending(id) {
@@ -2004,6 +2079,25 @@ export default {
     padding: 10px 12px 8px;
     border-top: 1px solid #ebeef5;
     background: #fff;
+  }
+
+  &__ctx-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f4f8ff;
+    border: 1px solid #d6e4ff;
+    color: #606266;
+    font-size: 12px;
+    line-height: 1.4;
+
+    i {
+      color: #409eff;
+      font-size: 13px;
+    }
   }
 
   &__composer {

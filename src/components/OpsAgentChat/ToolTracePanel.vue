@@ -39,16 +39,7 @@
 </template>
 
 <script>
-const TOOL_LABELS = {
-  lookup_order: '查订单',
-  lookup_gun_status: '查枪状态',
-  lookup_pay_refund: '查支付/退款',
-  propose_refund: '提议退款',
-  propose_remote_stop: '提议远程停充',
-  search_knowledge: '查操作说明',
-  refund: '退款',
-  remote_stop: '远程停充'
-}
+import { toolLabel } from './toolLabels'
 
 export default {
   name: 'ToolTracePanel',
@@ -88,12 +79,8 @@ export default {
     }
   },
   methods: {
-    toolLabel(name) {
-      if (!name) {
-        return '工具'
-      }
-      return TOOL_LABELS[name] || name
-    },
+    toolLabel,
+
     toggleStep(idx) {
       this.$set(this.stepOpen, idx, !this.stepOpen[idx])
     },

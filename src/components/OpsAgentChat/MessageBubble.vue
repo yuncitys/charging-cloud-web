@@ -27,12 +27,6 @@
           class="msg-bubble__md"
           v-html="renderMd(seg.value)"
         />
-        <json-block
-          v-else-if="seg.type === 'json'"
-          :key="'j-' + i"
-          :value="seg.value"
-          label="数据"
-        />
       </template>
       <tool-trace-panel
         v-if="message.toolTrace && message.toolTrace.length"
@@ -43,10 +37,8 @@
 </template>
 
 <script>
-import { splitTextAndJson } from './jsonPretty'
 import { renderMarkdown } from './renderMarkdown'
 import { humanizeOpsError } from './friendlyText'
-import JsonBlock from './JsonBlock.vue'
 import ToolTracePanel from './ToolTracePanel.vue'
 
 function isTechnicalFailure(text) {
@@ -55,7 +47,7 @@ function isTechnicalFailure(text) {
 
 export default {
   name: 'MessageBubble',
-  components: { JsonBlock, ToolTracePanel },
+  components: { ToolTracePanel },
   props: {
     message: {
       type: Object,
@@ -76,13 +68,14 @@ export default {
       return this.message.role === 'assistant' && isTechnicalFailure(this.rawText)
     },
     segments() {
+      // Assistant: markdown/text only — never split out pretty-printed JSON dumps (PII risk).
       if (this.message.role === 'user') {
         return [{ type: 'text', value: this.rawText }]
       }
       if (this.isFailureDump) {
         return [{ type: 'text', value: humanizeOpsError(this.rawText, null) }]
       }
-      return splitTextAndJson(this.rawText)
+      return [{ type: 'text', value: this.rawText }]
     },
     copySource() {
       if (this.isFailureDump) {

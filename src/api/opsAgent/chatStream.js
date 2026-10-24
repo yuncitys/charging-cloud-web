@@ -3,6 +3,8 @@ import { getToken } from '@/utils/auth'
 /**
  * POST SSE chat stream. Falls back to caller if unsupported.
  * Events: meta | token | pending | trace | done
+ *
+ * Returns a Promise with `.abort()` to cancel the fetch (AbortController).
  */
 export function sendChatStream(data, handlers) {
   const h = handlers || {}
@@ -17,11 +19,14 @@ export function sendChatStream(data, handlers) {
     headers.Authorization = token
   }
 
-  return fetch(url, {
+  const controller = typeof AbortController !== 'undefined' ? new AbortController() : null
+
+  const promise = fetch(url, {
     method: 'POST',
     headers,
     body: JSON.stringify(data || {}),
-    credentials: 'include'
+    credentials: 'include',
+    signal: controller ? controller.signal : undefined
   }).then(async res => {
     if (!res.ok) {
       const err = new Error('stream http ' + res.status)
@@ -75,6 +80,14 @@ export function sendChatStream(data, handlers) {
       h.onDone({})
     }
   })
+
+  promise.abort = () => {
+    if (controller) {
+      controller.abort()
+    }
+  }
+
+  return promise
 }
 
 function dispatch(name, raw, h) {
