@@ -1340,10 +1340,34 @@ export default {
         }
       })
     },
+    /** After SSE abort: leave a short assistant line so the thread does not look dead. */
+    appendStoppedNotice(targetId) {
+      const id = targetId || this.activeId
+      if (!id) {
+        return
+      }
+      const text = '已停止生成。需要的话可以换个说法再发，或补充订单号等信息后继续。'
+      this.applyConversation(id, c => {
+        const msgs = (c.messages || []).slice()
+        const last = msgs[msgs.length - 1]
+        if (last && last.role === 'assistant' && last.stopped) {
+          return
+        }
+        msgs.push({
+          role: 'assistant',
+          text,
+          toolTrace: null,
+          stopped: true
+        })
+        c.messages = msgs
+      })
+      this.scrollToBottom()
+    },
     stopGenerating() {
       const id = this.activeId
       this.abortInFlightChat()
       this.stripStreamingAssistant(id)
+      this.appendStoppedNotice(id)
       this.sending = false
       this.focusComposer()
     },
@@ -1560,10 +1584,15 @@ export default {
       cancelAction(id).then(res => {
         if (res && res.code === 200) {
           this.dismissPending(id)
+          const followUp =
+            (res.message && String(res.message).trim()) ||
+            ('好的，已取消「' +
+              actionLabel(typeof action === 'object' ? action : null) +
+              '」，没有执行任何操作。有需要可以直接说下一步。')
           this.patchActive(c => {
             c.messages = c.messages.concat([{
               role: 'assistant',
-              text: '好的，已取消「' + actionLabel(typeof action === 'object' ? action : null) + '」，没有执行任何操作。',
+              text: followUp,
               toolTrace: null
             }])
           })
