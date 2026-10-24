@@ -41,14 +41,43 @@ function labelFromObj(obj) {
   if (!obj || typeof obj !== 'object') {
     return ''
   }
-  const tool = obj.tool || obj.toolName || ''
-  const order = obj.orderCode || obj.payId || obj.payCode || ''
-  const name = ACTION_LABELS[tool] || tool || '操作'
-  let label = order ? name + '（订单 ' + order + '）' : name
-  if (obj.amount != null && obj.amount !== '') {
-    label += '，金额 ' + obj.amount + ' 元'
+  const parts = parsePendingFields(obj)
+  const name = parts.actionName || '操作'
+  let label = parts.order ? name + '（订单 ' + parts.order + '）' : name
+  if (parts.amount != null && parts.amount !== '') {
+    label += '，金额 ' + parts.amount + ' 元'
   }
   return label
+}
+
+/**
+ * Parse pending-action summary (object or JSON string) into display fields.
+ */
+export function parsePendingFields(summary) {
+  let obj = summary
+  if (typeof summary === 'string') {
+    const s = summary.trim()
+    if (!s) {
+      return { actionName: '', order: '', amount: '', raw: '' }
+    }
+    if (s.charAt(0) === '{') {
+      try {
+        obj = JSON.parse(s)
+      } catch (e) {
+        return { actionName: '', order: '', amount: '', raw: s }
+      }
+    } else {
+      return { actionName: '', order: '', amount: '', raw: s }
+    }
+  }
+  if (!obj || typeof obj !== 'object') {
+    return { actionName: '', order: '', amount: '', raw: '' }
+  }
+  const tool = obj.tool || obj.toolName || ''
+  const order = obj.orderCode || obj.payId || obj.payCode || ''
+  const amount = obj.amount != null && obj.amount !== '' ? String(obj.amount) : ''
+  const actionName = ACTION_LABELS[tool] || TOOL_LABELS[tool] || tool || ''
+  return { actionName, order: order ? String(order) : '', amount, raw: '' }
 }
 
 export function humanizeOpsError(raw, action) {

@@ -7,7 +7,21 @@
         <div class="pending-card__hint">确认后才会真正执行，点取消则不做任何改动</div>
       </div>
     </div>
-    <div class="pending-card__body">{{ plainSummary }}</div>
+    <div class="pending-card__body">
+      <div class="pending-card__action">{{ fields.actionName || '该操作' }}</div>
+      <div v-if="fields.amount" class="pending-card__amount">
+        <span class="pending-card__amount-label">金额</span>
+        <span class="pending-card__amount-value">{{ fields.amount }}</span>
+        <span class="pending-card__amount-unit">元</span>
+      </div>
+      <div v-if="fields.order" class="pending-card__order">
+        <span class="pending-card__order-label">订单 / 支付单</span>
+        <span class="pending-card__order-value">{{ fields.order }}</span>
+      </div>
+      <div v-if="!fields.amount && !fields.order" class="pending-card__fallback">
+        {{ plainSummary }}
+      </div>
+    </div>
     <div class="pending-card__actions">
       <el-button size="small" :disabled="confirming" @click="onCancel">取消</el-button>
       <el-button size="small" type="primary" :loading="confirming" @click="onConfirm">确认执行</el-button>
@@ -17,7 +31,7 @@
 
 <script>
 import { confirmAction } from '@/api/opsAgent/chat'
-import { actionLabel, summarizeAction } from './friendlyText'
+import { actionLabel, parsePendingFields, summarizeAction } from './friendlyText'
 
 export default {
   name: 'PendingActionCard',
@@ -33,6 +47,13 @@ export default {
     }
   },
   computed: {
+    fields() {
+      const fromSummary = parsePendingFields(this.action && this.action.summary)
+      if (!fromSummary.actionName) {
+        fromSummary.actionName = actionLabel(this.action)
+      }
+      return fromSummary
+    },
     plainSummary() {
       const label = actionLabel(this.action)
       const detail = summarizeAction(this.action.summary)
@@ -115,13 +136,68 @@ export default {
   }
 
   &__body {
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.85);
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  &__action {
+    font-size: 13px;
+    font-weight: 600;
+    color: #303133;
+    margin-bottom: 8px;
+  }
+
+  &__amount {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  &__amount-label {
+    font-size: 12px;
+    color: #909399;
+  }
+
+  &__amount-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #e6a23c;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  &__amount-unit {
+    font-size: 13px;
+    color: #909399;
+  }
+
+  &__order {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__order-label {
+    font-size: 12px;
+    color: #909399;
+  }
+
+  &__order-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+    word-break: break-all;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  &__fallback {
     font-size: 13px;
     color: #606266;
     line-height: 1.55;
-    padding: 10px 12px;
-    background: rgba(255, 255, 255, 0.7);
-    border-radius: 8px;
-    margin-bottom: 12px;
   }
 
   &__actions {
