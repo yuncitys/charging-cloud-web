@@ -2255,7 +2255,8 @@ export default {
     }
   }
 
-  &__send {
+  &__send,
+  &__stop {
     flex-shrink: 0;
     height: 36px;
     min-width: 56px;
@@ -2263,6 +2264,23 @@ export default {
     margin: 0;
     border-radius: 8px !important;
     font-size: 13px;
+    line-height: 34px;
+    box-sizing: border-box;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  &__stop {
+    border-color: #dcdfe6 !important;
+    background: #fff !important;
+    color: #606266 !important;
+
+    &:hover,
+    &:focus {
+      border-color: #c0c4cc !important;
+      color: #303133 !important;
+      background: #f5f7fa !important;
+    }
   }
 
   &__hint {
