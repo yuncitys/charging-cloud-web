@@ -278,6 +278,7 @@ import {
   listSessions,
   createSession,
   listSessionMessages,
+  listSessionPending,
   renameSession,
   deleteSession
 } from '@/api/opsAgent/chat'
@@ -315,14 +316,17 @@ const SHORTCUTS = [
     desc: '按订单号看状态和金额',
     icon: 'el-icon-search',
     tone: 'blue',
-    text: '查一下订单ORD20240101001'
+    // fillOnly：只填入输入框，需用户补上真实订单号后再发送，避免演示假单污染会话
+    fillOnly: true,
+    text: '查一下订单'
   },
   {
     label: '退款排障',
     desc: '扣款未启动时走确认退款',
     icon: 'el-icon-wallet',
     tone: 'amber',
-    text: '订单ORD20240101001扣了钱没启动，能不能退'
+    fillOnly: true,
+    text: '订单扣了钱没启动，能不能退（请补上订单号）'
   },
   {
     label: '枪离线 SOP',
@@ -336,7 +340,8 @@ const SHORTCUTS = [
     desc: '订单关不掉时远程停止',
     icon: 'el-icon-switch-button',
     tone: 'red',
-    text: '订单ORD20240101001关不掉，帮我停充'
+    fillOnly: true,
+    text: '订单关不掉，帮我停充（请补上订单号）'
   }
 ]
 
@@ -716,8 +721,11 @@ export default {
         return Promise.resolve()
       }
       this.$set(this.messagesLoadingIds, id, true)
-      return listSessionMessages(id)
-        .then(res => {
+      return Promise.all([
+        listSessionMessages(id),
+        listSessionPending(id).catch(() => null)
+      ])
+        .then(([res, pendingRes]) => {
           if (!res || res.code !== 200) {
             return
           }
@@ -728,8 +736,14 @@ export default {
           const next = Object.assign({}, this.conversations[idx])
           next.messages = mapServerMessages(res.data)
           next.messagesLoaded = true
-          // pending cards are ephemeral; reload does not restore open confirms
-          next.pendingActions = next.pendingActions || []
+          if (pendingRes && pendingRes.code === 200 && Array.isArray(pendingRes.data)) {
+            next.pendingActions = pendingRes.data.map(row => ({
+              id: row.id,
+              summary: row.summary
+            }))
+          } else {
+            next.pendingActions = next.pendingActions || []
+          }
           if (isDefaultConversationTitle(next.title)) {
             const derived = this.deriveTitleFromMessages(next.messages)
             if (derived) {
@@ -1157,6 +1171,10 @@ export default {
       this.inputText = item.text
       this.$nextTick(() => {
         this.autoGrowComposer()
+        this.focusComposer()
+        if (item && item.fillOnly) {
+          return
+        }
         this.sendMessage()
       })
     },
@@ -1390,6 +1408,7 @@ export default {
       }).catch(() => this.$message.error('取消失败，请稍后重试'))
     },
     onActionConfirmed({ action, result }) {
+      // Card goes away once confirm was processed; success/failure both echo in chat.
       this.dismissPending(action.id)
       this.patchActive(c => {
         c.messages = c.messages.concat([{
@@ -1400,15 +1419,13 @@ export default {
       })
       this.scrollToBottom()
     },
-    onActionConfirmFailed({ action }) {
-      this.patchActive(c => {
-        c.messages = c.messages.concat([{
-          role: 'assistant',
-          text: '「' + actionLabel(action) + '」确认请求失败，请稍后重试。',
-          toolTrace: null
-        }])
-      })
-      this.scrollToBottom()
+    onActionConfirmFailed({ action, error }) {
+      // Only when confirm itself did not take effect (network / lifecycle). Keep card for retry.
+      const detail = error && (error.msg || error.message)
+      const tip = detail && /[\u4e00-\u9fff]/.test(String(detail))
+        ? String(detail)
+        : '确认请求没有提交成功，请稍后重试；确认卡仍保留。'
+      this.$message && this.$message.warning(tip)
     }
   }
 }

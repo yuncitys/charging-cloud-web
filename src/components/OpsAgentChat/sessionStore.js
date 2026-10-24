@@ -39,7 +39,7 @@ export function createEmptyConversation(partial) {
         }
       ],
       pendingActions: [],
-      mockMode: true,
+      mockMode: false,
       messagesLoaded: false
     },
     partial || {},

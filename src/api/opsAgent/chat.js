@@ -49,6 +49,13 @@ export function listSessionMessages(id, limit) {
 	})
 }
 
+export function listSessionPending(id) {
+	return request({
+		url: `/api/agent/sessions/${id}/pending`,
+		method: 'get'
+	})
+}
+
 export function renameSession(id, title) {
 	return request({
 		url: `/api/agent/sessions/${id}`,

@@ -132,9 +132,12 @@ function extractMsg(text) {
 
 export function formatConfirmResult(action, result) {
   const label = actionLabel(action)
-  if (result && result.code === 200) {
+  const status = result && String(result.status || '').toUpperCase()
+  const codeOk = result && (result.code === 200 || result.code === '200')
+  if (status === 'EXECUTED' || (codeOk && status !== 'FAILED')) {
     return '已完成：' + label + '执行成功。'
   }
+  // Confirm succeeded; downstream (refund/stop) failed — never phrase as「确认失败」
   const raw = (result && (result.userMessage || result.error || result.msg)) || ''
   return humanizeOpsError(raw, action)
 }

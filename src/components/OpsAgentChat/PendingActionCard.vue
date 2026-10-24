@@ -50,9 +50,20 @@ export default {
       this.confirming = true
       confirmAction(this.action.id)
         .then(res => {
-          this.$emit('confirmed', { action: this.action, result: res })
+          // Confirm was accepted and run (EXECUTED / FAILED). Downstream refund/stop
+          // failure is still a completed confirm — close the card and echo the result.
+          const status = res && String(res.status || '').toUpperCase()
+          const settled = status === 'EXECUTED' || status === 'FAILED'
+          const codeOk = res && (res.code === 200 || res.code === '200')
+          if (settled || codeOk) {
+            this.$emit('confirmed', { action: this.action, result: res })
+            return
+          }
+          // Lifecycle reject (expired / mismatch / not pending) — confirm never took effect
+          this.$emit('confirm-failed', { action: this.action, error: res })
         })
         .catch(err => {
+          // Network / transport only — keep card so user can retry confirm
           this.$emit('confirm-failed', { action: this.action, error: err })
         })
         .finally(() => {
