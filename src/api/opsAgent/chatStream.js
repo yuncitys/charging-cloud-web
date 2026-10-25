@@ -3,7 +3,7 @@ import { agentStreamUrl } from './paths'
 
 /**
  * POST SSE chat stream. Falls back to caller if unsupported.
- * Events: meta | token | pending | trace | done
+ * Events: meta | status | token | pending | trace | done
  *
  * Returns a Promise with `.abort()` to cancel the fetch (AbortController).
  */
@@ -101,6 +101,16 @@ function dispatch(name, raw, h) {
   }
   if (name === 'meta' && typeof h.onMeta === 'function') {
     h.onMeta(parsed)
+  } else if (name === 'status' && typeof h.onStatus === 'function') {
+    let text = ''
+    if (parsed && typeof parsed === 'object' && parsed.text != null) {
+      text = String(parsed.text)
+    } else if (typeof parsed === 'string') {
+      text = parsed
+    } else if (raw) {
+      text = String(raw)
+    }
+    h.onStatus(text)
   } else if (name === 'token' && typeof h.onToken === 'function') {
     let text = raw || ''
     if (raw && raw.charAt(0) === '"') {

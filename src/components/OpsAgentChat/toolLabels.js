@@ -7,6 +7,7 @@ export const TOOL_LABELS = {
   lookup_order: '查订单',
   lookup_gun_status: '查枪状态',
   lookup_pay_refund: '查支付/退款',
+  lookup_station: '查站点',
   propose_refund: '提议退款',
   propose_remote_stop: '提议远程停充',
   search_knowledge: '查操作说明',
@@ -22,7 +23,8 @@ export const ACTION_LABELS = {
   propose_remote_stop: '远程停充',
   lookup_order: '查单',
   lookup_gun_status: '查枪状态',
-  lookup_pay_refund: '查支付/退款'
+  lookup_pay_refund: '查支付/退款',
+  lookup_station: '查站点'
 }
 
 /** Runtime overrides from GET /api/agent/tool-pool displayName */

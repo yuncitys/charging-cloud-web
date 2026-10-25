@@ -212,6 +212,7 @@
 
             <div v-if="sending" class="ops-agent-chat__typing">
               <span /><span /><span />
+              <em v-if="processStatus" class="ops-agent-chat__typing-text">{{ processStatus }}</em>
             </div>
 
             <pending-action-card
@@ -366,6 +367,8 @@ export default {
       searchQuery: '',
       inputText: '',
       sending: false,
+      /** Mid-run SSE status, e.g. 「正在查询订单…」 */
+      processStatus: '',
       sessionsLoading: false,
       sessionsLoadingMore: false,
       sessionsLoadError: false,
@@ -1270,6 +1273,7 @@ export default {
         }
         this.deliverAssistantReply(convId, payload)
           .finally(() => {
+            this.processStatus = ''
             this.sending = false
             this.scrollToBottom()
             this.focusComposer()
@@ -1368,6 +1372,7 @@ export default {
       this.abortInFlightChat()
       this.stripStreamingAssistant(id)
       this.appendStoppedNotice(id)
+      this.processStatus = ''
       this.sending = false
       this.focusComposer()
     },
@@ -1441,16 +1446,25 @@ export default {
       let liveId = convId
       let gotToken = false
       let aborted = false
+      this.processStatus = ''
       const streamReq = sendChatStream(payload, {
         onMeta: meta => {
           if (meta && meta.sessionId) {
             liveId = this.alignSessionId(liveId, meta.sessionId)
           }
         },
+        onStatus: text => {
+          if (aborted || !text) {
+            return
+          }
+          this.processStatus = text
+          this.scrollToBottom()
+        },
         onToken: chunk => {
           if (!chunk) {
             return
           }
+          this.processStatus = ''
           if (!gotToken) {
             gotToken = true
             this.applyConversation(liveId, c => {
@@ -1493,6 +1507,12 @@ export default {
           })
         },
         onDonePayload: done => {
+          this.processStatus = ''
+          if (done && done.stopped) {
+            this.stripStreamingAssistant(liveId)
+            this.appendStoppedNotice(liveId)
+            return
+          }
           this.applyConversation(liveId, c => {
             if (done && typeof done.mockMode === 'boolean') {
               c.mockMode = done.mockMode
@@ -2072,10 +2092,11 @@ export default {
 
   &__typing {
     display: flex;
+    align-items: center;
     gap: 4px;
     padding: 8px 4px;
 
-    span {
+    > span {
       width: 6px;
       height: 6px;
       border-radius: 50%;
@@ -2090,6 +2111,13 @@ export default {
         animation-delay: 0.3s;
       }
     }
+  }
+
+  &__typing-text {
+    margin-left: 6px;
+    font-style: normal;
+    font-size: 12px;
+    color: #909399;
   }
 
   &__shortcuts {
