@@ -295,6 +295,7 @@
 <script>
 import {
   sendChat,
+  stopChatGeneration,
   cancelAction,
   listSessions,
   createSession,
@@ -1369,11 +1370,17 @@ export default {
     },
     stopGenerating() {
       const id = this.activeId
+      const conv = this.conversations.find(c => c.id === id)
+      const sessionId = conv && (conv.sessionId || conv.id)
       this.abortInFlightChat()
       this.stripStreamingAssistant(id)
       this.appendStoppedNotice(id)
       this.processStatus = ''
       this.sending = false
+      // Persist stop notice server-side; abort alone may not land before refresh.
+      if (sessionId) {
+        stopChatGeneration(sessionId).catch(() => {})
+      }
       this.focusComposer()
     },
     loadAgentUiBootstrap() {

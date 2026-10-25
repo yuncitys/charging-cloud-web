@@ -9,6 +9,15 @@ export function sendChat(data) {
 	})
 }
 
+/** Persist「已停止生成」and cancel in-flight stream for this session. */
+export function stopChatGeneration(sessionId) {
+	return request({
+		url: agentPath('/chat/stop'),
+		method: 'post',
+		data: { sessionId }
+	})
+}
+
 export function confirmAction(id) {
 	return request({
 		url: agentPath(`/actions/${id}/confirm`),
