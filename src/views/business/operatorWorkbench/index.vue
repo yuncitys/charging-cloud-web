@@ -98,7 +98,7 @@
     <div v-if="canAlerts" class="wb-block" v-loading="blocks.alerts.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">异常预警</span>
-        <span class="wb-block__asof">按时段末日判定，最多展示 Top20</span>
+        <span class="wb-block__asof">{{ alertAsOfText }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/device/faultMonitor')">
           故障监控 <i class="el-icon-arrow-right" />
         </el-link>
@@ -143,7 +143,7 @@
       </div>
       <template v-else>
         <el-alert v-if="finance.hint" class="wb-hint" type="info" :closable="false" show-icon :title="finance.hint" />
-        <div class="wb-cards">
+        <div class="wb-cards wb-cards--3">
           <div class="wb-card">
             <div class="wb-card__label">应收（元）</div>
             <div class="wb-card__value">{{ money(finance.receivable) }}</div>
@@ -155,10 +155,7 @@
           <div class="wb-card">
             <div class="wb-card__label">已结算（元）</div>
             <div class="wb-card__value">{{ money(finance.settledAmount) }}</div>
-          </div>
-          <div class="wb-card">
-            <div class="wb-card__label">待结算（元）</div>
-            <div class="wb-card__value">{{ money(finance.pendingSettlementAmount) }}</div>
+            <div class="wb-card__sub">{{ settledSubText }}</div>
           </div>
         </div>
         <div class="wb-yesterday">
@@ -273,6 +270,19 @@ export default {
       if (!this.searchForm.merchantId) return this.stationList
       return this.stationList.filter(s => s.merchantId === this.searchForm.merchantId)
     },
+    alertAsOfText() {
+      const first = this.alerts.length ? this.alerts[0] : null
+      const day = first && first.alertDate
+      return (day ? `判定日：${day}` : '按已收口营业日判定') + '（今日未收口，周期含今日时取昨日），最多展示 Top20'
+    },
+    settledSubText() {
+      const f = this.finance
+      if (!f.settlementPeriodStart) return '商户结算快照汇总'
+      const range = f.settlementPeriodStart === f.settlementPeriodEnd
+        ? f.settlementPeriodStart
+        : `${f.settlementPeriodStart} ~ ${f.settlementPeriodEnd}`
+      return `结算快照汇总（${range}），待结算暂无`
+    },
     feeTotal() {
       return (Number(this.overview.electricFee) || 0) + (Number(this.overview.serviceFee) || 0)
     },
@@ -359,9 +369,9 @@ export default {
       const m = row.metricValue
       const c = row.compareValue
       switch (row.alertType) {
-        case 'ZERO_INCOME': return '当日实收为 0'
-        case 'INCOME_DROP': return `较前7日均值降幅 ${this.percent(m)}，当日实收 ${this.money(c)} 元`
-        case 'FAULT_HIGH': return `当日新建故障工单 ${this.int(m)} 个（阈值 ${this.int(c)}）`
+        case 'ZERO_INCOME': return '判定日实收为 0'
+        case 'INCOME_DROP': return `较前7日均值降幅 ${this.percent(m)}，判定日实收 ${this.money(c)} 元`
+        case 'FAULT_HIGH': return `判定日新建故障工单 ${this.int(m)} 个（阈值 ${this.int(c)}）`
         case 'START_FAIL': return `启动成功率 ${this.percent(m)}（阈值 ${this.percent(c)}）`
         default: return ''
       }
@@ -437,6 +447,9 @@ export default {
     gap: 12px;
     &--6 {
       grid-template-columns: repeat(6, 1fr);
+    }
+    &--3 {
+      grid-template-columns: repeat(3, 1fr);
     }
   }
   .wb-card {
