@@ -58,8 +58,9 @@
       </div>
       <div v-else class="wb-cards">
         <div class="wb-card">
-          <div class="wb-card__label">实收（元）</div>
+          <div class="wb-card__label">经营实收（元）</div>
           <div class="wb-card__value">{{ money(overview.actualIncome) }}</div>
+          <div class="wb-card__sub">与经营报表一致（订单实收口径）</div>
           <div class="wb-card__sub">
             环比
             <span v-if="overview.incomeWow != null" :class="overview.incomeWow >= 0 ? 'up' : 'down'">
@@ -99,7 +100,9 @@
       <div class="wb-block__head">
         <span class="wb-block__title">异常预警</span>
         <span class="wb-block__asof">{{ alertAsOfText }}</span>
-        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/device/faultMonitor')">
+        <el-button class="wb-block__btn" size="mini" icon="el-icon-setting" @click="openConfig">预警设置</el-button>
+        <el-button size="mini" icon="el-icon-view" @click="openDismissed">已忽略</el-button>
+        <el-link class="wb-block__link wb-block__link--inline" type="primary" :underline="false" @click="go('/device/faultMonitor')">
           故障监控 <i class="el-icon-arrow-right" />
         </el-link>
       </div>
@@ -117,13 +120,102 @@
         <el-table-column label="说明" min-width="260">
           <template slot-scope="scope">{{ alertDesc(scope.row) }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="100" align="center">
+        <el-table-column label="操作" width="140" align="center">
           <template slot-scope="scope">
             <el-button type="text" size="small" @click="goAlert(scope.row)">去处理</el-button>
+            <el-button type="text" size="small" @click="openDismiss(scope.row)">忽略</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
+
+    <!-- 预警设置抽屉 -->
+    <el-drawer title="预警设置" :visible.sync="configDrawer" direction="rtl" size="480px" append-to-body>
+      <div class="wb-drawer">
+        <el-form label-position="top" size="small">
+          <el-form-item v-if="!searchForm.merchantId" label="商户">
+            <el-select v-model="configMerchantId" filterable placeholder="请选择商户" style="width: 100%" @change="loadConfig">
+              <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <el-form v-loading="configLoading" label-position="top" size="small" class="wb-config-form">
+          <el-form-item label="收入骤降比例">
+            <el-input-number v-model="configForm.dropRatioThreshold" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
+            <div class="wb-tip">{{ FIELD_TIPS.dropRatioThreshold }}</div>
+          </el-form-item>
+          <el-form-item label="骤降基线金额（元）">
+            <el-input-number v-model="configForm.dropBaselineMin" :min="0" :step="10" :precision="2" style="width: 200px" />
+            <div class="wb-tip">{{ FIELD_TIPS.dropBaselineMin }}</div>
+          </el-form-item>
+          <el-form-item label="故障高发（新建工单数）">
+            <el-input-number v-model="configForm.faultHighMinOrders" :min="1" :step="1" :precision="0" style="width: 200px" />
+            <div class="wb-tip">{{ FIELD_TIPS.faultHighMinOrders }}</div>
+          </el-form-item>
+          <el-form-item label="启动成功率下限">
+            <el-input-number v-model="configForm.startSuccessRateMin" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
+            <div class="wb-tip">{{ FIELD_TIPS.startSuccessRateMin }}</div>
+          </el-form-item>
+          <el-form-item label="启动失败最少订单数">
+            <el-input-number v-model="configForm.startFailMinSamples" :min="1" :step="1" :precision="0" style="width: 200px" />
+            <div class="wb-tip">{{ FIELD_TIPS.startFailMinSamples }}</div>
+          </el-form-item>
+        </el-form>
+        <div class="wb-drawer__note">{{ CONFIG_FOOTER_NOTE }}</div>
+        <div class="wb-drawer__footer">
+          <el-button size="small" @click="configDrawer = false">取消</el-button>
+          <el-button size="small" type="primary" :loading="configSaving" :disabled="!configMerchantId" @click="saveConfig">保存</el-button>
+        </div>
+      </div>
+    </el-drawer>
+
+    <!-- 忽略时长 -->
+    <el-dialog title="忽略预警" :visible.sync="dismissDialog" width="420px" append-to-body>
+      <div v-if="dismissTarget" class="wb-dismiss-info">
+        {{ dismissTarget.stationName }} · {{ alertMeta(dismissTarget.alertType).label }}
+      </div>
+      <el-form label-width="80px" size="small">
+        <el-form-item label="忽略时长">
+          <el-radio-group v-model="dismissDays">
+            <el-radio-button :label="3">3 天</el-radio-button>
+            <el-radio-button :label="7">7 天</el-radio-button>
+            <el-radio-button :label="30">30 天</el-radio-button>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      <div class="wb-tip">忽略后该站点该类型预警在期限内不再出现在列表，到期自动恢复；商户内共享，可在「已忽略」中取消。</div>
+      <span slot="footer">
+        <el-button size="small" @click="dismissDialog = false">取消</el-button>
+        <el-button size="small" type="primary" :loading="dismissing" @click="confirmDismiss">确定</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 已忽略抽屉 -->
+    <el-drawer title="已忽略的预警" :visible.sync="dismissedDrawer" direction="rtl" size="560px" append-to-body>
+      <div class="wb-drawer">
+        <el-form v-if="!searchForm.merchantId" label-position="top" size="small">
+          <el-form-item label="商户">
+            <el-select v-model="dismissedMerchantId" filterable placeholder="请选择商户" style="width: 100%" @change="loadDismissed">
+              <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
+            </el-select>
+          </el-form-item>
+        </el-form>
+        <el-table v-loading="dismissedLoading" :data="dismissedList" size="small" empty-text="暂无已忽略预警">
+          <el-table-column label="站点" prop="stationName" min-width="140" show-overflow-tooltip />
+          <el-table-column label="类型" width="110" align="center">
+            <template slot-scope="scope">
+              <el-tag size="small" :type="alertMeta(scope.row.alertType).tag">{{ alertMeta(scope.row.alertType).label }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="到期时间" prop="expireAt" min-width="150" />
+          <el-table-column label="操作" width="90" align="center">
+            <template slot-scope="scope">
+              <el-button type="text" size="small" @click="cancelOne(scope.row)">取消忽略</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-drawer>
 
     <!-- 财务 -->
     <div v-if="canFinance" class="wb-block" v-loading="blocks.finance.loading">
@@ -149,8 +241,9 @@
             <div class="wb-card__value">{{ money(finance.receivable) }}</div>
           </div>
           <div class="wb-card">
-            <div class="wb-card__label">实收（元）</div>
+            <div class="wb-card__label">结算实收（元）</div>
             <div class="wb-card__value">{{ money(finance.actualReceived) }}</div>
+            <div class="wb-card__sub">与站点财务日账单一致</div>
           </div>
           <div class="wb-card">
             <div class="wb-card__label">已结算（元）</div>
@@ -225,7 +318,12 @@ import {
   workbenchOverview,
   workbenchAlerts,
   workbenchFinance,
-  workbenchMarketing
+  workbenchMarketing,
+  getAlertConfig,
+  saveAlertConfig,
+  dismissAlert,
+  listDismissed,
+  cancelDismiss
 } from '@/api/business/operatorWorkbench'
 
 const ALERT_META = {
@@ -233,6 +331,23 @@ const ALERT_META = {
   FAULT_HIGH: { label: '故障工单多', tag: 'danger' },
   INCOME_DROP: { label: '收入骤降', tag: 'warning' },
   ZERO_INCOME: { label: '零收入', tag: 'info' }
+}
+
+// 字段提示全文（spec：设置 UI）
+const FIELD_TIPS = {
+  dropRatioThreshold: '含义：判定日经营实收相对近 7 日均值的比例上限。作用：比例越低越「严」（更容易报骤降）。填 0.5 表示实收不到均价一半才告警。',
+  dropBaselineMin: '含义：近 7 日均值的最低门槛。作用：均值低于该金额的站点不报骤降，避免长期低流水小站误报。',
+  faultHighMinOrders: '含义：判定日新建故障工单数的下限。作用：达到或超过该笔数则进入「故障高发」列表，便于优先派修。',
+  startSuccessRateMin: '含义：启动成功订单占比的最低可接受值。作用：成功率低于该值则告警；调低可减少告警，调高更敏感。',
+  startFailMinSamples: '含义：参与成功率计算的最少样本（启动+无响应）。作用：样本不足不告警，避免「仅 1 单失败」刷屏。'
+}
+const CONFIG_FOOTER_NOTE = '修改后立即作用于预警列表，无需重跑统计任务。预警判定日规则与 V1 相同（选「今日」时看昨日已收口日）。'
+const DEFAULT_CONFIG = {
+  dropRatioThreshold: 0.5,
+  dropBaselineMin: 100,
+  faultHighMinOrders: 3,
+  startSuccessRateMin: 0.9,
+  startFailMinSamples: 10
 }
 
 function newBlock() {
@@ -252,6 +367,21 @@ export default {
         finance: newBlock(),
         marketing: newBlock()
       },
+      FIELD_TIPS,
+      CONFIG_FOOTER_NOTE,
+      configDrawer: false,
+      configLoading: false,
+      configSaving: false,
+      configMerchantId: null,
+      configForm: { ...DEFAULT_CONFIG },
+      dismissDialog: false,
+      dismissing: false,
+      dismissTarget: null,
+      dismissDays: 7,
+      dismissedDrawer: false,
+      dismissedLoading: false,
+      dismissedMerchantId: null,
+      dismissedList: [],
       overview: {},
       alerts: [],
       finance: {},
@@ -362,6 +492,101 @@ export default {
     loadMarketing() {
       return this.runBlock('marketing', workbenchMarketing, d => { this.marketing = d || {} })
     },
+    // 默认商户：筛选商户 > 唯一商户 > 空（需在抽屉内选择）
+    defaultMerchantId() {
+      if (this.searchForm.merchantId) return this.searchForm.merchantId
+      return this.merchantList.length === 1 ? this.merchantList[0].id : null
+    },
+    openConfig() {
+      this.configMerchantId = this.defaultMerchantId()
+      this.configForm = { ...DEFAULT_CONFIG }
+      this.configDrawer = true
+      if (this.configMerchantId) this.loadConfig()
+    },
+    loadConfig() {
+      if (!this.configMerchantId) return
+      this.configLoading = true
+      getAlertConfig(this.configMerchantId).then(res => {
+        if (res && res.code === 200 && res.data) {
+          const d = res.data
+          this.configForm = {
+            dropRatioThreshold: Number(d.dropRatioThreshold),
+            dropBaselineMin: Number(d.dropBaselineMin),
+            faultHighMinOrders: Number(d.faultHighMinOrders),
+            startSuccessRateMin: Number(d.startSuccessRateMin),
+            startFailMinSamples: Number(d.startFailMinSamples)
+          }
+        } else {
+          this.$message.error((res && res.msg) || '读取预警设置失败')
+        }
+      }).catch(() => {}).then(() => { this.configLoading = false })
+    },
+    saveConfig() {
+      if (!this.configMerchantId) return this.$message.warning('请选择商户')
+      this.configSaving = true
+      saveAlertConfig({ merchantId: this.configMerchantId, ...this.configForm }).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success('保存成功')
+          this.configDrawer = false
+          this.loadAlerts() // 保存后立即刷新预警列表
+        } else {
+          this.$message.error((res && res.msg) || '保存失败')
+        }
+      }).catch(() => {}).then(() => { this.configSaving = false })
+    },
+    openDismiss(row) {
+      this.dismissTarget = row
+      this.dismissDays = 7
+      this.dismissDialog = true
+    },
+    confirmDismiss() {
+      const row = this.dismissTarget
+      if (!row) return
+      const merchantId = row.merchantId || this.searchForm.merchantId
+      this.dismissing = true
+      dismissAlert({
+        merchantId,
+        stationId: row.stationId,
+        alertType: row.alertType,
+        days: this.dismissDays
+      }).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success(`已忽略 ${this.dismissDays} 天`)
+          this.dismissDialog = false
+          this.loadAlerts()
+        } else {
+          this.$message.error((res && res.msg) || '忽略失败')
+        }
+      }).catch(() => {}).then(() => { this.dismissing = false })
+    },
+    openDismissed() {
+      this.dismissedMerchantId = this.defaultMerchantId()
+      this.dismissedList = []
+      this.dismissedDrawer = true
+      if (this.dismissedMerchantId) this.loadDismissed()
+    },
+    loadDismissed() {
+      if (!this.dismissedMerchantId) return
+      this.dismissedLoading = true
+      listDismissed(this.dismissedMerchantId).then(res => {
+        if (res && res.code === 200) {
+          this.dismissedList = Array.isArray(res.data) ? res.data : []
+        } else {
+          this.$message.error((res && res.msg) || '加载失败')
+        }
+      }).catch(() => {}).then(() => { this.dismissedLoading = false })
+    },
+    cancelOne(row) {
+      cancelDismiss(row.id, this.dismissedMerchantId).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success('已取消忽略')
+          this.loadDismissed()
+          this.loadAlerts()
+        } else {
+          this.$message.error((res && res.msg) || '取消失败')
+        }
+      }).catch(() => {})
+    },
     alertMeta(type) {
       return ALERT_META[type] || { label: type || '-', tag: 'info' }
     },
@@ -428,11 +653,20 @@ export default {
     color: #909399;
     margin-right: 16px;
   }
+  .wb-block__btn {
+    margin-left: auto;
+  }
   .wb-block__link {
     margin-left: auto;
     & + .wb-block__link {
       margin-left: 16px;
     }
+  }
+  .wb-block__btn + .el-button {
+    margin-left: 8px;
+  }
+  .wb-block__link--inline {
+    margin-left: 16px;
   }
   .wb-error {
     display: flex;
@@ -519,5 +753,34 @@ export default {
     &--elec { background: #409eff; }
     &--service { background: #e6a23c; }
   }
+}
+
+// 抽屉 / 对话框 append-to-body，不在页面根节点内，样式需放在外层
+.wb-tip {
+  font-size: 12px;
+  line-height: 1.5;
+  color: #909399;
+  margin-top: 4px;
+}
+.wb-dismiss-info {
+  margin-bottom: 12px;
+  color: #303133;
+  font-weight: 600;
+}
+.wb-drawer {
+  padding: 0 20px 20px;
+}
+.wb-drawer__note {
+  font-size: 12px;
+  line-height: 1.6;
+  color: #909399;
+  background: #f7f9fc;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-top: 8px;
+}
+.wb-drawer__footer {
+  margin-top: 16px;
+  text-align: right;
 }
 </style>

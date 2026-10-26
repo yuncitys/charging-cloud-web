@@ -31,3 +31,44 @@ export function workbenchMarketing(data) {
     data
   })
 }
+
+// V2：预警阈值 / 忽略
+export function getAlertConfig(merchantId) {
+  return request({
+    url: '/api/web/operatorWorkbench/alertConfig',
+    method: 'get',
+    params: { merchantId }
+  })
+}
+
+export function saveAlertConfig(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/alertConfig',
+    method: 'put',
+    data
+  })
+}
+
+export function dismissAlert(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/alerts/dismiss',
+    method: 'post',
+    data
+  })
+}
+
+export function listDismissed(merchantId) {
+  return request({
+    url: '/api/web/operatorWorkbench/alerts/dismissed',
+    method: 'get',
+    params: { merchantId }
+  })
+}
+
+export function cancelDismiss(id, merchantId) {
+  return request({
+    url: `/api/web/operatorWorkbench/alerts/dismiss/${id}`,
+    method: 'delete',
+    params: { merchantId }
+  })
+}
