@@ -400,6 +400,8 @@
 				const hit = (this.chargingStationList || []).find(item => String(item.id) === String(id))
 				if (hit) {
 					this.listQuery.chargingStationIds = [hit.id]
+					const mid = hit.merchantId !== undefined && hit.merchantId !== null ? hit.merchantId : hit.merchant_id
+					this.listQuery.merchantId = (mid === undefined || mid === null) ? '' : mid
 				}
 			},
 			getMerchantList() {
