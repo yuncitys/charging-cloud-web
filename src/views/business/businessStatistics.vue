@@ -384,13 +384,23 @@
 				})
 			},
 			getChargingStationList() {
-				getChargingStationList(0).then(res => {
+				return getChargingStationList(0).then(res => {
 					if (res.code == 200) {
 						this.chargingStationList = res.data;
 					} else {
 						this.$message.error(res.msg)
 					}
 				})
+			},
+			// 工作台下钻：route.query.stationId 命中站点列表时预填；非法 id 静默忽略
+			applyRouteStation() {
+				const q = this.$route && this.$route.query ? this.$route.query.stationId : ''
+				const id = Array.isArray(q) ? q[0] : q
+				if (id === undefined || id === null || id === '') return
+				const hit = (this.chargingStationList || []).find(item => String(item.id) === String(id))
+				if (hit) {
+					this.listQuery.chargingStationIds = [hit.id]
+				}
 			},
 			getMerchantList() {
 				getMerchant().then(res => {
@@ -479,9 +489,18 @@
 			this.$dict.getSelector('device_status')
 			// this.getRouters()
 			this.getMerchantList()
-			this.getChargingStationList()
-			this.getReportsStatistics()
-			this.getLists()
+			const drillStationId = this.$route && this.$route.query ? this.$route.query.stationId : ''
+			if (drillStationId) {
+				// 下钻场景：等站点列表返回后预填，再统一发起一次查询
+				this.getChargingStationList().catch(() => {}).then(() => {
+					this.applyRouteStation()
+					this.handleFilter()
+				})
+			} else {
+				this.getChargingStationList()
+				this.getReportsStatistics()
+				this.getLists()
+			}
 			this.dateYear = this.formatTime(new Date(), 'yyyy-MM-dd')
 		},
 	}

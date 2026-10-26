@@ -163,8 +163,17 @@ export default {
   },
   created() {
     this.initDefaultDate()
-    this.loadOptions()
-    this.loadData()
+    const drillStationId = this.$route && this.$route.query ? this.$route.query.stationId : ''
+    const loading = this.loadOptions()
+    if (drillStationId) {
+      // 工作台下钻：等站点列表返回后预填，再统一加载一次
+      loading.then(() => {
+        this.applyRouteStation()
+        this.loadData()
+      })
+    } else {
+      this.loadData()
+    }
   },
   mounted() {
     window.addEventListener('resize', this.resizeCharts)
@@ -182,16 +191,26 @@ export default {
       this.syncDateQuery()
     },
     loadOptions() {
-      getMerchant().then(res => {
+      const merchantReq = getMerchant().then(res => {
         this.merchantList = res && Number(res.code) === 200 ? (res.data || []) : []
       }).catch(() => {
         this.merchantList = []
       })
-      getChargingStationList({}).then(res => {
+      const stationReq = getChargingStationList({}).then(res => {
         this.stationList = res && Number(res.code) === 200 ? (res.data || []) : []
       }).catch(() => {
         this.stationList = []
       })
+      return Promise.all([merchantReq, stationReq])
+    },
+    applyRouteStation() {
+      const q = this.$route && this.$route.query ? this.$route.query.stationId : ''
+      const id = Array.isArray(q) ? q[0] : q
+      if (id === undefined || id === null || id === '') return
+      const hit = this.stationList.find(item => String(item.id) === String(id))
+      if (hit) {
+        this.listQuery.stationId = hit.id
+      }
     },
     syncDateQuery() {
       if (this.dateRange && this.dateRange.length === 2) {
