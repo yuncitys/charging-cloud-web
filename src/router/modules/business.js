@@ -58,5 +58,14 @@ export default [
           title: '分账汇总',
           icon: 'el-icon-s-check',
         }
+      },
+{
+        path: '/business/operatorWorkbench',
+        component: () => import('@/views/business/operatorWorkbench/index'),
+        name: 'operatorWorkbench',
+        meta: {
+          title: '运营商工作台',
+          icon: 'el-icon-s-home',
+        }
       }
 ]
