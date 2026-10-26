@@ -491,6 +491,8 @@
 			this.getMerchantList()
 			const drillStationId = this.$route && this.$route.query ? this.$route.query.stationId : ''
 			if (drillStationId) {
+				// keep-alive 首次会连着触发 activated；跳过一次避免双查
+				this._skipDrillActivatedOnce = true
 				// 下钻场景：等站点列表返回后预填，再统一发起一次查询
 				this.getChargingStationList().catch(() => {}).then(() => {
 					this.applyRouteStation()
@@ -502,6 +504,22 @@
 				this.getLists()
 			}
 			this.dateYear = this.formatTime(new Date(), 'yyyy-MM-dd')
+		},
+		activated() {
+			const q = this.$route && this.$route.query ? this.$route.query.stationId : ''
+			const id = Array.isArray(q) ? q[0] : q
+			if (id === undefined || id === null || id === '') return
+			if (this._skipDrillActivatedOnce) {
+				this._skipDrillActivatedOnce = false
+				return
+			}
+			const ensure = (this.chargingStationList && this.chargingStationList.length)
+				? Promise.resolve()
+				: this.getChargingStationList().catch(() => {})
+			ensure.then(() => {
+				this.applyRouteStation()
+				this.handleFilter()
+			})
 		},
 	}
 </script>

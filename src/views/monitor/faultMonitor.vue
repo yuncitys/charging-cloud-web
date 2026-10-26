@@ -166,6 +166,8 @@ export default {
     const drillStationId = this.$route && this.$route.query ? this.$route.query.stationId : ''
     const loading = this.loadOptions()
     if (drillStationId) {
+      // keep-alive 首次会连着触发 activated；跳过一次避免双查
+      this._skipDrillActivatedOnce = true
       // 工作台下钻：等站点列表返回后预填，再统一加载一次
       loading.then(() => {
         this.applyRouteStation()
@@ -174,6 +176,22 @@ export default {
     } else {
       this.loadData()
     }
+  },
+  activated() {
+    const q = this.$route && this.$route.query ? this.$route.query.stationId : ''
+    const id = Array.isArray(q) ? q[0] : q
+    if (id === undefined || id === null || id === '') return
+    if (this._skipDrillActivatedOnce) {
+      this._skipDrillActivatedOnce = false
+      return
+    }
+    const ensure = (this.stationList && this.stationList.length)
+      ? Promise.resolve()
+      : this.loadOptions()
+    ensure.then(() => {
+      this.applyRouteStation()
+      this.loadData()
+    })
   },
   mounted() {
     window.addEventListener('resize', this.resizeCharts)
