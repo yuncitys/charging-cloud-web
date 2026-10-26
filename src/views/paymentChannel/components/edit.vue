@@ -308,49 +308,74 @@
         <div class="aliConfig" v-else-if="form.channelCode === 'alipay'">
           <el-row>
             <el-col :span="12">
-              <el-form-item label="公众号id">
-                <el-input v-model="aliConfig.officialAccount.id" clearable placeholder="公众号APPID"></el-input>
+              <el-form-item label="应用 AppId">
+                <el-input v-model="aliConfig.appId" clearable placeholder="发起 OpenAPI 的小程序/应用 AppId"></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="公众号secret">
-                <el-input v-model="aliConfig.officialAccount.secret" clearable placeholder="公众号secret"></el-input>
+              <el-form-item label="唤起小程序 AppId">
+                <div class="ali-field-with-tip">
+                  <el-input v-model="aliConfig.opAppId" clearable placeholder="可空，默认与应用 AppId 相同"></el-input>
+                  <span class="huifu-tip">op_app_id；须在商家中心绑定 JSAPI</span>
+                </div>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row>
             <el-col :span="12">
-              <el-form-item label="应用APPID">
-                <el-input v-model="aliConfig.appId" clearable placeholder="应用APPID"></el-input>
+              <el-form-item label="应用私钥">
+                <el-input
+                  v-model="aliConfig.privateKey"
+                  type="textarea"
+                  :rows="3"
+                  clearable
+                  placeholder="PKCS8 私钥，或 file:相对路径（相对 pay-server 系统文件目录）"
+                ></el-input>
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="pid">
-                <el-input v-model="aliConfig.pid" clearable placeholder="pid"></el-input>
+              <el-form-item label="支付宝公钥">
+                <el-input
+                  v-model="aliConfig.alipayPublicKey"
+                  type="textarea"
+                  :rows="3"
+                  clearable
+                  placeholder="支付宝公钥，或 file:相对路径"
+                ></el-input>
               </el-form-item>
             </el-col>
           </el-row>
           <el-row>
-            <el-col :span="12">
-              <el-form-item label="私钥">
-                <el-input v-model="aliConfig.privateKey" clearable placeholder="私钥"></el-input>
-              </el-form-item>
-            </el-col>
-            <el-col :span="12">
-              <el-form-item label="alipayPublicKey">
-                <el-input v-model="aliConfig.alipayPublicKey" clearable placeholder="公钥"></el-input>
-              </el-form-item>
-            </el-col>
-          </el-row>
-          <el-row>
-            <el-col :span="12">
-              <el-form-item label="签名方式">
-                <el-input v-model="aliConfig.signType" clearable placeholder="签名方式"></el-input>
-              </el-form-item>
-            </el-col>
             <el-col :span="12">
               <el-form-item label="回调域名">
-                <el-input v-model="aliConfig.callbackDomain" clearable placeholder="回调域名"></el-input>
+                <el-input
+                  v-model="aliConfig.callbackDomain"
+                  clearable
+                  placeholder="如 https://host/api/payment/Notify"
+                ></el-input>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="签名方式">
+                <el-input v-model="aliConfig.signType" clearable placeholder="默认 RSA2"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row>
+            <el-col :span="12">
+              <el-form-item label="网关">
+                <div class="ali-field-with-tip">
+                  <el-input v-model="aliConfig.gateway" clearable placeholder="可空，默认正式网关"></el-input>
+                  <span class="huifu-tip">沙箱可改为 openapi.alipaydev.com</span>
+                </div>
+              </el-form-item>
+            </el-col>
+            <el-col :span="12">
+              <el-form-item label="内容加密 AES">
+                <div class="ali-field-with-tip">
+                  <el-input v-model="aliConfig.aesKey" clearable show-password placeholder="可空；支付创单一般不需要"></el-input>
+                  <span class="huifu-tip">与登录解密共用时可填；仅支付可留空</span>
+                </div>
               </el-form-item>
             </el-col>
           </el-row>
@@ -492,18 +517,14 @@ export default {
         callbackDomain: ''
       },
       aliConfig: {
-        'officialAccount': { 'id': '', 'secret': '' },
-        'sandbox': null,
-        'pid': '',
-        'appId': '',
-        'privateKey': '',
-        'alipayPublicKey': '',
-        'signType': '',
-        'useCert': null,
-        'appPublicCert': null,
-        'alipayPublicCert': null,
-        'alipayRootCert': null,
-        'callbackDomain': ''
+        appId: '',
+        opAppId: '',
+        privateKey: '',
+        alipayPublicKey: '',
+        signType: 'RSA2',
+        callbackDomain: '',
+        gateway: '',
+        aesKey: ''
       },
       tzbankConfig: {
         platMerCstNo: '',
@@ -574,7 +595,10 @@ export default {
         } else if (code === 'wxpay_partner') {
           this.wxPartnerConfig = JSON.parse(this.form.configStr)
         } else if (code === 'alipay') {
-          this.aliConfig = JSON.parse(this.form.configStr)
+          this.aliConfig = Object.assign({}, this.aliConfig, JSON.parse(this.form.configStr || '{}'))
+          if (!this.aliConfig.signType) {
+            this.aliConfig.signType = 'RSA2'
+          }
         } else if (code === 'tzbank') {
           this.tzbankConfig = JSON.parse(this.form.configStr)
         } else if (code === 'huifu') {
@@ -672,6 +696,17 @@ export default {
           return
         }
       }
+      if (this.form.channelCode === 'alipay') {
+        this.form.serviceProviderId = 'alipay'
+        if (!this.aliConfig.signType || !String(this.aliConfig.signType).trim()) {
+          this.aliConfig.signType = 'RSA2'
+        }
+        const required = ['appId', 'privateKey', 'alipayPublicKey', 'callbackDomain']
+        if (required.some(k => !this.aliConfig[k] || !String(this.aliConfig[k]).trim())) {
+          this.$message.warning('请完整填写支付宝直连配置：应用 AppId、私钥、支付宝公钥、回调域名')
+          return
+        }
+      }
       this.$refs.form.validate(valid => {
         const code = this.form.channelCode
         this.syncChannelNameFromCode()
@@ -682,7 +717,17 @@ export default {
           this.wxPartnerConfig.merchantMode = 'PARTNER'
           this.form.configStr = JSON.stringify(this.wxPartnerConfig)
         } else if (code === 'alipay') {
-          this.form.configStr = JSON.stringify(this.aliConfig)
+          // 只落直连支付识别的字段，避免旧表单杂项写入 config_str
+          this.form.configStr = JSON.stringify({
+            appId: (this.aliConfig.appId || '').trim(),
+            opAppId: (this.aliConfig.opAppId || '').trim(),
+            privateKey: (this.aliConfig.privateKey || '').trim(),
+            alipayPublicKey: (this.aliConfig.alipayPublicKey || '').trim(),
+            signType: (this.aliConfig.signType || 'RSA2').trim(),
+            callbackDomain: (this.aliConfig.callbackDomain || '').trim(),
+            gateway: (this.aliConfig.gateway || '').trim(),
+            aesKey: (this.aliConfig.aesKey || '').trim()
+          })
         } else if (code === 'tzbank') {
           this.form.configStr = JSON.stringify(this.tzbankConfig)
         } else if (code === 'huifu') {
@@ -749,11 +794,23 @@ export default {
   min-height: 32px;
 }
 
+.ali-field-with-tip {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  gap: 4px;
+}
+
 .huifu-tip {
   margin-left: 10px;
   color: #909399;
   font-size: 12px;
   line-height: 1.4;
+}
+
+.ali-field-with-tip .huifu-tip {
+  margin-left: 0;
 }
 
 .huifu-delay-item {
