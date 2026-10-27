@@ -135,6 +135,109 @@
       </div>
     </div>
 
+    <!-- 充电用户（跟顶栏周期，末日≤昨日；TODAY 映射为昨日已收口） -->
+    <div v-if="canView" class="wb-block" v-loading="blocks.chargeUser.loading">
+      <div class="wb-block__head">
+        <span class="wb-block__title">{{ chargeUser.titleHint || '充电用户' }}</span>
+        <el-tooltip effect="dark" placement="top" :content="CHARGE_USER_TIP">
+          <i class="el-icon-question wb-col-help wb-cu-help" />
+        </el-tooltip>
+        <span v-if="chargeUserPeriodText" class="wb-block__asof wb-cu-asof">{{ chargeUserPeriodText }}</span>
+        <el-link class="wb-block__link" type="primary" :underline="false" @click="openChargeUserAnalysis">
+          用户分析 <i class="el-icon-data-line" />
+        </el-link>
+      </div>
+      <div v-if="blocks.chargeUser.error" class="wb-error">
+        <span>{{ blocks.chargeUser.error }}</span>
+        <el-button size="mini" type="primary" @click="loadChargeUser">重试</el-button>
+      </div>
+      <div v-else class="wb-cu">
+        <div class="wb-cu__cards">
+          <div class="wb-card">
+            <div class="wb-card__label">充电用户数</div>
+            <div class="wb-card__value">{{ int(chargeUser.chargeUserCount) }}</div>
+          </div>
+          <div class="wb-card">
+            <div class="wb-card__label">新增充电用户数</div>
+            <div class="wb-card__value">{{ int(chargeUser.newChargeUserCount) }}</div>
+          </div>
+        </div>
+        <div class="wb-cu__ring">
+          <div class="wb-ring" :style="chargeUserRingStyle">
+            <div class="wb-ring__inner">{{ chargeUserNewPercent }}%</div>
+          </div>
+          <div class="wb-cu__ring-text">
+            <div class="wb-card__label">新增占比</div>
+            <div class="wb-card__sub">新增 ÷ 充电用户</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 用户分析抽屉：昨日|本月对照卡 + 近 30 日趋势 + 本月按站 Top；筛选继承商户/业态/站点 -->
+    <el-drawer
+      title="用户分析"
+      :visible.sync="cuDrawer"
+      direction="rtl"
+      size="760px"
+      append-to-body
+      custom-class="wb-alert-config-drawer"
+    >
+      <div class="wb-drawer">
+        <div class="wb-drawer__body">
+          <div class="wb-drawer__note wb-ma-note">{{ CHARGE_USER_ANALYSIS_NOTE }}</div>
+          <div v-if="cuError" class="wb-ma-error">
+            <span>{{ cuError }}</span>
+            <el-button size="mini" type="primary" @click="loadChargeUserAnalysis">重试</el-button>
+          </div>
+          <div v-else v-loading="cuLoading">
+            <div class="wb-cu-compare">
+              <div v-for="c in cuCompareCards" :key="c.key" class="wb-card">
+                <div class="wb-card__label">{{ c.card.titleHint || c.fallbackTitle }}</div>
+                <div class="wb-cu-compare__row">
+                  <div>
+                    <div class="wb-card__sub">充电用户</div>
+                    <div class="wb-card__value">{{ int(c.card.chargeUserCount) }}</div>
+                  </div>
+                  <div>
+                    <div class="wb-card__sub">新增</div>
+                    <div class="wb-card__value">{{ int(c.card.newChargeUserCount) }}</div>
+                  </div>
+                </div>
+                <div class="wb-card__sub">{{ cuCardPeriod(c.card) }}</div>
+              </div>
+            </div>
+
+            <div class="wb-ma-title">近 30 日趋势（每日人数，非累计）</div>
+            <el-table :data="cuTrend" size="small" max-height="360" empty-text="暂无数据" style="width: 100%">
+              <el-table-column label="日期" prop="date" min-width="110" />
+              <el-table-column label="当日充电用户" min-width="120" align="right">
+                <template slot-scope="scope">{{ int(scope.row.chargeUserCount) }}</template>
+              </el-table-column>
+              <el-table-column label="当日新增" min-width="100" align="right">
+                <template slot-scope="scope">{{ int(scope.row.newChargeUserCount) }}</template>
+              </el-table-column>
+            </el-table>
+
+            <div class="wb-ma-title">本月按站充电用户 Top 10</div>
+            <div class="wb-tip wb-cu-top-note">{{ CHARGE_USER_STATION_TOP_NOTE }}</div>
+            <el-table :data="cuStationTop" size="small" empty-text="暂无数据" style="width: 100%">
+              <el-table-column label="#" type="index" width="50" align="center" />
+              <el-table-column label="电站名称" min-width="200" show-overflow-tooltip>
+                <template slot-scope="scope">{{ scope.row.stationName || ('电站 ' + scope.row.stationId) }}</template>
+              </el-table-column>
+              <el-table-column label="充电用户数" min-width="110" align="right">
+                <template slot-scope="scope">{{ int(scope.row.chargeUserCount) }}</template>
+              </el-table-column>
+            </el-table>
+          </div>
+        </div>
+        <div class="wb-drawer__footer">
+          <el-button size="small" @click="cuDrawer = false">关闭</el-button>
+        </div>
+      </div>
+    </el-drawer>
+
     <!-- 异常预警 -->
     <div v-if="canAlerts" class="wb-block" v-loading="blocks.alerts.loading">
       <div class="wb-block__head">
@@ -549,6 +652,8 @@ import {
   workbenchFinance,
   workbenchMarketing,
   workbenchMarketingAnalysis,
+  workbenchChargeUsers,
+  workbenchChargeUserAnalysis,
   getTerminalStatus,
   getStationPowerTop,
   getAlertConfig,
@@ -559,6 +664,13 @@ import {
   cancelDismiss
 } from '@/api/business/operatorWorkbench'
 import { ANALYSIS_RANGE_OPTIONS, buildAnalysisWindow, fillTrend } from './marketingAnalysis'
+import {
+  CHARGE_USER_TIP,
+  CHARGE_USER_ANALYSIS_NOTE,
+  CHARGE_USER_STATION_TOP_NOTE,
+  newUserPercent,
+  ringStyle
+} from './chargeUser'
 
 const ALERT_META = {
   START_FAIL: { label: '启动失败率高', tag: 'danger' },
@@ -632,6 +744,7 @@ export default {
         alerts: newBlock(),
         finance: newBlock(),
         marketing: newBlock(),
+        chargeUser: newBlock(),
         terminal: newBlock(),
         stationTop: newBlock()
       },
@@ -652,6 +765,18 @@ export default {
       maTrend: [],
       maTop: [],
       maSeq: 0,
+      CHARGE_USER_TIP,
+      CHARGE_USER_ANALYSIS_NOTE,
+      CHARGE_USER_STATION_TOP_NOTE,
+      chargeUser: {},
+      cuDrawer: false,
+      cuLoading: false,
+      cuError: '',
+      cuYesterday: {},
+      cuMonth: {},
+      cuTrend: [],
+      cuStationTop: [],
+      cuSeq: 0,
       CONFIG_FOOTER_NOTE,
       configDrawer: false,
       configLoading: false,
@@ -689,6 +814,25 @@ export default {
     // 站点列表已由 /networkDot/list 按 merchantId、ruleId 过滤（VO 无 merchantId，不能前端再滤）
     filteredStationList() {
       return this.stationList
+    },
+    // 充电用户块：副文案以服务端 subHint 为准，缺省回退统计起止日
+    chargeUserPeriodText() {
+      const c = this.chargeUser
+      if (c.subHint) return c.subHint
+      if (c.periodStart) return c.periodStart === c.periodEnd ? `统计日 ${c.periodStart}` : `统计区间 ${c.periodStart} ~ ${c.periodEnd}`
+      return ''
+    },
+    chargeUserNewPercent() {
+      return newUserPercent(this.chargeUser.newChargeUserCount, this.chargeUser.chargeUserCount)
+    },
+    chargeUserRingStyle() {
+      return ringStyle(this.chargeUserNewPercent)
+    },
+    cuCompareCards() {
+      return [
+        { key: 'yesterday', card: this.cuYesterday || {}, fallbackTitle: '昨日充电用户' },
+        { key: 'month', card: this.cuMonth || {}, fallbackTitle: '本月充电用户' }
+      ]
     },
     stationTopTitle() {
       return (PERIOD_TITLE[this.searchForm.periodType] || '') + '电站电量前 10'
@@ -783,6 +927,7 @@ export default {
       if (this.canView) {
         this.loadOverview()
         this.loadTerminal()
+        this.loadChargeUser()
         this.loadStationTop()
       }
       if (this.canAlerts) this.loadAlerts()
@@ -869,6 +1014,41 @@ export default {
       }).then(() => {
         if (seq === this.maSeq) this.maLoading = false
       })
+    },
+    loadChargeUser() {
+      return this.runBlock('chargeUser', workbenchChargeUsers, d => { this.chargeUser = d || {} })
+    },
+    // 用户分析：不识别 periodType，statDate 缺省今天（服务端取最近已收口日）；筛选继承商户/业态/站点
+    openChargeUserAnalysis() {
+      this.cuDrawer = true
+      this.loadChargeUserAnalysis()
+    },
+    loadChargeUserAnalysis() {
+      const seq = ++this.cuSeq // 筛选变化后重开抽屉时丢弃过期响应
+      this.cuLoading = true
+      this.cuError = ''
+      return workbenchChargeUserAnalysis(this.buildParams()).then(res => {
+        if (seq !== this.cuSeq) return
+        if (res && res.code === 200) {
+          const d = res.data || {}
+          this.cuYesterday = d.yesterday || {}
+          this.cuMonth = d.monthToDate || {}
+          this.cuTrend = Array.isArray(d.trend) ? d.trend : []
+          this.cuStationTop = Array.isArray(d.stationTop) ? d.stationTop : []
+        } else {
+          this.cuError = (res && res.msg) || '加载失败，请重试'
+        }
+      }).catch(e => {
+        if (seq !== this.cuSeq) return
+        this.cuError = (e && e.message) || '加载失败，请重试'
+      }).then(() => {
+        if (seq === this.cuSeq) this.cuLoading = false
+      })
+    },
+    cuCardPeriod(c) {
+      if (c.subHint) return c.subHint
+      if (!c.periodStart) return '--'
+      return c.periodStart === c.periodEnd ? `统计日 ${c.periodStart}` : `统计区间 ${c.periodStart} ~ ${c.periodEnd}`
     },
     loadTerminal() {
       return this.runBlock('terminal', getTerminalStatus, d => { this.terminal = d || {} })
@@ -1185,6 +1365,49 @@ export default {
   .wb-hint {
     margin-bottom: 12px;
   }
+  .wb-cu-help {
+    margin: 0 16px 0 -8px;
+  }
+  .wb-cu {
+    display: flex;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .wb-cu__cards {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .wb-cu__ring {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: #f7f9fc;
+    border-radius: 6px;
+    padding: 14px 24px;
+  }
+  .wb-ring {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .wb-ring__inner {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #f7f9fc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: #303133;
+  }
   .wb-yesterday,
   .wb-roi {
     margin-top: 12px;
@@ -1258,6 +1481,24 @@ export default {
   padding: 12px 0;
 }
 .wb-ma-note {
+  margin: 0 0 8px;
+}
+.wb-cu-compare {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 12px;
+  .wb-card { background: #f7f9fc; border-radius: 6px; padding: 14px 16px; }
+  .wb-card__label { font-size: 13px; color: #909399; }
+  .wb-card__value { font-size: 24px; font-weight: 600; color: #303133; margin-top: 4px; }
+  .wb-card__sub { font-size: 12px; color: #909399; margin-top: 4px; }
+}
+.wb-cu-compare__row {
+  display: flex;
+  gap: 32px;
+  margin-top: 6px;
+}
+.wb-cu-top-note {
   margin: 0 0 8px;
 }
 .wb-ma-title {

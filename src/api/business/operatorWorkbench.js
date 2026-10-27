@@ -44,6 +44,29 @@ export function workbenchMarketingAnalysis(data) {
   })
 }
 
+// 充电用户（随顶栏周期，末日≤昨日，TODAY→昨日）
+// → { chargeUserCount, newChargeUserCount, periodStart, periodEnd, titleHint, subHint }
+export function workbenchChargeUsers(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/chargeUsers',
+    method: 'post',
+    data
+  })
+}
+
+// 用户分析：body = OperatorWorkbenchQuery（periodType 被忽略；statDate 缺省今天）
+// → { yesterday: {chargeUserCount,newChargeUserCount,periodStart,periodEnd,titleHint,subHint},
+//     monthToDate: { 同上；本月无已收口日时全 0 且起止为 null },
+//     trend: [{ date, chargeUserCount, newChargeUserCount }]  // 近 30 日每日人数，升序，缺失日已补 0
+//     stationTop: [{ stationId, stationName, chargeUserCount }] }  // 本月按站 Top ≤10
+export function workbenchChargeUserAnalysis(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/chargeUserAnalysis',
+    method: 'post',
+    data
+  })
+}
+
 // V3：终端状态（实时，不随周期）→ { dc: {fault,offline,occupy,charging,idle,other}, ac: {...} }
 export function getTerminalStatus(data) {
   return request({

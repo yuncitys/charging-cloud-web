@@ -18,6 +18,19 @@ jest.mock('@/api/business/operatorWorkbench', () => {
     workbenchFinance: ok,
     workbenchMarketing: ok,
     workbenchMarketingAnalysis: jest.fn(() => Promise.resolve({ code: 200, data: { trend: [], activityTop: [] } })),
+    workbenchChargeUsers: jest.fn(() => Promise.resolve({
+      code: 200,
+      data: { chargeUserCount: 40, newChargeUserCount: 10, periodStart: '2026-10-26', periodEnd: '2026-10-26', titleHint: '昨日充电用户', subHint: '今日未收口，按昨日统计' }
+    })),
+    workbenchChargeUserAnalysis: jest.fn(() => Promise.resolve({
+      code: 200,
+      data: {
+        yesterday: { chargeUserCount: 40, newChargeUserCount: 10, periodStart: '2026-10-26', periodEnd: '2026-10-26', titleHint: '昨日充电用户' },
+        monthToDate: { chargeUserCount: 300, newChargeUserCount: 90, periodStart: '2026-10-01', periodEnd: '2026-10-26', titleHint: '本月充电用户', subHint: '统计区间 2026-10-01 ~ 2026-10-26' },
+        trend: [{ date: '2026-10-25', chargeUserCount: 3, newChargeUserCount: 1 }],
+        stationTop: [{ stationId: 1, stationName: 'A', chargeUserCount: 20 }]
+      }
+    })),
     getTerminalStatus: jest.fn(() => Promise.resolve({
       code: 200,
       data: {
@@ -162,5 +175,86 @@ describe('OperatorWorkbench V3', () => {
     await slow
     expect(w.vm.maTop[0].activityId).toBe('new')
     expect(w.vm.maLoading).toBe(false)
+  })
+
+  it('loads charge user block with other panels; title/ring follow response', async () => {
+    const w = factory()
+    await flush()
+    expect(api.workbenchChargeUsers).toHaveBeenCalledTimes(1)
+    expect(api.workbenchChargeUsers).toHaveBeenCalledWith(expect.objectContaining({ periodType: 'TODAY' }))
+    expect(w.vm.chargeUser.chargeUserCount).toBe(40)
+    expect(w.vm.chargeUserPeriodText).toBe('今日未收口，按昨日统计')
+    expect(w.vm.chargeUserNewPercent).toBe(25)
+    expect(w.vm.chargeUserRingStyle.background).toContain('conic-gradient')
+    w.vm.searchForm.periodType = 'WEEK'
+    w.vm.search()
+    await flush()
+    expect(api.workbenchChargeUsers).toHaveBeenLastCalledWith(expect.objectContaining({ periodType: 'WEEK' }))
+  })
+
+  it('charge user block shows error without blocking others and falls back to period text', async () => {
+    api.workbenchChargeUsers.mockResolvedValueOnce({ code: 500, msg: '用户块失败' })
+    const w = factory()
+    await flush()
+    expect(w.vm.blocks.chargeUser.error).toBe('用户块失败')
+    expect(w.vm.blocks.overview.error).toBe('')
+    api.workbenchChargeUsers.mockResolvedValueOnce({ code: 200, data: { chargeUserCount: 0, newChargeUserCount: 0, periodStart: '2026-10-01', periodEnd: '2026-10-26' } })
+    await w.vm.loadChargeUser()
+    expect(w.vm.chargeUserPeriodText).toBe('统计区间 2026-10-01 ~ 2026-10-26')
+    expect(w.vm.chargeUserNewPercent).toBe(0)
+  })
+
+  it('does not load charge users without view permission', async () => {
+    const w = shallowMount(OperatorWorkbench, {
+      mocks: {
+        $router: { push: jest.fn() },
+        $message: { warning: jest.fn(), error: jest.fn(), success: jest.fn() },
+        $dict: { getDeviceRuleOptions: jest.fn(() => Promise.resolve([])) },
+        btnAuthen: { permsVerifAuthention: code => code !== ':web:operatorWorkbench:view' }
+      },
+      directives: { loading: {} }
+    })
+    await flush()
+    expect(w.vm.canView).toBe(false)
+    expect(api.workbenchChargeUsers).not.toHaveBeenCalled()
+  })
+
+  it('opens user analysis drawer with merchant/rule/stationIds and maps cards, trend, station top', async () => {
+    const w = factory()
+    await flush()
+    w.vm.searchForm.merchantId = 9
+    w.vm.searchForm.ruleId = 2
+    w.vm.searchForm.stationIds = [1]
+    w.vm.openChargeUserAnalysis()
+    await flush()
+    expect(w.vm.cuDrawer).toBe(true)
+    expect(api.workbenchChargeUserAnalysis).toHaveBeenCalledWith(expect.objectContaining({ merchantId: 9, ruleId: 2, stationIds: [1] }))
+    expect(w.vm.cuYesterday.chargeUserCount).toBe(40)
+    expect(w.vm.cuMonth.chargeUserCount).toBe(300)
+    expect(w.vm.cuTrend).toHaveLength(1)
+    expect(w.vm.cuStationTop[0].stationName).toBe('A')
+    expect(w.vm.cuCompareCards).toHaveLength(2)
+    expect(w.vm.cuCardPeriod({ periodStart: '2026-10-26', periodEnd: '2026-10-26' })).toBe('统计日 2026-10-26')
+    expect(w.vm.cuCardPeriod({})).toBe('--')
+  })
+
+  it('user analysis handles error and ignores stale responses', async () => {
+    const w = factory()
+    await flush()
+    api.workbenchChargeUserAnalysis.mockResolvedValueOnce({ code: 500, msg: '分析失败' })
+    await w.vm.loadChargeUserAnalysis()
+    expect(w.vm.cuError).toBe('分析失败')
+
+    let resolveSlow
+    api.workbenchChargeUserAnalysis
+      .mockImplementationOnce(() => new Promise(r => { resolveSlow = r }))
+      .mockResolvedValueOnce({ code: 200, data: { trend: [], stationTop: [{ stationId: 'new' }] } })
+    const slow = w.vm.loadChargeUserAnalysis()
+    await w.vm.loadChargeUserAnalysis()
+    resolveSlow({ code: 200, data: { trend: [], stationTop: [{ stationId: 'old' }] } })
+    await slow
+    expect(w.vm.cuStationTop[0].stationId).toBe('new')
+    expect(w.vm.cuError).toBe('')
+    expect(w.vm.cuLoading).toBe(false)
   })
 })
