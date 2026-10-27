@@ -54,7 +54,7 @@
       </div>
       <div v-if="blocks.overview.error" class="wb-error">
         <span>{{ blocks.overview.error }}</span>
-        <el-button size="mini" type="primary" plain @click="loadOverview">重试</el-button>
+        <el-button size="mini" type="primary" @click="loadOverview">重试</el-button>
       </div>
       <div v-else class="wb-cards">
         <div class="wb-card">
@@ -111,7 +111,7 @@
       </div>
       <div v-if="blocks.alerts.error" class="wb-error">
         <span>{{ blocks.alerts.error }}</span>
-        <el-button size="mini" type="primary" plain @click="loadAlerts">重试</el-button>
+        <el-button size="mini" type="primary" @click="loadAlerts">重试</el-button>
       </div>
       <el-table v-else :data="alerts" size="small" style="width: 100%" empty-text="暂无预警" @selection-change="onAlertSelectionChange">
         <el-table-column type="selection" width="45" align="center" />
@@ -236,7 +236,7 @@
       </div>
       <div v-if="blocks.finance.error" class="wb-error">
         <span>{{ blocks.finance.error }}</span>
-        <el-button size="mini" type="primary" plain @click="loadFinance">重试</el-button>
+        <el-button size="mini" type="primary" @click="loadFinance">重试</el-button>
       </div>
       <template v-else>
         <el-alert v-if="finance.hint" class="wb-hint" type="info" :closable="false" show-icon :title="finance.hint" />
@@ -273,7 +273,7 @@
       </div>
       <div v-if="blocks.marketing.error" class="wb-error">
         <span>{{ blocks.marketing.error }}</span>
-        <el-button size="mini" type="primary" plain @click="loadMarketing">重试</el-button>
+        <el-button size="mini" type="primary" @click="loadMarketing">重试</el-button>
       </div>
       <template v-else>
         <div class="wb-cards wb-cards--6">
@@ -493,6 +493,8 @@ export default {
       return this.runBlock('overview', workbenchOverview, d => { this.overview = d || {} })
     },
     loadAlerts() {
+      // 刷新/失败重试前清空勾选，避免表格销毁后「批量忽略（N）」仍指向不可见旧行
+      this.alertSelection = []
       return this.runBlock('alerts', workbenchAlerts, d => { this.alerts = Array.isArray(d) ? d : [] })
     },
     loadFinance() {
@@ -582,19 +584,22 @@ export default {
           const d = res.data || {}
           const ok = Number(d.successCount) || 0
           const fail = (Number(d.failCount) || 0) + skipped
+          const firstMsg = d.failures && d.failures.length ? d.failures[0].msg : ''
           if (fail > 0) {
-            this.$message.warning(`已忽略 ${ok} 条，失败 ${fail} 条`)
+            this.$message.warning(`已忽略 ${ok} 条，失败 ${fail} 条${firstMsg ? '（' + firstMsg + '）' : ''}`)
           } else {
             this.$message.success(`已忽略 ${ok} 条`)
           }
           this.dismissDialog = false
-          this.alertSelection = []
           this.dismissTargets = []
           this.loadAlerts()
         } else {
           this.$message.error((res && res.msg) || '批量忽略失败')
+          this.loadAlerts()
         }
-      }).catch(() => {}).then(() => { this.dismissing = false })
+      }).catch(() => {
+        this.loadAlerts()
+      }).then(() => { this.dismissing = false })
     },
     confirmDismiss() {
       if (this.dismissMode === 'batch') return this.confirmBatchDismiss()
