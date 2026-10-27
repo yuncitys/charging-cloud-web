@@ -543,6 +543,10 @@
     >
       <div class="wb-drawer">
         <div class="wb-drawer__body">
+          <div class="wb-drawer__note wb-ma-note">{{ MARKETING_ANALYSIS_NOTE }}</div>
+          <div v-if="searchForm.stationIds && searchForm.stationIds.length" class="wb-tip wb-ma-station-tip">
+            营销按商户统计，所选站点筛选对本分析不生效；业态为「商户是否存在该业态网点」的软过滤。
+          </div>
           <el-form :inline="true" size="small" class="wb-ma-filter" @submit.native.prevent>
             <el-form-item label="统计周期">
               <el-radio-group v-model="maMode" size="small" @change="loadMarketingAnalysis">
@@ -553,10 +557,6 @@
               <span v-if="maWindow">{{ maWindow.startDate }} ~ {{ maWindow.endDate }}（共 {{ maWindow.analysisDays }} 天）</span>
             </el-form-item>
           </el-form>
-          <div class="wb-drawer__note wb-ma-note">{{ MARKETING_ANALYSIS_NOTE }}</div>
-          <div v-if="searchForm.stationIds && searchForm.stationIds.length" class="wb-tip">
-            营销按商户统计，所选站点筛选对本分析不生效；业态为「商户是否存在该业态网点」的软过滤。
-          </div>
 
           <div v-if="maError" class="wb-ma-error">
             <span>{{ maError }}</span>
@@ -1592,7 +1592,7 @@ export default {
   margin-top: 4px;
 }
 .wb-ma-filter {
-  margin-bottom: 4px;
+  margin: 0 0 8px;
 }
 .wb-ma-range {
   font-size: 12px;
@@ -1606,7 +1606,10 @@ export default {
   padding: 12px 0;
 }
 .wb-ma-note {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+}
+.wb-ma-station-tip {
+  margin: -4px 0 10px;
 }
 .wb-cu-compare {
   display: grid;
