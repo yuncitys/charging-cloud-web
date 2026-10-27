@@ -257,12 +257,12 @@
     <div v-if="canAlerts" class="wb-block" v-loading="blocks.alerts.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">异常预警</span>
-        <span class="wb-block__meta" :title="alertMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ alertMeta.period }}</span>
+        <span class="wb-block__meta" :title="alertBlockMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ alertBlockMeta.period }}</span>
           <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ alertMeta.range }}</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ alertBlockMeta.range }}</span>
           <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ alertMeta.sync }}</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ alertBlockMeta.sync }}</span>
         </span>
         <el-button class="wb-block__btn" size="mini" icon="el-icon-setting" @click="openConfig">预警设置</el-button>
         <el-button size="mini" icon="el-icon-view" @click="openDismissed">已忽略</el-button>
@@ -881,7 +881,7 @@ export default {
         sync: SYNC.CHARGE_USER
       })
     },
-    alertMeta() {
+    alertBlockMeta() {
       const first = this.alerts.length ? this.alerts[0] : null
       const day = first && first.alertDate
       return buildBlockMeta({
