@@ -135,7 +135,7 @@
       </div>
     </div>
 
-    <!-- 充电用户（跟顶栏周期，末日≤昨日；TODAY 映射为昨日已收口） -->
+    <!-- 充电用户（跟顶栏周期，末日可含今天；约每 15 分钟同步） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.chargeUser.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">{{ chargeUser.titleHint || '充电用户' }}</span>

@@ -24,9 +24,12 @@ describe('chargeUser helpers', () => {
     expect(ringStyle(-5).background).toContain('0 0%')
   })
 
-  it('tip mentions the competitor calibre', () => {
+  it('tip mentions start-day calibre and 15-min sync', () => {
     expect(CHARGE_USER_TIP).toContain('手机号')
     expect(CHARGE_USER_TIP).toContain('C 端')
+    expect(CHARGE_USER_TIP).toContain('开始时间')
+    expect(CHARGE_USER_TIP).toContain('进行中')
+    expect(CHARGE_USER_TIP).toContain('15 分钟')
   })
 
   it('period counts are explained as daily-dedup sums (not live range distinct)', () => {
