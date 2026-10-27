@@ -470,7 +470,7 @@
             <div class="wb-card__value">{{ money(marketing.subsidyCost) }}</div>
           </div>
         </div>
-        <!-- 活动参与：订单集与「核销订单实收」一致；电站/用户为区间去重，非逐日相加 -->
+        <!-- 活动参与：订单集与「核销订单实收」一致；电站/用户为日表逐日去重之和（跨日可能重复计） -->
         <div class="wb-cards wb-cards--3 wb-cards--row2">
           <div class="wb-card">
             <div class="wb-card__label">活动订单电量（度）</div>
@@ -695,11 +695,11 @@ const STATION_TOP_TIPS = {
   utilizationRate: '(总充电时长分钟 ÷ 60) ÷ (终端数量 × 24 × D) × 100；终端数为 0 时显示 --',
   ratedPowerKw: '站下未删设备额定功率之和（W）÷ 1000'
 }
-// 营销活动参与三字段口径（订单集同「核销订单实收」；与后端 OperatorWorkbenchMarketingVo 注释一致）
+// 营销活动参与三字段口径（参与电站/用户为日表 SUM；与后端 OperatorWorkbenchMarketingVo 注释一致）
 const MARKETING_TIPS = {
   activityOrderKwh: '有核销关联订单的充电量合计',
-  participateStationCount: '核销订单去重电站数（区间去重）',
-  participateUserCount: '核销订单去重用户数（区间去重）',
+  participateStationCount: '区间内各日去重电站数之和（跨日可能重复计）',
+  participateUserCount: '区间内各日去重用户数之和（跨日可能重复计）',
   topKwh: '同一订单被同活动多张券核销只计一次；一单跨多个活动则各活动各计一次，故 Top 合计可能大于趋势电量'
 }
 const MARKETING_ANALYSIS_NOTE = '趋势读营销日表，无数据的日期按 0 补齐；活动 Top 按核销数倒序（其次电量）。手工券与平台活动发券不计入 Top，Top 核销数已剔除已删除用户券，可能略小于趋势核销数。'
