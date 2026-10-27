@@ -55,9 +55,12 @@
     <div v-if="canView" class="wb-block" v-loading="blocks.overview.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">经营概览</span>
-        <span v-if="overview.dataAsOf" class="wb-block__asof">数据时点：{{ overview.dataAsOf }}</span>
-        <span v-if="overview.periodStart" class="wb-block__asof">
-          统计区间：{{ overview.periodStart }} ~ {{ overview.periodEnd }}
+        <span class="wb-block__meta" :title="overviewMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ overviewMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ overviewMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ overviewMeta.sync }}</span>
         </span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
           经营报表 <i class="el-icon-arrow-right" />
@@ -110,7 +113,13 @@
     <div v-if="canView" class="wb-block" v-loading="blocks.terminal.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">终端状态</span>
-        <span class="wb-block__asof">实时枪口状态，不随统计周期变化</span>
+        <span class="wb-block__meta" :title="terminalMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ terminalMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ terminalMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ terminalMeta.sync }}</span>
+        </span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/device/faultMonitor')">
           异常明细 <i class="el-icon-arrow-right" />
         </el-link>
@@ -138,11 +147,17 @@
     <!-- 充电用户（跟顶栏周期，末日可含今天；约每 15 分钟同步） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.chargeUser.loading">
       <div class="wb-block__head">
-        <span class="wb-block__title">{{ chargeUser.titleHint || '充电用户' }}</span>
+        <span class="wb-block__title">充电用户</span>
         <el-tooltip effect="dark" placement="top" :content="CHARGE_USER_TIP">
           <i class="el-icon-question wb-col-help wb-cu-help" />
         </el-tooltip>
-        <span v-if="chargeUserPeriodText" class="wb-block__asof wb-cu-asof">{{ chargeUserPeriodText }}</span>
+        <span class="wb-block__meta" :title="chargeUserMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ chargeUserMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ chargeUserMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ chargeUserMeta.sync }}</span>
+        </span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openChargeUserAnalysis">
           用户分析 <i class="el-icon-data-line" />
         </el-link>
@@ -242,7 +257,13 @@
     <div v-if="canAlerts" class="wb-block" v-loading="blocks.alerts.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">异常预警</span>
-        <span class="wb-block__asof">{{ alertAsOfText }}</span>
+        <span class="wb-block__meta" :title="alertMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ alertMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ alertMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ alertMeta.sync }}</span>
+        </span>
         <el-button class="wb-block__btn" size="mini" icon="el-icon-setting" @click="openConfig">预警设置</el-button>
         <el-button size="mini" icon="el-icon-view" @click="openDismissed">已忽略</el-button>
         <el-button size="mini" icon="el-icon-close" :disabled="!alertSelection.length" @click="openBatchDismiss">
@@ -391,7 +412,13 @@
     <div v-if="canFinance" class="wb-block" v-loading="blocks.finance.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">财务</span>
-        <span v-if="finance.dataAsOf" class="wb-block__asof">数据时点：{{ finance.dataAsOf }}</span>
+        <span class="wb-block__meta" :title="financeMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ financeMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ financeMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ financeMeta.sync }}</span>
+        </span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/finance/stationFinanceDayBill')">
           站点日账单 <i class="el-icon-arrow-right" />
         </el-link>
@@ -432,11 +459,13 @@
     <div v-if="canMarketing" class="wb-block" v-loading="blocks.marketing.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">营销</span>
-        <span v-if="marketing.dataAsOf" class="wb-block__asof">数据时点：{{ marketing.dataAsOf }}</span>
-        <span v-if="marketing.periodStart" class="wb-block__asof">
-          统计区间：{{ marketing.periodStart }} ~ {{ marketing.periodEnd }}
+        <span class="wb-block__meta" :title="marketingMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ marketingMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ marketingMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ marketingMeta.sync }}</span>
         </span>
-        <span v-if="marketing.periodHint" class="wb-block__asof">{{ marketing.periodHint }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openMarketingAnalysis">
           营销分析 <i class="el-icon-data-line" />
         </el-link>
@@ -587,12 +616,14 @@
     <!-- 电站电量 Top10（周期随顶栏） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.stationTop.loading">
       <div class="wb-block__head">
-        <span class="wb-block__title">{{ stationTopTitle }}</span>
-        <span v-if="stationTopMeta.dataAsOf" class="wb-block__asof">数据时点：{{ stationTopMeta.dataAsOf }}</span>
-        <span v-if="stationTopMeta.periodStart" class="wb-block__asof">
-          统计区间：{{ stationTopMeta.periodStart }} ~ {{ stationTopMeta.periodEnd }}
+        <span class="wb-block__title">电站电量前 10</span>
+        <span class="wb-block__meta" :title="stationTopBlockMeta.title">
+          <span class="wb-block__meta-item"><em>统计周期</em>{{ stationTopBlockMeta.period }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>统计区间</em>{{ stationTopBlockMeta.range }}</span>
+          <span class="wb-block__meta-sep">｜</span>
+          <span class="wb-block__meta-item"><em>同步</em>{{ stationTopBlockMeta.sync }}</span>
         </span>
-        <span v-if="stationTopMeta.periodHint" class="wb-block__asof">{{ stationTopMeta.periodHint }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
           电站报表 <i class="el-icon-arrow-right" />
         </el-link>
@@ -681,6 +712,7 @@ import {
   newUserPercent,
   ringStyle
 } from './chargeUser'
+import { SYNC, buildBlockMeta } from './blockMeta'
 
 const ALERT_META = {
   START_FAIL: { label: '启动失败率高', tag: 'danger' },
@@ -735,8 +767,6 @@ const TERMINAL_COLUMNS = [
   { key: 'dc', title: '直流' },
   { key: 'ac', title: '交流' }
 ]
-const PERIOD_TITLE = { TODAY: '今日', WEEK: '本周', MONTH: '本月' }
-
 function newBlock() {
   return { loading: false, error: '' }
 }
@@ -826,12 +856,70 @@ export default {
     filteredStationList() {
       return this.stationList
     },
-    // 充电用户块：副文案以服务端 subHint 为准，缺省回退统计起止日
-    chargeUserPeriodText() {
+    overviewMeta() {
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        periodStart: this.overview.periodStart,
+        periodEnd: this.overview.periodEnd,
+        sync: SYNC.WORKBENCH_DAY,
+        dataAsOf: this.overview.dataAsOf
+      })
+    },
+    terminalMeta() {
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        sync: SYNC.REALTIME,
+        followsPeriod: false
+      })
+    },
+    chargeUserMeta() {
       const c = this.chargeUser
-      if (c.subHint) return c.subHint
-      if (c.periodStart) return c.periodStart === c.periodEnd ? `统计日 ${c.periodStart}` : `统计区间 ${c.periodStart} ~ ${c.periodEnd}`
-      return ''
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        periodStart: c.periodStart,
+        periodEnd: c.periodEnd,
+        sync: SYNC.CHARGE_USER
+      })
+    },
+    alertMeta() {
+      const first = this.alerts.length ? this.alerts[0] : null
+      const day = first && first.alertDate
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        periodStart: day,
+        periodEnd: day,
+        sync: SYNC.ALERT
+      })
+    },
+    financeMeta() {
+      const f = this.finance
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        periodStart: f.settlementPeriodStart,
+        periodEnd: f.settlementPeriodEnd,
+        sync: SYNC.FINANCE,
+        dataAsOf: f.dataAsOf
+      })
+    },
+    marketingMeta() {
+      const m = this.marketing
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        periodStart: m.periodStart,
+        periodEnd: m.periodEnd,
+        sync: SYNC.MARKETING,
+        dataAsOf: m.dataAsOf
+      })
+    },
+    stationTopBlockMeta() {
+      const m = this.stationTopMeta
+      return buildBlockMeta({
+        periodType: this.searchForm.periodType,
+        periodStart: m.periodStart,
+        periodEnd: m.periodEnd,
+        sync: SYNC.STATION_TOP,
+        dataAsOf: m.dataAsOf
+      })
     },
     chargeUserNewPercent() {
       return newUserPercent(this.chargeUser.newChargeUserCount, this.chargeUser.chargeUserCount)
@@ -844,14 +932,6 @@ export default {
         { key: 'yesterday', card: this.cuYesterday || {}, fallbackTitle: '昨日充电用户' },
         { key: 'month', card: this.cuMonth || {}, fallbackTitle: '本月充电用户' }
       ]
-    },
-    stationTopTitle() {
-      return (PERIOD_TITLE[this.searchForm.periodType] || '') + '电站电量前 10'
-    },
-    alertAsOfText() {
-      const first = this.alerts.length ? this.alerts[0] : null
-      const day = first && first.alertDate
-      return (day ? `判定日：${day}` : '按已收口营业日判定') + '（今日未收口，周期含今日时取昨日）'
     },
     settledSubText() {
       const f = this.finance
@@ -1300,6 +1380,25 @@ export default {
     font-size: 12px;
     color: #909399;
     margin-right: 16px;
+  }
+  .wb-block__meta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 12px;
+    color: #909399;
+    margin-right: 16px;
+    line-height: 1.4;
+    max-width: 62%;
+  }
+  .wb-block__meta-item em {
+    font-style: normal;
+    color: #c0c4cc;
+    margin-right: 4px;
+  }
+  .wb-block__meta-sep {
+    margin: 0 6px;
+    color: #dcdfe6;
   }
   .wb-block__btn {
     margin-left: auto;
