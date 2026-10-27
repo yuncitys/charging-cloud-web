@@ -32,6 +32,24 @@ export function workbenchMarketing(data) {
   })
 }
 
+// V3：终端状态（实时，不随周期）→ { dc: {fault,offline,occupy,charging,idle,other}, ac: {...} }
+export function getTerminalStatus(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/terminalStatus',
+    method: 'post',
+    data
+  })
+}
+
+// V3：电站电量 Top10 → [{ rank, stationId, stationName, totalKwh, avgDailyKwh, avgDailyKwhPerGun, gunCount, utilizationRate, ratedPowerKw }]
+export function getStationPowerTop(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/stationPowerTop',
+    method: 'post',
+    data
+  })
+}
+
 // V2：预警阈值 / 忽略
 export function getAlertConfig(merchantId) {
   return request({

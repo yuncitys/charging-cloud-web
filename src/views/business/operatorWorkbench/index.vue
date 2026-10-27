@@ -21,6 +21,17 @@
             <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
           </el-select>
         </el-form-item>
+        <el-form-item label="业态">
+          <el-select
+            v-model="searchForm.ruleId"
+            clearable
+            placeholder="全部"
+            style="width: 140px"
+            @change="onRuleChange"
+          >
+            <el-option v-for="r in ruleOptions" :key="r.value" :label="r.label" :value="r.value" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="站点">
           <el-select
             v-model="searchForm.stationIds"
@@ -91,6 +102,35 @@
         <div class="wb-fee__legend">
           <span><i class="dot dot--elec" />电费 {{ money(overview.electricFee) }} 元（{{ feeElecPercent }}%）</span>
           <span><i class="dot dot--service" />服务费 {{ money(overview.serviceFee) }} 元（{{ feeServicePercent }}%）</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 终端状态（实时，不随统计周期变化） -->
+    <div v-if="canView" class="wb-block" v-loading="blocks.terminal.loading">
+      <div class="wb-block__head">
+        <span class="wb-block__title">终端状态</span>
+        <span class="wb-block__asof">实时枪口状态，不随统计周期变化</span>
+        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/device/faultMonitor')">
+          异常明细 <i class="el-icon-arrow-right" />
+        </el-link>
+        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/device/stationMonitor')">
+          电站监控 <i class="el-icon-arrow-right" />
+        </el-link>
+      </div>
+      <div v-if="blocks.terminal.error" class="wb-error">
+        <span>{{ blocks.terminal.error }}</span>
+        <el-button size="mini" type="primary" @click="loadTerminal">重试</el-button>
+      </div>
+      <div v-else class="wb-term">
+        <div v-for="col in terminalColumns" :key="col.key" class="wb-term__col">
+          <div class="wb-term__title">{{ col.title }}</div>
+          <div class="wb-term__grid">
+            <div v-for="st in TERMINAL_STATES" :key="st.key" class="wb-card wb-term__item">
+              <div class="wb-card__label">{{ st.label }}</div>
+              <div class="wb-card__value" :class="st.cls">{{ int(terminal[col.key] && terminal[col.key][st.key]) }}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -334,6 +374,42 @@
       </template>
     </div>
 
+    <!-- 电站电量 Top10（周期随顶栏） -->
+    <div v-if="canView" class="wb-block" v-loading="blocks.stationTop.loading">
+      <div class="wb-block__head">
+        <span class="wb-block__title">{{ stationTopTitle }}</span>
+        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
+          电站报表 <i class="el-icon-arrow-right" />
+        </el-link>
+      </div>
+      <div v-if="blocks.stationTop.error" class="wb-error">
+        <span>{{ blocks.stationTop.error }}</span>
+        <el-button size="mini" type="primary" @click="loadStationTop">重试</el-button>
+      </div>
+      <el-table v-else :data="stationTop" size="small" style="width: 100%" empty-text="暂无数据">
+        <el-table-column label="排名" prop="rank" width="70" align="center" />
+        <el-table-column label="电站名称" prop="stationName" min-width="180" show-overflow-tooltip />
+        <el-table-column label="总电量(度)" min-width="110" align="right">
+          <template slot-scope="scope">{{ num(scope.row.totalKwh) }}</template>
+        </el-table-column>
+        <el-table-column label="日均电量(度)" min-width="120" align="right">
+          <template slot-scope="scope">{{ num(scope.row.avgDailyKwh) }}</template>
+        </el-table-column>
+        <el-table-column label="单枪日均电量(度)" min-width="140" align="right">
+          <template slot-scope="scope">{{ num(scope.row.avgDailyKwhPerGun) }}</template>
+        </el-table-column>
+        <el-table-column label="终端数量(个)" min-width="110" align="right">
+          <template slot-scope="scope">{{ scope.row.gunCount != null ? scope.row.gunCount : '--' }}</template>
+        </el-table-column>
+        <el-table-column label="充电利用率(%)" min-width="120" align="right">
+          <template slot-scope="scope">{{ num(scope.row.utilizationRate) }}</template>
+        </el-table-column>
+        <el-table-column label="额定功率(kW)" min-width="120" align="right">
+          <template slot-scope="scope">{{ num(scope.row.ratedPowerKw) }}</template>
+        </el-table-column>
+      </el-table>
+    </div>
+
     <div v-if="!canView && !canAlerts && !canFinance && !canMarketing" class="wb-block wb-error">暂无工作台数据权限</div>
   </div>
 </template>
@@ -346,6 +422,8 @@ import {
   workbenchAlerts,
   workbenchFinance,
   workbenchMarketing,
+  getTerminalStatus,
+  getStationPowerTop,
   getAlertConfig,
   saveAlertConfig,
   dismissAlert,
@@ -378,6 +456,21 @@ const DEFAULT_CONFIG = {
   startFailMinSamples: 10
 }
 
+// 终端状态：六态展示顺序与配色
+const TERMINAL_STATES = [
+  { key: 'fault', label: '故障', cls: 'wb-term--fault' },
+  { key: 'offline', label: '离线', cls: 'wb-term--offline' },
+  { key: 'occupy', label: '占用', cls: 'wb-term--occupy' },
+  { key: 'charging', label: '充电中', cls: 'wb-term--charging' },
+  { key: 'idle', label: '空闲', cls: 'wb-term--idle' },
+  { key: 'other', label: '其他', cls: '' }
+]
+const TERMINAL_COLUMNS = [
+  { key: 'dc', title: '直流' },
+  { key: 'ac', title: '交流' }
+]
+const PERIOD_TITLE = { TODAY: '今日', WEEK: '本周', MONTH: '本月' }
+
 function newBlock() {
   return { loading: false, error: '' }
 }
@@ -386,15 +479,22 @@ export default {
   name: 'OperatorWorkbench',
   data() {
     return {
-      searchForm: { periodType: 'TODAY', merchantId: null, stationIds: [] },
+      searchForm: { periodType: 'TODAY', merchantId: null, ruleId: null, stationIds: [] },
       merchantList: [],
+      ruleOptions: [],
       stationList: [],
       blocks: {
         overview: newBlock(),
         alerts: newBlock(),
         finance: newBlock(),
-        marketing: newBlock()
+        marketing: newBlock(),
+        terminal: newBlock(),
+        stationTop: newBlock()
       },
+      TERMINAL_STATES,
+      terminalColumns: TERMINAL_COLUMNS,
+      terminal: {},
+      stationTop: [],
       FIELD_TIPS,
       CONFIG_FOOTER_NOTE,
       configDrawer: false,
@@ -434,6 +534,9 @@ export default {
       if (!this.searchForm.merchantId) return this.stationList
       return this.stationList.filter(s => s.merchantId === this.searchForm.merchantId)
     },
+    stationTopTitle() {
+      return (PERIOD_TITLE[this.searchForm.periodType] || '') + '电站电量前 10'
+    },
     alertAsOfText() {
       const first = this.alerts.length ? this.alerts[0] : null
       const day = first && first.alertDate
@@ -461,6 +564,7 @@ export default {
   },
   created() {
     this.initMerchant()
+    this.initRuleOptions()
     this.initStationList()
     this.search()
   },
@@ -472,6 +576,7 @@ export default {
       const f = this.searchForm
       const p = { periodType: f.periodType }
       if (f.merchantId) p.merchantId = f.merchantId
+      if (f.ruleId !== null && f.ruleId !== undefined && f.ruleId !== '') p.ruleId = f.ruleId
       if (f.stationIds && f.stationIds.length) p.stationIds = f.stationIds
       if (withPage) {
         p.page = this.alertPage
@@ -484,8 +589,19 @@ export default {
         if (res.code === 200) this.merchantList = res.data || []
       }).catch(() => {})
     },
+    // 业态选项：字典 device_rule（按 BaseConfig.VUE_RULE_ID_TABS 过滤，值为数字）
+    initRuleOptions() {
+      this.$dict.getDeviceRuleOptions().then(list => {
+        this.ruleOptions = list || []
+      }).catch(() => { this.ruleOptions = [] })
+    },
+    // 站点候选：业态由后端 /networkDot/list 按 rule_id 过滤（返回 VO 不含 ruleId，无法前端过滤）
     initStationList() {
-      getChargingStationList({}).then(res => {
+      const params = {}
+      if (this.searchForm.ruleId !== null && this.searchForm.ruleId !== undefined && this.searchForm.ruleId !== '') {
+        params.ruleId = this.searchForm.ruleId
+      }
+      return getChargingStationList(params).then(res => {
         if (res.code === 200) this.stationList = res.data || []
       }).catch(() => { this.stationList = [] })
     },
@@ -494,10 +610,22 @@ export default {
       this.searchForm.stationIds = this.searchForm.stationIds.filter(id => allowed.has(id))
       this.search()
     },
+    // 切换业态：重新拉取该业态站点，剔除已选但不在候选内的站点，再查询
+    onRuleChange() {
+      this.initStationList().then(() => {
+        const allowed = new Set(this.filteredStationList.map(s => s.id))
+        this.searchForm.stationIds = this.searchForm.stationIds.filter(id => allowed.has(id))
+        this.search()
+      })
+    },
     search() {
       // 无权限不请求；四块互不阻断；查询/换筛选条件回到第 1 页
       this.alertPage = 1
-      if (this.canView) this.loadOverview()
+      if (this.canView) {
+        this.loadOverview()
+        this.loadTerminal()
+        this.loadStationTop()
+      }
       if (this.canAlerts) this.loadAlerts()
       if (this.canFinance) this.loadFinance()
       if (this.canMarketing) this.loadMarketing()
@@ -550,6 +678,12 @@ export default {
     },
     loadMarketing() {
       return this.runBlock('marketing', workbenchMarketing, d => { this.marketing = d || {} })
+    },
+    loadTerminal() {
+      return this.runBlock('terminal', getTerminalStatus, d => { this.terminal = d || {} })
+    },
+    loadStationTop() {
+      return this.runBlock('stationTop', getStationPowerTop, d => { this.stationTop = Array.isArray(d) ? d : [] })
     },
     // 默认商户：筛选商户 > 唯一商户 > 空（需在抽屉内选择）
     defaultMerchantId() {
@@ -727,6 +861,12 @@ export default {
       const n = Number(v)
       return isNaN(n) || v == null ? '0.00' : n.toFixed(2)
     },
+    // 可空数值：null/非数字 → '--'，否则保留 2 位
+    num(v) {
+      if (v == null || v === '') return '--'
+      const n = Number(v)
+      return isNaN(n) ? '--' : n.toFixed(2)
+    },
     int(v) {
       return v == null ? 0 : v
     },
@@ -823,6 +963,31 @@ export default {
     .up { color: #f56c6c; }
     .down { color: #67c23a; }
   }
+  .wb-term {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  .wb-term__title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #606266;
+    margin-bottom: 8px;
+  }
+  .wb-term__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+  .wb-term__item {
+    padding: 10px 12px;
+    .wb-card__value { font-size: 20px; }
+  }
+  .wb-term--fault { color: #f56c6c; }
+  .wb-term--offline { color: #909399; }
+  .wb-term--occupy { color: #e6a23c; }
+  .wb-term--charging { color: #409eff; }
+  .wb-term--idle { color: #67c23a; }
   .wb-hint {
     margin-bottom: 12px;
   }
