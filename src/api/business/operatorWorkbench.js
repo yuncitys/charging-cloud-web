@@ -57,6 +57,15 @@ export function dismissAlert(data) {
   })
 }
 
+// 批量忽略：{ days, items: [{ merchantId, stationId, alertType }] } → { successCount, failCount, failures }
+export function batchDismissAlerts(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/alerts/dismiss/batch',
+    method: 'post',
+    data
+  })
+}
+
 export function listDismissed(merchantId) {
   return request({
     url: '/api/web/operatorWorkbench/alerts/dismissed',

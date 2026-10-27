@@ -102,6 +102,9 @@
         <span class="wb-block__asof">{{ alertAsOfText }}</span>
         <el-button class="wb-block__btn" size="mini" icon="el-icon-setting" @click="openConfig">预警设置</el-button>
         <el-button size="mini" icon="el-icon-view" @click="openDismissed">已忽略</el-button>
+        <el-button size="mini" icon="el-icon-close" :disabled="!alertSelection.length" @click="openBatchDismiss">
+          批量忽略<template v-if="alertSelection.length">（{{ alertSelection.length }}）</template>
+        </el-button>
         <el-link class="wb-block__link wb-block__link--inline" type="primary" :underline="false" @click="go('/device/faultMonitor')">
           故障监控 <i class="el-icon-arrow-right" />
         </el-link>
@@ -110,7 +113,8 @@
         <span>{{ blocks.alerts.error }}</span>
         <el-button size="mini" type="primary" plain @click="loadAlerts">重试</el-button>
       </div>
-      <el-table v-else :data="alerts" size="small" style="width: 100%" empty-text="暂无预警">
+      <el-table v-else :data="alerts" size="small" style="width: 100%" empty-text="暂无预警" @selection-change="onAlertSelectionChange">
+        <el-table-column type="selection" width="45" align="center" />
         <el-table-column label="站点" prop="stationName" min-width="160" show-overflow-tooltip />
         <el-table-column label="预警类型" width="120" align="center">
           <template slot-scope="scope">
@@ -171,7 +175,8 @@
 
     <!-- 忽略时长 -->
     <el-dialog title="忽略预警" :visible.sync="dismissDialog" width="420px" append-to-body>
-      <div v-if="dismissTarget" class="wb-dismiss-info">
+      <div v-if="dismissMode === 'batch'" class="wb-dismiss-info">已选 {{ dismissTargets.length }} 条预警</div>
+      <div v-else-if="dismissTarget" class="wb-dismiss-info">
         {{ dismissTarget.stationName }} · {{ alertMeta(dismissTarget.alertType).label }}
       </div>
       <el-form label-width="80px" size="small">
@@ -322,6 +327,7 @@ import {
   getAlertConfig,
   saveAlertConfig,
   dismissAlert,
+  batchDismissAlerts,
   listDismissed,
   cancelDismiss
 } from '@/api/business/operatorWorkbench'
@@ -377,6 +383,9 @@ export default {
       dismissDialog: false,
       dismissing: false,
       dismissTarget: null,
+      dismissMode: 'one', // 'one' | 'batch'
+      dismissTargets: [], // 批量模式下的已选行
+      alertSelection: [],
       dismissDays: 7,
       dismissedDrawer: false,
       dismissedLoading: false,
@@ -534,12 +543,61 @@ export default {
         }
       }).catch(() => {}).then(() => { this.configSaving = false })
     },
+    onAlertSelectionChange(rows) {
+      this.alertSelection = rows || []
+    },
     openDismiss(row) {
+      this.dismissMode = 'one'
       this.dismissTarget = row
+      this.dismissTargets = []
       this.dismissDays = 7
       this.dismissDialog = true
     },
+    openBatchDismiss() {
+      if (!this.alertSelection.length) return
+      this.dismissMode = 'batch'
+      this.dismissTarget = null
+      this.dismissTargets = this.alertSelection.slice()
+      this.dismissDays = 7
+      this.dismissDialog = true
+    },
+    // 批量：缺 merchantId（行内与筛选商户均无）的行在提交前过滤，计入失败条数并提示
+    confirmBatchDismiss() {
+      const items = []
+      let skipped = 0
+      this.dismissTargets.forEach(row => {
+        const merchantId = row.merchantId || this.searchForm.merchantId
+        if (!merchantId) {
+          skipped++
+          return
+        }
+        items.push({ merchantId, stationId: row.stationId, alertType: row.alertType })
+      })
+      if (!items.length) {
+        return this.$message.warning('所选预警缺少商户信息，请先在筛选中选择商户')
+      }
+      this.dismissing = true
+      batchDismissAlerts({ days: this.dismissDays, items }).then(res => {
+        if (res && res.code === 200) {
+          const d = res.data || {}
+          const ok = Number(d.successCount) || 0
+          const fail = (Number(d.failCount) || 0) + skipped
+          if (fail > 0) {
+            this.$message.warning(`已忽略 ${ok} 条，失败 ${fail} 条`)
+          } else {
+            this.$message.success(`已忽略 ${ok} 条`)
+          }
+          this.dismissDialog = false
+          this.alertSelection = []
+          this.dismissTargets = []
+          this.loadAlerts()
+        } else {
+          this.$message.error((res && res.msg) || '批量忽略失败')
+        }
+      }).catch(() => {}).then(() => { this.dismissing = false })
+    },
     confirmDismiss() {
+      if (this.dismissMode === 'batch') return this.confirmBatchDismiss()
       const row = this.dismissTarget
       if (!row) return
       const merchantId = row.merchantId || this.searchForm.merchantId
