@@ -8,13 +8,16 @@
 
 		  <div :class="{hasTagsView:needTagsView}" class="main-container">
 
-		    <!-- mix 模式：顶部水平菜单独占一行 -->
-		    <topSidebar v-if="menuLayout === 'mix'" />
-
-		    <!-- mix 模式：navbar 单独一行；sidebar 模式：navbar + 用户区合并为一行 -->
-		    <div :class="{'fixed-header': fixedHeader, 'sidebar-combined-header': menuLayout !== 'mix'}">
+		    <!-- 顶栏整体固定：mix=水平菜单+面包屑；sidebar=面包屑+用户区合并一行 -->
+		    <div
+		      :class="{
+		        'fixed-header': fixedHeader,
+		        'mix-header': menuLayout === 'mix',
+		        'sidebar-combined-header': menuLayout !== 'mix'
+		      }"
+		    >
+		      <topSidebar v-if="menuLayout === 'mix'" />
 		      <navbar />
-		      <!-- sidebar 模式：用户信息区与 navbar 同行 -->
 		      <topSidebar v-if="menuLayout !== 'mix'" />
 		    </div>
 
@@ -103,6 +106,7 @@ export default {
     z-index: 9;
     width: calc(100% - #{$sideBarWidth});
     transition: width 0.28s;
+    background: #fff;
   }
 
   .hideSidebar .fixed-header {
@@ -111,6 +115,12 @@ export default {
 
   .mobile .fixed-header {
     width: 100%;
+  }
+
+  /* mix 模式：水平菜单 + 面包屑上下两行 */
+  .mix-header {
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 21, 41, .08);
   }
 
   /* sidebar 模式：navbar + topSidebar 合并为一行 */
@@ -122,8 +132,15 @@ export default {
   }
 </style>
 
-<!-- 非 scoped：穿透子组件样式，仅在 sidebar 合并顶栏场景生效 -->
+<!-- 非 scoped：穿透子组件样式 -->
 <style lang="scss">
+  /* mix 固定顶栏时，面包屑行不再单独投阴影，避免双层阴影 */
+  .mix-header {
+    .navbar {
+      box-shadow: none !important;
+    }
+  }
+
   .sidebar-combined-header {
     .navbar {
       flex: 0 0 auto;
