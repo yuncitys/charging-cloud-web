@@ -392,19 +392,43 @@
         <el-table-column label="总电量(度)" min-width="110" align="right">
           <template slot-scope="scope">{{ num(scope.row.totalKwh) }}</template>
         </el-table-column>
-        <el-table-column label="日均电量(度)" min-width="120" align="right">
+        <el-table-column min-width="130" align="right">
+          <template slot="header">
+            <span>日均电量(度)</span>
+            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.avgDailyKwh">
+              <i class="el-icon-question wb-col-help" @click.stop />
+            </el-tooltip>
+          </template>
           <template slot-scope="scope">{{ num(scope.row.avgDailyKwh) }}</template>
         </el-table-column>
-        <el-table-column label="单枪日均电量(度)" min-width="140" align="right">
+        <el-table-column min-width="150" align="right">
+          <template slot="header">
+            <span>单枪日均电量(度)</span>
+            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.avgDailyKwhPerGun">
+              <i class="el-icon-question wb-col-help" @click.stop />
+            </el-tooltip>
+          </template>
           <template slot-scope="scope">{{ num(scope.row.avgDailyKwhPerGun) }}</template>
         </el-table-column>
         <el-table-column label="终端数量(个)" min-width="110" align="right">
           <template slot-scope="scope">{{ scope.row.gunCount != null ? scope.row.gunCount : '--' }}</template>
         </el-table-column>
-        <el-table-column label="充电利用率(%)" min-width="120" align="right">
+        <el-table-column min-width="130" align="right">
+          <template slot="header">
+            <span>充电利用率(%)</span>
+            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.utilizationRate">
+              <i class="el-icon-question wb-col-help" @click.stop />
+            </el-tooltip>
+          </template>
           <template slot-scope="scope">{{ num(scope.row.utilizationRate) }}</template>
         </el-table-column>
-        <el-table-column label="额定功率(kW)" min-width="120" align="right">
+        <el-table-column min-width="130" align="right">
+          <template slot="header">
+            <span>额定功率(kW)</span>
+            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.ratedPowerKw">
+              <i class="el-icon-question wb-col-help" @click.stop />
+            </el-tooltip>
+          </template>
           <template slot-scope="scope">{{ num(scope.row.ratedPowerKw) }}</template>
         </el-table-column>
       </el-table>
@@ -446,6 +470,14 @@ const FIELD_TIPS = {
   faultHighMinOrders: '含义：判定日新建故障工单数的下限。作用：达到或超过该笔数则进入「故障高发」列表，便于优先派修。',
   startSuccessRateMin: '含义：启动成功订单占比的最低可接受值。作用：成功率低于该值则告警；调低可减少告警，调高更敏感。',
   startFailMinSamples: '含义：参与成功率计算的最少样本（启动+无响应）。作用：样本不足不告警，避免「仅 1 单失败」刷屏。'
+}
+
+// 电站电量 Top10 表头公式（与后端 Service 口径一致）
+const STATION_TOP_TIPS = {
+  avgDailyKwh: '总电量 ÷ 区间天数 D（起止日含首尾，至少 1）',
+  avgDailyKwhPerGun: '日均电量 ÷ 终端数量；终端数为 0 时显示 --',
+  utilizationRate: '(总充电时长分钟 ÷ 60) ÷ (终端数量 × 24 × D) × 100；终端数为 0 时显示 --',
+  ratedPowerKw: '站下未删设备额定功率之和（W）÷ 1000'
 }
 const CONFIG_FOOTER_NOTE = '修改后立即作用于预警列表，无需重跑统计任务。预警判定日规则与 V1 相同（选「今日」时看昨日已收口日）。'
 const DEFAULT_CONFIG = {
@@ -496,6 +528,7 @@ export default {
       terminal: {},
       stationTop: [],
       FIELD_TIPS,
+      STATION_TOP_TIPS,
       CONFIG_FOOTER_NOTE,
       configDrawer: false,
       configLoading: false,
@@ -1032,6 +1065,13 @@ export default {
     margin-right: 6px;
     &--elec { background: #409eff; }
     &--service { background: #e6a23c; }
+  }
+  .wb-col-help {
+    margin-left: 4px;
+    color: #c0c4cc;
+    font-size: 14px;
+    cursor: pointer;
+    vertical-align: middle;
   }
 }
 

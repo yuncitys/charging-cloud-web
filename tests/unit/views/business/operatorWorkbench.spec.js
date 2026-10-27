@@ -84,6 +84,16 @@ describe('OperatorWorkbench V3', () => {
     expect(w.vm.num(12.345)).toBe('12.35')
   })
 
+  it('exposes formula tips for calculated station-top columns', async () => {
+    const w = factory()
+    await flush()
+    const tips = w.vm.STATION_TOP_TIPS
+    expect(tips.avgDailyKwh).toContain('总电量')
+    expect(tips.avgDailyKwhPerGun).toContain('日均电量')
+    expect(tips.utilizationRate).toContain('24')
+    expect(tips.ratedPowerKw).toContain('1000')
+  })
+
   it('rule change refetches stations by ruleId, prunes selection, and re-queries', async () => {
     const w = factory()
     await flush()
