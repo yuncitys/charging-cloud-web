@@ -1,5 +1,11 @@
 /* eslint-env jest */
-import { newUserPercent, ringStyle, CHARGE_USER_TIP } from '@/views/business/operatorWorkbench/chargeUser'
+import {
+  newUserPercent,
+  ringStyle,
+  CHARGE_USER_TIP,
+  CHARGE_USER_ANALYSIS_NOTE,
+  CHARGE_USER_STATION_TOP_NOTE
+} from '@/views/business/operatorWorkbench/chargeUser'
 
 describe('chargeUser helpers', () => {
   it('newUserPercent handles zero denominator, clamp and rounding', () => {
@@ -21,5 +27,13 @@ describe('chargeUser helpers', () => {
   it('tip mentions the competitor calibre', () => {
     expect(CHARGE_USER_TIP).toContain('手机号')
     expect(CHARGE_USER_TIP).toContain('C 端')
+  })
+
+  it('period counts are explained as daily-dedup sums (not live range distinct)', () => {
+    expect(CHARGE_USER_TIP).toContain('各日去重之和')
+    expect(CHARGE_USER_TIP).toContain('重复')
+    expect(CHARGE_USER_ANALYSIS_NOTE).toContain('各日去重之和')
+    expect(CHARGE_USER_ANALYSIS_NOTE).not.toContain('订单侧区间去重')
+    expect(CHARGE_USER_STATION_TOP_NOTE).toContain('各日去重之和')
   })
 })
