@@ -133,39 +133,48 @@
       </el-table>
     </div>
 
-    <!-- 预警设置抽屉 -->
-    <el-drawer title="预警设置" :visible.sync="configDrawer" direction="rtl" size="480px" append-to-body>
+    <!-- 预警设置抽屉：自定义 class + 底栏固定，避免说明文案过长把「保存」顶出可视区 -->
+    <el-drawer
+      title="预警设置"
+      :visible.sync="configDrawer"
+      direction="rtl"
+      size="480px"
+      append-to-body
+      custom-class="wb-alert-config-drawer"
+    >
       <div class="wb-drawer">
-        <el-form label-position="top" size="small">
-          <el-form-item v-if="!searchForm.merchantId" label="商户">
-            <el-select v-model="configMerchantId" filterable placeholder="请选择商户" style="width: 100%" @change="loadConfig">
-              <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
-            </el-select>
-          </el-form-item>
-        </el-form>
-        <el-form v-loading="configLoading" label-position="top" size="small" class="wb-config-form">
-          <el-form-item label="收入骤降比例">
-            <el-input-number v-model="configForm.dropRatioThreshold" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
-            <div class="wb-tip">{{ FIELD_TIPS.dropRatioThreshold }}</div>
-          </el-form-item>
-          <el-form-item label="骤降基线金额（元）">
-            <el-input-number v-model="configForm.dropBaselineMin" :min="0" :step="10" :precision="2" style="width: 200px" />
-            <div class="wb-tip">{{ FIELD_TIPS.dropBaselineMin }}</div>
-          </el-form-item>
-          <el-form-item label="故障高发（新建工单数）">
-            <el-input-number v-model="configForm.faultHighMinOrders" :min="1" :step="1" :precision="0" style="width: 200px" />
-            <div class="wb-tip">{{ FIELD_TIPS.faultHighMinOrders }}</div>
-          </el-form-item>
-          <el-form-item label="启动成功率下限">
-            <el-input-number v-model="configForm.startSuccessRateMin" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
-            <div class="wb-tip">{{ FIELD_TIPS.startSuccessRateMin }}</div>
-          </el-form-item>
-          <el-form-item label="启动失败最少订单数">
-            <el-input-number v-model="configForm.startFailMinSamples" :min="1" :step="1" :precision="0" style="width: 200px" />
-            <div class="wb-tip">{{ FIELD_TIPS.startFailMinSamples }}</div>
-          </el-form-item>
-        </el-form>
-        <div class="wb-drawer__note">{{ CONFIG_FOOTER_NOTE }}</div>
+        <div class="wb-drawer__body">
+          <el-form label-position="top" size="small">
+            <el-form-item v-if="!searchForm.merchantId" label="商户">
+              <el-select v-model="configMerchantId" filterable placeholder="请选择商户" style="width: 100%" @change="loadConfig">
+                <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
+              </el-select>
+            </el-form-item>
+          </el-form>
+          <el-form v-loading="configLoading" label-position="top" size="small" class="wb-config-form">
+            <el-form-item label="收入骤降比例">
+              <el-input-number v-model="configForm.dropRatioThreshold" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
+              <div class="wb-tip">{{ FIELD_TIPS.dropRatioThreshold }}</div>
+            </el-form-item>
+            <el-form-item label="骤降基线金额（元）">
+              <el-input-number v-model="configForm.dropBaselineMin" :min="0" :step="10" :precision="2" style="width: 200px" />
+              <div class="wb-tip">{{ FIELD_TIPS.dropBaselineMin }}</div>
+            </el-form-item>
+            <el-form-item label="故障高发（新建工单数）">
+              <el-input-number v-model="configForm.faultHighMinOrders" :min="1" :step="1" :precision="0" style="width: 200px" />
+              <div class="wb-tip">{{ FIELD_TIPS.faultHighMinOrders }}</div>
+            </el-form-item>
+            <el-form-item label="启动成功率下限">
+              <el-input-number v-model="configForm.startSuccessRateMin" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
+              <div class="wb-tip">{{ FIELD_TIPS.startSuccessRateMin }}</div>
+            </el-form-item>
+            <el-form-item label="启动失败最少订单数">
+              <el-input-number v-model="configForm.startFailMinSamples" :min="1" :step="1" :precision="0" style="width: 200px" />
+              <div class="wb-tip">{{ FIELD_TIPS.startFailMinSamples }}</div>
+            </el-form-item>
+          </el-form>
+          <div class="wb-drawer__note">{{ CONFIG_FOOTER_NOTE }}</div>
+        </div>
         <div class="wb-drawer__footer">
           <el-button size="small" @click="configDrawer = false">取消</el-button>
           <el-button size="small" type="primary" :loading="configSaving" :disabled="!configMerchantId" @click="saveConfig">保存</el-button>
@@ -831,7 +840,16 @@ export default {
   font-weight: 600;
 }
 .wb-drawer {
-  padding: 0 20px 20px;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+.wb-drawer__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 20px 16px;
 }
 .wb-drawer__note {
   font-size: 12px;
@@ -843,7 +861,28 @@ export default {
   margin-top: 8px;
 }
 .wb-drawer__footer {
-  margin-top: 16px;
+  flex-shrink: 0;
+  padding: 12px 20px;
+  border-top: 1px solid #ebeef5;
   text-align: right;
+  background: #fff;
+}
+</style>
+
+<style>
+/* append-to-body 抽屉须用非 scoped，否则无法作用到 .el-drawer__body */
+.wb-alert-config-drawer.el-drawer .el-drawer__body {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+.wb-alert-config-drawer.el-drawer .el-drawer__header {
+  margin-bottom: 0;
+  padding: 16px 20px;
+  border-bottom: 1px solid #ebeef5;
+  flex-shrink: 0;
 }
 </style>
