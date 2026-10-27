@@ -432,6 +432,11 @@
     <div v-if="canMarketing" class="wb-block" v-loading="blocks.marketing.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">营销</span>
+        <span v-if="marketing.dataAsOf" class="wb-block__asof">数据时点：{{ marketing.dataAsOf }}</span>
+        <span v-if="marketing.periodStart" class="wb-block__asof">
+          统计区间：{{ marketing.periodStart }} ~ {{ marketing.periodEnd }}
+        </span>
+        <span v-if="marketing.periodHint" class="wb-block__asof">{{ marketing.periodHint }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openMarketingAnalysis">
           营销分析 <i class="el-icon-data-line" />
         </el-link>
@@ -583,6 +588,11 @@
     <div v-if="canView" class="wb-block" v-loading="blocks.stationTop.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">{{ stationTopTitle }}</span>
+        <span v-if="stationTopMeta.dataAsOf" class="wb-block__asof">数据时点：{{ stationTopMeta.dataAsOf }}</span>
+        <span v-if="stationTopMeta.periodStart" class="wb-block__asof">
+          统计区间：{{ stationTopMeta.periodStart }} ~ {{ stationTopMeta.periodEnd }}
+        </span>
+        <span v-if="stationTopMeta.periodHint" class="wb-block__asof">{{ stationTopMeta.periodHint }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
           电站报表 <i class="el-icon-arrow-right" />
         </el-link>
@@ -752,6 +762,7 @@ export default {
       terminalColumns: TERMINAL_COLUMNS,
       terminal: {},
       stationTop: [],
+      stationTopMeta: {},
       FIELD_TIPS,
       STATION_TOP_TIPS,
       MARKETING_TIPS,
@@ -1054,7 +1065,22 @@ export default {
       return this.runBlock('terminal', getTerminalStatus, d => { this.terminal = d || {} })
     },
     loadStationTop() {
-      return this.runBlock('stationTop', getStationPowerTop, d => { this.stationTop = Array.isArray(d) ? d : [] })
+      return this.runBlock('stationTop', getStationPowerTop, d => {
+        // 兼容旧版：data 直接为数组；新版为 { list, dataAsOf, periodStart, periodEnd, periodHint }
+        if (Array.isArray(d)) {
+          this.stationTop = d
+          this.stationTopMeta = {}
+          return
+        }
+        const o = d || {}
+        this.stationTop = Array.isArray(o.list) ? o.list : []
+        this.stationTopMeta = {
+          dataAsOf: o.dataAsOf,
+          periodStart: o.periodStart,
+          periodEnd: o.periodEnd,
+          periodHint: o.periodHint
+        }
+      })
     },
     // 默认商户：筛选商户 > 唯一商户 > 空（需在抽屉内选择）
     defaultMerchantId() {

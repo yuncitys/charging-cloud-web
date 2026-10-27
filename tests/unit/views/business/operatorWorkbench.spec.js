@@ -86,6 +86,28 @@ describe('OperatorWorkbench V3', () => {
     expect(w.vm.ruleOptions).toHaveLength(2)
   })
 
+  it('station top accepts legacy array and { list, meta } result', async () => {
+    const w = factory()
+    await flush()
+    expect(w.vm.stationTop).toHaveLength(1)
+    expect(w.vm.stationTopMeta).toEqual({})
+    api.getStationPowerTop.mockResolvedValueOnce({
+      code: 200,
+      data: {
+        list: [{ rank: 1, stationId: 1, stationName: 'A' }, { rank: 2, stationId: 2, stationName: 'B' }],
+        dataAsOf: '2026-10-27 10:00:00',
+        periodStart: '2026-10-27',
+        periodEnd: '2026-10-27',
+        periodHint: '充电日账单约每15分钟同步'
+      }
+    })
+    await w.vm.loadStationTop()
+    await flush()
+    expect(w.vm.stationTop).toHaveLength(2)
+    expect(w.vm.stationTopMeta.dataAsOf).toBe('2026-10-27 10:00:00')
+    expect(w.vm.stationTopMeta.periodHint).toBe('充电日账单约每15分钟同步')
+  })
+
   it('station top title follows period; null shows --', async () => {
     const w = factory()
     await flush()
