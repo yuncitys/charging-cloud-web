@@ -329,7 +329,10 @@
     <div v-if="canMarketing" class="wb-block" v-loading="blocks.marketing.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">营销</span>
-        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/marketing/activityHub')">
+        <el-link class="wb-block__link" type="primary" :underline="false" @click="openMarketingAnalysis">
+          营销分析 <i class="el-icon-data-line" />
+        </el-link>
+        <el-link class="wb-block__link wb-block__link--inline" type="primary" :underline="false" @click="go('/marketing/activityHub')">
           营销中心 <i class="el-icon-arrow-right" />
         </el-link>
       </div>
@@ -364,6 +367,24 @@
             <div class="wb-card__value">{{ money(marketing.subsidyCost) }}</div>
           </div>
         </div>
+        <!-- 活动参与：订单集与「核销订单实收」一致；电站/用户为区间去重，非逐日相加 -->
+        <div class="wb-cards wb-cards--3 wb-cards--row2">
+          <div class="wb-card">
+            <div class="wb-card__label">活动订单电量（度）</div>
+            <div class="wb-card__value">{{ money(marketing.activityOrderKwh) }}</div>
+            <div class="wb-card__sub">{{ MARKETING_TIPS.activityOrderKwh }}</div>
+          </div>
+          <div class="wb-card">
+            <div class="wb-card__label">参与电站数</div>
+            <div class="wb-card__value">{{ int(marketing.participateStationCount) }}</div>
+            <div class="wb-card__sub">{{ MARKETING_TIPS.participateStationCount }}</div>
+          </div>
+          <div class="wb-card">
+            <div class="wb-card__label">参与用户数</div>
+            <div class="wb-card__value">{{ int(marketing.participateUserCount) }}</div>
+            <div class="wb-card__sub">{{ MARKETING_TIPS.participateUserCount }}</div>
+          </div>
+        </div>
         <div class="wb-roi">
           核销订单实收 {{ money(marketing.redeemOrderActualIncome) }} 元 ｜ 粗略 ROI：
           <b>{{ marketing.roughRoi != null ? Number(marketing.roughRoi).toFixed(2) : '--' }}</b>
@@ -373,6 +394,87 @@
         </div>
       </template>
     </div>
+
+    <!-- 营销分析抽屉：日趋势 + 活动 Top；筛选继承商户/业态（站点对营销不生效） -->
+    <el-drawer
+      title="营销分析"
+      :visible.sync="maDrawer"
+      direction="rtl"
+      size="760px"
+      append-to-body
+      custom-class="wb-alert-config-drawer"
+    >
+      <div class="wb-drawer">
+        <div class="wb-drawer__body">
+          <el-form :inline="true" size="small" class="wb-ma-filter" @submit.native.prevent>
+            <el-form-item label="统计周期">
+              <el-radio-group v-model="maMode" size="small" @change="loadMarketingAnalysis">
+                <el-radio-button v-for="o in ANALYSIS_RANGE_OPTIONS" :key="o.value" :label="o.value">{{ o.label }}</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item class="wb-ma-range">
+              <span v-if="maWindow">{{ maWindow.startDate }} ~ {{ maWindow.endDate }}（共 {{ maWindow.analysisDays }} 天）</span>
+            </el-form-item>
+          </el-form>
+          <div class="wb-drawer__note wb-ma-note">{{ MARKETING_ANALYSIS_NOTE }}</div>
+          <div v-if="searchForm.stationIds && searchForm.stationIds.length" class="wb-tip">
+            营销按商户统计，所选站点筛选对本分析不生效；业态为「商户是否存在该业态网点」的软过滤。
+          </div>
+
+          <div v-if="maError" class="wb-ma-error">
+            <span>{{ maError }}</span>
+            <el-button size="mini" type="primary" @click="loadMarketingAnalysis">重试</el-button>
+          </div>
+          <template v-else>
+            <div class="wb-ma-title">日趋势</div>
+            <el-table v-loading="maLoading" :data="maTrend" size="small" max-height="360" empty-text="暂无数据" style="width: 100%">
+              <el-table-column label="日期" prop="date" min-width="100" />
+              <el-table-column label="发券数" min-width="80" align="right">
+                <template slot-scope="scope">{{ int(scope.row.issueCount) }}</template>
+              </el-table-column>
+              <el-table-column label="核销数" min-width="80" align="right">
+                <template slot-scope="scope">{{ int(scope.row.redeemCount) }}</template>
+              </el-table-column>
+              <el-table-column label="优惠成本(元)" min-width="110" align="right">
+                <template slot-scope="scope">{{ money(scope.row.discountCost) }}</template>
+              </el-table-column>
+              <el-table-column label="活动订单电量(度)" min-width="130" align="right">
+                <template slot-scope="scope">{{ money(scope.row.activityOrderKwh) }}</template>
+              </el-table-column>
+            </el-table>
+
+            <div class="wb-ma-title">活动 Top 20</div>
+            <el-table v-loading="maLoading" :data="maTop" size="small" empty-text="暂无数据" style="width: 100%">
+              <el-table-column label="#" type="index" width="50" align="center" />
+              <el-table-column label="活动名称" min-width="160" show-overflow-tooltip>
+                <template slot-scope="scope">{{ scope.row.activityName || ('活动 ' + scope.row.activityId) }}</template>
+              </el-table-column>
+              <el-table-column label="发券数" min-width="80" align="right">
+                <template slot-scope="scope">{{ int(scope.row.issueCount) }}</template>
+              </el-table-column>
+              <el-table-column label="核销数" min-width="80" align="right">
+                <template slot-scope="scope">{{ int(scope.row.redeemCount) }}</template>
+              </el-table-column>
+              <el-table-column min-width="130" align="right">
+                <template slot="header">
+                  <span>活动订单电量(度)</span>
+                  <el-tooltip effect="dark" placement="top" :content="MARKETING_TIPS.topKwh">
+                    <i class="el-icon-question wb-col-help" @click.stop />
+                  </el-tooltip>
+                </template>
+                <template slot-scope="scope">{{ money(scope.row.activityOrderKwh) }}</template>
+              </el-table-column>
+              <el-table-column label="优惠成本(元)" min-width="110" align="right">
+                <template slot-scope="scope">{{ money(scope.row.discountCost) }}</template>
+              </el-table-column>
+            </el-table>
+          </template>
+        </div>
+        <div class="wb-drawer__footer">
+          <el-button size="small" @click="maDrawer = false">关闭</el-button>
+        </div>
+      </div>
+    </el-drawer>
 
     <!-- 电站电量 Top10（周期随顶栏） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.stationTop.loading">
@@ -446,6 +548,7 @@ import {
   workbenchAlerts,
   workbenchFinance,
   workbenchMarketing,
+  workbenchMarketingAnalysis,
   getTerminalStatus,
   getStationPowerTop,
   getAlertConfig,
@@ -455,6 +558,7 @@ import {
   listDismissed,
   cancelDismiss
 } from '@/api/business/operatorWorkbench'
+import { ANALYSIS_RANGE_OPTIONS, buildAnalysisWindow, fillTrend } from './marketingAnalysis'
 
 const ALERT_META = {
   START_FAIL: { label: '启动失败率高', tag: 'danger' },
@@ -479,6 +583,14 @@ const STATION_TOP_TIPS = {
   utilizationRate: '(总充电时长分钟 ÷ 60) ÷ (终端数量 × 24 × D) × 100；终端数为 0 时显示 --',
   ratedPowerKw: '站下未删设备额定功率之和（W）÷ 1000'
 }
+// 营销活动参与三字段口径（订单集同「核销订单实收」；与后端 OperatorWorkbenchMarketingVo 注释一致）
+const MARKETING_TIPS = {
+  activityOrderKwh: '有核销关联订单的充电量合计',
+  participateStationCount: '核销订单去重电站数（区间去重）',
+  participateUserCount: '核销订单去重用户数（区间去重）',
+  topKwh: '同一订单被同活动多张券核销只计一次；一单跨多个活动则各活动各计一次，故 Top 合计可能大于趋势电量'
+}
+const MARKETING_ANALYSIS_NOTE = '趋势读营销日表，无数据的日期按 0 补齐；活动 Top 按核销数倒序（其次电量）。手工券与平台活动发券不计入 Top，Top 核销数已剔除已删除用户券，可能略小于趋势核销数。'
 const CONFIG_FOOTER_NOTE = '修改后立即作用于预警列表，无需重跑统计任务。预警判定日规则与 V1 相同（选「今日」时看昨日已收口日）。'
 const DEFAULT_CONFIG = {
   dropRatioThreshold: 0.5,
@@ -529,6 +641,17 @@ export default {
       stationTop: [],
       FIELD_TIPS,
       STATION_TOP_TIPS,
+      MARKETING_TIPS,
+      MARKETING_ANALYSIS_NOTE,
+      ANALYSIS_RANGE_OPTIONS,
+      maDrawer: false,
+      maLoading: false,
+      maError: '',
+      maMode: '30',
+      maWindow: null,
+      maTrend: [],
+      maTop: [],
+      maSeq: 0,
       CONFIG_FOOTER_NOTE,
       configDrawer: false,
       configLoading: false,
@@ -714,6 +837,38 @@ export default {
     },
     loadMarketing() {
       return this.runBlock('marketing', workbenchMarketing, d => { this.marketing = d || {} })
+    },
+    // 营销分析：窗口末日/天数由前端算（服务端 statDate 仅为末日，不识别周期；末日夹取到今天）
+    openMarketingAnalysis() {
+      this.maMode = '30'
+      this.maDrawer = true
+      this.loadMarketingAnalysis()
+    },
+    loadMarketingAnalysis() {
+      const win = buildAnalysisWindow(this.maMode, this.searchForm.periodType)
+      this.maWindow = win
+      const params = this.buildParams()
+      delete params.stationIds // 营销为商户维，站点筛选不生效
+      params.statDate = win.statDate
+      params.analysisDays = win.analysisDays
+      const seq = ++this.maSeq // 切换周期时丢弃过期响应
+      this.maLoading = true
+      this.maError = ''
+      return workbenchMarketingAnalysis(params).then(res => {
+        if (seq !== this.maSeq) return
+        if (res && res.code === 200) {
+          const d = res.data || {}
+          this.maTrend = fillTrend(d.trend, win)
+          this.maTop = Array.isArray(d.activityTop) ? d.activityTop : []
+        } else {
+          this.maError = (res && res.msg) || '加载失败，请重试'
+        }
+      }).catch(e => {
+        if (seq !== this.maSeq) return
+        this.maError = (e && e.message) || '加载失败，请重试'
+      }).then(() => {
+        if (seq === this.maSeq) this.maLoading = false
+      })
     },
     loadTerminal() {
       return this.runBlock('terminal', getTerminalStatus, d => { this.terminal = d || {} })
@@ -976,6 +1131,9 @@ export default {
     &--3 {
       grid-template-columns: repeat(3, 1fr);
     }
+    &--row2 {
+      margin-top: 12px;
+    }
   }
   .wb-card {
     background: #f7f9fc;
@@ -1084,6 +1242,36 @@ export default {
   line-height: 1.5;
   color: #909399;
   margin-top: 4px;
+}
+.wb-ma-filter {
+  margin-bottom: 4px;
+}
+.wb-ma-range {
+  font-size: 12px;
+  color: #909399;
+}
+.wb-ma-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #f56c6c;
+  padding: 12px 0;
+}
+.wb-ma-note {
+  margin: 0 0 8px;
+}
+.wb-ma-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #303133;
+  margin: 16px 0 8px;
+}
+.wb-col-help {
+  margin-left: 4px;
+  color: #c0c4cc;
+  font-size: 14px;
+  cursor: pointer;
+  vertical-align: middle;
 }
 .wb-dismiss-info {
   margin-bottom: 12px;

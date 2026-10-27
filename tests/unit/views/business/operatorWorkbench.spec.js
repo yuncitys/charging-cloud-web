@@ -17,6 +17,7 @@ jest.mock('@/api/business/operatorWorkbench', () => {
     workbenchAlerts: jest.fn(() => Promise.resolve({ code: 200, data: [], count: 0 })),
     workbenchFinance: ok,
     workbenchMarketing: ok,
+    workbenchMarketingAnalysis: jest.fn(() => Promise.resolve({ code: 200, data: { trend: [], activityTop: [] } })),
     getTerminalStatus: jest.fn(() => Promise.resolve({
       code: 200,
       data: {
@@ -120,5 +121,46 @@ describe('OperatorWorkbench V3', () => {
     expect(getChargingStationList).toHaveBeenLastCalledWith({ merchantId: 9 })
     expect(w.vm.searchForm.stationIds).toEqual([1])
     expect(api.getTerminalStatus).toHaveBeenCalledWith(expect.objectContaining({ merchantId: 9 }))
+  })
+
+  it('opens marketing analysis drawer with merchant/rule, no stationIds, analysisDays + statDate', async () => {
+    const w = factory()
+    await flush()
+    w.vm.searchForm.merchantId = 9
+    w.vm.searchForm.ruleId = 2
+    w.vm.searchForm.stationIds = [1]
+    w.vm.openMarketingAnalysis()
+    await flush()
+    expect(w.vm.maDrawer).toBe(true)
+    const p = api.workbenchMarketingAnalysis.mock.calls[0][0]
+    expect(p).toEqual(expect.objectContaining({ merchantId: 9, ruleId: 2, analysisDays: 30 }))
+    expect(p.stationIds).toBeUndefined()
+    expect(p.statDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
+    expect(w.vm.maTrend).toHaveLength(30)
+  })
+
+  it('marketing analysis maps rows, handles error and ignores stale responses', async () => {
+    const w = factory()
+    await flush()
+    api.workbenchMarketingAnalysis.mockResolvedValueOnce({
+      code: 200,
+      data: { trend: [], activityTop: [{ activityId: 'a1', activityName: '满减', issueCount: 3, redeemCount: 1, activityOrderKwh: 5, discountCost: 2 }] }
+    })
+    await w.vm.loadMarketingAnalysis()
+    expect(w.vm.maTop).toHaveLength(1)
+    api.workbenchMarketingAnalysis.mockResolvedValueOnce({ code: 500, msg: '失败了' })
+    await w.vm.loadMarketingAnalysis()
+    expect(w.vm.maError).toBe('失败了')
+
+    let resolveSlow
+    api.workbenchMarketingAnalysis
+      .mockImplementationOnce(() => new Promise(r => { resolveSlow = r }))
+      .mockResolvedValueOnce({ code: 200, data: { trend: [], activityTop: [{ activityId: 'new' }] } })
+    const slow = w.vm.loadMarketingAnalysis()
+    await w.vm.loadMarketingAnalysis()
+    resolveSlow({ code: 200, data: { trend: [], activityTop: [{ activityId: 'old' }] } })
+    await slow
+    expect(w.vm.maTop[0].activityId).toBe('new')
+    expect(w.vm.maLoading).toBe(false)
   })
 })

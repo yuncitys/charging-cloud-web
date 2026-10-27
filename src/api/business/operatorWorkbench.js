@@ -32,6 +32,18 @@ export function workbenchMarketing(data) {
   })
 }
 
+// 营销分析：body = OperatorWorkbenchQuery + analysisDays(默认 30，最大 90)；statDate 为窗口末日（服务端夹取到今天）
+// → { trend: [{ date, issueCount, redeemCount, discountCost, activityOrderKwh }],
+//     activityTop: [{ activityId, activityName, issueCount, redeemCount, activityOrderKwh, discountCost }] }
+// 趋势仅返回有日表行的日期，前端补 0
+export function workbenchMarketingAnalysis(data) {
+  return request({
+    url: '/api/web/operatorWorkbench/marketingAnalysis',
+    method: 'post',
+    data
+  })
+}
+
 // V3：终端状态（实时，不随周期）→ { dc: {fault,offline,occupy,charging,idle,other}, ac: {...} }
 export function getTerminalStatus(data) {
   return request({
