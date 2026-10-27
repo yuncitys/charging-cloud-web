@@ -563,9 +563,9 @@ export default {
     anyLoading() {
       return Object.keys(this.blocks).some(k => this.blocks[k].loading)
     },
+    // 站点列表已由 /networkDot/list 按 merchantId、ruleId 过滤（VO 无 merchantId，不能前端再滤）
     filteredStationList() {
-      if (!this.searchForm.merchantId) return this.stationList
-      return this.stationList.filter(s => s.merchantId === this.searchForm.merchantId)
+      return this.stationList
     },
     stationTopTitle() {
       return (PERIOD_TITLE[this.searchForm.periodType] || '') + '电站电量前 10'
@@ -628,9 +628,10 @@ export default {
         this.ruleOptions = list || []
       }).catch(() => { this.ruleOptions = [] })
     },
-    // 站点候选：业态由后端 /networkDot/list 按 rule_id 过滤（返回 VO 不含 ruleId，无法前端过滤）
+    // 站点候选：后端按 merchantId / ruleId 过滤（VO 不含这两字段，无法前端过滤）
     initStationList() {
       const params = {}
+      if (this.searchForm.merchantId) params.merchantId = this.searchForm.merchantId
       if (this.searchForm.ruleId !== null && this.searchForm.ruleId !== undefined && this.searchForm.ruleId !== '') {
         params.ruleId = this.searchForm.ruleId
       }
@@ -638,12 +639,14 @@ export default {
         if (res.code === 200) this.stationList = res.data || []
       }).catch(() => { this.stationList = [] })
     },
+    // 切换商户/业态：重拉站点候选，剔除已选但不在候选内的站点，再查询
     onMerchantChange() {
-      const allowed = new Set(this.filteredStationList.map(s => s.id))
-      this.searchForm.stationIds = this.searchForm.stationIds.filter(id => allowed.has(id))
-      this.search()
+      this.initStationList().then(() => {
+        const allowed = new Set(this.filteredStationList.map(s => s.id))
+        this.searchForm.stationIds = this.searchForm.stationIds.filter(id => allowed.has(id))
+        this.search()
+      })
     },
-    // 切换业态：重新拉取该业态站点，剔除已选但不在候选内的站点，再查询
     onRuleChange() {
       this.initStationList().then(() => {
         const allowed = new Set(this.filteredStationList.map(s => s.id))

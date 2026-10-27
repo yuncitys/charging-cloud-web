@@ -107,4 +107,18 @@ describe('OperatorWorkbench V3', () => {
     expect(w.vm.searchForm.stationIds).toEqual([2])
     expect(api.getTerminalStatus).toHaveBeenCalledWith(expect.objectContaining({ ruleId: 2 }))
   })
+
+  it('merchant change refetches stations by merchantId and prunes selection', async () => {
+    const w = factory()
+    await flush()
+    w.vm.searchForm.stationIds = [1, 2]
+    w.vm.searchForm.merchantId = 9
+    getChargingStationList.mockResolvedValueOnce({ code: 200, data: [{ id: 1, networkName: 'A' }] })
+    api.getTerminalStatus.mockClear()
+    w.vm.onMerchantChange()
+    await flush()
+    expect(getChargingStationList).toHaveBeenLastCalledWith({ merchantId: 9 })
+    expect(w.vm.searchForm.stationIds).toEqual([1])
+    expect(api.getTerminalStatus).toHaveBeenCalledWith(expect.objectContaining({ merchantId: 9 }))
+  })
 })
