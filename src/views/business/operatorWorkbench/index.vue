@@ -113,24 +113,37 @@
         <span>{{ blocks.alerts.error }}</span>
         <el-button size="mini" type="primary" @click="loadAlerts">重试</el-button>
       </div>
-      <el-table v-else :data="alerts" size="small" style="width: 100%" empty-text="暂无预警" @selection-change="onAlertSelectionChange">
-        <el-table-column type="selection" width="45" align="center" />
-        <el-table-column label="站点" prop="stationName" min-width="160" show-overflow-tooltip />
-        <el-table-column label="预警类型" width="120" align="center">
-          <template slot-scope="scope">
-            <el-tag size="small" :type="alertMeta(scope.row.alertType).tag">{{ alertMeta(scope.row.alertType).label }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column label="说明" min-width="260">
-          <template slot-scope="scope">{{ alertDesc(scope.row) }}</template>
-        </el-table-column>
-        <el-table-column label="操作" width="140" align="center">
-          <template slot-scope="scope">
-            <el-button type="text" size="small" @click="goAlert(scope.row)">去处理</el-button>
-            <el-button type="text" size="small" @click="openDismiss(scope.row)">忽略</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <template v-else>
+        <el-table :data="alerts" size="small" style="width: 100%" empty-text="暂无预警" @selection-change="onAlertSelectionChange">
+          <el-table-column type="selection" width="45" align="center" />
+          <el-table-column label="站点" prop="stationName" min-width="160" show-overflow-tooltip />
+          <el-table-column label="预警类型" width="120" align="center">
+            <template slot-scope="scope">
+              <el-tag size="small" :type="alertMeta(scope.row.alertType).tag">{{ alertMeta(scope.row.alertType).label }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="说明" min-width="260">
+            <template slot-scope="scope">{{ alertDesc(scope.row) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" align="center">
+            <template slot-scope="scope">
+              <el-button type="text" size="small" @click="goAlert(scope.row)">去处理</el-button>
+              <el-button type="text" size="small" @click="openDismiss(scope.row)">忽略</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          class="wb-pagination"
+          background
+          layout="total, sizes, prev, pager, next"
+          :total="alertTotal"
+          :current-page="alertPage"
+          :page-size="alertLimit"
+          :page-sizes="[20, 50, 100]"
+          @size-change="onAlertSizeChange"
+          @current-change="onAlertPageChange"
+        />
+      </template>
     </div>
 
     <!-- 预警设置抽屉：自定义 class + 底栏固定，避免说明文案过长把「保存」顶出可视区 -->
@@ -153,7 +166,7 @@
           </el-form>
           <el-form v-loading="configLoading" label-position="top" size="small" class="wb-config-form">
             <el-form-item label="收入骤降比例">
-              <el-input-number v-model="configForm.dropRatioThreshold" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
+              <el-input-number v-model="configForm.dropRatioThreshold" :min="0.01" :max="1" :step="0.05" :precision="4" style="width: 200px" />
               <div class="wb-tip">{{ FIELD_TIPS.dropRatioThreshold }}</div>
             </el-form-item>
             <el-form-item label="骤降基线金额（元）">
@@ -165,7 +178,7 @@
               <div class="wb-tip">{{ FIELD_TIPS.faultHighMinOrders }}</div>
             </el-form-item>
             <el-form-item label="启动成功率下限">
-              <el-input-number v-model="configForm.startSuccessRateMin" :min="0.01" :max="1" :step="0.05" :precision="2" style="width: 200px" />
+              <el-input-number v-model="configForm.startSuccessRateMin" :min="0.01" :max="1" :step="0.05" :precision="4" style="width: 200px" />
               <div class="wb-tip">{{ FIELD_TIPS.startSuccessRateMin }}</div>
             </el-form-item>
             <el-form-item label="启动失败最少订单数">
@@ -251,7 +264,7 @@
         <el-alert v-if="finance.hint" class="wb-hint" type="info" :closable="false" show-icon :title="finance.hint" />
         <div class="wb-cards wb-cards--3">
           <div class="wb-card">
-            <div class="wb-card__label">应收（元）</div>
+            <div class="wb-card__label">出账合计（元）</div>
             <div class="wb-card__value">{{ money(finance.receivable) }}</div>
           </div>
           <div class="wb-card">
@@ -402,6 +415,9 @@ export default {
       dismissedList: [],
       overview: {},
       alerts: [],
+      alertPage: 1,
+      alertLimit: 20,
+      alertTotal: 0,
       finance: {},
       marketing: {}
     }
@@ -421,7 +437,7 @@ export default {
     alertAsOfText() {
       const first = this.alerts.length ? this.alerts[0] : null
       const day = first && first.alertDate
-      return (day ? `判定日：${day}` : '按已收口营业日判定') + '（今日未收口，周期含今日时取昨日），最多展示 Top20'
+      return (day ? `判定日：${day}` : '按已收口营业日判定') + '（今日未收口，周期含今日时取昨日）'
     },
     settledSubText() {
       const f = this.finance
@@ -452,11 +468,15 @@ export default {
     perm(code) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(code))
     },
-    buildParams() {
+    buildParams(withPage) {
       const f = this.searchForm
       const p = { periodType: f.periodType }
       if (f.merchantId) p.merchantId = f.merchantId
       if (f.stationIds && f.stationIds.length) p.stationIds = f.stationIds
+      if (withPage) {
+        p.page = this.alertPage
+        p.limit = this.alertLimit
+      }
       return p
     },
     initMerchant() {
@@ -475,20 +495,21 @@ export default {
       this.search()
     },
     search() {
-      // 无权限不请求；四块互不阻断
+      // 无权限不请求；四块互不阻断；查询/换筛选条件回到第 1 页
+      this.alertPage = 1
       if (this.canView) this.loadOverview()
       if (this.canAlerts) this.loadAlerts()
       if (this.canFinance) this.loadFinance()
       if (this.canMarketing) this.loadMarketing()
     },
     // 通用块加载：失败只影响本块
-    runBlock(key, api, onOk) {
+    runBlock(key, api, onOk, withPage) {
       const block = this.blocks[key]
       block.loading = true
       block.error = ''
-      return api(this.buildParams()).then(res => {
+      return api(this.buildParams(withPage)).then(res => {
         if (res && res.code === 200) {
-          onOk(res.data)
+          onOk(res.data, res)
         } else {
           block.error = (res && res.msg) || '加载失败，请重试'
         }
@@ -504,7 +525,25 @@ export default {
     loadAlerts() {
       // 刷新/失败重试前清空勾选，避免表格销毁后「批量忽略（N）」仍指向不可见旧行
       this.alertSelection = []
-      return this.runBlock('alerts', workbenchAlerts, d => { this.alerts = Array.isArray(d) ? d : [] })
+      return this.runBlock('alerts', workbenchAlerts, (d, res) => {
+        this.alerts = Array.isArray(d) ? d : []
+        const count = Number(res && res.count)
+        this.alertTotal = isNaN(count) ? this.alerts.length : count
+        // 忽略/取消后当前页已越界：回退到最后一页重新加载
+        if (!this.alerts.length && this.alertTotal > 0 && this.alertPage > 1) {
+          this.alertPage = Math.max(1, Math.ceil(this.alertTotal / this.alertLimit))
+          this.$nextTick(() => this.loadAlerts()) // 等外层 loading 复位后再重载
+        }
+      }, true)
+    },
+    onAlertPageChange(page) {
+      this.alertPage = page
+      this.loadAlerts() // loadAlerts 内会清空勾选
+    },
+    onAlertSizeChange(size) {
+      this.alertLimit = size
+      this.alertPage = 1
+      this.loadAlerts()
     },
     loadFinance() {
       return this.runBlock('finance', workbenchFinance, d => { this.finance = d || {} })
@@ -739,6 +778,10 @@ export default {
   }
   .wb-block__link--inline {
     margin-left: 16px;
+  }
+  .wb-pagination {
+    margin-top: 12px;
+    text-align: right;
   }
   .wb-error {
     display: flex;
