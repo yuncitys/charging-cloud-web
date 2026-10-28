@@ -11,7 +11,7 @@ export const SYNC = {
   ALERT: '读工作台日表（约每15分钟）',
   FINANCE: '日账单T+1出账；结算看快照',
   MARKETING: '约每15分钟同步',
-  STATION_TOP: '电量约每15分钟；终端数/功率实时'
+  STATION_TOP: '约每15分钟同步'
 }
 
 /**
@@ -37,7 +37,6 @@ export function formatSyncShort(sync) {
   if (!sync || sync === NA) return NA
   if (sync === SYNC.REALTIME) return '实时'
   if (sync === SYNC.FINANCE) return 'T+1出账'
-  if (sync === SYNC.STATION_TOP) return '15分钟·部分实时'
   if (sync === SYNC.ALERT) return '15分钟'
   if (sync.indexOf('15') >= 0) return '15分钟'
   return sync

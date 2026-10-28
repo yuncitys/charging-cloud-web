@@ -55,6 +55,8 @@ describe('blockMeta', () => {
   it('formatSyncShort and hoverTitle keep compact head readable', () => {
     expect(formatSyncShort(SYNC.WORKBENCH_DAY)).toBe('15分钟')
     expect(formatSyncShort(SYNC.REALTIME)).toBe('实时')
+    expect(formatSyncShort(SYNC.STATION_TOP)).toBe('15分钟')
+    expect(SYNC.STATION_TOP).toBe('约每15分钟同步')
     const m = buildBlockMeta({
       periodType: 'TODAY',
       periodStart: '2026-10-28',

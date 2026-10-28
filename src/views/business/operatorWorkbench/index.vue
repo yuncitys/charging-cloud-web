@@ -697,9 +697,9 @@ const FIELD_TIPS = {
 // 电站电量 Top10 表头公式（与后端 Service 口径一致）
 const STATION_TOP_TIPS = {
   avgDailyKwh: '总电量 ÷ 区间天数 D（起止日含首尾，至少 1）',
-  avgDailyKwhPerGun: '日均电量 ÷ 终端数量；终端数为 0 时显示 --',
-  utilizationRate: '(总充电时长分钟 ÷ 60) ÷ (终端数量 × 24 × D) × 100；终端数为 0 时显示 --',
-  ratedPowerKw: '站下未删设备额定功率之和（W）÷ 1000'
+  avgDailyKwhPerGun: '日均电量 ÷ 终端数量；终端数为统计区间末日日表快照，为 0 时显示 --',
+  utilizationRate: '(总充电时长分钟 ÷ 60) ÷ (终端数量 × 24 × D) × 100；终端数为统计区间末日日表快照，为 0 时显示 --',
+  ratedPowerKw: '统计区间末日日表快照：站下未删设备额定功率之和（W）÷ 1000'
 }
 // 营销活动参与三字段口径（参与电站/用户为日表 SUM；与后端 OperatorWorkbenchMarketingVo 注释一致）
 const MARKETING_TIPS = {
