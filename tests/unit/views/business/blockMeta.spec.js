@@ -4,6 +4,8 @@ import {
   SYNC,
   formatPeriodLabel,
   formatRange,
+  formatSyncShort,
+  formatMetaHover,
   buildBlockMeta
 } from '@/views/business/operatorWorkbench/blockMeta'
 
@@ -48,5 +50,20 @@ describe('blockMeta', () => {
     expect(m.period).toBe(NA)
     expect(m.range).toBe(NA)
     expect(m.sync).toBe(SYNC.REALTIME)
+  })
+
+  it('formatSyncShort and hoverTitle keep compact head readable', () => {
+    expect(formatSyncShort(SYNC.WORKBENCH_DAY)).toBe('15分钟')
+    expect(formatSyncShort(SYNC.REALTIME)).toBe('实时')
+    const m = buildBlockMeta({
+      periodType: 'TODAY',
+      periodStart: '2026-10-28',
+      periodEnd: '2026-10-28',
+      sync: SYNC.MARKETING,
+      dataAsOf: '12:00'
+    })
+    expect(m.syncShort).toBe('15分钟')
+    expect(formatMetaHover(m)).toContain('统计周期')
+    expect(m.hoverTitle).toContain('最近刷新')
   })
 })

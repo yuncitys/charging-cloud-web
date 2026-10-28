@@ -32,8 +32,26 @@ export function formatRange(start, end) {
   return s === e ? String(s) : `${s} ~ ${e}`
 }
 
+/** 标题旁默认展示的短同步标签 */
+export function formatSyncShort(sync) {
+  if (!sync || sync === NA) return NA
+  if (sync === SYNC.REALTIME) return '实时'
+  if (sync === SYNC.FINANCE) return 'T+1出账'
+  if (sync === SYNC.STATION_TOP) return '15分钟·部分实时'
+  if (sync === SYNC.ALERT) return '15分钟'
+  if (sync.indexOf('15') >= 0) return '15分钟'
+  return sync
+}
+
+/** 悬停完整三要素（+ 可选最近刷新） */
+export function formatMetaHover(meta) {
+  if (!meta) return ''
+  const line = `统计周期 ${meta.period} ｜ 统计区间 ${meta.range} ｜ 同步 ${meta.sync}`
+  return meta.dataAsOf ? `${line}\n最近刷新：${meta.dataAsOf}` : line
+}
+
 /**
- * @returns {{ period: string, range: string, sync: string, dataAsOf: string, title: string }}
+ * @returns {{ period, range, sync, syncShort, dataAsOf, title, hoverTitle }}
  */
 export function buildBlockMeta({
   periodType,
@@ -47,11 +65,14 @@ export function buildBlockMeta({
   const range = followsPeriod ? formatRange(periodStart, periodEnd) : NA
   const syncText = sync || NA
   const asOf = dataAsOf ? String(dataAsOf) : ''
-  return {
+  const meta = {
     period,
     range,
     sync: syncText,
+    syncShort: formatSyncShort(syncText),
     dataAsOf: asOf,
     title: asOf ? `最近刷新：${asOf}` : ''
   }
+  meta.hoverTitle = formatMetaHover(meta)
+  return meta
 }

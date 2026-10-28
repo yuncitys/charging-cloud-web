@@ -51,17 +51,13 @@
       </el-form>
     </div>
 
+    <!-- 首屏：经营 + 异常并重 -->
+    <div v-if="canView || canAlerts" class="wb-row wb-row--primary">
     <!-- 经营概览 -->
-    <div v-if="canView" class="wb-block" v-loading="blocks.overview.loading">
+    <div v-if="canView" class="wb-block wb-block--hero" v-loading="blocks.overview.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">经营概览</span>
-        <span class="wb-block__meta" :title="overviewMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ overviewMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ overviewMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ overviewMeta.sync }}</span>
-        </span>
+        <span class="wb-block__sync" :title="overviewMeta.hoverTitle">{{ overviewMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
           经营报表 <i class="el-icon-arrow-right" />
         </el-link>
@@ -109,17 +105,65 @@
       </div>
     </div>
 
+    <!-- 异常预警 -->
+    <div v-if="canAlerts" class="wb-block wb-block--hero" v-loading="blocks.alerts.loading">
+      <div class="wb-block__head">
+        <span class="wb-block__title">异常预警<span v-if="alertTotal > 0" class="wb-block__badge">{{ alertTotal }}</span></span>
+        <span class="wb-block__sync" :title="alertBlockMeta.hoverTitle">{{ alertBlockMeta.syncShort }}</span>
+        <el-button class="wb-block__btn" size="mini" icon="el-icon-setting" @click="openConfig">预警设置</el-button>
+        <el-button size="mini" icon="el-icon-view" @click="openDismissed">已忽略</el-button>
+        <el-button size="mini" icon="el-icon-close" :disabled="!alertSelection.length" @click="openBatchDismiss">
+          批量忽略<template v-if="alertSelection.length">（{{ alertSelection.length }}）</template>
+        </el-button>
+        <el-link class="wb-block__link wb-block__link--inline" type="primary" :underline="false" @click="go('/device/faultMonitor')">
+          故障监控 <i class="el-icon-arrow-right" />
+        </el-link>
+      </div>
+      <div v-if="blocks.alerts.error" class="wb-error">
+        <span>{{ blocks.alerts.error }}</span>
+        <el-button size="mini" type="primary" @click="loadAlerts">重试</el-button>
+      </div>
+      <template v-else>
+        <el-table :data="alerts" size="small" max-height="280" style="width: 100%" empty-text="暂无预警" @selection-change="onAlertSelectionChange">
+          <el-table-column type="selection" width="45" align="center" />
+          <el-table-column label="站点" prop="stationName" min-width="160" show-overflow-tooltip />
+          <el-table-column label="预警类型" width="120" align="center">
+            <template slot-scope="scope">
+              <el-tag size="small" :type="alertMeta(scope.row.alertType).tag">{{ alertMeta(scope.row.alertType).label }}</el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column label="说明" min-width="260">
+            <template slot-scope="scope">{{ alertDesc(scope.row) }}</template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" align="center">
+            <template slot-scope="scope">
+              <el-button type="text" size="small" @click="goAlert(scope.row)">去处理</el-button>
+              <el-button type="text" size="small" @click="openDismiss(scope.row)">忽略</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+        <el-pagination
+          class="wb-pagination"
+          background
+          layout="total, sizes, prev, pager, next"
+          :total="alertTotal"
+          :current-page="alertPage"
+          :page-size="alertLimit"
+          :page-sizes="[20, 50, 100]"
+          @size-change="onAlertSizeChange"
+          @current-change="onAlertPageChange"
+        />
+      </template>
+    </div>
+    </div>
+
+    <!-- 次区：终端 + 充电用户 -->
+    <div v-if="canView" class="wb-row">
     <!-- 终端状态（实时，不随统计周期变化） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.terminal.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">终端状态</span>
-        <span class="wb-block__meta" :title="terminalMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ terminalMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ terminalMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ terminalMeta.sync }}</span>
-        </span>
+        <span class="wb-block__sync" :title="terminalMeta.hoverTitle">{{ terminalMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/device/faultMonitor')">
           异常明细 <i class="el-icon-arrow-right" />
         </el-link>
@@ -151,13 +195,7 @@
         <el-tooltip effect="dark" placement="top" :content="CHARGE_USER_TIP">
           <i class="el-icon-question wb-col-help wb-cu-help" />
         </el-tooltip>
-        <span class="wb-block__meta" :title="chargeUserMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ chargeUserMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ chargeUserMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ chargeUserMeta.sync }}</span>
-        </span>
+        <span class="wb-block__sync" :title="chargeUserMeta.hoverTitle">{{ chargeUserMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openChargeUserAnalysis">
           用户分析 <i class="el-icon-data-line" />
         </el-link>
@@ -187,6 +225,7 @@
           </div>
         </div>
       </div>
+    </div>
     </div>
 
     <!-- 用户分析抽屉：昨日|本月对照卡 + 近 30 日趋势 + 本月按站 Top；筛选继承商户/业态/站点 -->
@@ -252,63 +291,6 @@
         </div>
       </div>
     </el-drawer>
-
-    <!-- 异常预警 -->
-    <div v-if="canAlerts" class="wb-block" v-loading="blocks.alerts.loading">
-      <div class="wb-block__head">
-        <span class="wb-block__title">异常预警</span>
-        <span class="wb-block__meta" :title="alertBlockMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ alertBlockMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ alertBlockMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ alertBlockMeta.sync }}</span>
-        </span>
-        <el-button class="wb-block__btn" size="mini" icon="el-icon-setting" @click="openConfig">预警设置</el-button>
-        <el-button size="mini" icon="el-icon-view" @click="openDismissed">已忽略</el-button>
-        <el-button size="mini" icon="el-icon-close" :disabled="!alertSelection.length" @click="openBatchDismiss">
-          批量忽略<template v-if="alertSelection.length">（{{ alertSelection.length }}）</template>
-        </el-button>
-        <el-link class="wb-block__link wb-block__link--inline" type="primary" :underline="false" @click="go('/device/faultMonitor')">
-          故障监控 <i class="el-icon-arrow-right" />
-        </el-link>
-      </div>
-      <div v-if="blocks.alerts.error" class="wb-error">
-        <span>{{ blocks.alerts.error }}</span>
-        <el-button size="mini" type="primary" @click="loadAlerts">重试</el-button>
-      </div>
-      <template v-else>
-        <el-table :data="alerts" size="small" style="width: 100%" empty-text="暂无预警" @selection-change="onAlertSelectionChange">
-          <el-table-column type="selection" width="45" align="center" />
-          <el-table-column label="站点" prop="stationName" min-width="160" show-overflow-tooltip />
-          <el-table-column label="预警类型" width="120" align="center">
-            <template slot-scope="scope">
-              <el-tag size="small" :type="alertMeta(scope.row.alertType).tag">{{ alertMeta(scope.row.alertType).label }}</el-tag>
-            </template>
-          </el-table-column>
-          <el-table-column label="说明" min-width="260">
-            <template slot-scope="scope">{{ alertDesc(scope.row) }}</template>
-          </el-table-column>
-          <el-table-column label="操作" width="140" align="center">
-            <template slot-scope="scope">
-              <el-button type="text" size="small" @click="goAlert(scope.row)">去处理</el-button>
-              <el-button type="text" size="small" @click="openDismiss(scope.row)">忽略</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
-        <el-pagination
-          class="wb-pagination"
-          background
-          layout="total, sizes, prev, pager, next"
-          :total="alertTotal"
-          :current-page="alertPage"
-          :page-size="alertLimit"
-          :page-sizes="[20, 50, 100]"
-          @size-change="onAlertSizeChange"
-          @current-change="onAlertPageChange"
-        />
-      </template>
-    </div>
 
     <!-- 预警设置抽屉：自定义 class + 底栏固定，避免说明文案过长把「保存」顶出可视区 -->
     <el-drawer
@@ -412,13 +394,7 @@
     <div v-if="canFinance" class="wb-block" v-loading="blocks.finance.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">财务</span>
-        <span class="wb-block__meta" :title="financeMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ financeMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ financeMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ financeMeta.sync }}</span>
-        </span>
+        <span class="wb-block__sync" :title="financeMeta.hoverTitle">{{ financeMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/finance/stationFinanceDayBill')">
           站点日账单 <i class="el-icon-arrow-right" />
         </el-link>
@@ -459,13 +435,7 @@
     <div v-if="canMarketing" class="wb-block" v-loading="blocks.marketing.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">营销</span>
-        <span class="wb-block__meta" :title="marketingMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ marketingMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ marketingMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ marketingMeta.sync }}</span>
-        </span>
+        <span class="wb-block__sync" :title="marketingMeta.hoverTitle">{{ marketingMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openMarketingAnalysis">
           营销分析 <i class="el-icon-data-line" />
         </el-link>
@@ -617,13 +587,7 @@
     <div v-if="canView" class="wb-block" v-loading="blocks.stationTop.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">电站电量前 10</span>
-        <span class="wb-block__meta" :title="stationTopBlockMeta.title">
-          <span class="wb-block__meta-item"><em>统计周期</em>{{ stationTopBlockMeta.period }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>统计区间</em>{{ stationTopBlockMeta.range }}</span>
-          <span class="wb-block__meta-sep">｜</span>
-          <span class="wb-block__meta-item"><em>同步</em>{{ stationTopBlockMeta.sync }}</span>
-        </span>
+        <span class="wb-block__sync" :title="stationTopBlockMeta.hoverTitle">{{ stationTopBlockMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
           电站报表 <i class="el-icon-arrow-right" />
         </el-link>
@@ -1357,6 +1321,31 @@ export default {
 
 <style lang="scss" scoped>
 .operator-workbench-page {
+  .wb-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: stretch;
+    > .wb-block {
+      margin-bottom: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    > .wb-block:only-child {
+      grid-column: 1 / -1;
+    }
+  }
+  .wb-row--primary > .wb-block--hero {
+    border-color: #d9e6f8;
+    box-shadow: 0 1px 2px rgba(48, 86, 150, 0.06);
+  }
+  @media (max-width: 1199px) {
+    .wb-row {
+      grid-template-columns: 1fr;
+    }
+  }
   .wb-block {
     background: #fff;
     border: 1px solid #ebeef5;
@@ -1368,13 +1357,43 @@ export default {
   .wb-block__head {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 0;
     margin-bottom: 14px;
   }
   .wb-block__title {
     font-size: 16px;
     font-weight: 600;
     color: #303133;
-    margin-right: 16px;
+    margin-right: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .wb-block--hero .wb-block__title {
+    font-size: 17px;
+  }
+  .wb-block__badge {
+    display: inline-block;
+    min-width: 18px;
+    padding: 0 6px;
+    height: 18px;
+    line-height: 18px;
+    border-radius: 9px;
+    background: #f56c6c;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .wb-block__sync {
+    font-size: 12px;
+    color: #909399;
+    background: #f4f6f9;
+    border-radius: 4px;
+    padding: 2px 8px;
+    margin-right: 12px;
+    cursor: help;
   }
   .wb-block__asof {
     font-size: 12px;
@@ -1399,6 +1418,9 @@ export default {
   .wb-block__meta-sep {
     margin: 0 6px;
     color: #dcdfe6;
+  }
+  .wb-block--hero .wb-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .wb-block__btn {
     margin-left: auto;
@@ -1463,24 +1485,35 @@ export default {
     .down { color: #67c23a; }
   }
   .wb-term {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
   }
   .wb-term__title {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     color: #606266;
     margin-bottom: 8px;
   }
   .wb-term__grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 8px;
   }
   .wb-term__item {
-    padding: 10px 12px;
-    .wb-card__value { font-size: 20px; }
+    padding: 12px 10px;
+    text-align: center;
+    min-width: 0;
+    .wb-card__label {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wb-card__value {
+      font-size: 22px;
+      margin-top: 6px;
+      line-height: 1.2;
+    }
   }
   .wb-term--fault { color: #f56c6c; }
   .wb-term--offline { color: #909399; }
@@ -1494,27 +1527,45 @@ export default {
     margin: 0 16px 0 -8px;
   }
   .wb-cu {
-    display: flex;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 14px;
     align-items: stretch;
-    gap: 12px;
+    flex: 1;
+    min-height: 0;
   }
   .wb-cu__cards {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-direction: column;
     gap: 12px;
+    min-width: 0;
+    height: 100%;
+    .wb-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    .wb-card__value {
+      font-size: 28px;
+      margin-top: 6px;
+    }
   }
   .wb-cu__ring {
     display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: center;
+    gap: 18px;
     background: #f7f9fc;
     border-radius: 6px;
-    padding: 14px 24px;
+    padding: 20px 24px;
+    min-width: 0;
+    height: 100%;
+    box-sizing: border-box;
   }
   .wb-ring {
-    width: 80px;
-    height: 80px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -1522,16 +1573,26 @@ export default {
     flex-shrink: 0;
   }
   .wb-ring__inner {
-    width: 60px;
-    height: 60px;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
     background: #f7f9fc;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 600;
     color: #303133;
+  }
+  .wb-cu__ring-text {
+    .wb-card__label {
+      font-size: 14px;
+      color: #303133;
+      font-weight: 600;
+    }
+    .wb-card__sub {
+      margin-top: 6px;
+    }
   }
   .wb-yesterday,
   .wb-roi {
