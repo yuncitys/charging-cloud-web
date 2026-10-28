@@ -671,3 +671,40 @@ export function chargingOrderSplitCurve(data) {
     data
   })
 }
+
+// 表单提交（与上方接口一致：x-www-form-urlencoded）
+function postForm(url, data) {
+  return request({
+    url,
+    method: 'post',
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    },
+    transformRequest: [
+      function(data) {
+        var ret = ''
+        for (var it in data) {
+          if (data[it] === undefined || data[it] === null || data[it] === '') continue
+          ret += encodeURIComponent(it) + '=' + encodeURIComponent(data[it]) + '&'
+        }
+        return ret.substring(0, ret.lastIndexOf('&'))
+      }
+    ],
+    data
+  })
+}
+
+// 枪口日统计分页
+export function gunChargeDayStatisticsList(data) {
+  return postForm('/api/web/home/gunChargeDayStatistics/list', data)
+}
+
+// 枪口日统计合计
+export function gunChargeDayStatisticsSummary(data) {
+  return postForm('/api/web/home/gunChargeDayStatistics/summary', data)
+}
+
+// 站点小时统计（0-23 时，共 24 行）
+export function stationChargeHourStatisticsList(data) {
+  return postForm('/api/web/home/stationChargeHourStatistics/list', data)
+}

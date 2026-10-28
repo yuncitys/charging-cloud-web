@@ -67,5 +67,23 @@ export default [
           title: '运营商工作台',
           icon: 'el-icon-s-home',
         }
+      },
+{
+        path: '/business/gunChargeDayStatistics',
+        component: () => import('@/views/business/gunChargeDayStatistics'),
+        name: 'gunChargeDayStatistics',
+        meta: {
+          title: '枪口统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+{
+        path: '/business/stationChargeHourStatistics',
+        component: () => import('@/views/business/stationChargeHourStatistics'),
+        name: 'stationChargeHourStatistics',
+        meta: {
+          title: '小时统计',
+          icon: 'el-icon-s-check',
+        }
       }
 ]
