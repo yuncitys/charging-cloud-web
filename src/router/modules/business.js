@@ -85,5 +85,41 @@ export default [
           title: '小时统计',
           icon: 'el-icon-s-check',
         }
+      },
+      {
+        path: '/business/orgPeriodStatistics',
+        component: () => import('@/views/business/orgPeriodStatistics'),
+        name: 'orgPeriodStatistics',
+        meta: {
+          title: '时期统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgStatistics',
+        component: () => import('@/views/business/orgStatistics'),
+        name: 'orgStatistics',
+        meta: {
+          title: '机构统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgCompareStatistics',
+        component: () => import('@/views/business/orgCompareStatistics'),
+        name: 'orgCompareStatistics',
+        meta: {
+          title: '机构比对',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgUserStatistics',
+        component: () => import('@/views/business/orgUserStatistics'),
+        name: 'orgUserStatistics',
+        meta: {
+          title: '用户统计',
+          icon: 'el-icon-s-check',
+        }
       }
 ]
