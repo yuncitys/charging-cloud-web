@@ -124,6 +124,12 @@
       	<el-table-column label="订单总金额(元)" prop="orderTotalAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
       	<el-table-column label="用户实付合计(元)" prop="userActualPayTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
       	<el-table-column label="商户实收合计(元)" prop="merchantReceiptTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="运营商优惠券抵扣(元)" prop="operatorCouponDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="运营商电站活动抵扣(元)" prop="operatorStationActivityDiscountAmount" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="平台优惠券抵扣(元)" prop="platformCouponDiscountAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="平台电站活动抵扣(元)" prop="platformStationActivityDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="用户实付电费(元)" prop="userActualElectricityAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+      	<el-table-column label="用户实付服务费(元)" prop="userActualServiceAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
       </el-table>
       <div class="pagination-container">
       	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
