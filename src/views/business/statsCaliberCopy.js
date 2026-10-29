@@ -34,6 +34,7 @@ const F = {
     label: '各支付方式金额',
     desc: '余额/微信/支付分/刷卡/投币/支付宝/月卡：按订单支付方式拆开的金额；只展示有同步数据的站×日。'
   },
+  gunDailyAvgDegree: { label: '枪日均电量(度)', desc: '区间总电量÷区间日历天数÷运营枪数；没有运营枪数时显示 --。' },
   operatorIncome: { label: '运营商户实收(元)', desc: '落到你们商户口袋里的收入（以本表统计口径为准）。' },
   compareMetric: { label: '比对内容', desc: '一次只比一个指标（例如只比电量，或只比实付）；表里每个日期格子就是该机构当天这个指标的数。' },
   compareTotalRow: { label: '总计（首行）', desc: '当天所有机构该指标加总，方便和某一家机构对照。' },
@@ -56,6 +57,8 @@ const PAGE_HINT = {
     '本页读日汇总同步表（不是实时扫订单）。明细按日×站，汇总按站把区间加总；金额明细按支付方式拆开。无同步数据的站/日不出现。',
   charge:
     '本页看整体充电走势（日或月）。度量来自日汇总同步表；可按商户筛选。切换「月」后时间列显示 yyyy-MM。',
+  overview:
+    '本页读站点日汇总同步表。金额=订单总金额，服务费=标价服务费。枪日均=区间总电量÷天数÷运营枪数。设备状态四率二期提供。',
   business:
     '本页按设备汇总，度量来自枪口日同步表（不是实时扫订单，也不看设备在线状态）。区间内无同步数据的设备不出现。'
 }
@@ -99,6 +102,12 @@ export function caliberForPage(pageKey) {
         F.totalStandardChargeFee, F.totalStandardServiceFee, F.orderTotalAmount,
         F.operatorCoupon, F.operatorActivity, F.platformCoupon, F.platformActivity,
         F.userElec, F.userSvc, F.userPay, F.realityPay
+      ]
+      break
+    case 'overview':
+      fields = [
+        F.date, F.station, F.totalDegree, F.totalOrderCount,
+        F.orderTotalAmount, F.totalStandardServiceFee, F.gunDailyAvgDegree
       ]
       break
     case 'business':
