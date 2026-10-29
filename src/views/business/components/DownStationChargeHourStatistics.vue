@@ -1,0 +1,42 @@
+<template>
+  <div style="display: inline-block;">
+    <el-button
+      style="margin-right: 20px;"
+      type="primary"
+      class="filter-item"
+      icon="el-icon-download"
+      :loading="downloadLoading"
+      v-if="btnAuthen.permsVerifAuthention(':reports:stationChargeHour:export')"
+      @click="doExport"
+    >导出</el-button>
+    <downloadProgress ref="downloadProgress" />
+  </div>
+</template>
+
+<script>
+import { exportStationChargeHourStatistics } from '@/api/business/businessStatistics.js'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
+
+export default {
+  name: 'DownStationChargeHourStatistics',
+  components: { downloadProgress },
+  props: {
+    queryData: { type: Object, default() { return {} } }
+  },
+  data() {
+    return { downloadLoading: false }
+  },
+  methods: {
+    doExport() {
+      const downloadData = JSON.parse(JSON.stringify(this.queryData))
+      exportStationChargeHourStatistics(downloadData).then(res => {
+        if (res.code == 200) {
+          this.$refs.downloadProgress.open(res.data.id)
+        } else {
+          this.$message.error(res.msg)
+        }
+      })
+    }
+  }
+}
+</script>

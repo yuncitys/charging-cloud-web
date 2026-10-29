@@ -37,6 +37,16 @@
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
     </div>
 
+    <div class="report-header">
+      <div class="title-section">
+        <span class="title">小时统计</span>
+        <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
+      </div>
+      <DownStationChargeHourStatistics :query-data="listQuery" />
+    </div>
+
+    <StatsSummaryCards :items="summaryCards" />
+
     <div ref="chart" class="hour-chart" />
 
     <el-table
@@ -73,6 +83,11 @@ import echarts from 'echarts'
 import { stationChargeHourStatisticsList } from '@/api/business/businessStatistics.js'
 import { getMerchant } from '@/api/merchant/merchant.js'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList.js'
+import StatsSummaryCards from './components/StatsSummaryCards.vue'
+import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+import DownStationChargeHourStatistics from './components/DownStationChargeHourStatistics.vue'
+import { caliberForPage, buildOrgSummaryCardItems, sumHourListToSummary } from './statsCaliberCopy.js'
+import { formatNumber } from './orgStatisticsMetrics.js'
 
 function today() {
   const d = new Date()
@@ -99,6 +114,7 @@ const SUM_COLUMNS = {
 
 export default {
   name: 'stationChargeHourStatistics',
+  components: { StatsSummaryCards, StatsCaliberDialog, DownStationChargeHourStatistics },
   data() {
     return {
       listQuery: {
@@ -110,7 +126,13 @@ export default {
       chargingStationList: [],
       list: [],
       listLoading: false,
-      chart: null
+      chart: null,
+      caliber: caliberForPage('hour')
+    }
+  },
+  computed: {
+    summaryCards() {
+      return buildOrgSummaryCardItems(sumHourListToSummary(this.list), formatNumber)
     }
   },
   created() {
@@ -198,6 +220,21 @@ export default {
 </script>
 
 <style scoped>
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+.title-section {
+  display: flex;
+  align-items: center;
+}
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 8px;
+}
 .hour-chart {
   width: 100%;
   height: 320px;

@@ -55,15 +55,15 @@
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
     </div>
 
-    <div class="gun-summary">
-      <div class="gun-summary-item"><span>充电次数</span><b>{{ formatNumber(summary.totalOrderCount, 0) }}</b></div>
-      <div class="gun-summary-item"><span>电量(度)</span><b>{{ formatNumber(summary.totalDegree, 4) }}</b></div>
-      <div class="gun-summary-item"><span>时长(h)</span><b>{{ formatNumber((summary.totalDuration || 0) / 60, 2) }}</b></div>
-      <div class="gun-summary-item"><span>订单总金额(元)</span><b>{{ formatNumber(summary.orderTotalAmount, 2) }}</b></div>
-      <div class="gun-summary-item"><span>用户实付(元)</span><b>{{ formatNumber(summary.userActualPayAmount, 2) }}</b></div>
-      <div class="gun-summary-item"><span>电费(元)</span><b>{{ formatNumber(summary.totalStandardChargeFee, 4) }}</b></div>
-      <div class="gun-summary-item"><span>服务费(元)</span><b>{{ formatNumber(summary.totalStandardServiceFee, 4) }}</b></div>
+    <div class="report-header">
+      <div class="title-section">
+        <span class="title">枪口统计</span>
+        <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
+      </div>
+      <DownGunChargeDayStatistics :query-data="buildQuery()" />
     </div>
+
+    <StatsSummaryCards :items="summaryCards" />
 
     <el-table
       :key="tableKey"
@@ -116,6 +116,10 @@
 import { gunChargeDayStatisticsList, gunChargeDayStatisticsSummary } from '@/api/business/businessStatistics.js'
 import { getMerchant } from '@/api/merchant/merchant.js'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList.js'
+import StatsSummaryCards from './components/StatsSummaryCards.vue'
+import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+import DownGunChargeDayStatistics from './components/DownGunChargeDayStatistics.vue'
+import { caliberForPage, buildGunSummaryCardItems } from './statsCaliberCopy.js'
 
 function fmt(date) {
   const y = date.getFullYear()
@@ -126,6 +130,7 @@ function fmt(date) {
 
 export default {
   name: 'gunChargeDayStatistics',
+  components: { StatsSummaryCards, StatsCaliberDialog, DownGunChargeDayStatistics },
   data() {
     const start = fmt(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
     const end = fmt(new Date())
@@ -148,7 +153,13 @@ export default {
       total: 0,
       tableKey: 0,
       listLoading: false,
-      summary: {}
+      summary: {},
+      caliber: caliberForPage('gun')
+    }
+  },
+  computed: {
+    summaryCards() {
+      return buildGunSummaryCardItems(this.summary, this.formatNumber)
     }
   },
   created() {
@@ -221,25 +232,19 @@ export default {
 </script>
 
 <style scoped>
-.gun-summary {
+.report-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin: 8px 0 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
 }
-.gun-summary-item {
-  min-width: 150px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  background: #f5f7fa;
+.title-section {
+  display: flex;
+  align-items: center;
 }
-.gun-summary-item span {
-  display: block;
-  font-size: 12px;
-  color: #909399;
-}
-.gun-summary-item b {
-  font-size: 18px;
-  color: #303133;
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 8px;
 }
 </style>

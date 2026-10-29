@@ -25,11 +25,15 @@
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
     </div>
 
-    <div class="org-summary">
-      <div v-for="m in summaryMetrics" :key="m.key" class="org-summary-item">
-        <span>{{ m.label }}</span><b>{{ formatNumber(summary[m.key], m.digits) }}</b>
+    <div class="report-header">
+      <div class="title-section">
+        <span class="title">机构统计</span>
+        <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
       </div>
+      <DownOrgStatistics :query-data="buildQuery()" />
     </div>
+
+    <StatsSummaryCards :items="summaryCards" />
 
     <el-table
       :key="tableKey"
@@ -72,10 +76,15 @@
 
 <script>
 import { orgStatisticsList, orgStatisticsSummary } from '@/api/business/orgChargeStatistics.js'
-import { ORG_METRICS, ORG_SUMMARY_KEYS, formatNumber, fmtDate } from './orgStatisticsMetrics.js'
+import { ORG_METRICS, formatNumber, fmtDate } from './orgStatisticsMetrics.js'
+import StatsSummaryCards from './components/StatsSummaryCards.vue'
+import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+import DownOrgStatistics from './components/DownOrgStatistics.vue'
+import { caliberForPage, buildOrgSummaryCardItems } from './statsCaliberCopy.js'
 
 export default {
   name: 'orgStatistics',
+  components: { StatsSummaryCards, StatsCaliberDialog, DownOrgStatistics },
   data() {
     const start = fmtDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
     const end = fmtDate(new Date())
@@ -89,12 +98,17 @@ export default {
         limit: 10
       },
       metrics: ORG_METRICS,
-      summaryMetrics: ORG_METRICS.filter(m => ORG_SUMMARY_KEYS.indexOf(m.key) >= 0),
       list: [],
       total: 0,
       tableKey: 0,
       listLoading: false,
-      summary: {}
+      summary: {},
+      caliber: caliberForPage('org')
+    }
+  },
+  computed: {
+    summaryCards() {
+      return buildOrgSummaryCardItems(this.summary, formatNumber)
     }
   },
   created() {
@@ -148,25 +162,19 @@ export default {
 </script>
 
 <style scoped>
-.org-summary {
+.report-header {
   display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin: 8px 0 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
 }
-.org-summary-item {
-  min-width: 150px;
-  padding: 10px 16px;
-  border-radius: 8px;
-  background: #f5f7fa;
+.title-section {
+  display: flex;
+  align-items: center;
 }
-.org-summary-item span {
-  display: block;
-  font-size: 12px;
-  color: #909399;
-}
-.org-summary-item b {
-  font-size: 18px;
-  color: #303133;
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 8px;
 }
 </style>

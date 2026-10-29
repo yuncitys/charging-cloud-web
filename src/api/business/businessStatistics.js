@@ -708,3 +708,11 @@ export function gunChargeDayStatisticsSummary(data) {
 export function stationChargeHourStatisticsList(data) {
   return postForm('/api/web/home/stationChargeHourStatistics/list', data)
 }
+
+export function exportGunChargeDayStatistics(data) {
+  return postForm('/api/web/home/gunChargeDayStatistics/export', data)
+}
+
+export function exportStationChargeHourStatistics(data) {
+  return postForm('/api/web/home/stationChargeHourStatistics/export', data)
+}

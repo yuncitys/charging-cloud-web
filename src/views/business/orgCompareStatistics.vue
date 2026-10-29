@@ -34,6 +34,14 @@
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
     </div>
 
+    <div class="report-header">
+      <div class="title-section">
+        <span class="title">机构比对</span>
+        <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
+      </div>
+      <DownOrgCompareStatistics :query-data="listQuery" />
+    </div>
+
     <el-table
       :key="tableKey"
       v-loading="listLoading"
@@ -43,7 +51,17 @@
       border
       :row-class-name="rowClassName"
     >
-      <el-table-column label="机构名称" prop="orgName" align="center" fixed min-width="180" show-overflow-tooltip />
+      <el-table-column align="center" fixed min-width="180" show-overflow-tooltip>
+        <template slot="header">
+          <div class="corner-header">
+            <span class="corner-header-time">时间</span>
+            <span class="corner-header-org">机构名称</span>
+          </div>
+        </template>
+        <template slot-scope="scope">
+          <span :class="{ 'org-name-link': !scope.row.isTotal }">{{ scope.row.orgName }}</span>
+        </template>
+      </el-table-column>
       <el-table-column
         v-for="(d, idx) in dates"
         :key="d"
@@ -63,9 +81,13 @@
 <script>
 import { orgCompareStatistics } from '@/api/business/orgChargeStatistics.js'
 import { ORG_COMPARE_METRICS, formatNumber, fmtDate } from './orgStatisticsMetrics.js'
+import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+import DownOrgCompareStatistics from './components/DownOrgCompareStatistics.vue'
+import { caliberForPage } from './statsCaliberCopy.js'
 
 export default {
   name: 'orgCompareStatistics',
+  components: { StatsCaliberDialog, DownOrgCompareStatistics },
   data() {
     const start = fmtDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
     const end = fmtDate(new Date())
@@ -82,14 +104,14 @@ export default {
       rows: [],
       totals: [],
       tableKey: 0,
-      listLoading: false
+      listLoading: false,
+      caliber: caliberForPage('compare')
     }
   },
   computed: {
     currentMetric() {
       return ORG_COMPARE_METRICS.find(m => m.key === this.listQuery.metricKey) || ORG_COMPARE_METRICS[0]
     },
-    // 第一行为「总计」（后端 totals 与 dates 对齐），其后为各机构
     tableRows() {
       if (!this.rows.length) return []
       return [{ orgId: -1, orgName: '总计', values: this.totals, isTotal: true }].concat(this.rows)
@@ -141,5 +163,52 @@ export default {
 .org-compare-total-row {
   font-weight: bold;
   background: #f5f7fa;
+}
+</style>
+
+<style scoped>
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+}
+.title-section {
+  display: flex;
+  align-items: center;
+}
+.title {
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 8px;
+}
+.org-name-link {
+  color: #409EFF;
+}
+.corner-header {
+  position: relative;
+  height: 48px;
+  width: 100%;
+  background: linear-gradient(
+    to top right,
+    transparent calc(50% - 0.5px),
+    #dcdfe6 calc(50% - 0.5px),
+    #dcdfe6 calc(50% + 0.5px),
+    transparent calc(50% + 0.5px)
+  );
+}
+.corner-header-time {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 12px;
+  color: #606266;
+}
+.corner-header-org {
+  position: absolute;
+  bottom: 4px;
+  left: 8px;
+  font-size: 12px;
+  color: #606266;
 }
 </style>

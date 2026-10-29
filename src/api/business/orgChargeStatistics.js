@@ -50,3 +50,16 @@ export function orgUserStatisticsList(data) {
 export function orgUserStatisticsSummary(data) {
   return postForm('/api/web/home/orgUserStatistics/summary', data)
 }
+
+export function exportOrgPeriodStatistics(data) {
+  return postForm('/api/web/home/orgPeriodStatistics/export', data)
+}
+export function exportOrgStatistics(data) {
+  return postForm('/api/web/home/orgStatistics/export', data)
+}
+export function exportOrgCompareStatistics(data) {
+  return postForm('/api/web/home/orgCompareStatistics/export', data)
+}
+export function exportOrgUserStatistics(data) {
+  return postForm('/api/web/home/orgUserStatistics/export', data)
+}
