@@ -27,6 +27,13 @@ const F = {
   userElec: { label: '用户实付电费(元)', desc: '用户为「电」实际掏的钱（扣完相关优惠之后）。' },
   userSvc: { label: '用户实付服务费(元)', desc: '用户为「服务费」实际掏的钱（扣完相关优惠之后）。' },
   userPay: { label: '用户实付合计(元)', desc: '用户这单（或这段汇总里）一共实付多少钱。' },
+  actualPrice: { label: '应收金额(元)', desc: '订单应付总额合计（优惠前视角，和「订单总金额」同一类口径）。' },
+  realityPay: { label: '实收金额(元)', desc: '用户实际付出去的钱合计（扣完券和活动之后）。' },
+  fundIncome: { label: '充电总收益(元)', desc: '金额明细里按支付方式加总的订单金额（各支付列之和）。' },
+  fundPayCols: {
+    label: '各支付方式金额',
+    desc: '余额/微信/支付分/刷卡/投币/支付宝/月卡：按订单支付方式拆开的金额；只展示有同步数据的站×日。'
+  },
   operatorIncome: { label: '运营商户实收(元)', desc: '落到你们商户口袋里的收入（以本表统计口径为准）。' },
   compareMetric: { label: '比对内容', desc: '一次只比一个指标（例如只比电量，或只比实付）；表里每个日期格子就是该机构当天这个指标的数。' },
   compareTotalRow: { label: '总计（首行）', desc: '当天所有机构该指标加总，方便和某一家机构对照。' },
@@ -44,7 +51,9 @@ const PAGE_HINT = {
   gun: '按枪查看，方便找出哪把枪忙、哪把闲。',
   hour: '按小时看，可以看出一天里哪几个钟点更忙。',
   org: '按机构（或机构下用户）看贡献，方便对账和客户经营。',
-  compare: '选好要比的指标后，横着看日期、竖着看机构，一眼对比谁贡献多。'
+  compare: '选好要比的指标后，横着看日期、竖着看机构，一眼对比谁贡献多。',
+  station:
+    '本页读日汇总同步表（不是实时扫订单）。明细按日×站，汇总按站把区间加总；金额明细按支付方式拆开。无同步数据的站/日不出现。'
 }
 
 export function caliberForPage(pageKey) {
@@ -68,6 +77,16 @@ export function caliberForPage(pageKey) {
       break
     case 'compare':
       fields = [F.compareMetric, F.orgName, F.date, F.compareTotalRow, F.compareRowSum, F.operatorIncome]
+      break
+    case 'station':
+      fields = [
+        F.date, F.station,
+        F.totalOrderCount, F.durationHours, F.actualPrice, F.realityPay,
+        F.totalStandardChargeFee, F.totalStandardServiceFee, F.totalDegree,
+        F.operatorCoupon, F.operatorActivity, F.platformCoupon, F.platformActivity,
+        F.userElec, F.userSvc, F.userPay,
+        F.fundIncome, F.fundPayCols
+      ]
       break
     default:
       fields = METRIC_FIELDS
