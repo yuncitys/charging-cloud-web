@@ -69,6 +69,15 @@ export default [
         }
       },
 {
+        path: '/business/businessOverview',
+        component: () => import('@/views/business/businessOverview'),
+        name: 'businessOverview',
+        meta: {
+          title: '经营概览',
+          icon: 'el-icon-s-data',
+        }
+      },
+{
         path: '/business/gunChargeDayStatistics',
         component: () => import('@/views/business/gunChargeDayStatistics'),
         name: 'gunChargeDayStatistics',
