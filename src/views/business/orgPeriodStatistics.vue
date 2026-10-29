@@ -1,18 +1,11 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-date-picker
-        v-model="dateRange"
-        class="filter-item"
-        style="margin-right: 20px;"
-        type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        format="yyyy-MM-dd"
-        value-format="yyyy-MM-dd"
-        :clearable="false"
-        @change="dateChange"
+      <StatsTimeRangeFilter
+        :time-type.sync="listQuery.timeType"
+        :start.sync="listQuery.startDate"
+        :end.sync="listQuery.endDate"
+        @change="onTimeChange"
       />
       <el-select
         v-model="stationIdList"
@@ -43,6 +36,7 @@
       :key="tableKey"
       v-loading="listLoading"
       :data="list"
+      class="stats-nested-table"
       element-loading-text="拼命加载中......"
       style="width: 100%;"
       align="center"
@@ -50,17 +44,21 @@
       <el-table-column type="index" width="55" label="序号" align="center">
         <template slot-scope="scope"><span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span></template>
       </el-table-column>
-      <el-table-column label="日期" prop="summaryDate" align="center" min-width="110" />
-      <el-table-column
-        v-for="m in metrics"
-        :key="m.key"
-        :label="m.label"
-        :prop="m.key"
-        align="center"
-        sortable
-        :min-width="m.minWidth"
-      >
-        <template slot-scope="scope">{{ formatNumber(scope.row[m.key], m.digits) }}</template>
+      <el-table-column label="统计维度" align="center">
+        <el-table-column label="日期" prop="summaryDate" align="center" min-width="110" />
+      </el-table-column>
+      <el-table-column v-for="g in metricGroups" :key="g.label" :label="g.label" align="center">
+        <el-table-column
+          v-for="m in g.metrics"
+          :key="m.key"
+          :label="m.label"
+          :prop="m.key"
+          align="center"
+          sortable
+          :min-width="m.minWidth"
+        >
+          <template slot-scope="scope">{{ formatNumber(scope.row[m.key], m.digits) }}</template>
+        </el-table-column>
       </el-table-column>
     </el-table>
     <div class="pagination-container">
@@ -80,31 +78,32 @@
 
 <script>
 import { orgPeriodStatisticsList, orgPeriodStatisticsSummary } from '@/api/business/orgChargeStatistics.js'
-import { ORG_METRICS, formatNumber, fmtDate } from './orgStatisticsMetrics.js'
+import { ORG_METRICS, groupOrgMetrics, formatNumber } from './orgStatisticsMetrics.js'
 import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList.js'
 import StatsSummaryCards from './components/StatsSummaryCards.vue'
 import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+import StatsTimeRangeFilter, { defaultRangeForTimeType } from './components/StatsTimeRangeFilter.vue'
 import DownOrgPeriodStatistics from './components/DownOrgPeriodStatistics.vue'
 import { caliberForPage, buildOrgSummaryCardItems } from './statsCaliberCopy.js'
+import './styles/statsNestedTable.css'
 
 export default {
   name: 'orgPeriodStatistics',
-  components: { StatsSummaryCards, StatsCaliberDialog, DownOrgPeriodStatistics },
+  components: { StatsSummaryCards, StatsCaliberDialog, StatsTimeRangeFilter, DownOrgPeriodStatistics },
   data() {
-    const start = fmtDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
-    const end = fmtDate(new Date())
+    const range = defaultRangeForTimeType(3)
     return {
-      dateRange: [start, end],
       listQuery: {
-        startDate: start,
-        endDate: end,
+        timeType: 3,
+        startDate: range[0],
+        endDate: range[1],
         stationIds: '',
         page: 1,
         limit: 10
       },
       stationIdList: [],
       chargingStationList: [],
-      metrics: ORG_METRICS,
+      metricGroups: groupOrgMetrics(ORG_METRICS),
       list: [],
       total: 0,
       tableKey: 0,
@@ -151,9 +150,7 @@ export default {
         this.summary = res.code == 200 && res.data ? res.data : {}
       }).catch(() => { this.summary = {} })
     },
-    dateChange(e) {
-      this.listQuery.startDate = e ? e[0] : ''
-      this.listQuery.endDate = e ? e[1] : ''
+    onTimeChange() {
       this.handleFilter()
     },
     handleFilter() {

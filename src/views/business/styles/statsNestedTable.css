@@ -1,0 +1,8 @@
+/* 统计页嵌套表头：子列名过长时换行，避免 ... 截断 */
+.el-table.stats-nested-table th > .cell {
+  white-space: normal;
+  word-break: break-word;
+  line-height: 1.35;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}

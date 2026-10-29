@@ -29,7 +29,7 @@
         style="width: 240px; margin-right: 20px;"
         filterable
         clearable
-        placeholder="请选择充电站（不选则汇总权限内全部）"
+        placeholder="请选择充电站"
         @change="handleFilter"
       >
         <el-option v-for="item in chargingStationList" :key="item.id" :label="item.networkName" :value="item.id" />

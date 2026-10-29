@@ -1,25 +1,12 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-select v-model="listQuery.timeType" style="width: 150px;margin-right: 20px ;" class="filter-item"
-      	placeholder="时间维度" @change="handleDimensionChange">
-      	<el-option v-for="item in timeType" :key="item.id" :label="item.title" :value="item.id"/>
-      </el-select>
-      <el-date-picker
-        class="filter-item"
-        style="margin-right: 20px ;"
-        v-model="defaultDateRange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        @change="dateChange"
-        :type="datePickerType"
-        :format="dateFormat"
-        :value-format="dateValueFormat"
-        :default-value="defaultDateRange"
-        :picker-options="pickerOptions"
-        :clearable="false">
-      </el-date-picker>
+      <StatsTimeRangeFilter
+        :time-type.sync="listQuery.timeType"
+        :start.sync="listQuery.startTime"
+        :end.sync="listQuery.endTime"
+        @change="onTimeChange"
+      />
       <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
         placeholder="请选择商户">
           <el-option
@@ -45,9 +32,7 @@
       <div class="report-header">
           <div class="title-section">
           <span class="title">充电趋势</span>
-          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
-            <el-icon><i class="el-icon-question"></i></el-icon>
-          </el-tooltip>
+          <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
         </div>
       </div>
       <div class="summary-cards">
@@ -98,38 +83,43 @@
 
       <div class="report-header">
         <div class="title-section">
-          <!-- 标题 -->
           <span class="title">明细列表</span>
-          <!-- 带有统计说明的图标提示 -->
-          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
-            <el-icon><i class="el-icon-question"></i></el-icon>
-          </el-tooltip>
         </div>
         <!-- 靠右的导出按钮 -->
         <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
         <DownChargingTrendStatistics :queryData="listQuery" />
       </div>
 
-      <el-table v-loading="listLoading" :key="tableKey" :data="chargingTrendList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading" :key="tableKey" :data="chargingTrendList" class="stats-nested-table" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
       	</el-table-column>
-        <el-table-column label="时间" prop="datetime" align="center" min-width="110" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="电量(度)" prop="totalPower" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="充电时长(h)" prop="chargeDurationHours" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="充电次数" prop="totalChargeNumber" align="center" sortable min-width="100" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="电费(元)" prop="electricityFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="服务费(元)" prop="serviceFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="订单总金额(元)" prop="orderTotalAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="用户实付合计(元)" prop="userActualPayTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="商户实收合计(元)" prop="merchantReceiptTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="运营商优惠券抵扣(元)" prop="operatorCouponDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="运营商电站活动抵扣(元)" prop="operatorStationActivityDiscountAmount" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="平台优惠券抵扣(元)" prop="platformCouponDiscountAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="平台电站活动抵扣(元)" prop="platformStationActivityDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="用户实付电费(元)" prop="userActualElectricityAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
-      	<el-table-column label="用户实付服务费(元)" prop="userActualServiceAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+        <el-table-column label="统计维度" align="center">
+          <el-table-column label="时间" prop="datetime" align="center" min-width="110" :show-overflow-tooltip="isPc" />
+        </el-table-column>
+        <el-table-column label="充电概况" align="center">
+          <el-table-column label="电量(度)" prop="totalPower" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电时长(h)" prop="chargeDurationHours" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电次数" prop="totalChargeNumber" align="center" sortable min-width="100" :show-overflow-tooltip="isPc" />
+        </el-table-column>
+        <el-table-column label="原价费用" align="center">
+          <el-table-column label="电费(元)" prop="electricityFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
+          <el-table-column label="服务费(元)" prop="serviceFee" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
+          <el-table-column label="订单总金额(元)" prop="orderTotalAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
+          <el-table-column label="商户实收合计(元)" prop="merchantReceiptTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+        </el-table-column>
+        <el-table-column label="优惠抵扣" align="center">
+          <el-table-column label="运营商优惠券抵扣(元)" prop="operatorCouponDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+          <el-table-column label="运营商电站活动抵扣(元)" prop="operatorStationActivityDiscountAmount" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台优惠券抵扣(元)" prop="platformCouponDiscountAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台电站活动抵扣(元)" prop="platformStationActivityDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+        </el-table-column>
+        <el-table-column label="用户实付" align="center">
+          <el-table-column label="用户实付合计(元)" prop="userActualPayTotal" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户实付电费(元)" prop="userActualElectricityAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户实付服务费(元)" prop="userActualServiceAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+        </el-table-column>
       </el-table>
       <div class="pagination-container">
       	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
@@ -143,6 +133,10 @@
 <script>
   import ChargingTrendLineChart from './components/ChargingTrendLineChart'
   import DownChargingTrendStatistics from './components/DownChargingTrendStatistics'
+  import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+  import StatsTimeRangeFilter, { defaultRangeForTimeType } from './components/StatsTimeRangeFilter.vue'
+  import { caliberForPage } from './statsCaliberCopy.js'
+  import './styles/statsNestedTable.css'
   import {
     chargingTrend,
     chargingTrendList,
@@ -157,10 +151,14 @@
     name: 'chargingTrendStatistics',
     components: {
       ChargingTrendLineChart,
-      DownChargingTrendStatistics
+      DownChargingTrendStatistics,
+      StatsCaliberDialog,
+      StatsTimeRangeFilter
     },
     data() {
+      const range = defaultRangeForTimeType(3)
       return {
+        caliber: caliberForPage('charge'),
         lineChartData: {
           totalPower: [],
           orderCount: [],
@@ -188,35 +186,12 @@
         chargingTrendList: [],
         listQuery: {
         	timeType: 3,
-        	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
-        	endTime: this.formatDate(new Date(),3),
+        	startTime: range[0],
+        	endTime: range[1],
         	merchantId: '',
         	chargingStationIds: '',
         	page: 1,
         	limit: 10,
-        },
-        timeType: [
-          {
-            title: '日',
-            id: 3,
-          },
-          {
-            title: '月',
-            id: 2,
-          },
-        ],
-        datePickerType: 'daterange',  // 日期选择器的类型
-        dateFormat: 'yyyy-MM-dd',  // 默认日期格式
-        dateValueFormat: 'yyyy-MM-dd', // 默认传递的值的格式
-        defaultDateRange: [
-          this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3), // 一周前的日期
-          this.formatDate(new Date(),3)  // 今天的日期
-        ],
-        pickerOptions: {
-          disabledDate(time) {
-            return false;
-            // return time.getTime() > Date.now() + 6 * 24 * 60 * 60 * 1000 || time.getTime() < Date.now();
-          }
         },
         merchantList: [],
         chargingStationList: [],
@@ -287,37 +262,8 @@
         const intWithComma = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
         return parts[1] ? `${intWithComma}.${parts[1]}` : intWithComma
       },
-      handleDimensionChange(value) {
-        console.log("value：",value)
-        if (value === 3) {
-          // 日维度，设置为日期范围选择
-          this.datePickerType = 'daterange';
-          this.dateFormat = 'yyyy-MM-dd';
-          this.dateValueFormat = 'yyyy-MM-dd';
-          this.defaultDateRange = [
-            this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),value), // 一周前的日期
-            this.formatDate(new Date(),value)  // 今天的日期
-          ]
-          console.log("defaultDateRange",this.defaultDateRange)
-        } else if (value === 2) {
-          // 月维度，设置为月份范围选择
-          this.datePickerType = 'monthrange';
-          this.dateFormat = 'yyyy-MM';
-          this.dateValueFormat = 'yyyy-MM';
-          //当前时间
-          let currentDate = new Date();
-          // 设置三个月前的日期
-          let threeMonthsAgo = new Date();
-          threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
-          // 格式化日期输出
-          this.defaultDateRange = [
-            this.formatDate(threeMonthsAgo, value),  // 三个月前的日期
-            this.formatDate(new Date(), value)      // 今天的日期
-          ]
-          console.log("defaultDateRange",this.defaultDateRange)
-        }
-        this.listQuery.startTime = this.defaultDateRange[0]
-        this.listQuery.endTime = this.defaultDateRange[1]
+      onTimeChange() {
+        this.handleFilter()
       },
       getMerchantList() {
         getMerchant().then(res => {
@@ -392,16 +338,6 @@
           this.listLoading = false
         })
       },
-      dateChange(e) {
-      	if (e) {
-      		this.listQuery.startTime = e[0]
-      		this.listQuery.endTime = e[1]
-      	} else {
-      		this.listQuery.startTime = ''
-      		this.listQuery.endTime = ''
-      	}
-      	this.handleFilter()
-      },
       handleFilter() {
       	this.listQuery.page = 1
         this.listQuery.limit = 10
@@ -417,17 +353,6 @@
       	this.listQuery.page = val
       	this.getChargingTrendList()
       },
-      // 将日期格式化为 'yyyy-MM-dd' 的方法
-      formatDate(date,timeType) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份补齐两位
-        const day = date.getDate().toString().padStart(2, '0'); // 日期补齐两位
-        if (timeType === 3) {
-          return `${year}-${month}-${day}`;
-        } else{
-          return `${year}-${month}`;
-        }
-      }
     },
     created() {
       this.getMerchantList()

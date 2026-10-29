@@ -54,6 +54,8 @@ const PAGE_HINT = {
   compare: '选好要比的指标后，横着看日期、竖着看机构，一眼对比谁贡献多。',
   station:
     '本页读日汇总同步表（不是实时扫订单）。明细按日×站，汇总按站把区间加总；金额明细按支付方式拆开。无同步数据的站/日不出现。',
+  charge:
+    '本页看整体充电走势（日或月）。度量来自日汇总同步表；可按商户筛选。切换「月」后时间列显示 yyyy-MM。',
   business:
     '本页按设备汇总，度量来自枪口日同步表（不是实时扫订单，也不看设备在线状态）。区间内无同步数据的设备不出现。'
 }
@@ -88,6 +90,15 @@ export function caliberForPage(pageKey) {
         F.operatorCoupon, F.operatorActivity, F.platformCoupon, F.platformActivity,
         F.userElec, F.userSvc, F.userPay,
         F.fundIncome, F.fundPayCols
+      ]
+      break
+    case 'charge':
+      fields = [
+        F.date,
+        F.totalOrderCount, F.durationHours, F.totalDegree,
+        F.totalStandardChargeFee, F.totalStandardServiceFee, F.orderTotalAmount,
+        F.operatorCoupon, F.operatorActivity, F.platformCoupon, F.platformActivity,
+        F.userElec, F.userSvc, F.userPay, F.realityPay
       ]
       break
     case 'business':

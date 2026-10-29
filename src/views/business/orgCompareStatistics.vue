@@ -1,18 +1,11 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-date-picker
-        v-model="dateRange"
-        class="filter-item"
-        style="margin-right: 20px;"
-        type="daterange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        format="yyyy-MM-dd"
-        value-format="yyyy-MM-dd"
-        :clearable="false"
-        @change="dateChange"
+      <StatsTimeRangeFilter
+        day-only
+        :start.sync="listQuery.startDate"
+        :end.sync="listQuery.endDate"
+        @change="onTimeChange"
       />
       <el-select
         v-model="listQuery.metricKey"
@@ -80,22 +73,21 @@
 
 <script>
 import { orgCompareStatistics } from '@/api/business/orgChargeStatistics.js'
-import { ORG_COMPARE_METRICS, formatNumber, fmtDate } from './orgStatisticsMetrics.js'
+import { ORG_COMPARE_METRICS, formatNumber } from './orgStatisticsMetrics.js'
 import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
 import DownOrgCompareStatistics from './components/DownOrgCompareStatistics.vue'
+import StatsTimeRangeFilter, { defaultRangeForTimeType } from './components/StatsTimeRangeFilter.vue'
 import { caliberForPage } from './statsCaliberCopy.js'
 
 export default {
   name: 'orgCompareStatistics',
-  components: { StatsCaliberDialog, DownOrgCompareStatistics },
+  components: { StatsCaliberDialog, DownOrgCompareStatistics, StatsTimeRangeFilter },
   data() {
-    const start = fmtDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000))
-    const end = fmtDate(new Date())
+    const range = defaultRangeForTimeType(3)
     return {
-      dateRange: [start, end],
       listQuery: {
-        startDate: start,
-        endDate: end,
+        startDate: range[0],
+        endDate: range[1],
         orgName: '',
         metricKey: 'totalDegree'
       },
@@ -147,9 +139,7 @@ export default {
         }
       }).catch(() => { this.listLoading = false })
     },
-    dateChange(e) {
-      this.listQuery.startDate = e ? e[0] : ''
-      this.listQuery.endDate = e ? e[1] : ''
+    onTimeChange() {
       this.handleFilter()
     },
     handleFilter() {
