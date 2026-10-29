@@ -53,7 +53,9 @@ const PAGE_HINT = {
   org: '按机构（或机构下用户）看贡献，方便对账和客户经营。',
   compare: '选好要比的指标后，横着看日期、竖着看机构，一眼对比谁贡献多。',
   station:
-    '本页读日汇总同步表（不是实时扫订单）。明细按日×站，汇总按站把区间加总；金额明细按支付方式拆开。无同步数据的站/日不出现。'
+    '本页读日汇总同步表（不是实时扫订单）。明细按日×站，汇总按站把区间加总；金额明细按支付方式拆开。无同步数据的站/日不出现。',
+  business:
+    '本页按设备汇总，度量来自枪口日同步表（不是实时扫订单，也不看设备在线状态）。区间内无同步数据的设备不出现。'
 }
 
 export function caliberForPage(pageKey) {
@@ -86,6 +88,15 @@ export function caliberForPage(pageKey) {
         F.operatorCoupon, F.operatorActivity, F.platformCoupon, F.platformActivity,
         F.userElec, F.userSvc, F.userPay,
         F.fundIncome, F.fundPayCols
+      ]
+      break
+    case 'business':
+      fields = [
+        F.date, F.station,
+        F.totalOrderCount, F.durationHours, F.actualPrice, F.realityPay,
+        F.totalStandardChargeFee, F.totalStandardServiceFee, F.totalDegree,
+        F.operatorCoupon, F.operatorActivity, F.platformCoupon, F.platformActivity,
+        F.userElec, F.userSvc
       ]
       break
     default:

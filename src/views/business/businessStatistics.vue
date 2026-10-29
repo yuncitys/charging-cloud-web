@@ -33,7 +33,8 @@
 			</div>
 			<div class="report-header">
 				<div class="title-section">
-					<span class="title">实时经营统计</span>
+					<span class="title">经营统计</span>
+					<StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
 					<span class="headerSpan2">数据更新至{{dateYear}}</span>
 				</div>
 			</div>
@@ -67,12 +68,6 @@
 					</el-table-column>
 					<el-table-column prop="deviceCode" label="设备号" align="center" :show-overflow-tooltip="isPc">
 					</el-table-column>
-					<el-table-column prop="deviceStatus" label="设备状态" align="center" :show-overflow-tooltip="isPc">
-						<template slot-scope="scope">
-							<el-tag type="danger" v-if="scope.row.deviceStatus == 0">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
-							<el-tag type="success" v-if="scope.row.deviceStatus == 1">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
-						</template>
-					</el-table-column>
 					<el-table-column prop="deviceName" label="设备名称" align="center" :show-overflow-tooltip="isPc">
 					</el-table-column>
 					<el-table-column prop="deviceTypeName" label="设备类型" align="center" :show-overflow-tooltip="isPc">
@@ -88,16 +83,22 @@
 							<span>{{ formatChargeDurationHours(scope.row.totalDuration) }}</span>
 						</template>
 					</el-table-column>
-					<el-table-column prop="totalPower" label="使用电量" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-energy" label-class-name="col-header-energy">
+					<el-table-column prop="totalPower" label="使用电量（度）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-energy" label-class-name="col-header-energy">
 					</el-table-column>
-					<el-table-column prop="totalElectricityPrice" label="电费" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
+					<el-table-column prop="totalElectricityPrice" label="电费（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
-					<el-table-column prop="totalServicePrice" label="服务费" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
+					<el-table-column prop="totalServicePrice" label="服务费（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
 					<el-table-column prop="totalActualMoney" label="应收金额（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
 					<el-table-column prop="totalRealityPayMoney" label="实收金额（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
 					</el-table-column>
+					<el-table-column prop="operatorCouponDiscountAmount" label="运营商优惠券抵扣（元）" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+					<el-table-column prop="operatorStationActivityDiscountAmount" label="运营商电站活动抵扣（元）" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
+					<el-table-column prop="platformCouponDiscountAmount" label="平台优惠券抵扣（元）" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+					<el-table-column prop="platformStationActivityDiscountAmount" label="平台电站活动抵扣（元）" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+					<el-table-column prop="userActualElectricityAmount" label="用户实付电费（元）" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+					<el-table-column prop="userActualServiceAmount" label="用户实付服务费（元）" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
 				</el-table>
 				<div class="pagination-container">
 					<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="limit" :total="total"
@@ -126,13 +127,16 @@
 	import businessBusList from './businessBusList.vue'
 	import deviceAdmin from '../device/components/deviceAdmin.vue'
 	import downDeviceReportsExcel from './components/downDeviceReportsExcel.vue'
+	import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+	import { caliberForPage } from './statsCaliberCopy.js'
 	export default {
 		name: 'businessStatistics1',
 		components: {
       		deviceAdmin,
 			businessDevList,
 			businessBusList,
-      		downDeviceReportsExcel
+      		downDeviceReportsExcel,
+			StatsCaliberDialog
 		},
 		data() {
 			return {
@@ -158,6 +162,7 @@
         		listLoading: false,
 				dateYear: '',
         		time: '',
+				caliber: caliberForPage('business'),
 				statisticsList: [
 					{
 						title: '实收总金额（元）',
@@ -185,10 +190,6 @@
 					},
           			{
 						title: '总充电服务费（元）',
-						data: ''
-					},
-					{
-						title: '运营设备数（台）',
 						data: ''
 					},
 				],
@@ -231,7 +232,6 @@
 				if (title.indexOf('总充电时长') !== -1) return 'cardItem--duration'
 				if (title.indexOf('总充电电费') !== -1) return 'cardItem--electricity'
 				if (title.indexOf('总充电服务费') !== -1) return 'cardItem--service-fee'
-				if (title.indexOf('运营设备数') !== -1) return 'cardItem--device-count'
 				return ''
 			},
 			/**
@@ -370,8 +370,6 @@
 								item.data = reportCount.totalRealityPayMoney || 0
 							} else if (item.title == '应收总金额（元）') {
 								item.data = reportCount.totalActualMoney || 0
-							} else if (item.title == '运营设备数（台）') {
-								item.data = reportCount.totalDevice || 0
 							}
 						})
 						this.statisticsList = statisticsList
@@ -663,9 +661,6 @@
 		background: linear-gradient(135deg, #14b8a6, #06b6d4);
 	}
 
-	.cardItem--device-count {
-		background: linear-gradient(135deg, #22c55e, #4ade80);
-	}
 
 	.cardItem--charge-fee .cardIcon,
 	.cardItem--receivable-total .cardIcon,
@@ -673,8 +668,7 @@
 		background-image: url(../../assets/home-panel/trade-panel.png);
 	}
 
-	.cardItem--power .cardIcon,
-	.cardItem--device-count .cardIcon {
+	.cardItem--power .cardIcon {
 		background-image: url(../../assets/home-panel/device-panel.png);
 	}
 
