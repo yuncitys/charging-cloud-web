@@ -9,7 +9,9 @@
     <el-row :gutter="32">
       <el-col :xs="24" :sm="24" :lg="8">
         <div class="chart-wrapper borRadduis10">
-          <raddar-chart :chart-data="raddarData" />
+          <raddar-chart :chart-data="raddarData" v-if="raddarData.items.length !== 0" />
+          <div v-if="raddarData.items.length === 0" style="height: 300px;text-align: center;line-height: 300px;">暂无数据
+          </div>
         </div>
       </el-col>
       <el-col :xs="24" :sm="24" :lg="8">
@@ -29,52 +31,29 @@
 </template>
 
 <script>
-  import GithubCorner from '@/components/GithubCorner'
   import PanelGroup from './components/PanelGroup'
   import LineChart from './components/LineChart'
   import RaddarChart from './components/RaddarChart'
   import PieChart from './components/PieChart'
   import BarChart from './components/BarChart'
-  import TransactionTable from './components/TransactionTable'
-  import TodoList from './components/TodoList'
-  import BoxCard from './components/BoxCard'
   import {
-    findHomeData,
+    findHomePanelSummary,
+    findHomeDailyTrend,
+    findHomePayTypeRatio,
+    findHomeMonthTrend,
     findHomeDataByNetWork
   } from '@/api/index/index.js'
-  const lineChartData = {
-    orderCount: [],
-    orderPrice: [],
-    electricityPrice: [],
-    servicePrice: [],
-    DAY: []
-  }
-  const raddarData = {
-    items: []
-  }
-  const pieData = {
-    expectedData: [],
-    actualData: []
-  }
-  const barData = {
-    deviceCount: [],
-    orderPrice: [],
-    electricityPrice: [],
-    servicePrice: [],
-    DAY: []
-  }
+
+  const PAY_TYPE_COLORS = ['#4CD263', '#F4A261', '#E76F51', '#2A9D8F', '#409EFF', '#9B59B6', '#F56C6C', '#909399', '#E6A23C']
+
   export default {
     name: 'DashboardAdmin1',
     components: {
-      GithubCorner,
       PanelGroup,
       LineChart,
       RaddarChart,
       PieChart,
-      BarChart,
-      TransactionTable,
-      TodoList,
-      BoxCard
+      BarChart
     },
     data() {
       return {
@@ -86,7 +65,6 @@
           DAY: []
         },
         panelData: {
-          totalDevice: 0,
           totalMoney: 0,
           totalOrder: 0,
           totalElectricityMoney: 0,
@@ -100,134 +78,107 @@
           actualData: []
         },
         barData: {
-          deviceCount: [],
           orderPrice: [],
           electricityPrice: [],
           servicePrice: [],
           DAY: []
-        },
-        totalDevice: '',
-        totalUser: '',
-        totalMoney: '',
-        totalOrder: ''
+        }
       }
     },
     created() {
-      this.onfindHomeData()
-      this.onfindHomeDataByNetWork()
+      this.loadPanelSummary()
+      this.loadDailyTrend()
+      this.loadPayTypeRatio()
+      this.loadMonthTrend()
+      this.loadProvinceRatio()
     },
     methods: {
-      onfindHomeDataByNetWork() {
-        findHomeDataByNetWork().then(res => {
+      loadPanelSummary() {
+        findHomePanelSummary().then(res => {
           if (res.code === 200) {
-            let pieData = res.data || []
-            let newpieData = []
-            let actualData = []
-            if (pieData.length != 0) {
-              pieData.forEach((item, index) => {
-                let obj = {
-                  value: 320,
-                  name: ''
-                }
-                obj.value = item.count
-                obj.name = item.province
-                actualData.push(item.province)
-                newpieData.push(obj)
-              })
+            this.panelData = res.data || {
+              totalMoney: 0,
+              totalOrder: 0,
+              totalElectricityMoney: 0,
+              totalServicePrice: 0
             }
-            this.pieData.expectedData = newpieData
-            this.pieData.actualData = actualData
           }
         })
       },
-      onfindHomeData() {
-        findHomeData().then(res => {
-          if (res.code == 200) {
-            //统计
-            this.panelData = res.data.homeData
-
-            //订单类型
-            const orderType = res.data.orderType || {}
-            raddarData.items = [
-              {
-                key: 'smOrder',
-                name: '扫码订单',
-                count: Number(orderType.smOrderCount) || 0,
-                rate: Number(orderType.smOrderRate) || 0,
-                color: '#4CD263'
-              },
-              {
-                key: 'skOrder',
-                name: '刷卡订单',
-                count: Number(orderType.skOrderCount) || 0,
-                rate: Number(orderType.skOrderRate) || 0,
-                color: '#F4A261'
-              },
-              {
-                key: 'freeOrder',
-                name: '免费订单',
-                count: Number(orderType.freeOrderCount) || 0,
-                rate: Number(orderType.freeOrderRate) || 0,
-                color: '#E76F51'
-              },
-              {
-                key: 'monthOrder',
-                name: '包月订单',
-                count: Number(orderType.monthOrderCount) || 0,
-                rate: Number(orderType.monthOrderRate) || 0,
-                color: '#2A9D8F'
-              }
-            ]
-            this.raddarData = raddarData
-
-            //曲线
-            let orderUser = res.data.orderUser || []
-            let lineChartData = {
-              orderCount: [],
-              orderPrice: [],
-              electricityPrice: [],
-              servicePrice: [],
-              DAY: []
-            }
-            if (orderUser.length != 0) {
-              orderUser.forEach((item, index) => {
-                lineChartData.orderCount.push(item.orderCount)
-                lineChartData.orderPrice.push(item.orderPrice)
-                lineChartData.electricityPrice.push(item.electricityPrice)
-                lineChartData.servicePrice.push(item.servicePrice)
-                lineChartData.DAY.push(item.DAY)
-              })
-            }
-            this.lineChartData = lineChartData
-
-            //柱状图
-            let yearMonthCount = res.data.yearMonthCount || []
-            let barData = {
-              deviceCount: [],
-              orderPrice: [],
-              electricityPrice: [],
-              servicePrice: [],
-              DAY: []
-            }
-            if (yearMonthCount.length != 0) {
-              yearMonthCount.forEach((item, index) => {
-                barData.deviceCount.push(item.deviceCount)
-                barData.orderPrice.push(item.orderPrice)
-                barData.electricityPrice.push(item.electricityPrice)
-                barData.servicePrice.push(item.servicePrice)
-                let day = item.DAY + '月'
-                barData.DAY.push(day)
-              })
-            }
-            this.barData = barData
-
-
-            this.$forceUpdate()
+      loadDailyTrend() {
+        findHomeDailyTrend().then(res => {
+          if (res.code !== 200) return
+          const list = res.data || []
+          const next = {
+            orderCount: [],
+            orderPrice: [],
+            electricityPrice: [],
+            servicePrice: [],
+            DAY: []
+          }
+          list.forEach((item) => {
+            next.orderCount.push(item.orderCount)
+            next.orderPrice.push(item.orderPrice)
+            next.electricityPrice.push(item.electricityPrice)
+            next.servicePrice.push(item.servicePrice)
+            next.DAY.push(item.day)
+          })
+          this.lineChartData = next
+        })
+      },
+      loadPayTypeRatio() {
+        findHomePayTypeRatio().then(res => {
+          if (res.code !== 200) return
+          const payTypeList = res.data || []
+          this.raddarData = {
+            items: payTypeList.map((item, index) => ({
+              key: item.payType || ('pay-' + index),
+              name: item.payTypeName || item.payType || '未知',
+              count: Number(item.orderCount) || 0,
+              rate: Number(item.rate) || 0,
+              color: PAY_TYPE_COLORS[index % PAY_TYPE_COLORS.length]
+            }))
           }
         })
       },
-      handleSetLineChartData(type) {
-        this.lineChartData = lineChartData[type]
+      loadMonthTrend() {
+        findHomeMonthTrend().then(res => {
+          if (res.code !== 200) return
+          const list = res.data || []
+          const next = {
+            orderPrice: [],
+            electricityPrice: [],
+            servicePrice: [],
+            DAY: []
+          }
+          list.forEach((item) => {
+            next.orderPrice.push(item.orderPrice)
+            next.electricityPrice.push(item.electricityPrice)
+            next.servicePrice.push(item.servicePrice)
+            next.DAY.push(item.month)
+          })
+          this.barData = next
+        })
+      },
+      loadProvinceRatio() {
+        findHomeDataByNetWork().then(res => {
+          if (res.code !== 200) return
+          const pieData = res.data || []
+          const newpieData = []
+          const actualData = []
+          pieData.forEach((item) => {
+            const provinceName = item.province || '未知省份'
+            newpieData.push({
+              value: item.count,
+              name: provinceName
+            })
+            actualData.push(provinceName)
+          })
+          this.pieData = {
+            expectedData: newpieData,
+            actualData: actualData
+          }
+        })
       }
     }
   }

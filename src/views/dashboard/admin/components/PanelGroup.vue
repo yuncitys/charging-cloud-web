@@ -1,18 +1,6 @@
 <template>
 	<el-row :gutter="24" class="panel-group">
-		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
-			<div class="card-panel borRadduis15 device-panel-color" @click="handleSetLineChartData('messages')">
-        <div class="device-panel-img panel-img"></div>
-        <div class="card-panel-description">
-					<div class="card-panel-text">
-						设备总数
-					</div>
-					<count-to :start-val="0" :end-val="chartData.totalDevice ? chartData.totalDevice : 0"
-						:duration="3000" class="card-panel-num" :decimals="0" />
-				</div>
-			</div>
-		</el-col>
-		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
+		<el-col :xs="12" :sm="12" :md="12" :lg="6" class="card-panel-col">
 			<div class="card-panel borRadduis15 trade-panel-color" @click="handleSetLineChartData('purchases')">
         <div class="trade-panel-img panel-img"></div>
         <div class="card-panel-description">
@@ -24,7 +12,7 @@
 				</div>
 			</div>
 		</el-col>
-		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
+		<el-col :xs="12" :sm="12" :md="12" :lg="6" class="card-panel-col">
 			<div class="card-panel borRadduis15 order-panel-color" @click="handleSetLineChartData('shoppings')">
         <div class="order-panel-img panel-img"></div>
         <div class="card-panel-description">
@@ -32,11 +20,11 @@
 						总订单
 					</div>
 					<count-to :start-val="0" :end-val="chartData.totalOrder ? chartData.totalOrder : 0" :duration="3600"
-						class="card-panel-num" :decimals="2" />
+						class="card-panel-num" :decimals="0" />
 				</div>
 			</div>
 		</el-col>
-		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
+		<el-col :xs="12" :sm="12" :md="12" :lg="6" class="card-panel-col">
 			<div class="card-panel borRadduis15 electricity-panel-color" @click="handleSetLineChartData('electricity')">
         <div class="trade-panel-img panel-img"></div>
         <div class="card-panel-description">
@@ -48,7 +36,7 @@
 				</div>
 			</div>
 		</el-col>
-		<el-col :xs="12" :sm="12" :md="8" :lg="4" class="card-panel-col">
+		<el-col :xs="12" :sm="12" :md="12" :lg="6" class="card-panel-col">
 			<div class="card-panel borRadduis15 service-panel-color" @click="handleSetLineChartData('service')">
         <div class="order-panel-img panel-img"></div>
         <div class="card-panel-description">
