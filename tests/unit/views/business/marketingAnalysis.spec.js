@@ -1,10 +1,14 @@
 /* eslint-env jest */
-import { buildAnalysisWindow, fillTrend, periodDays, formatDate, parseDate } from '@/views/business/operatorWorkbench/marketingAnalysis'
+import { buildAnalysisWindow, fillTrend, formatDate, parseDate, ANALYSIS_RANGE_OPTIONS } from '@/views/business/operatorWorkbench/marketingAnalysis'
 
-// 2026-10-27 为周二；2026-11-01 为周日
 const TUE = new Date(2026, 9, 27, 15, 30)
 
 describe('marketingAnalysis window', () => {
+  it('only offers 7 / 30 day options', () => {
+    expect(ANALYSIS_RANGE_OPTIONS.map(o => o.value)).toEqual(['7', '30'])
+    expect(ANALYSIS_RANGE_OPTIONS.some(o => o.label.includes('顶栏'))).toBe(false)
+  })
+
   it('7 / 30 day modes end today', () => {
     expect(buildAnalysisWindow('7', 'MONTH', TUE)).toEqual({
       analysisDays: 7, statDate: '2026-10-27', startDate: '2026-10-21', endDate: '2026-10-27'
@@ -14,25 +18,15 @@ describe('marketingAnalysis window', () => {
     expect(w30.startDate).toBe('2026-09-28')
   })
 
-  it('PERIOD mode maps TODAY / WEEK / MONTH to period day counts', () => {
-    expect(buildAnalysisWindow('PERIOD', 'TODAY', TUE).analysisDays).toBe(1)
-    const week = buildAnalysisWindow('PERIOD', 'WEEK', TUE)
-    expect(week.analysisDays).toBe(2) // 周一 10-26 ~ 周二 10-27
-    expect(week.startDate).toBe('2026-10-26')
-    const month = buildAnalysisWindow('PERIOD', 'MONTH', TUE)
-    expect(month.analysisDays).toBe(27)
-    expect(month.startDate).toBe('2026-10-01')
-  })
-
-  it('Sunday counts as day 7 of the week', () => {
-    expect(periodDays('WEEK', new Date(2026, 10, 1))).toBe(7)
-    expect(periodDays('WEEK', new Date(2026, 9, 26))).toBe(1)
+  it('unknown mode defaults to 30 days', () => {
+    expect(buildAnalysisWindow('PERIOD', 'WEEK', TUE).analysisDays).toBe(30)
   })
 
   it('clamps a future anchor date to today', () => {
-    const w = buildAnalysisWindow('PERIOD', 'MONTH', TUE, '2026-10-31')
+    const w = buildAnalysisWindow('30', 'MONTH', TUE, '2026-10-31')
     expect(w.statDate).toBe('2026-10-27')
-    expect(w.analysisDays).toBe(27)
+    expect(w.analysisDays).toBe(30)
+    expect(w.startDate).toBe('2026-09-28')
   })
 
   it('formats and parses local dates', () => {
@@ -56,8 +50,8 @@ describe('marketingAnalysis fillTrend', () => {
   })
 
   it('handles empty / null trend', () => {
-    const win = buildAnalysisWindow('PERIOD', 'TODAY', TUE)
-    expect(fillTrend(null, win)).toHaveLength(1)
+    const win = buildAnalysisWindow('7', 'TODAY', TUE)
+    expect(fillTrend(null, win)).toHaveLength(7)
     expect(fillTrend([], win)[0].issueCount).toBe(0)
   })
 })

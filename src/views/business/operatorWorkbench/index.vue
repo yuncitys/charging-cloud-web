@@ -1,108 +1,75 @@
 <template>
   <div class="app-container operator-workbench-page">
-    <div class="filter-container">
-      <el-form :inline="true" :model="searchForm" class="form left" @submit.native.prevent="search">
-        <el-form-item label="统计周期">
-          <el-radio-group v-model="searchForm.periodType" size="small" @change="search">
-            <el-radio-button label="TODAY">今日</el-radio-button>
-            <el-radio-button label="WEEK">本周</el-radio-button>
-            <el-radio-button label="MONTH">本月</el-radio-button>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="商户">
-          <el-select
-            v-model="searchForm.merchantId"
-            clearable
-            filterable
-            placeholder="全部"
-            style="width: 200px"
-            @change="onMerchantChange"
-          >
-            <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="业态">
-          <el-select
-            v-model="searchForm.ruleId"
-            clearable
-            placeholder="全部"
-            style="width: 140px"
-            @change="onRuleChange"
-          >
-            <el-option v-for="r in ruleOptions" :key="r.value" :label="r.label" :value="r.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="站点">
-          <el-select
-            v-model="searchForm.stationIds"
-            clearable
-            filterable
-            multiple
-            collapse-tags
-            placeholder="全部"
-            style="width: 240px"
-          >
-            <el-option v-for="s in filteredStationList" :key="s.id" :label="s.networkName" :value="s.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" icon="el-icon-search" :loading="anyLoading" @click="search">查询</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-
-    <!-- 首屏：经营 + 异常并重 -->
+    <!-- 首屏：充电数据 + 异常并重（无顶栏筛选；DataScope 按登录身份收口） -->
     <div v-if="canView || canAlerts" class="wb-row wb-row--primary">
-    <!-- 经营概览 -->
-    <div v-if="canView" class="wb-block wb-block--hero" v-loading="blocks.overview.loading">
+    <!-- 充电数据（对齐商户端数据 Tab） -->
+    <div v-if="canView" class="wb-block wb-block--hero wb-charge" v-loading="blocks.overview.loading">
       <div class="wb-block__head">
-        <span class="wb-block__title">经营概览</span>
+        <span class="wb-block__title">充电数据</span>
+        <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+          <div slot="content">{{ CHARGE_DATA_TIP }}</div>
+          <i class="el-icon-question wb-col-help wb-head-help" />
+        </el-tooltip>
         <span class="wb-block__sync" :title="overviewMeta.hoverTitle">{{ overviewMeta.syncShort }}</span>
+        <el-radio-group v-model="dayKey" size="mini" class="wb-day-toggle" @change="loadOverview">
+          <el-radio-button label="today">今</el-radio-button>
+          <el-radio-button label="yesterday">昨</el-radio-button>
+        </el-radio-group>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
-          经营报表 <i class="el-icon-arrow-right" />
+          电站报表 <i class="el-icon-arrow-right" />
         </el-link>
       </div>
       <div v-if="blocks.overview.error" class="wb-error">
         <span>{{ blocks.overview.error }}</span>
         <el-button size="mini" type="primary" @click="loadOverview">重试</el-button>
       </div>
-      <div v-else class="wb-cards">
-        <div class="wb-card">
-          <div class="wb-card__label">经营实收（元）</div>
-          <div class="wb-card__value">{{ money(overview.actualIncome) }}</div>
-          <div class="wb-card__sub">与经营报表一致（订单实收口径）</div>
-          <div class="wb-card__sub">
-            环比
-            <span v-if="overview.incomeWow != null" :class="overview.incomeWow >= 0 ? 'up' : 'down'">
-              {{ overview.incomeWow >= 0 ? '↑' : '↓' }} {{ percent(Math.abs(overview.incomeWow)) }}
-            </span>
-            <span v-else>--</span>
+      <template v-else>
+        <div class="wb-charge__hero">
+          <div class="wb-charge__label">充电电量（度）</div>
+          <div class="wb-charge__val">{{ num(overview.totalDegree) }}</div>
+        </div>
+        <div class="wb-cards wb-cards--4">
+          <div class="wb-card">
+            <div class="wb-card__label">订单数量（个）</div>
+            <div class="wb-card__value">{{ int(overview.orderCount) }}</div>
+          </div>
+          <div class="wb-card">
+            <div class="wb-card__label">订单金额（元）</div>
+            <div class="wb-card__value">{{ money(overview.orderTotalAmount) }}</div>
+          </div>
+          <div class="wb-card">
+            <div class="wb-card__label">订单电费（元）</div>
+            <div class="wb-card__value">{{ money(overview.electricFee) }}</div>
+          </div>
+          <div class="wb-card">
+            <div class="wb-card__label">订单服务费（元）</div>
+            <div class="wb-card__value">{{ money(overview.serviceFee) }}</div>
           </div>
         </div>
-        <div class="wb-card">
-          <div class="wb-card__label">充电量（度）</div>
-          <div class="wb-card__value">{{ money(overview.chargeKwh) }}</div>
+        <div class="wb-hourly">
+          <div class="wb-hourly__title">充电电量今日及昨日趋势（度）</div>
+          <div class="wb-hourly__legend">
+            <span><i class="wb-hourly__dot wb-hourly__dot--today" />今日</span>
+            <span><i class="wb-hourly__dot wb-hourly__dot--yesterday" />昨日</span>
+          </div>
+          <div v-if="hourlyCategories.length" class="wb-hourly__chart">
+            <div
+              v-for="(cat, idx) in hourlyCategories"
+              :key="cat"
+              class="wb-hourly__col"
+              :title="hourlyTip(idx)"
+            >
+              <div class="wb-hourly__bars">
+                <div class="wb-hourly__bar wb-hourly__bar--today" :style="{ height: hourlyBarHeight(overview.todaySeries, idx) }" />
+                <div class="wb-hourly__bar wb-hourly__bar--yesterday" :style="{ height: hourlyBarHeight(overview.yesterdaySeries, idx) }" />
+              </div>
+              <div v-if="idx % 2 === 0" class="wb-hourly__lbl">{{ cat }}</div>
+            </div>
+          </div>
+          <div v-else class="wb-card__sub">暂无分时数据</div>
+          <div class="wb-card__sub wb-hourly__note">上方数字随「今 / 昨」切换；曲线固定对比今日与昨日。今日大约每 15 分钟更新。</div>
         </div>
-        <div class="wb-card">
-          <div class="wb-card__label">订单数</div>
-          <div class="wb-card__value">{{ overview.orderCount != null ? overview.orderCount : 0 }}</div>
-        </div>
-        <div class="wb-card">
-          <div class="wb-card__label">优惠金额（元）</div>
-          <div class="wb-card__value">{{ money(overview.discountAmount) }}</div>
-        </div>
-      </div>
-      <div v-if="!blocks.overview.error" class="wb-fee">
-        <div class="wb-fee__title">费用结构</div>
-        <div class="wb-fee__bar">
-          <div class="wb-fee__seg wb-fee__seg--elec" :style="{ width: feeElecPercent + '%' }" />
-          <div class="wb-fee__seg wb-fee__seg--service" :style="{ width: feeServicePercent + '%' }" />
-        </div>
-        <div class="wb-fee__legend">
-          <span><i class="dot dot--elec" />电费 {{ money(overview.electricFee) }} 元（{{ feeElecPercent }}%）</span>
-          <span><i class="dot dot--service" />服务费 {{ money(overview.serviceFee) }} 元（{{ feeServicePercent }}%）</span>
-        </div>
-      </div>
+      </template>
     </div>
 
     <!-- 异常预警 -->
@@ -159,7 +126,7 @@
 
     <!-- 次区：终端 + 充电用户 -->
     <div v-if="canView" class="wb-row">
-    <!-- 终端状态（实时，不随统计周期变化） -->
+    <!-- 终端状态（实时枪口六态） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.terminal.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">终端状态</span>
@@ -188,14 +155,19 @@
       </div>
     </div>
 
-    <!-- 充电用户（跟顶栏周期，末日可含今天；约每 15 分钟同步） -->
+    <!-- 充电用户（卡片内今/昨；约每 15 分钟同步） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.chargeUser.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">充电用户</span>
-        <el-tooltip effect="dark" placement="top" :content="CHARGE_USER_TIP">
-          <i class="el-icon-question wb-col-help wb-cu-help" />
+        <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+          <div slot="content">{{ CHARGE_USER_TIP }}</div>
+          <i class="el-icon-question wb-col-help wb-head-help" />
         </el-tooltip>
         <span class="wb-block__sync" :title="chargeUserMeta.hoverTitle">{{ chargeUserMeta.syncShort }}</span>
+        <el-radio-group v-model="chargeUserDayKey" size="mini" class="wb-day-toggle" @change="loadChargeUser">
+          <el-radio-button label="today">今</el-radio-button>
+          <el-radio-button label="yesterday">昨</el-radio-button>
+        </el-radio-group>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openChargeUserAnalysis">
           用户分析 <i class="el-icon-data-line" />
         </el-link>
@@ -228,7 +200,7 @@
     </div>
     </div>
 
-    <!-- 用户分析抽屉：昨日|本月对照卡 + 近 30 日趋势 + 本月按站 Top；筛选继承商户/业态/站点 -->
+    <!-- 用户分析抽屉：昨日|本月对照卡 + 近 30 日趋势 + 本月按站 Top；范围按登录 DataScope -->
     <el-drawer
       title="用户分析"
       :visible.sync="cuDrawer"
@@ -390,14 +362,15 @@
       </div>
     </el-drawer>
 
-    <!-- 财务 -->
+    <!-- 财务：累计总收入 / 今日收入 / 可提现 -->
     <div v-if="canFinance" class="wb-block" v-loading="blocks.finance.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">财务</span>
+        <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+          <div slot="content">{{ FINANCE_TIP }}</div>
+          <i class="el-icon-question wb-col-help wb-head-help" />
+        </el-tooltip>
         <span class="wb-block__sync" :title="financeMeta.hoverTitle">{{ financeMeta.syncShort }}</span>
-        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/finance/stationFinanceDayBill')">
-          站点日账单 <i class="el-icon-arrow-right" />
-        </el-link>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/finance/settlementLedger')">
           结算台账 <i class="el-icon-arrow-right" />
         </el-link>
@@ -406,35 +379,30 @@
         <span>{{ blocks.finance.error }}</span>
         <el-button size="mini" type="primary" @click="loadFinance">重试</el-button>
       </div>
-      <template v-else>
-        <el-alert v-if="finance.hint" class="wb-hint" type="info" :closable="false" show-icon :title="finance.hint" />
-        <div class="wb-cards wb-cards--3">
-          <div class="wb-card">
-            <div class="wb-card__label">出账合计（元）</div>
-            <div class="wb-card__value">{{ money(finance.receivable) }}</div>
-          </div>
-          <div class="wb-card">
-            <div class="wb-card__label">结算实收（元）</div>
-            <div class="wb-card__value">{{ money(finance.actualReceived) }}</div>
-            <div class="wb-card__sub">与站点财务日账单一致</div>
-          </div>
-          <div class="wb-card">
-            <div class="wb-card__label">已结算（元）</div>
-            <div class="wb-card__value">{{ money(finance.settledAmount) }}</div>
-            <div class="wb-card__sub">{{ settledSubText }}</div>
-          </div>
+      <div v-else class="wb-cards" :class="finance.showWithdraw ? 'wb-cards--3' : 'wb-cards--2'">
+        <div class="wb-card">
+          <div class="wb-card__label">累计总收入（元）</div>
+          <div class="wb-card__value">{{ money(finance.totalIncome) }}</div>
         </div>
-        <div class="wb-yesterday">
-          昨日：收入 {{ money(finance.yesterdayIncome) }} 元 ｜ 订单 {{ finance.yesterdayOrders != null ? finance.yesterdayOrders : 0 }} 笔 ｜
-          电量 {{ money(finance.yesterdayKwh) }} 度
+        <div class="wb-card">
+          <div class="wb-card__label">今日收入（元）</div>
+          <div class="wb-card__value">{{ money(finance.todayIncome) }}</div>
         </div>
-      </template>
+        <div v-if="finance.showWithdraw" class="wb-card">
+          <div class="wb-card__label">可提现（元）</div>
+          <div class="wb-card__value">{{ money(finance.balanceAmount) }}</div>
+        </div>
+      </div>
     </div>
 
     <!-- 营销：有权限即展示，数据全 0 也显示 -->
     <div v-if="canMarketing" class="wb-block" v-loading="blocks.marketing.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">营销</span>
+        <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+          <div slot="content">{{ MARKETING_TIP }}</div>
+          <i class="el-icon-question wb-col-help wb-head-help" />
+        </el-tooltip>
         <span class="wb-block__sync" :title="marketingMeta.hoverTitle">{{ marketingMeta.syncShort }}</span>
         <el-link class="wb-block__link" type="primary" :underline="false" @click="openMarketingAnalysis">
           营销分析 <i class="el-icon-data-line" />
@@ -474,22 +442,18 @@
             <div class="wb-card__value">{{ money(marketing.subsidyCost) }}</div>
           </div>
         </div>
-        <!-- 活动参与：订单集与「核销订单实收」一致；电站/用户为日表逐日去重之和（跨日可能重复计） -->
         <div class="wb-cards wb-cards--3 wb-cards--row2">
           <div class="wb-card">
             <div class="wb-card__label">活动订单电量（度）</div>
             <div class="wb-card__value">{{ money(marketing.activityOrderKwh) }}</div>
-            <div class="wb-card__sub">{{ MARKETING_TIPS.activityOrderKwh }}</div>
           </div>
           <div class="wb-card">
             <div class="wb-card__label">参与电站数</div>
             <div class="wb-card__value">{{ int(marketing.participateStationCount) }}</div>
-            <div class="wb-card__sub">{{ MARKETING_TIPS.participateStationCount }}</div>
           </div>
           <div class="wb-card">
             <div class="wb-card__label">参与用户数</div>
             <div class="wb-card__value">{{ int(marketing.participateUserCount) }}</div>
-            <div class="wb-card__sub">{{ MARKETING_TIPS.participateUserCount }}</div>
           </div>
         </div>
         <div class="wb-roi">
@@ -502,7 +466,7 @@
       </template>
     </div>
 
-    <!-- 营销分析抽屉：日趋势 + 活动 Top；筛选继承商户/业态（站点对营销不生效） -->
+    <!-- 营销分析抽屉：日趋势 + 活动 Top；商户级，按登录 DataScope -->
     <el-drawer
       title="营销分析"
       :visible.sync="maDrawer"
@@ -514,9 +478,6 @@
       <div class="wb-drawer">
         <div class="wb-drawer__body">
           <div class="wb-drawer__note wb-ma-note">{{ MARKETING_ANALYSIS_NOTE }}</div>
-          <div v-if="searchForm.stationIds && searchForm.stationIds.length" class="wb-tip wb-ma-station-tip">
-            营销按商户统计，所选站点筛选对本分析不生效；业态为「商户是否存在该业态网点」的软过滤。
-          </div>
           <el-form :inline="true" size="small" class="wb-ma-filter" @submit.native.prevent>
             <el-form-item label="统计周期">
               <el-radio-group v-model="maMode" size="small" @change="loadMarketingAnalysis">
@@ -565,7 +526,8 @@
               <el-table-column min-width="130" align="right">
                 <template slot="header">
                   <span>活动订单电量(度)</span>
-                  <el-tooltip effect="dark" placement="top" :content="MARKETING_TIPS.topKwh">
+                  <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+                    <div slot="content">{{ MARKETING_TIPS.topKwh }}</div>
                     <i class="el-icon-question wb-col-help" @click.stop />
                   </el-tooltip>
                 </template>
@@ -583,13 +545,17 @@
       </div>
     </el-drawer>
 
-    <!-- 电站电量 Top10（周期随顶栏） -->
+    <!-- 电站电量 Top10（今/昨） -->
     <div v-if="canView" class="wb-block" v-loading="blocks.stationTop.loading">
       <div class="wb-block__head">
         <span class="wb-block__title">电站电量前 10</span>
         <span class="wb-block__sync" :title="stationTopBlockMeta.hoverTitle">{{ stationTopBlockMeta.syncShort }}</span>
-        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatistics')">
-          电站报表 <i class="el-icon-arrow-right" />
+        <el-radio-group v-model="stationTopDayKey" size="mini" class="wb-day-toggle" @change="loadStationTop">
+          <el-radio-button label="today">今</el-radio-button>
+          <el-radio-button label="yesterday">昨</el-radio-button>
+        </el-radio-group>
+        <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/business/businessStatisticsThree')">
+          电站趋势 <i class="el-icon-arrow-right" />
         </el-link>
       </div>
       <div v-if="blocks.stationTop.error" class="wb-error">
@@ -605,7 +571,8 @@
         <el-table-column min-width="130" align="right">
           <template slot="header">
             <span>日均电量(度)</span>
-            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.avgDailyKwh">
+            <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+              <div slot="content">{{ STATION_TOP_TIPS.avgDailyKwh }}</div>
               <i class="el-icon-question wb-col-help" @click.stop />
             </el-tooltip>
           </template>
@@ -614,7 +581,8 @@
         <el-table-column min-width="150" align="right">
           <template slot="header">
             <span>单枪日均电量(度)</span>
-            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.avgDailyKwhPerGun">
+            <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+              <div slot="content">{{ STATION_TOP_TIPS.avgDailyKwhPerGun }}</div>
               <i class="el-icon-question wb-col-help" @click.stop />
             </el-tooltip>
           </template>
@@ -626,7 +594,8 @@
         <el-table-column min-width="130" align="right">
           <template slot="header">
             <span>充电利用率(%)</span>
-            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.utilizationRate">
+            <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+              <div slot="content">{{ STATION_TOP_TIPS.utilizationRate }}</div>
               <i class="el-icon-question wb-col-help" @click.stop />
             </el-tooltip>
           </template>
@@ -635,7 +604,8 @@
         <el-table-column min-width="130" align="right">
           <template slot="header">
             <span>额定功率(kW)</span>
-            <el-tooltip effect="dark" placement="top" :content="STATION_TOP_TIPS.ratedPowerKw">
+            <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+              <div slot="content">{{ STATION_TOP_TIPS.ratedPowerKw }}</div>
               <i class="el-icon-question wb-col-help" @click.stop />
             </el-tooltip>
           </template>
@@ -650,7 +620,6 @@
 
 <script>
 import { getMerchant } from '@/api/merchant/merchant'
-import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 import {
   workbenchOverview,
   workbenchAlerts,
@@ -685,31 +654,49 @@ const ALERT_META = {
   ZERO_INCOME: { label: '零收入', tag: 'info' }
 }
 
-// 字段提示全文（spec：设置 UI）
+// 预警设置：面向运营
 const FIELD_TIPS = {
-  dropRatioThreshold: '含义：判定日经营实收相对近 7 日均值的比例上限。作用：比例越低越「严」（更容易报骤降）。填 0.5 表示实收不到均价一半才告警。',
-  dropBaselineMin: '含义：近 7 日均值的最低门槛。作用：均值低于该金额的站点不报骤降，避免长期低流水小站误报。',
-  faultHighMinOrders: '含义：判定日新建故障工单数的下限。作用：达到或超过该笔数则进入「故障高发」列表，便于优先派修。',
-  startSuccessRateMin: '含义：启动成功订单占比的最低可接受值。作用：成功率低于该值则告警；调低可减少告警，调高更敏感。',
-  startFailMinSamples: '含义：参与成功率计算的最少样本（启动+无响应）。作用：样本不足不告警，避免「仅 1 单失败」刷屏。'
+  dropRatioThreshold: '收入降到近 7 天平均的多少比例以下，才报「收入骤降」。数字越小越严格。例如 0.5 表示不到平时一半才告警。',
+  dropBaselineMin: '近 7 天平均收入低于这个金额的小站，不报骤降，避免一直流水很低的站频繁告警。',
+  faultHighMinOrders: '当天新建故障工单达到多少笔，才报「故障高发」。',
+  startSuccessRateMin: '启动成功率低于这个比例才告警。调低会少报，调高会更敏感。',
+  startFailMinSamples: '至少有多少次启动尝试才参与计算。样本太少不告警，避免偶发 1 单失败就刷屏。'
 }
 
-// 电站电量 Top10 表头公式（与后端 Service 口径一致）
+const CHARGE_DATA_TIP =
+  '切换「今 / 昨」查看当天充电概况：电量、订单数、金额、电费与服务费。' +
+  '下方曲线固定对比今日和昨日各时段电量。今日大约每 15 分钟更新一次。'
+
+const FINANCE_TIP =
+  '累计总收入：开业以来已结算到账的收入合计。\n' +
+  '今日收入：今天已结算到账的收入，当天可能暂时为 0。\n' +
+  '可提现：当前账号钱包里还能提走的余额（仅商户/租户账号显示）。'
+
 const STATION_TOP_TIPS = {
-  avgDailyKwh: '总电量 ÷ 区间天数 D（起止日含首尾，至少 1）',
-  avgDailyKwhPerGun: '日均电量 ÷ 终端数量；终端数为统计区间末日日表快照，为 0 时显示 --',
-  utilizationRate: '(总充电时长分钟 ÷ 60) ÷ (终端数量 × 24 × D) × 100；终端数为统计区间末日日表快照，为 0 时显示 --',
-  ratedPowerKw: '统计区间末日日表快照：站下未删设备额定功率之和（W）÷ 1000'
+  avgDailyKwh: '所选日期该站充了多少度电。',
+  avgDailyKwhPerGun: '所选日期平均每把枪充了多少度。没有投运枪时显示 --。',
+  utilizationRate: '所选日期枪被占用充电的时间占比。没有投运枪时显示 --。',
+  ratedPowerKw: '站内设备额定功率合计（千瓦）。'
 }
-// 营销活动参与三字段口径（参与电站/用户为日表 SUM；与后端 OperatorWorkbenchMarketingVo 注释一致）
+const MARKETING_TIP =
+  '进行中活动：当前仍在跑的营销活动个数。\n' +
+  '发券数：今天发出去的优惠券张数。\n' +
+  '核销数：今天用户实际用掉的券张数。\n' +
+  '核销率：用掉的券 ÷ 发出的券，越高说明券越被用上。\n' +
+  '优惠成本：今天因用券减免的金额，相当于你让利出去的钱。\n' +
+  '补贴成本：今天活动补贴出去的金额。\n' +
+  '活动订单电量：用了券的充电订单一共充了多少度。\n' +
+  '参与电站数 / 参与用户数：今天有活动订单的电站数、参与活动充电的用户数。\n' +
+  '核销订单实收：用了券的订单实际收到的钱。粗略 ROI ≈ 实收 ÷ 优惠成本，仅供粗看，不是严格增量归因。'
+
 const MARKETING_TIPS = {
-  activityOrderKwh: '有核销关联订单的充电量合计',
-  participateStationCount: '区间内各日去重电站数之和（跨日可能重复计）',
-  participateUserCount: '区间内各日去重用户数之和（跨日可能重复计）',
-  topKwh: '同一订单被同活动多张券核销只计一次；一单跨多个活动则各活动各计一次，故 Top 合计可能大于趋势电量'
+  topKwh: '同一笔订单在同一活动里只计一次电量；一笔订单参加多个活动时，每个活动都会各计一次。'
 }
-const MARKETING_ANALYSIS_NOTE = '趋势读营销日表，无数据的日期按 0 补齐；活动 Top 按核销数倒序（其次电量）。手工券与平台活动发券不计入 Top，Top 核销数已剔除已删除用户券，可能略小于趋势核销数。'
-const CONFIG_FOOTER_NOTE = '修改后立即作用于预警列表，无需重跑统计任务。预警判定日规则与 V1 相同（选「今日」时看昨日已收口日）。'
+const MARKETING_ANALYSIS_NOTE =
+  '趋势图按天展示发券、核销等情况，没有数据的日期按 0 显示。' +
+  '活动排行按核销次数排序。部分手工券不计入排行，所以排行核销数可能略小于趋势里的核销数。'
+const CONFIG_FOOTER_NOTE =
+  '保存后马上生效，不用等统计任务。预警按「昨天」的完整数据判断，今天进行中的数据不参与。'
 const DEFAULT_CONFIG = {
   dropRatioThreshold: 0.5,
   dropBaselineMin: 100,
@@ -739,10 +726,11 @@ export default {
   name: 'OperatorWorkbench',
   data() {
     return {
-      searchForm: { periodType: 'TODAY', merchantId: null, ruleId: null, stationIds: [] },
+      searchForm: { periodType: 'TODAY', merchantId: null },
+      dayKey: 'today',
+      chargeUserDayKey: 'today',
+      stationTopDayKey: 'today',
       merchantList: [],
-      ruleOptions: [],
-      stationList: [],
       blocks: {
         overview: newBlock(),
         alerts: newBlock(),
@@ -758,7 +746,10 @@ export default {
       stationTop: [],
       stationTopMeta: {},
       FIELD_TIPS,
+      CHARGE_DATA_TIP,
+      FINANCE_TIP,
       STATION_TOP_TIPS,
+      MARKETING_TIP,
       MARKETING_TIPS,
       MARKETING_ANALYSIS_NOTE,
       ANALYSIS_RANGE_OPTIONS,
@@ -816,22 +807,18 @@ export default {
     anyLoading() {
       return Object.keys(this.blocks).some(k => this.blocks[k].loading)
     },
-    // 站点列表已由 /networkDot/list 按 merchantId、ruleId 过滤（VO 无 merchantId，不能前端再滤）
-    filteredStationList() {
-      return this.stationList
-    },
     overviewMeta() {
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
-        periodStart: this.overview.periodStart,
-        periodEnd: this.overview.periodEnd,
-        sync: SYNC.WORKBENCH_DAY,
+        periodType: this.dayKey === 'yesterday' ? 'YESTERDAY' : 'TODAY',
+        periodStart: this.overview.periodStart || this.overview.dayDate,
+        periodEnd: this.overview.periodEnd || this.overview.dayDate,
+        sync: SYNC.CHARGE_DAY,
         dataAsOf: this.overview.dataAsOf
       })
     },
     terminalMeta() {
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
+        periodType: 'TODAY',
         sync: SYNC.REALTIME,
         followsPeriod: false
       })
@@ -839,36 +826,37 @@ export default {
     chargeUserMeta() {
       const c = this.chargeUser
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
+        periodType: this.chargeUserDayKey === 'yesterday' ? 'YESTERDAY' : 'TODAY',
         periodStart: c.periodStart,
         periodEnd: c.periodEnd,
-        sync: SYNC.CHARGE_USER
+        sync: SYNC.CHARGE_USER,
+        dataAsOf: c.dataAsOf
       })
     },
     alertBlockMeta() {
       const first = this.alerts.length ? this.alerts[0] : null
       const day = first && first.alertDate
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
+        periodType: 'YESTERDAY',
         periodStart: day,
         periodEnd: day,
         sync: SYNC.ALERT
       })
     },
     financeMeta() {
-      const f = this.finance
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
-        periodStart: f.settlementPeriodStart,
-        periodEnd: f.settlementPeriodEnd,
+        periodType: 'TODAY',
+        periodStart: null,
+        periodEnd: null,
         sync: SYNC.FINANCE,
-        dataAsOf: f.dataAsOf
+        followsPeriod: false,
+        dataAsOf: this.finance.dataAsOf
       })
     },
     marketingMeta() {
       const m = this.marketing
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
+        periodType: 'TODAY',
         periodStart: m.periodStart,
         periodEnd: m.periodEnd,
         sync: SYNC.MARKETING,
@@ -878,7 +866,7 @@ export default {
     stationTopBlockMeta() {
       const m = this.stationTopMeta
       return buildBlockMeta({
-        periodType: this.searchForm.periodType,
+        periodType: this.stationTopDayKey === 'yesterday' ? 'YESTERDAY' : 'TODAY',
         periodStart: m.periodStart,
         periodEnd: m.periodEnd,
         sync: SYNC.STATION_TOP,
@@ -897,30 +885,22 @@ export default {
         { key: 'month', card: this.cuMonth || {}, fallbackTitle: '本月充电用户' }
       ]
     },
-    settledSubText() {
-      const f = this.finance
-      if (!f.settlementPeriodStart) return '商户结算快照汇总'
-      const range = f.settlementPeriodStart === f.settlementPeriodEnd
-        ? f.settlementPeriodStart
-        : `${f.settlementPeriodStart} ~ ${f.settlementPeriodEnd}`
-      return `结算快照汇总（${range}），待结算暂无`
+    hourlyCategories() {
+      return Array.isArray(this.overview.categories) ? this.overview.categories : []
     },
-    feeTotal() {
-      return (Number(this.overview.electricFee) || 0) + (Number(this.overview.serviceFee) || 0)
-    },
-    feeElecPercent() {
-      if (!this.feeTotal) return 0
-      return Math.round((Number(this.overview.electricFee) || 0) / this.feeTotal * 1000) / 10
-    },
-    feeServicePercent() {
-      if (!this.feeTotal) return 0
-      return Math.round((100 - this.feeElecPercent) * 10) / 10
+    hourlyMax() {
+      const a = Array.isArray(this.overview.todaySeries) ? this.overview.todaySeries : []
+      const b = Array.isArray(this.overview.yesterdaySeries) ? this.overview.yesterdaySeries : []
+      let max = 0
+      a.concat(b).forEach(v => {
+        const n = Number(v)
+        if (!isNaN(n) && n > max) max = n
+      })
+      return max
     }
   },
   created() {
     this.initMerchant()
-    this.initRuleOptions()
-    this.initStationList()
     this.search()
   },
   methods: {
@@ -928,11 +908,7 @@ export default {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(code))
     },
     buildParams(withPage) {
-      const f = this.searchForm
-      const p = { periodType: f.periodType }
-      if (f.merchantId) p.merchantId = f.merchantId
-      if (f.ruleId !== null && f.ruleId !== undefined && f.ruleId !== '') p.ruleId = f.ruleId
-      if (f.stationIds && f.stationIds.length) p.stationIds = f.stationIds
+      const p = { periodType: 'TODAY' }
       if (withPage) {
         p.page = this.alertPage
         p.limit = this.alertLimit
@@ -944,40 +920,7 @@ export default {
         if (res.code === 200) this.merchantList = res.data || []
       }).catch(() => {})
     },
-    // 业态选项：字典 device_rule（按 BaseConfig.VUE_RULE_ID_TABS 过滤，值为数字）
-    initRuleOptions() {
-      this.$dict.getDeviceRuleOptions().then(list => {
-        this.ruleOptions = list || []
-      }).catch(() => { this.ruleOptions = [] })
-    },
-    // 站点候选：后端按 merchantId / ruleId 过滤（VO 不含这两字段，无法前端过滤）
-    initStationList() {
-      const params = {}
-      if (this.searchForm.merchantId) params.merchantId = this.searchForm.merchantId
-      if (this.searchForm.ruleId !== null && this.searchForm.ruleId !== undefined && this.searchForm.ruleId !== '') {
-        params.ruleId = this.searchForm.ruleId
-      }
-      return getChargingStationList(params).then(res => {
-        if (res.code === 200) this.stationList = res.data || []
-      }).catch(() => { this.stationList = [] })
-    },
-    // 切换商户/业态：重拉站点候选，剔除已选但不在候选内的站点，再查询
-    onMerchantChange() {
-      this.initStationList().then(() => {
-        const allowed = new Set(this.filteredStationList.map(s => s.id))
-        this.searchForm.stationIds = this.searchForm.stationIds.filter(id => allowed.has(id))
-        this.search()
-      })
-    },
-    onRuleChange() {
-      this.initStationList().then(() => {
-        const allowed = new Set(this.filteredStationList.map(s => s.id))
-        this.searchForm.stationIds = this.searchForm.stationIds.filter(id => allowed.has(id))
-        this.search()
-      })
-    },
     search() {
-      // 无权限不请求；四块互不阻断；查询/换筛选条件回到第 1 页
       this.alertPage = 1
       if (this.canView) {
         this.loadOverview()
@@ -990,11 +933,12 @@ export default {
       if (this.canMarketing) this.loadMarketing()
     },
     // 通用块加载：失败只影响本块
-    runBlock(key, api, onOk, withPage) {
+    runBlock(key, apiFn, onOk, withPage, extra) {
       const block = this.blocks[key]
       block.loading = true
       block.error = ''
-      return api(this.buildParams(withPage)).then(res => {
+      const params = Object.assign({}, this.buildParams(withPage), extra || {})
+      return apiFn(params).then(res => {
         if (res && res.code === 200) {
           onOk(res.data, res)
         } else {
@@ -1007,7 +951,20 @@ export default {
       })
     },
     loadOverview() {
-      return this.runBlock('overview', workbenchOverview, d => { this.overview = d || {} })
+      return this.runBlock('overview', workbenchOverview, d => { this.overview = d || {} }, false, { dayKey: this.dayKey })
+    },
+    hourlyBarHeight(series, idx) {
+      const max = this.hourlyMax
+      if (!max) return '2px'
+      const n = Number(Array.isArray(series) ? series[idx] : 0)
+      if (isNaN(n) || n <= 0) return '2px'
+      return Math.max(4, Math.round(n / max * 72)) + 'px'
+    },
+    hourlyTip(idx) {
+      const cat = this.hourlyCategories[idx] || ''
+      const t = this.num(Array.isArray(this.overview.todaySeries) ? this.overview.todaySeries[idx] : null)
+      const y = this.num(Array.isArray(this.overview.yesterdaySeries) ? this.overview.yesterdaySeries[idx] : null)
+      return `${cat} 今日 ${t} / 昨日 ${y}`
     },
     loadAlerts() {
       // 刷新/失败重试前清空勾选，避免表格销毁后「批量忽略（N）」仍指向不可见旧行
@@ -1071,9 +1028,11 @@ export default {
       })
     },
     loadChargeUser() {
-      return this.runBlock('chargeUser', workbenchChargeUsers, d => { this.chargeUser = d || {} })
+      return this.runBlock('chargeUser', workbenchChargeUsers, d => { this.chargeUser = d || {} }, false, {
+        dayKey: this.chargeUserDayKey
+      })
     },
-    // 用户分析：不识别 periodType，statDate 缺省今天（服务端取最近已收口日）；筛选继承商户/业态/站点
+    // 用户分析：不识别 periodType；范围按登录 DataScope
     openChargeUserAnalysis() {
       this.cuDrawer = true
       this.loadChargeUserAnalysis()
@@ -1124,11 +1083,10 @@ export default {
           periodEnd: o.periodEnd,
           periodHint: o.periodHint
         }
-      })
+      }, false, { dayKey: this.stationTopDayKey })
     },
-    // 默认商户：筛选商户 > 唯一商户 > 空（需在抽屉内选择）
+    // 默认商户：列表唯一商户，否则空（预警设置/已忽略抽屉内选手动）
     defaultMerchantId() {
-      if (this.searchForm.merchantId) return this.searchForm.merchantId
       return this.merchantList.length === 1 ? this.merchantList[0].id : null
     },
     openConfig() {
@@ -1199,7 +1157,7 @@ export default {
         items.push({ merchantId, stationId: row.stationId, alertType: row.alertType })
       })
       if (!items.length) {
-        return this.$message.warning('所选预警缺少商户信息，请先在筛选中选择商户')
+        return this.$message.warning('所选预警缺少商户信息，请打开「预警设置」选择商户后再试')
       }
       this.dismissing = true
       batchDismissAlerts({ days: this.dismissDays, items }).then(res => {
@@ -1419,8 +1377,13 @@ export default {
     margin: 0 6px;
     color: #dcdfe6;
   }
-  .wb-block--hero .wb-cards {
+  .wb-block--hero .wb-cards--4 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  @media (min-width: 1200px) {
+    .wb-block--hero .wb-cards--4 {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
   }
   .wb-block__btn {
     margin-left: auto;
@@ -1448,6 +1411,90 @@ export default {
     color: #f56c6c;
     padding: 12px 0;
   }
+  .wb-day-toggle {
+    margin-right: 12px;
+  }
+  .wb-charge__hero {
+    margin-bottom: 14px;
+  }
+  .wb-charge__label {
+    font-size: 13px;
+    color: #909399;
+  }
+  .wb-charge__val {
+    font-size: 32px;
+    font-weight: 600;
+    color: #303133;
+    margin-top: 4px;
+    line-height: 1.2;
+  }
+  .wb-hourly {
+    margin-top: 16px;
+  }
+  .wb-hourly__title {
+    font-size: 13px;
+    color: #606266;
+    margin-bottom: 8px;
+  }
+  .wb-hourly__legend {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: #909399;
+    margin-bottom: 8px;
+  }
+  .wb-hourly__dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+    &--today { background: #409eff; }
+    &--yesterday { background: #67c23a; }
+  }
+  .wb-hourly__chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 96px;
+    overflow-x: auto;
+    padding-bottom: 18px;
+  }
+  .wb-hourly__col {
+    flex: 1 0 18px;
+    min-width: 14px;
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+  }
+  .wb-hourly__bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 72px;
+  }
+  .wb-hourly__bar {
+    width: 5px;
+    border-radius: 2px 2px 0 0;
+    min-height: 2px;
+    &--today { background: #409eff; }
+    &--yesterday { background: #67c23a; }
+  }
+  .wb-hourly__lbl {
+    position: absolute;
+    bottom: -16px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: #c0c4cc;
+    white-space: nowrap;
+  }
+  .wb-hourly__note {
+    margin-top: 8px;
+  }
   .wb-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -1455,8 +1502,14 @@ export default {
     &--6 {
       grid-template-columns: repeat(6, 1fr);
     }
+    &--4 {
+      grid-template-columns: repeat(4, 1fr);
+    }
     &--3 {
       grid-template-columns: repeat(3, 1fr);
+    }
+    &--2 {
+      grid-template-columns: repeat(2, 1fr);
     }
     &--row2 {
       margin-top: 12px;
@@ -1523,7 +1576,8 @@ export default {
   .wb-hint {
     margin-bottom: 12px;
   }
-  .wb-cu-help {
+  /* 标题旁问号：与右侧「15分钟」等同步标签拉开间距（同原充电用户） */
+  .wb-head-help {
     margin: 0 16px 0 -8px;
   }
   .wb-cu {
@@ -1702,6 +1756,13 @@ export default {
   font-size: 14px;
   cursor: pointer;
   vertical-align: middle;
+}
+/* append-to-body 的 tooltip，限制宽度避免全屏长条 */
+.wb-tip-popper {
+  max-width: 320px !important;
+  line-height: 1.55;
+  word-break: break-word;
+  white-space: normal;
 }
 .wb-dismiss-info {
   margin-bottom: 12px;

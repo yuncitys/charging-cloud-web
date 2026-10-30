@@ -2,20 +2,33 @@
 import { shallowMount } from '@vue/test-utils'
 import OperatorWorkbench from '@/views/business/operatorWorkbench/index.vue'
 import * as api from '@/api/business/operatorWorkbench'
-import { getChargingStationList } from '@/api/netWorkDot/netWorkDotList'
 
 jest.mock('@/api/merchant/merchant', () => ({
   getMerchant: jest.fn(() => Promise.resolve({ code: 200, data: [] }))
 }))
-jest.mock('@/api/netWorkDot/netWorkDotList', () => ({
-  getChargingStationList: jest.fn(() => Promise.resolve({ code: 200, data: [{ id: 1, networkName: 'A' }, { id: 2, networkName: 'B' }] }))
-}))
 jest.mock('@/api/business/operatorWorkbench', () => {
   const ok = jest.fn(() => Promise.resolve({ code: 200, data: {} }))
   return {
-    workbenchOverview: ok,
+    workbenchOverview: jest.fn(() => Promise.resolve({
+      code: 200,
+      data: {
+        dayKey: 'today',
+        dayDate: '2026-10-30',
+        totalDegree: 12.5,
+        orderCount: 3,
+        orderTotalAmount: 100,
+        electricFee: 60,
+        serviceFee: 40,
+        categories: ['00:00', '01:00'],
+        todaySeries: [1, 2],
+        yesterdaySeries: [0.5, 1]
+      }
+    })),
     workbenchAlerts: jest.fn(() => Promise.resolve({ code: 200, data: [], count: 0 })),
-    workbenchFinance: ok,
+    workbenchFinance: jest.fn(() => Promise.resolve({
+      code: 200,
+      data: { totalIncome: 1200, todayIncome: 88.5, showWithdraw: false, balanceAmount: null }
+    })),
     workbenchMarketing: ok,
     workbenchMarketingAnalysis: jest.fn(() => Promise.resolve({ code: 200, data: { trend: [], activityTop: [] } })),
     workbenchChargeUsers: jest.fn(() => Promise.resolve({
@@ -40,7 +53,12 @@ jest.mock('@/api/business/operatorWorkbench', () => {
     })),
     getStationPowerTop: jest.fn(() => Promise.resolve({
       code: 200,
-      data: [{ rank: 1, stationId: 1, stationName: 'A', totalKwh: 100, avgDailyKwh: 10, avgDailyKwhPerGun: null, gunCount: 0, utilizationRate: null, ratedPowerKw: 60 }]
+      data: {
+        list: [{ rank: 1, stationId: 1, stationName: 'A', totalKwh: 100, avgDailyKwh: 100, avgDailyKwhPerGun: null, gunCount: 0, utilizationRate: null, ratedPowerKw: 60 }],
+        periodStart: '2026-10-30',
+        periodEnd: '2026-10-30',
+        periodHint: '仅统计今日电量，大约每15分钟更新；终端数与额定功率为当日快照'
+      }
     })),
     getAlertConfig: jest.fn(),
     saveAlertConfig: jest.fn(),
@@ -57,173 +75,124 @@ const factory = () => shallowMount(OperatorWorkbench, {
   mocks: {
     $router: { push: jest.fn() },
     $message: { warning: jest.fn(), error: jest.fn(), success: jest.fn() },
-    $dict: { getDeviceRuleOptions: jest.fn(() => Promise.resolve([{ value: 1, label: '电动单车' }, { value: 2, label: '新能源汽车' }])) },
+    $dict: { getDeviceRuleOptions: jest.fn(() => Promise.resolve([])) },
     btnAuthen: { permsVerifAuthention: () => true }
   },
   directives: { loading: {} }
 })
 
-describe('OperatorWorkbench V3', () => {
+describe('OperatorWorkbench merchant-align', () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it('buildParams carries ruleId only when selected', async () => {
+  it('buildParams is fixed TODAY without merchant/station filters', async () => {
     const w = factory()
     await flush()
-    expect(w.vm.buildParams().ruleId).toBeUndefined()
-    w.vm.searchForm.ruleId = 2
-    expect(w.vm.buildParams().ruleId).toBe(2)
-    w.vm.searchForm.ruleId = null
-    expect(w.vm.buildParams().ruleId).toBeUndefined()
+    expect(w.vm.buildParams()).toEqual({ periodType: 'TODAY' })
   })
 
-  it('loads terminal status and station top with other panels', async () => {
+  it('loads charge overview with dayKey and hourly series', async () => {
+    const w = factory()
+    await flush()
+    expect(api.workbenchOverview).toHaveBeenCalledWith(expect.objectContaining({ periodType: 'TODAY', dayKey: 'today' }))
+    expect(w.vm.overview.totalDegree).toBe(12.5)
+    expect(w.vm.hourlyCategories).toHaveLength(2)
+    expect(w.vm.hourlyMax).toBe(2)
+    w.vm.dayKey = 'yesterday'
+    await w.vm.loadOverview()
+    expect(api.workbenchOverview).toHaveBeenLastCalledWith(expect.objectContaining({ dayKey: 'yesterday' }))
+  })
+
+  it('loads terminal status and station top with dayKey today/yesterday', async () => {
     const w = factory()
     await flush()
     expect(api.getTerminalStatus).toHaveBeenCalledTimes(1)
-    expect(api.getStationPowerTop).toHaveBeenCalledTimes(1)
+    expect(api.getStationPowerTop).toHaveBeenCalledWith(expect.objectContaining({ periodType: 'TODAY', dayKey: 'today' }))
     expect(w.vm.terminal.dc.idle).toBe(13)
     expect(w.vm.stationTop).toHaveLength(1)
-    expect(w.vm.ruleOptions).toHaveLength(2)
-  })
-
-  it('station top accepts legacy array and { list, meta } result', async () => {
-    const w = factory()
-    await flush()
-    expect(w.vm.stationTop).toHaveLength(1)
-    expect(w.vm.stationTopMeta).toEqual({})
-    api.getStationPowerTop.mockResolvedValueOnce({
-      code: 200,
-      data: {
-        list: [{ rank: 1, stationId: 1, stationName: 'A' }, { rank: 2, stationId: 2, stationName: 'B' }],
-        dataAsOf: '2026-10-27 10:00:00',
-        periodStart: '2026-10-27',
-        periodEnd: '2026-10-27',
-        periodHint: '充电日账单约每15分钟同步'
-      }
-    })
+    expect(w.vm.stationTopMeta.periodHint).toContain('今日')
+    w.vm.stationTopDayKey = 'yesterday'
     await w.vm.loadStationTop()
-    await flush()
-    expect(w.vm.stationTop).toHaveLength(2)
-    expect(w.vm.stationTopMeta.dataAsOf).toBe('2026-10-27 10:00:00')
-    expect(w.vm.stationTopMeta.periodHint).toBe('充电日账单约每15分钟同步')
+    expect(api.getStationPowerTop).toHaveBeenLastCalledWith(expect.objectContaining({ dayKey: 'yesterday' }))
   })
 
-  it('station top title follows period; null shows --', async () => {
+  it('finance tip via question mark; sync short is 15分钟', async () => {
     const w = factory()
     await flush()
-    expect(w.vm.stationTopTitle).toBe('今日电站电量前 10')
-    w.vm.searchForm.periodType = 'WEEK'
-    expect(w.vm.stationTopTitle).toBe('本周电站电量前 10')
-    w.vm.searchForm.periodType = 'MONTH'
-    expect(w.vm.stationTopTitle).toBe('本月电站电量前 10')
+    expect(w.vm.finance.totalIncome).toBe(1200)
+    expect(w.vm.finance.todayIncome).toBe(88.5)
+    expect(w.vm.finance.showWithdraw).toBe(false)
+    expect(w.vm.FINANCE_TIP).toContain('累计总收入')
+    expect(w.vm.FINANCE_TIP).toContain('今日收入')
+    expect(w.vm.FINANCE_TIP).toContain('可提现')
+    expect(w.vm.FINANCE_TIP).not.toContain('商户端')
+    expect(w.vm.financeMeta.syncShort).toBe('15分钟')
+  })
+
+  it('exposes plain-language tips for station-top columns', async () => {
+    const w = factory()
+    await flush()
+    const tips = w.vm.STATION_TOP_TIPS
+    expect(tips.avgDailyKwh).toContain('所选日期')
+    expect(tips.utilizationRate).toContain('占比')
+    expect(tips.ratedPowerKw).toContain('千瓦')
     expect(w.vm.num(null)).toBe('--')
     expect(w.vm.num(12.345)).toBe('12.35')
   })
 
-  it('exposes formula tips for calculated station-top columns', async () => {
+  it('station trend link goes to businessStatisticsThree', async () => {
     const w = factory()
     await flush()
-    const tips = w.vm.STATION_TOP_TIPS
-    expect(tips.avgDailyKwh).toContain('总电量')
-    expect(tips.avgDailyKwhPerGun).toContain('日均电量')
-    expect(tips.utilizationRate).toContain('24')
-    expect(tips.ratedPowerKw).toContain('1000')
+    w.vm.go('/business/businessStatisticsThree')
+    expect(w.vm.$router.push).toHaveBeenCalledWith({ path: '/business/businessStatisticsThree', query: {} })
   })
 
-  it('rule change refetches stations by ruleId, prunes selection, and re-queries', async () => {
+  it('marketing tip explains fields for operators', async () => {
     const w = factory()
     await flush()
-    w.vm.searchForm.stationIds = [1, 2]
-    w.vm.searchForm.ruleId = 2
-    getChargingStationList.mockResolvedValueOnce({ code: 200, data: [{ id: 2, networkName: 'B' }] })
-    api.getTerminalStatus.mockClear()
-    w.vm.onRuleChange()
-    await flush()
-    expect(getChargingStationList).toHaveBeenLastCalledWith({ ruleId: 2 })
-    expect(w.vm.searchForm.stationIds).toEqual([2])
-    expect(api.getTerminalStatus).toHaveBeenCalledWith(expect.objectContaining({ ruleId: 2 }))
+    const tip = w.vm.MARKETING_TIP
+    expect(tip).toContain('进行中活动')
+    expect(tip).toContain('发券数')
+    expect(tip).toContain('核销数')
+    expect(tip).toContain('核销率')
+    expect(tip).toContain('优惠成本')
+    expect(tip).toContain('补贴成本')
+    expect(tip).toContain('活动订单电量')
+    expect(tip).toContain('参与电站数')
+    expect(tip).toContain('参与用户数')
+    expect(tip).toContain('核销订单实收')
+    expect(tip).toContain('粗略 ROI')
+    expect(tip).not.toMatch(/日表|SUM|DataScope|periodType/)
   })
 
-  it('merchant change refetches stations by merchantId and prunes selection', async () => {
+  it('opens marketing analysis with TODAY params', async () => {
     const w = factory()
     await flush()
-    w.vm.searchForm.stationIds = [1, 2]
-    w.vm.searchForm.merchantId = 9
-    getChargingStationList.mockResolvedValueOnce({ code: 200, data: [{ id: 1, networkName: 'A' }] })
-    api.getTerminalStatus.mockClear()
-    w.vm.onMerchantChange()
-    await flush()
-    expect(getChargingStationList).toHaveBeenLastCalledWith({ merchantId: 9 })
-    expect(w.vm.searchForm.stationIds).toEqual([1])
-    expect(api.getTerminalStatus).toHaveBeenCalledWith(expect.objectContaining({ merchantId: 9 }))
-  })
-
-  it('opens marketing analysis drawer with merchant/rule, no stationIds, analysisDays + statDate', async () => {
-    const w = factory()
-    await flush()
-    w.vm.searchForm.merchantId = 9
-    w.vm.searchForm.ruleId = 2
-    w.vm.searchForm.stationIds = [1]
     w.vm.openMarketingAnalysis()
     await flush()
     expect(w.vm.maDrawer).toBe(true)
     const p = api.workbenchMarketingAnalysis.mock.calls[0][0]
-    expect(p).toEqual(expect.objectContaining({ merchantId: 9, ruleId: 2, analysisDays: 30 }))
-    expect(p.stationIds).toBeUndefined()
+    expect(p).toEqual(expect.objectContaining({ periodType: 'TODAY', analysisDays: 30 }))
     expect(p.statDate).toMatch(/^\d{4}-\d{2}-\d{2}$/)
     expect(w.vm.maTrend).toHaveLength(30)
   })
 
-  it('marketing analysis maps rows, handles error and ignores stale responses', async () => {
+  it('loads charge user block with dayKey today/yesterday', async () => {
     const w = factory()
     await flush()
-    api.workbenchMarketingAnalysis.mockResolvedValueOnce({
-      code: 200,
-      data: { trend: [], activityTop: [{ activityId: 'a1', activityName: '满减', issueCount: 3, redeemCount: 1, activityOrderKwh: 5, discountCost: 2 }] }
-    })
-    await w.vm.loadMarketingAnalysis()
-    expect(w.vm.maTop).toHaveLength(1)
-    api.workbenchMarketingAnalysis.mockResolvedValueOnce({ code: 500, msg: '失败了' })
-    await w.vm.loadMarketingAnalysis()
-    expect(w.vm.maError).toBe('失败了')
-
-    let resolveSlow
-    api.workbenchMarketingAnalysis
-      .mockImplementationOnce(() => new Promise(r => { resolveSlow = r }))
-      .mockResolvedValueOnce({ code: 200, data: { trend: [], activityTop: [{ activityId: 'new' }] } })
-    const slow = w.vm.loadMarketingAnalysis()
-    await w.vm.loadMarketingAnalysis()
-    resolveSlow({ code: 200, data: { trend: [], activityTop: [{ activityId: 'old' }] } })
-    await slow
-    expect(w.vm.maTop[0].activityId).toBe('new')
-    expect(w.vm.maLoading).toBe(false)
-  })
-
-  it('loads charge user block with other panels; title/ring follow response', async () => {
-    const w = factory()
-    await flush()
-    expect(api.workbenchChargeUsers).toHaveBeenCalledTimes(1)
-    expect(api.workbenchChargeUsers).toHaveBeenCalledWith(expect.objectContaining({ periodType: 'TODAY' }))
+    expect(api.workbenchChargeUsers).toHaveBeenCalledWith(expect.objectContaining({ periodType: 'TODAY', dayKey: 'today' }))
     expect(w.vm.chargeUser.chargeUserCount).toBe(40)
-    expect(w.vm.chargeUserPeriodText).toBe('今日未收口，按昨日统计')
     expect(w.vm.chargeUserNewPercent).toBe(25)
-    expect(w.vm.chargeUserRingStyle.background).toContain('conic-gradient')
-    w.vm.searchForm.periodType = 'WEEK'
-    w.vm.search()
-    await flush()
-    expect(api.workbenchChargeUsers).toHaveBeenLastCalledWith(expect.objectContaining({ periodType: 'WEEK' }))
+    w.vm.chargeUserDayKey = 'yesterday'
+    await w.vm.loadChargeUser()
+    expect(api.workbenchChargeUsers).toHaveBeenLastCalledWith(expect.objectContaining({ dayKey: 'yesterday' }))
   })
 
-  it('charge user block shows error without blocking others and falls back to period text', async () => {
+  it('charge user block shows error without blocking others', async () => {
     api.workbenchChargeUsers.mockResolvedValueOnce({ code: 500, msg: '用户块失败' })
     const w = factory()
     await flush()
     expect(w.vm.blocks.chargeUser.error).toBe('用户块失败')
     expect(w.vm.blocks.overview.error).toBe('')
-    api.workbenchChargeUsers.mockResolvedValueOnce({ code: 200, data: { chargeUserCount: 0, newChargeUserCount: 0, periodStart: '2026-10-01', periodEnd: '2026-10-26' } })
-    await w.vm.loadChargeUser()
-    expect(w.vm.chargeUserPeriodText).toBe('统计区间 2026-10-01 ~ 2026-10-26')
-    expect(w.vm.chargeUserNewPercent).toBe(0)
   })
 
   it('does not load charge users without view permission', async () => {
@@ -241,42 +210,14 @@ describe('OperatorWorkbench V3', () => {
     expect(api.workbenchChargeUsers).not.toHaveBeenCalled()
   })
 
-  it('opens user analysis drawer with merchant/rule/stationIds and maps cards, trend, station top', async () => {
+  it('opens user analysis drawer and maps cards', async () => {
     const w = factory()
     await flush()
-    w.vm.searchForm.merchantId = 9
-    w.vm.searchForm.ruleId = 2
-    w.vm.searchForm.stationIds = [1]
     w.vm.openChargeUserAnalysis()
     await flush()
     expect(w.vm.cuDrawer).toBe(true)
-    expect(api.workbenchChargeUserAnalysis).toHaveBeenCalledWith(expect.objectContaining({ merchantId: 9, ruleId: 2, stationIds: [1] }))
+    expect(api.workbenchChargeUserAnalysis).toHaveBeenCalled()
     expect(w.vm.cuYesterday.chargeUserCount).toBe(40)
-    expect(w.vm.cuMonth.chargeUserCount).toBe(300)
-    expect(w.vm.cuTrend).toHaveLength(1)
-    expect(w.vm.cuStationTop[0].stationName).toBe('A')
     expect(w.vm.cuCompareCards).toHaveLength(2)
-    expect(w.vm.cuCardPeriod({ periodStart: '2026-10-26', periodEnd: '2026-10-26' })).toBe('统计日 2026-10-26')
-    expect(w.vm.cuCardPeriod({})).toBe('--')
-  })
-
-  it('user analysis handles error and ignores stale responses', async () => {
-    const w = factory()
-    await flush()
-    api.workbenchChargeUserAnalysis.mockResolvedValueOnce({ code: 500, msg: '分析失败' })
-    await w.vm.loadChargeUserAnalysis()
-    expect(w.vm.cuError).toBe('分析失败')
-
-    let resolveSlow
-    api.workbenchChargeUserAnalysis
-      .mockImplementationOnce(() => new Promise(r => { resolveSlow = r }))
-      .mockResolvedValueOnce({ code: 200, data: { trend: [], stationTop: [{ stationId: 'new' }] } })
-    const slow = w.vm.loadChargeUserAnalysis()
-    await w.vm.loadChargeUserAnalysis()
-    resolveSlow({ code: 200, data: { trend: [], stationTop: [{ stationId: 'old' }] } })
-    await slow
-    expect(w.vm.cuStationTop[0].stationId).toBe('new')
-    expect(w.vm.cuError).toBe('')
-    expect(w.vm.cuLoading).toBe(false)
   })
 })

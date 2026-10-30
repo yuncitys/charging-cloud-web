@@ -24,19 +24,17 @@ describe('chargeUser helpers', () => {
     expect(ringStyle(-5).background).toContain('0 0%')
   })
 
-  it('tip mentions start-day calibre and 15-min sync', () => {
-    expect(CHARGE_USER_TIP).toContain('手机号')
-    expect(CHARGE_USER_TIP).toContain('C 端')
-    expect(CHARGE_USER_TIP).toContain('开始时间')
-    expect(CHARGE_USER_TIP).toContain('进行中')
+  it('tips stay plain-language for operators', () => {
+    expect(CHARGE_USER_TIP).toContain('今 / 昨')
+    expect(CHARGE_USER_TIP).toContain('充电用户')
     expect(CHARGE_USER_TIP).toContain('15 分钟')
-  })
-
-  it('period counts are explained as daily-dedup sums (not live range distinct)', () => {
-    expect(CHARGE_USER_TIP).toContain('各日去重之和')
-    expect(CHARGE_USER_TIP).toContain('重复')
-    expect(CHARGE_USER_ANALYSIS_NOTE).toContain('各日去重之和')
-    expect(CHARGE_USER_ANALYSIS_NOTE).not.toContain('订单侧区间去重')
-    expect(CHARGE_USER_STATION_TOP_NOTE).toContain('各日去重之和')
+    expect(CHARGE_USER_TIP).not.toContain('order_status')
+    expect(CHARGE_USER_TIP).not.toContain('DataScope')
+    expect(CHARGE_USER_TIP).not.toContain('日表')
+    expect(CHARGE_USER_ANALYSIS_NOTE).toContain('昨日')
+    expect(CHARGE_USER_ANALYSIS_NOTE).toContain('本月')
+    expect(CHARGE_USER_ANALYSIS_NOTE).not.toContain('顶栏')
+    expect(CHARGE_USER_STATION_TOP_NOTE).toContain('各站')
+    expect(CHARGE_USER_STATION_TOP_NOTE).not.toContain('站维日表')
   })
 })

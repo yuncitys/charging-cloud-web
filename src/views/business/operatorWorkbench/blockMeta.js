@@ -1,21 +1,27 @@
-// 工作台各块标题旁统一元信息：统计周期 ｜ 统计区间 ｜ 同步
+// 工作台各块标题旁统一元信息：统计日/周期 ｜ 统计区间 ｜ 同步
 
-export const PERIOD_LABEL = { TODAY: '今日', WEEK: '本周', MONTH: '本月' }
+export const PERIOD_LABEL = {
+  TODAY: '今日',
+  YESTERDAY: '昨日',
+  WEEK: '本周',
+  MONTH: '本月'
+}
 export const NA = '—'
 
-/** 各块「同步」固定文案（与日表 / 实时口径一致） */
+/** 各块「同步」悬停文案（面向运营，避免表名/字段名） */
 export const SYNC = {
-  WORKBENCH_DAY: '约每15分钟同步',
+  WORKBENCH_DAY: '约每15分钟更新',
+  CHARGE_DAY: '约每15分钟更新',
   REALTIME: '实时',
-  CHARGE_USER: '约每15分钟同步',
-  ALERT: '读工作台日表（约每15分钟）',
-  FINANCE: '日账单T+1出账；结算看快照',
-  MARKETING: '约每15分钟同步',
-  STATION_TOP: '约每15分钟同步'
+  CHARGE_USER: '约每15分钟更新',
+  ALERT: '约每15分钟更新（按昨日已结清数据判定）',
+  FINANCE: '约每15分钟更新',
+  MARKETING: '约每15分钟更新',
+  STATION_TOP: '约每15分钟更新'
 }
 
 /**
- * @param {string} periodType TODAY|WEEK|MONTH|…
+ * @param {string} periodType TODAY|YESTERDAY|WEEK|MONTH|…
  * @param {{ followsPeriod?: boolean }} [opt]
  */
 export function formatPeriodLabel(periodType, opt) {
@@ -36,7 +42,7 @@ export function formatRange(start, end) {
 export function formatSyncShort(sync) {
   if (!sync || sync === NA) return NA
   if (sync === SYNC.REALTIME) return '实时'
-  if (sync === SYNC.FINANCE) return 'T+1出账'
+  if (sync === SYNC.FINANCE) return '15分钟'
   if (sync === SYNC.ALERT) return '15分钟'
   if (sync.indexOf('15') >= 0) return '15分钟'
   return sync
@@ -45,7 +51,7 @@ export function formatSyncShort(sync) {
 /** 悬停完整三要素（+ 可选最近刷新） */
 export function formatMetaHover(meta) {
   if (!meta) return ''
-  const line = `统计周期 ${meta.period} ｜ 统计区间 ${meta.range} ｜ 同步 ${meta.sync}`
+  const line = `统计日 ${meta.period} ｜ 统计区间 ${meta.range} ｜ 同步 ${meta.sync}`
   return meta.dataAsOf ? `${line}\n最近刷新：${meta.dataAsOf}` : line
 }
 
