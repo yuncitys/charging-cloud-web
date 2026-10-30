@@ -1351,7 +1351,7 @@ export default {
       if (!id) {
         return
       }
-      const text = '已停止生成。需要的话可以换个说法再发，或补充订单号等信息后继续。'
+      const text = '已停止生成。需要的话可以换个说法再发，或补充信息后继续。'
       this.applyConversation(id, c => {
         const msgs = (c.messages || []).slice()
         const last = msgs[msgs.length - 1]
