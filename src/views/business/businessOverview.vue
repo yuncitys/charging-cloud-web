@@ -21,9 +21,11 @@
         <el-radio-button label="7d">前7天</el-radio-button>
         <el-radio-button label="30d">前30天</el-radio-button>
         <el-radio-button label="12m">前12个月</el-radio-button>
+        <el-radio-button label="custom">自定义</el-radio-button>
       </el-radio-group>
 
       <el-date-picker
+        v-if="activePreset === 'custom'"
         v-model="customRange"
         class="filter-item custom-range"
         type="daterange"
@@ -37,46 +39,54 @@
       <el-button type="primary" class="filter-item" icon="el-icon-search" @click="handleFilter">查询</el-button>
     </div>
 
-    <section class="overview-panel">
-      <div class="panel-header">
-        <div class="title-section">
-          <span class="title">核心指标</span>
-          <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
+    <div class="overview-charts-row">
+      <section class="overview-panel chart-panel">
+        <div class="panel-header">
+          <div class="title-section">
+            <span class="title">核心指标</span>
+            <StatsCaliberDialog :intro="coreCaliber.intro" :fields="coreCaliber.fields" />
+          </div>
+          <span class="data-tip"><i class="el-icon-warning-outline" /> 日汇总（T+1）</span>
         </div>
-        <span class="data-tip"><i class="el-icon-warning-outline" /> 数据来自日汇总同步表（T+1），非实时</span>
-      </div>
 
-      <el-tabs v-model="activeMetric" class="metric-tabs">
-        <el-tab-pane
-          v-for="metric in metrics"
-          :key="metric.key"
-          :label="metric.label"
-          :name="metric.key"
-        />
-      </el-tabs>
-      <div ref="trendChart" v-loading="trendLoading" class="trend-chart" />
-    </section>
+        <el-tabs v-model="activeMetric" class="metric-tabs">
+          <el-tab-pane
+            v-for="metric in metrics"
+            :key="metric.key"
+            :label="metric.label"
+            :name="metric.key"
+          />
+        </el-tabs>
+        <div ref="trendChart" v-loading="trendLoading" class="trend-chart" />
+      </section>
 
-    <section class="overview-panel">
-      <div class="panel-header">
-        <span class="title">设备分析</span>
-        <span class="data-tip"><i class="el-icon-warning-outline" /> 设备状态数据按日汇总（T+1），缺失数据不连线</span>
-      </div>
+      <section class="overview-panel chart-panel">
+        <div class="panel-header">
+          <div class="title-section">
+            <span class="title">设备分析</span>
+            <StatsCaliberDialog :intro="deviceCaliber.intro" :fields="deviceCaliber.fields" />
+          </div>
+          <span class="data-tip"><i class="el-icon-warning-outline" /> 状态日汇总（T+1）</span>
+        </div>
 
-      <el-tabs v-model="activeDeviceMetric" class="metric-tabs">
-        <el-tab-pane
-          v-for="metric in deviceMetrics"
-          :key="metric.key"
-          :label="metric.label"
-          :name="metric.key"
-        />
-      </el-tabs>
-      <div ref="deviceTrendChart" v-loading="trendLoading" class="trend-chart" />
-    </section>
+        <el-tabs v-model="activeDeviceMetric" class="metric-tabs">
+          <el-tab-pane
+            v-for="metric in deviceMetrics"
+            :key="metric.key"
+            :label="metric.label"
+            :name="metric.key"
+          />
+        </el-tabs>
+        <div ref="deviceTrendChart" v-loading="trendLoading" class="trend-chart" />
+      </section>
+    </div>
 
     <section class="overview-panel station-panel">
       <div class="panel-header">
-        <span class="title">电站数据</span>
+        <div class="title-section">
+          <span class="title">电站数据</span>
+          <StatsCaliberDialog :intro="stationCaliber.intro" :fields="stationCaliber.fields" />
+        </div>
         <DownBusinessOverviewStations :query-data="exportQuery" />
       </div>
 
@@ -186,7 +196,9 @@ export default {
       listLoading: false,
       chart: null,
       deviceChart: null,
-      caliber: caliberForPage('overview')
+      coreCaliber: caliberForPage('overviewCore'),
+      deviceCaliber: caliberForPage('overviewDevice'),
+      stationCaliber: caliberForPage('overviewStation')
     }
   },
   computed: {
@@ -218,6 +230,7 @@ export default {
     window.addEventListener('resize', this.resizeChart)
     this.renderChart()
     this.renderDeviceChart()
+    this.$nextTick(() => this.resizeChart())
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.resizeChart)
@@ -232,19 +245,27 @@ export default {
   },
   methods: {
     applyPreset(preset) {
+      if (preset === 'custom') {
+        this.customRange = []
+        return
+      }
       Object.assign(this.listQuery, buildOverviewRange(preset))
       this.customRange = []
       this.handleFilter()
     },
     applyCustomRange(range) {
       if (!range || range.length !== 2) return
-      this.activePreset = ''
+      this.activePreset = 'custom'
       this.listQuery.timeType = 3
       this.listQuery.startDate = range[0]
       this.listQuery.endDate = range[1]
       this.handleFilter()
     },
     handleFilter() {
+      if (this.activePreset === 'custom' && (!this.customRange || this.customRange.length !== 2)) {
+        this.$message.warning('请选择自定义起止日期')
+        return
+      }
       this.listQuery.page = 1
       this.fetchData()
     },
@@ -438,6 +459,17 @@ export default {
 .custom-range {
   width: 360px;
 }
+.overview-charts-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+.chart-panel {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+}
 .overview-panel {
   margin-bottom: 16px;
 }
@@ -446,9 +478,13 @@ export default {
   display: flex;
   align-items: center;
 }
+.title-section .title {
+  margin-right: 6px;
+}
 .panel-header {
   justify-content: space-between;
   min-height: 40px;
+  gap: 8px;
 }
 .title {
   color: #303133;
@@ -457,7 +493,8 @@ export default {
 }
 .data-tip {
   color: #909399;
-  font-size: 13px;
+  font-size: 12px;
+  white-space: nowrap;
 }
 .data-tip i {
   color: #E6A23C;
@@ -467,9 +504,21 @@ export default {
 }
 .trend-chart {
   width: 100%;
-  height: 360px;
+  height: 320px;
 }
 .station-panel {
   padding-bottom: 4px;
+}
+.station-panel .panel-header {
+  margin-bottom: 16px;
+  padding-bottom: 4px;
+}
+@media (max-width: 1200px) {
+  .overview-charts-row {
+    flex-direction: column;
+  }
+  .chart-panel {
+    margin-bottom: 0;
+  }
 }
 </style>

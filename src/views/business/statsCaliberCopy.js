@@ -75,6 +75,12 @@ const PAGE_HINT = {
     '本页看整体充电走势（日或月）。度量来自日汇总同步表；可按商户筛选。切换「月」后时间列显示 yyyy-MM。',
   overview:
     '本页读站点日汇总同步表。金额=订单总金额，服务费=标价服务费。枪日均=区间总电量÷天数÷运营枪数。设备四率例外，按枪状态时长汇总；容量分母 B=区间内逐日汇总的运营枪数×86400 秒，占用、预约不进入四率分子。本页利用率按枪状态充电时长计算，不等于工作台按订单充电分钟计算的利用率。',
+  overviewCore:
+    '核心指标来自站点充电日汇总（T+1）。金额=订单总金额，服务费=标价服务费；按日或月桶展示，无数据补 0。',
+  overviewDevice:
+    '设备分析四率来自站日状态时长汇总（T+1）。分母 B=区间内逐日运营枪数×86400 秒；占用、预约不进分子。利用率按枪状态充电时长，不等于工作台订单充电分钟利用率。缺失数据不连线。',
+  overviewStation:
+    '电站表与上方筛选一致：充电度量来自站点日汇总；四率来自状态时长日汇总。枪日均=区间总电量÷天数÷运营枪数；无运营枪或无状态容量时相关列显示 --。',
   business:
     '本页按设备汇总，度量来自枪口日同步表（不是实时扫订单，也不看设备在线状态）。区间内无同步数据的设备不出现。'
 }
@@ -123,6 +129,25 @@ export function caliberForPage(pageKey) {
     case 'overview':
       fields = [
         F.date, F.station, F.totalDegree, F.totalOrderCount,
+        F.orderTotalAmount, F.totalStandardServiceFee, F.gunDailyAvgDegree,
+        F.availabilityRate, F.utilizationRate, F.offlineRate, F.faultRate
+      ]
+      break
+    case 'overviewCore':
+      fields = [
+        F.date, F.station, F.totalDegree, F.totalOrderCount,
+        F.orderTotalAmount, F.totalStandardServiceFee
+      ]
+      break
+    case 'overviewDevice':
+      fields = [
+        F.date, F.station,
+        F.availabilityRate, F.utilizationRate, F.offlineRate, F.faultRate
+      ]
+      break
+    case 'overviewStation':
+      fields = [
+        F.station, F.totalDegree, F.totalOrderCount,
         F.orderTotalAmount, F.totalStandardServiceFee, F.gunDailyAvgDegree,
         F.availabilityRate, F.utilizationRate, F.offlineRate, F.faultRate
       ]
