@@ -227,23 +227,43 @@
 
           <div v-if="showShortcuts" class="ops-agent-chat__shortcuts">
             <div class="ops-agent-chat__shortcuts-label">试试这样问</div>
-            <button
-              v-for="item in shortcuts"
-              :key="item.label"
-              type="button"
-              class="ops-agent-chat__suggest"
-              :disabled="sending"
-              @click="useShortcut(item)"
-            >
-              <span class="ops-agent-chat__suggest-icon" :class="'is-' + item.tone">
-                <i :class="item.icon" />
-              </span>
-              <span class="ops-agent-chat__suggest-body">
-                <span class="ops-agent-chat__suggest-title">{{ item.label }}</span>
-                <span class="ops-agent-chat__suggest-desc">{{ item.desc }}</span>
-              </span>
-              <i class="el-icon-arrow-right ops-agent-chat__suggest-arrow" />
-            </button>
+            <div class="ops-agent-chat__shortcuts-grid">
+              <button
+                v-for="item in shortcuts"
+                :key="item.label"
+                type="button"
+                class="ops-agent-chat__suggest"
+                :class="'is-' + (item.tone || 'blue')"
+                :disabled="sending"
+                @click="useShortcut(item)"
+              >
+                <span class="ops-agent-chat__suggest-icon" aria-hidden="true">
+                  <svg
+                    class="ops-agent-chat__suggest-svg"
+                    viewBox="0 0 24 24"
+                    width="20"
+                    height="20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      v-for="(d, idx) in shortcutIcon(item).paths"
+                      :key="idx"
+                      :d="d"
+                      :stroke="shortcutIcon(item).stroke"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      fill="none"
+                    />
+                  </svg>
+                </span>
+                <span class="ops-agent-chat__suggest-body">
+                  <span class="ops-agent-chat__suggest-title">{{ item.label }}</span>
+                  <span class="ops-agent-chat__suggest-desc">{{ item.desc }}</span>
+                </span>
+              </button>
+            </div>
           </div>
 
           <div class="ops-agent-chat__footer">
@@ -342,6 +362,7 @@ import {
   WELCOME_TEXT,
   setWelcomeText
 } from './sessionStore'
+import { resolveShortcutIcon } from './shortcutIcons'
 
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
 
@@ -475,7 +496,7 @@ export default {
     },
     showShortcuts() {
       const msgs = this.activeConversation.messages || []
-      return msgs.length <= 2
+      return !msgs.some(m => m && m.role === 'user')
     }
   },
   mounted() {
@@ -1219,6 +1240,9 @@ export default {
         }
       })
     },
+    shortcutIcon(item) {
+      return resolveShortcutIcon(item)
+    },
     useShortcut(item) {
       this.inputText = item.text
       this.$nextTick(() => {
@@ -1400,6 +1424,7 @@ export default {
               text: s.text || '',
               fillOnly: !!s.fillOnly,
               icon: s.icon || 'el-icon-chat-dot-round',
+              iconKey: s.iconKey || '',
               tone: s.tone || 'blue'
             }))
           }
@@ -2128,77 +2153,66 @@ export default {
   }
 
   &__shortcuts {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    padding: 4px 12px 10px;
+    padding: 6px 12px 12px;
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
   }
 
   &__shortcuts-label {
     font-size: 12px;
-    color: #909399;
-    padding: 2px 2px 4px;
+    color: #64748b;
+    padding: 2px 2px 8px;
+    letter-spacing: 0.02em;
+  }
+
+  &__shortcuts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
   }
 
   &__suggest {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    align-items: flex-start;
+    gap: 8px;
     width: 100%;
     text-align: left;
-    border: 1px solid #ebeef5;
-    background: #fafbfc;
+    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.9);
     border-radius: 10px;
-    padding: 8px 10px;
+    padding: 10px 10px 9px;
     cursor: pointer;
-    transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
 
     &:hover:not(:disabled) {
-      border-color: #c6e2ff;
-      background: #f5f9ff;
-      box-shadow: 0 1px 4px rgba(64, 158, 255, 0.1);
-
-      .ops-agent-chat__suggest-arrow {
-        color: #409eff;
-        transform: translateX(2px);
-      }
+      border-color: #94a3b8;
+      background: #fff;
+      transform: translateY(-1px);
     }
 
     &:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
+
+    &.is-blue:hover:not(:disabled) { border-color: #5b7c99; }
+    &.is-amber:hover:not(:disabled) { border-color: #b8893d; }
+    &.is-green:hover:not(:disabled) { border-color: #4a8f6f; }
+    &.is-red:hover:not(:disabled) { border-color: #c45b5b; }
   }
 
   &__suggest-icon {
     flex-shrink: 0;
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 8px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 15px;
+    background: #f1f5f9;
+  }
 
-    &.is-blue {
-      background: #ecf5ff;
-      color: #409eff;
-    }
-
-    &.is-amber {
-      background: #fdf6ec;
-      color: #e6a23c;
-    }
-
-    &.is-green {
-      background: #f0f9eb;
-      color: #67c23a;
-    }
-
-    &.is-red {
-      background: #fef0f0;
-      color: #f56c6c;
-    }
+  &__suggest-svg {
+    display: block;
   }
 
   &__suggest-body {
@@ -2212,24 +2226,22 @@ export default {
   &__suggest-title {
     font-size: 13px;
     font-weight: 600;
-    color: #303133;
+    color: #334155;
     line-height: 1.3;
   }
 
   &__suggest-desc {
     font-size: 11px;
-    color: #909399;
-    line-height: 1.3;
-    white-space: nowrap;
+    color: #94a3b8;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   &__suggest-arrow {
-    flex-shrink: 0;
-    color: #c0c4cc;
-    font-size: 12px;
-    transition: color 0.15s, transform 0.15s;
+    display: none;
   }
 
   &__footer {
