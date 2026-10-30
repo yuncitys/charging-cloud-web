@@ -237,26 +237,8 @@
                 :disabled="sending"
                 @click="useShortcut(item)"
               >
-                <span class="ops-agent-chat__suggest-icon" aria-hidden="true">
-                  <svg
-                    class="ops-agent-chat__suggest-svg"
-                    viewBox="0 0 24 24"
-                    width="20"
-                    height="20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      v-for="(d, idx) in shortcutIcon(item).paths"
-                      :key="idx"
-                      :d="d"
-                      :stroke="shortcutIcon(item).stroke"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      fill="none"
-                    />
-                  </svg>
+                <span class="ops-agent-chat__suggest-icon" :class="'is-' + (item.tone || 'blue')">
+                  <i :class="item.icon || 'el-icon-chat-dot-round'" />
                 </span>
                 <span class="ops-agent-chat__suggest-body">
                   <span class="ops-agent-chat__suggest-title">{{ item.label }}</span>
@@ -362,7 +344,6 @@ import {
   WELCOME_TEXT,
   setWelcomeText
 } from './sessionStore'
-import { resolveShortcutIcon } from './shortcutIcons'
 
 const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
 
@@ -1247,9 +1228,6 @@ export default {
         }
       })
     },
-    shortcutIcon(item) {
-      return resolveShortcutIcon(item)
-    },
     useShortcut(item) {
       this.inputText = item.text
       this.$nextTick(() => {
@@ -1431,7 +1409,6 @@ export default {
               text: s.text || '',
               fillOnly: !!s.fillOnly,
               icon: s.icon || 'el-icon-chat-dot-round',
-              iconKey: s.iconKey || '',
               tone: s.tone || 'blue'
             }))
           }
@@ -2215,11 +2192,27 @@ export default {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background: #f1f5f9;
-  }
+    font-size: 14px;
 
-  &__suggest-svg {
-    display: block;
+    &.is-blue {
+      background: #ecf5ff;
+      color: #409eff;
+    }
+
+    &.is-amber {
+      background: #fdf6ec;
+      color: #e6a23c;
+    }
+
+    &.is-green {
+      background: #f0f9eb;
+      color: #67c23a;
+    }
+
+    &.is-red {
+      background: #fef0f0;
+      color: #f56c6c;
+    }
   }
 
   &__suggest-body {
