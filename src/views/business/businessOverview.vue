@@ -2,6 +2,14 @@
   <div class="app-container business-overview">
     <div class="filter-container overview-filter">
       <el-select
+        v-model="listQuery.ruleId"
+        class="filter-item rule-select"
+        clearable
+        placeholder="全部业态"
+      >
+        <el-option v-for="item in ruleIdOptions" :key="'rule-' + item.value" :label="item.label" :value="item.value" />
+      </el-select>
+      <el-select
         v-model="listQuery.stationId"
         class="filter-item station-select"
         filterable
@@ -184,7 +192,9 @@ export default {
       deviceMetrics: DEVICE_METRICS,
       customRange: [],
       chargingStationList: [],
+      ruleIdOptions: [],
       listQuery: Object.assign({
+        ruleId: null,
         stationId: '',
         page: 1,
         limit: 10
@@ -203,7 +213,7 @@ export default {
   },
   computed: {
     exportQuery() {
-      return Object.assign({}, this.listQuery)
+      return this.buildQuery()
     },
     currentMetric() {
       return this.metrics.find(item => item.key === this.activeMetric) || this.metrics[0]
@@ -221,6 +231,7 @@ export default {
     }
   },
   created() {
+    this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
     this.loadStationOptions()
     this.fetchData()
   },
@@ -273,6 +284,12 @@ export default {
       this.fetchTrend()
       this.fetchStationRows()
     },
+    buildQuery() {
+      const q = Object.assign({}, this.listQuery)
+      if (q.ruleId == null || q.ruleId === '') delete q.ruleId
+      if (q.stationId === '') delete q.stationId
+      return q
+    },
     loadStationOptions() {
       getChargingStationList(0).then(res => {
         this.chargingStationList = res.code === 200 ? (res.data || []) : []
@@ -282,7 +299,7 @@ export default {
     },
     fetchTrend() {
       this.trendLoading = true
-      businessOverviewCoreTrend(this.listQuery).then(res => {
+      businessOverviewCoreTrend(this.buildQuery()).then(res => {
         if (res.code === 200) {
           this.trend = res.data || { dates: [] }
           this.renderChart()
@@ -300,7 +317,7 @@ export default {
     },
     fetchStationRows() {
       this.listLoading = true
-      businessOverviewStationList(this.listQuery).then(res => {
+      businessOverviewStationList(this.buildQuery()).then(res => {
         if (res.code === 200) {
           this.stationRows = res.data || []
           this.total = Number(res.count) || 0
@@ -447,6 +464,10 @@ export default {
 }
 .overview-filter {
   margin-bottom: 16px;
+}
+.rule-select {
+  width: 130px;
+  margin-right: 16px;
 }
 .station-select {
   width: 260px;

@@ -13,6 +13,16 @@
         @change="handleFilter"
       />
       <el-select
+        v-model="listQuery.ruleId"
+        class="filter-item"
+        style="width: 130px; margin-right: 20px;"
+        clearable
+        placeholder="全部业态"
+        @change="handleFilter"
+      >
+        <el-option v-for="item in ruleIdOptions" :key="'rule-' + item.value" :label="item.label" :value="item.value" />
+      </el-select>
+      <el-select
         v-model="listQuery.merchantId"
         class="filter-item"
         style="width: 200px; margin-right: 20px;"
@@ -42,7 +52,7 @@
         <span class="title">小时统计</span>
         <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
       </div>
-      <DownStationChargeHourStatistics :query-data="listQuery" />
+      <DownStationChargeHourStatistics :query-data="buildQuery()" />
     </div>
 
     <StatsSummaryCards :items="summaryCards" />
@@ -119,11 +129,13 @@ export default {
     return {
       listQuery: {
         summaryDate: today(),
+        ruleId: null,
         stationId: '',
         merchantId: ''
       },
       merchantList: [],
       chargingStationList: [],
+      ruleIdOptions: [],
       list: [],
       listLoading: false,
       chart: null,
@@ -136,6 +148,7 @@ export default {
     }
   },
   created() {
+    this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
     this.getMerchantList()
     this.getStationList()
     this.getList()
@@ -153,6 +166,11 @@ export default {
     }
   },
   methods: {
+    buildQuery() {
+      const q = Object.assign({}, this.listQuery)
+      if (q.ruleId == null || q.ruleId === '') delete q.ruleId
+      return q
+    },
     getMerchantList() {
       getMerchant().then(res => {
         this.merchantList = res.code == 200 ? (res.data || []) : []
@@ -169,7 +187,7 @@ export default {
         return
       }
       this.listLoading = true
-      stationChargeHourStatisticsList(this.listQuery).then(res => {
+      stationChargeHourStatisticsList(this.buildQuery()).then(res => {
         this.listLoading = false
         if (res.code == 200) {
           this.list = res.data || []

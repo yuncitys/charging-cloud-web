@@ -8,6 +8,15 @@
         @change="onTimeChange"
       />
       <el-select
+        v-model="listQuery.ruleId"
+        class="filter-item"
+        style="width: 130px; margin-right: 20px;"
+        clearable
+        placeholder="全部业态"
+      >
+        <el-option v-for="item in ruleIdOptions" :key="'rule-' + item.value" :label="item.label" :value="item.value" />
+      </el-select>
+      <el-select
         v-model="listQuery.merchantId"
         class="filter-item"
         style="width: 200px; margin-right: 20px;"
@@ -137,6 +146,7 @@ export default {
         timeType: 3,
         startDate: range[0],
         endDate: range[1],
+        ruleId: null,
         merchantId: '',
         stationIds: '',
         deviceCode: '',
@@ -147,6 +157,7 @@ export default {
       stationIdList: [],
       merchantList: [],
       chargingStationList: [],
+      ruleIdOptions: [],
       list: [],
       total: 0,
       tableKey: 0,
@@ -161,6 +172,7 @@ export default {
     }
   },
   created() {
+    this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
     this.getMerchantList()
     this.getStationList()
     this.getList()
@@ -168,7 +180,9 @@ export default {
   },
   methods: {
     buildQuery() {
-      return Object.assign({}, this.listQuery, { stationIds: this.stationIdList.join(',') })
+      const q = Object.assign({}, this.listQuery, { stationIds: this.stationIdList.join(',') })
+      if (q.ruleId == null || q.ruleId === '') delete q.ruleId
+      return q
     },
     getMerchantList() {
       getMerchant().then(res => {

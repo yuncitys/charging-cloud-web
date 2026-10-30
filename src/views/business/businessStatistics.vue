@@ -4,6 +4,15 @@
 			<div class="statistics-search-bar">
 				<el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入设备号" v-model="listQuery.deviceCode" class="filter-item" clearable
 					@keyup.enter.native="handleFilter" @clear="handleFilter()" />
+				<el-select style="width: 130px;margin-right: 20px ;" class="filter-item" v-model="listQuery.ruleId" clearable @change="handleFilter()"
+				placeholder="全部业态">
+					<el-option
+					v-for="item in ruleIdOptions"
+					:key="'rule-' + item.value"
+					:label="item.label"
+					:value="item.value">
+					</el-option>
+				</el-select>
 				<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
 				placeholder="请选择商户">
 					<el-option
@@ -31,7 +40,7 @@
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
 					查询
 				</el-button>
-				<downDeviceReportsExcel :queryData="listQuery" />
+				<downDeviceReportsExcel :queryData="buildQuery()" />
 			</div>
 			<div class="report-header">
 				<div class="title-section">
@@ -157,6 +166,7 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
+					ruleId: null,
 					merchantId: '',
 					deviceCode: '',
 					allocationStatus: 1,
@@ -164,6 +174,7 @@
 					createTimeStart: _defaultDayBounds.start,
 					createTimeEnd: _defaultDayBounds.end
 				},
+				ruleIdOptions: [],
 				tableKey: 0,
 				isChildUpdate1: true,
 				isChildUpdate2: false,
@@ -355,9 +366,17 @@
 			// 		this.getLists()
 			// 	})
 			// },
+			buildQuery() {
+				const q = Object.assign({}, this.listQuery)
+				if (q.ruleId == null || q.ruleId === '') delete q.ruleId
+				if (Array.isArray(q.chargingStationIds)) {
+					q.chargingStationIds = q.chargingStationIds.join(',')
+				}
+				return q
+			},
 			getReportsStatistics() {
 				this.loading = true
-				let listQuery = this.listQuery
+				let listQuery = this.buildQuery()
 				let statisticsList = this.statisticsList
 				getReportsStatistics(listQuery).then(res => {
 					if (res.code == 200) {
@@ -433,7 +452,7 @@
 			},
 			getLists() {
 				this.listLoading = true
-				getDeviceStatistics(this.listQuery).then(res => {
+				getDeviceStatistics(this.buildQuery()).then(res => {
 					if (res.code == 200) {
 						this.list = res.data
 						this.total = res.count
@@ -463,6 +482,7 @@
 		created() {
 			this.$dict.getSelector('device_rule')
 			this.$dict.getSelector('device_status')
+			this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
 			// this.getRouters()
 			this.getMerchantList()
 			const drillStationId = this.$route && this.$route.query ? this.$route.query.stationId : ''

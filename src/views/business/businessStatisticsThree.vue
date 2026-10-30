@@ -7,6 +7,15 @@
         :end.sync="listQuery.endTime"
         @change="onTimeChange"
       />
+      <el-select style="width: 130px;margin-right: 20px ;" class="filter-item" v-model="listQuery.ruleId" clearable @change="handleFilter()"
+        placeholder="全部业态">
+          <el-option
+            v-for="item in ruleIdOptions"
+            :key="'rule-' + item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
+      </el-select>
       <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
         placeholder="请选择商户">
           <el-option
@@ -282,12 +291,14 @@
         	timeType: 3,
         	startTime: range[0],
         	endTime: range[1],
+        	ruleId: null,
         	merchantId: '',
         	chargingStationIds: '',
         },
         caliber: caliberForPage('station'),
         merchantList: [],
         chargingStationList: [],
+        ruleIdOptions: [],
         isPc: true,
       }
     },
@@ -297,6 +308,7 @@
         if (Array.isArray(q.chargingStationIds)) {
           q.chargingStationIds = q.chargingStationIds.join(',')
         }
+        if (q.ruleId == null || q.ruleId === '') delete q.ruleId
         return q
       },
       singleQuery() {
@@ -485,6 +497,7 @@
       },
     },
     created() {
+      this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
       this.getMerchantList()
       this.getChargingStationList()
       this.getChargingStationSingleList()
