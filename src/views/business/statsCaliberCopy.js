@@ -35,6 +35,22 @@ const F = {
     desc: '余额/微信/支付分/刷卡/投币/支付宝/月卡：按订单支付方式拆开的金额；只展示有同步数据的站×日。'
   },
   gunDailyAvgDegree: { label: '枪日均电量(度)', desc: '区间总电量÷区间日历天数÷运营枪数；没有运营枪数时显示 --。' },
+  availabilityRate: {
+    label: '可用率',
+    desc: '（充电中时长+空闲时长）÷容量时长。容量时长=区间内逐日汇总的运营枪数×86400 秒；占用、预约不计入分子。'
+  },
+  utilizationRate: {
+    label: '利用率',
+    desc: '枪状态为“充电中”的时长÷容量时长。该指标来自枪状态，不等于工作台按订单充电分钟计算的利用率；占用、预约不计入分子。'
+  },
+  offlineRate: {
+    label: '离线率',
+    desc: '枪状态为“离线”的时长÷容量时长；占用、预约不计入分子。'
+  },
+  faultRate: {
+    label: '故障率',
+    desc: '枪状态为“故障”的时长÷容量时长；占用、预约不计入分子。'
+  },
   operatorIncome: { label: '运营商户实收(元)', desc: '落到你们商户口袋里的收入（以本表统计口径为准）。' },
   compareMetric: { label: '比对内容', desc: '一次只比一个指标（例如只比电量，或只比实付）；表里每个日期格子就是该机构当天这个指标的数。' },
   compareTotalRow: { label: '总计（首行）', desc: '当天所有机构该指标加总，方便和某一家机构对照。' },
@@ -58,7 +74,7 @@ const PAGE_HINT = {
   charge:
     '本页看整体充电走势（日或月）。度量来自日汇总同步表；可按商户筛选。切换「月」后时间列显示 yyyy-MM。',
   overview:
-    '本页读站点日汇总同步表。金额=订单总金额，服务费=标价服务费。枪日均=区间总电量÷天数÷运营枪数。设备状态四率二期提供。',
+    '本页读站点日汇总同步表。金额=订单总金额，服务费=标价服务费。枪日均=区间总电量÷天数÷运营枪数。设备四率例外，按枪状态时长汇总；容量分母 B=区间内逐日汇总的运营枪数×86400 秒，占用、预约不进入四率分子。本页利用率按枪状态充电时长计算，不等于工作台按订单充电分钟计算的利用率。',
   business:
     '本页按设备汇总，度量来自枪口日同步表（不是实时扫订单，也不看设备在线状态）。区间内无同步数据的设备不出现。'
 }
@@ -107,7 +123,8 @@ export function caliberForPage(pageKey) {
     case 'overview':
       fields = [
         F.date, F.station, F.totalDegree, F.totalOrderCount,
-        F.orderTotalAmount, F.totalStandardServiceFee, F.gunDailyAvgDegree
+        F.orderTotalAmount, F.totalStandardServiceFee, F.gunDailyAvgDegree,
+        F.availabilityRate, F.utilizationRate, F.offlineRate, F.faultRate
       ]
       break
     case 'business':

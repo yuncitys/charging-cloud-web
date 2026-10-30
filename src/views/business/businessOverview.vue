@@ -57,6 +57,23 @@
       <div ref="trendChart" v-loading="trendLoading" class="trend-chart" />
     </section>
 
+    <section class="overview-panel">
+      <div class="panel-header">
+        <span class="title">设备分析</span>
+        <span class="data-tip"><i class="el-icon-warning-outline" /> 设备状态数据按日汇总（T+1），缺失数据不连线</span>
+      </div>
+
+      <el-tabs v-model="activeDeviceMetric" class="metric-tabs">
+        <el-tab-pane
+          v-for="metric in deviceMetrics"
+          :key="metric.key"
+          :label="metric.label"
+          :name="metric.key"
+        />
+      </el-tabs>
+      <div ref="deviceTrendChart" v-loading="trendLoading" class="trend-chart" />
+    </section>
+
     <section class="overview-panel station-panel">
       <div class="panel-header">
         <span class="title">电站数据</span>
@@ -87,6 +104,18 @@
         </el-table-column>
         <el-table-column prop="gunDailyAvgDegree" label="枪日均电量(度)" min-width="150" align="right" sortable>
           <template slot-scope="scope">{{ formatGunDailyAvg(scope.row.gunDailyAvgDegree) }}</template>
+        </el-table-column>
+        <el-table-column prop="availabilityRate" label="可用率" min-width="110" align="right" sortable>
+          <template slot-scope="scope">{{ formatRate(scope.row.availabilityRate) }}</template>
+        </el-table-column>
+        <el-table-column prop="utilizationRate" label="利用率" min-width="110" align="right" sortable>
+          <template slot-scope="scope">{{ formatRate(scope.row.utilizationRate) }}</template>
+        </el-table-column>
+        <el-table-column prop="offlineRate" label="离线率" min-width="110" align="right" sortable>
+          <template slot-scope="scope">{{ formatRate(scope.row.offlineRate) }}</template>
+        </el-table-column>
+        <el-table-column prop="faultRate" label="故障率" min-width="110" align="right" sortable>
+          <template slot-scope="scope">{{ formatRate(scope.row.faultRate) }}</template>
         </el-table-column>
       </el-table>
 
@@ -125,6 +154,13 @@ const METRICS = [
   { key: 'totalStandardServiceFeeSeries', label: '总充电服务费', unit: '元', color: '#F56C6C' }
 ]
 
+const DEVICE_METRICS = [
+  { key: 'availabilityRateSeries', label: '可用率', color: '#67C23A' },
+  { key: 'utilizationRateSeries', label: '利用率', color: '#409EFF' },
+  { key: 'offlineRateSeries', label: '离线率', color: '#909399' },
+  { key: 'faultRateSeries', label: '故障率', color: '#F56C6C' }
+]
+
 export default {
   name: 'BusinessOverview',
   components: { StatsCaliberDialog, DownBusinessOverviewStations },
@@ -134,6 +170,8 @@ export default {
       activePreset: '7d',
       activeMetric: METRICS[0].key,
       metrics: METRICS,
+      activeDeviceMetric: DEVICE_METRICS[0].key,
+      deviceMetrics: DEVICE_METRICS,
       customRange: [],
       chargingStationList: [],
       listQuery: Object.assign({
@@ -147,6 +185,7 @@ export default {
       trendLoading: false,
       listLoading: false,
       chart: null,
+      deviceChart: null,
       caliber: caliberForPage('overview')
     }
   },
@@ -156,11 +195,17 @@ export default {
     },
     currentMetric() {
       return this.metrics.find(item => item.key === this.activeMetric) || this.metrics[0]
+    },
+    currentDeviceMetric() {
+      return this.deviceMetrics.find(item => item.key === this.activeDeviceMetric) || this.deviceMetrics[0]
     }
   },
   watch: {
     activeMetric() {
       this.renderChart()
+    },
+    activeDeviceMetric() {
+      this.renderDeviceChart()
     }
   },
   created() {
@@ -169,14 +214,20 @@ export default {
   },
   mounted() {
     this.chart = echarts.init(this.$refs.trendChart)
+    this.deviceChart = echarts.init(this.$refs.deviceTrendChart)
     window.addEventListener('resize', this.resizeChart)
     this.renderChart()
+    this.renderDeviceChart()
   },
   beforeDestroy() {
     window.removeEventListener('resize', this.resizeChart)
     if (this.chart) {
       this.chart.dispose()
       this.chart = null
+    }
+    if (this.deviceChart) {
+      this.deviceChart.dispose()
+      this.deviceChart = null
     }
   },
   methods: {
@@ -214,11 +265,14 @@ export default {
         if (res.code === 200) {
           this.trend = res.data || { dates: [] }
           this.renderChart()
+          this.renderDeviceChart()
         } else {
           this.$message.error(res.msg || '核心指标查询失败')
         }
       }).catch(() => {
         this.trend = { dates: [] }
+        this.renderChart()
+        this.renderDeviceChart()
       }).finally(() => {
         this.trendLoading = false
       })
@@ -280,8 +334,55 @@ export default {
         }]
       }, true)
     },
+    renderDeviceChart() {
+      if (!this.deviceChart) return
+      const metric = this.currentDeviceMetric
+      const values = this.trend[metric.key] || []
+      this.deviceChart.setOption({
+        color: [metric.color],
+        tooltip: {
+          trigger: 'axis',
+          formatter(params) {
+            const point = params[0]
+            if (!point) return ''
+            const value = point.value !== null && point.value !== undefined
+              ? `${Number(point.value).toFixed(2)}%`
+              : '--'
+            return `${point.axisValue}<br/>${point.marker}${metric.label}：${value}`
+          }
+        },
+        grid: { left: 28, right: 28, top: 30, bottom: 30, containLabel: true },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: this.trend.dates || [],
+          axisLine: { lineStyle: { color: '#DCDFE6' }},
+          axisLabel: { color: '#606266' }
+        },
+        yAxis: {
+          type: 'value',
+          name: '%',
+          axisLabel: { formatter: '{value}%' },
+          axisLine: { show: false },
+          axisTick: { show: false },
+          splitLine: { lineStyle: { color: '#EBEEF5' }}
+        },
+        series: [{
+          name: metric.label,
+          type: 'line',
+          smooth: true,
+          connectNulls: false,
+          showSymbol: values.length <= 31,
+          symbolSize: 7,
+          lineStyle: { width: 3 },
+          areaStyle: { opacity: 0.08 },
+          data: values
+        }]
+      }, true)
+    },
     resizeChart() {
       if (this.chart) this.chart.resize()
+      if (this.deviceChart) this.deviceChart.resize()
     },
     formatNumber(value, digits) {
       const number = Number(value)
@@ -293,6 +394,11 @@ export default {
     },
     formatGunDailyAvg(value) {
       return value === null || value === undefined ? '--' : this.formatNumber(value, 4)
+    },
+    formatRate(value) {
+      const number = Number(value)
+      if (value === null || value === undefined || value === '' || Number.isNaN(number)) return '--'
+      return `${number.toFixed(2)}%`
     },
     handleSizeChange(limit) {
       this.listQuery.limit = limit
