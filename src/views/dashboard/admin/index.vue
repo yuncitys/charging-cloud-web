@@ -9,8 +9,8 @@
     <el-row :gutter="32">
       <el-col :xs="24" :sm="24" :lg="8">
         <div class="chart-wrapper borRadduis10">
-          <raddar-chart :chart-data="raddarData" v-if="raddarData.items.length !== 0" />
-          <div v-if="raddarData.items.length === 0" style="height: 300px;text-align: center;line-height: 300px;">暂无数据
+          <pie-chart :chart-data="payTypePieData" v-if="payTypePieData.actualData.length !== 0" />
+          <div v-if="payTypePieData.actualData.length === 0" style="height: 300px;text-align: center;line-height: 300px;">暂无数据
           </div>
         </div>
       </el-col>
@@ -33,7 +33,6 @@
 <script>
   import PanelGroup from './components/PanelGroup'
   import LineChart from './components/LineChart'
-  import RaddarChart from './components/RaddarChart'
   import PieChart from './components/PieChart'
   import BarChart from './components/BarChart'
   import {
@@ -44,14 +43,11 @@
     findHomeDataByNetWork
   } from '@/api/index/index.js'
 
-  const PAY_TYPE_COLORS = ['#4CD263', '#F4A261', '#E76F51', '#2A9D8F', '#409EFF', '#9B59B6', '#F56C6C', '#909399', '#E6A23C']
-
   export default {
     name: 'DashboardAdmin1',
     components: {
       PanelGroup,
       LineChart,
-      RaddarChart,
       PieChart,
       BarChart
     },
@@ -70,8 +66,9 @@
           totalElectricityMoney: 0,
           totalServicePrice: 0
         },
-        raddarData: {
-          items: []
+        payTypePieData: {
+          expectedData: [],
+          actualData: []
         },
         pieData: {
           expectedData: [],
@@ -130,14 +127,19 @@
         findHomePayTypeRatio().then(res => {
           if (res.code !== 200) return
           const payTypeList = res.data || []
-          this.raddarData = {
-            items: payTypeList.map((item, index) => ({
-              key: item.payType || ('pay-' + index),
-              name: item.payTypeName || item.payType || '未知',
-              count: Number(item.orderCount) || 0,
-              rate: Number(item.rate) || 0,
-              color: PAY_TYPE_COLORS[index % PAY_TYPE_COLORS.length]
-            }))
+          const expectedData = []
+          const actualData = []
+          payTypeList.forEach((item) => {
+            const name = item.payTypeName || item.payType || '未知'
+            expectedData.push({
+              value: Number(item.orderCount) || 0,
+              name
+            })
+            actualData.push(name)
+          })
+          this.payTypePieData = {
+            expectedData,
+            actualData
           }
         })
       },
