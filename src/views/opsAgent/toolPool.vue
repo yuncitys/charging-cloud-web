@@ -82,12 +82,6 @@
 <script>
 	import { listToolPool, updateToolPool, syncToolPool } from '@/api/opsAgent/toolPool'
 
-	const RISK_MAP = {
-		l0: { label: 'L0 只读', type: 'success' },
-		l1: { label: 'L1 低风险', type: 'warning' },
-		l2: { label: 'L2 高风险', type: 'danger' }
-	}
-
 	const RISK_ORDER = ['l0', 'l1', 'l2']
 
 	const RISK_GROUP_META = {

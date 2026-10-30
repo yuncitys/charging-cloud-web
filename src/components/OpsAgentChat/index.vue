@@ -495,7 +495,14 @@ export default {
         .filter(Boolean)
     },
     showShortcuts() {
-      const msgs = this.activeConversation.messages || []
+      const c = this.activeConversation
+      const msgs = c.messages || []
+      if (this.messagesLoadingIds[c.id]) {
+        return false
+      }
+      if (!c.messagesLoaded && msgs.length === 0) {
+        return false
+      }
       return !msgs.some(m => m && m.role === 'user')
     }
   },
@@ -2238,10 +2245,6 @@ export default {
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-  }
-
-  &__suggest-arrow {
-    display: none;
   }
 
   &__footer {
