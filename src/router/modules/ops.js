@@ -103,5 +103,14 @@ export default [
         title: 'Ops Agent 工具池',
         icon: 'el-icon-set-up',
       }
+    },
+{
+      path: '/opsAgent/knowledge',
+      component: () => import('@/views/opsAgent/knowledge'),
+      name: 'opsAgentKnowledge',
+      meta: {
+        title: 'Ops Agent 知识库',
+        icon: 'el-icon-notebook-2',
+      }
     }
 ]
