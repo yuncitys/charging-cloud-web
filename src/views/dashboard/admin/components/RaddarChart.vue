@@ -87,7 +87,7 @@
             trigger: 'item',
             formatter: params => {
               const item = dataMap[params.name] || {}
-              return `${params.name}<br/>订单总数：${item.count || 0}<br/>占比：${this.formatPercent(item.rate)}`
+              return `${params.name}<br/>订单笔数：${item.count || 0}<br/>占比：${this.formatPercent(item.rate)}`
             }
           },
           legend: {
@@ -99,8 +99,8 @@
               return `${name}  ${item.count || 0}单  ${this.formatPercent(item.rate)}`
             }
           },
-          series: [{
-            name: '订单占比',
+            series: [{
+            name: '支付类型占比',
             type: 'pie',
             radius: ['50%', '70%'],
             avoidLabelOverlap: false,

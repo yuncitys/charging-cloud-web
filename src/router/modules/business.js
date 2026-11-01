@@ -58,5 +58,77 @@ export default [
           title: '分账汇总',
           icon: 'el-icon-s-check',
         }
+      },
+{
+        path: '/business/operatorWorkbench',
+        component: () => import('@/views/business/operatorWorkbench/index'),
+        name: 'operatorWorkbench',
+        meta: {
+          title: '运营商工作台',
+          icon: 'el-icon-s-home',
+        }
+      },
+{
+        path: '/business/businessOverview',
+        component: () => import('@/views/business/businessOverview'),
+        name: 'businessOverview',
+        meta: {
+          title: '经营概览',
+          icon: 'el-icon-s-data',
+        }
+      },
+{
+        path: '/business/gunChargeDayStatistics',
+        component: () => import('@/views/business/gunChargeDayStatistics'),
+        name: 'gunChargeDayStatistics',
+        meta: {
+          title: '枪口统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+{
+        path: '/business/stationChargeHourStatistics',
+        component: () => import('@/views/business/stationChargeHourStatistics'),
+        name: 'stationChargeHourStatistics',
+        meta: {
+          title: '小时统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgPeriodStatistics',
+        component: () => import('@/views/business/orgPeriodStatistics'),
+        name: 'orgPeriodStatistics',
+        meta: {
+          title: '时期统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgStatistics',
+        component: () => import('@/views/business/orgStatistics'),
+        name: 'orgStatistics',
+        meta: {
+          title: '机构统计',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgCompareStatistics',
+        component: () => import('@/views/business/orgCompareStatistics'),
+        name: 'orgCompareStatistics',
+        meta: {
+          title: '机构比对',
+          icon: 'el-icon-s-check',
+        }
+      },
+      {
+        path: '/business/orgUserStatistics',
+        component: () => import('@/views/business/orgUserStatistics'),
+        name: 'orgUserStatistics',
+        meta: {
+          title: '用户统计',
+          icon: 'el-icon-s-check',
+        }
       }
 ]

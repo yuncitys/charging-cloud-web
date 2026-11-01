@@ -64,7 +64,6 @@
         this.setOptions(this.chartData)
       },
       setOptions({
-        deviceCount,
         orderPrice,
         electricityPrice,
         servicePrice,
@@ -110,27 +109,6 @@
             }
           }],
           series: [{
-            name: '设备数',
-            type: 'bar',
-            stack: 'vistors',
-            barWidth: '60%',
-            data: deviceCount,
-            animationDuration,
-            itemStyle: {
-                normal: {
-                    color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-                        offset: 0,
-                        color: '#83bff6'
-                    }, {
-                        offset: 0.5,
-                        color: '#188df0'
-                    }, {
-                        offset: 1,
-                        color: '#188df0'
-                    }])
-                }
-            }
-          }, {
             name: '交易额',
             type: 'bar',
             stack: 'vistors',

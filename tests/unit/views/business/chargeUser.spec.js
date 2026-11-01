@@ -1,0 +1,40 @@
+/* eslint-env jest */
+import {
+  newUserPercent,
+  ringStyle,
+  CHARGE_USER_TIP,
+  CHARGE_USER_ANALYSIS_NOTE,
+  CHARGE_USER_STATION_TOP_NOTE
+} from '@/views/business/operatorWorkbench/chargeUser'
+
+describe('chargeUser helpers', () => {
+  it('newUserPercent handles zero denominator, clamp and rounding', () => {
+    expect(newUserPercent(5, 0)).toBe(0)
+    expect(newUserPercent(null, 10)).toBe(0)
+    expect(newUserPercent(0, 10)).toBe(0)
+    expect(newUserPercent(1, 3)).toBe(33.3)
+    expect(newUserPercent(12, 10)).toBe(100)
+    expect(newUserPercent('x', 10)).toBe(0)
+  })
+
+  it('ringStyle builds conic-gradient and clamps percent', () => {
+    expect(ringStyle(25, '#111', '#eee').background).toBe('conic-gradient(#111 0 25%, #eee 25% 100%)')
+    expect(ringStyle(0).background).toContain('0%')
+    expect(ringStyle(150).background).toContain('100%')
+    expect(ringStyle(-5).background).toContain('0 0%')
+  })
+
+  it('tips stay plain-language for operators', () => {
+    expect(CHARGE_USER_TIP).toContain('今 / 昨')
+    expect(CHARGE_USER_TIP).toContain('充电用户')
+    expect(CHARGE_USER_TIP).toContain('15 分钟')
+    expect(CHARGE_USER_TIP).not.toContain('order_status')
+    expect(CHARGE_USER_TIP).not.toContain('DataScope')
+    expect(CHARGE_USER_TIP).not.toContain('日表')
+    expect(CHARGE_USER_ANALYSIS_NOTE).toContain('昨日')
+    expect(CHARGE_USER_ANALYSIS_NOTE).toContain('本月')
+    expect(CHARGE_USER_ANALYSIS_NOTE).not.toContain('顶栏')
+    expect(CHARGE_USER_STATION_TOP_NOTE).toContain('各站')
+    expect(CHARGE_USER_STATION_TOP_NOTE).not.toContain('站维日表')
+  })
+})

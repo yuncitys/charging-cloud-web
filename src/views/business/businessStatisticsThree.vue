@@ -1,25 +1,21 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-select v-model="listQuery.timeType" style="width: 150px;margin-right: 20px ;" class="filter-item"
-      	placeholder="时间维度" @change="handleDimensionChange">
-      	<el-option v-for="item in timeType" :key="item.id" :label="item.title" :value="item.id"/>
+      <StatsTimeRangeFilter
+        :time-type.sync="listQuery.timeType"
+        :start.sync="listQuery.startTime"
+        :end.sync="listQuery.endTime"
+        @change="onTimeChange"
+      />
+      <el-select style="width: 130px;margin-right: 20px ;" class="filter-item" v-model="listQuery.ruleId" clearable @change="handleFilter()"
+        placeholder="全部业态">
+          <el-option
+            v-for="item in ruleIdOptions"
+            :key="'rule-' + item.value"
+            :label="item.label"
+            :value="item.value">
+          </el-option>
       </el-select>
-      <el-date-picker
-        class="filter-item"
-        style="margin-right: 20px ;"
-        v-model="defaultDateRange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        @change="dateChange"
-        :type="datePickerType"
-        :format="dateFormat"
-        :value-format="dateValueFormat"
-        :default-value="defaultDateRange"
-        :picker-options="pickerOptions"
-        :clearable="false">
-      </el-date-picker>
       <el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
         placeholder="请选择商户">
           <el-option
@@ -44,12 +40,8 @@
 
       <div class="report-header">
         <div class="title-section">
-          <!-- 标题 -->
           <span class="title">电站趋势</span>
-          <!-- 带有统计说明的图标提示 -->
-          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
-            <el-icon><i class="el-icon-question"></i></el-icon>
-          </el-tooltip>
+          <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
         </div>
       </div>
       <div class="summary-cards">
@@ -61,11 +53,6 @@
         <div class="summary-card summary-card--duration">
           <div class="summary-label">总充电时长(小时)</div>
           <div class="summary-value summary-duration">{{ formatChargeDurationHours(summaryTotal.totalChargeDurations) }}</div>
-          <div class="summary-card-icon" />
-        </div>
-        <div class="summary-card summary-card--device-total">
-          <div class="summary-label">设备总数(台)</div>
-          <div class="summary-value summary-count">{{ formatNumber(summaryTotal.totalDevice, 0) }}</div>
           <div class="summary-card-icon" />
         </div>
         <div class="summary-card summary-card--amount">
@@ -97,157 +84,150 @@
 
       <div class="report-header">
         <div class="title-section">
-          <!-- 标题 -->
           <span class="title">明细列表</span>
-          <!-- 带有统计说明的图标提示 -->
-          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
-            <el-icon><i class="el-icon-question"></i></el-icon>
-          </el-tooltip>
+          <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
         </div>
-        <!-- 靠右的导出按钮 -->
-        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
-        <DownChargingStationSingleStatistics :queryData="listQuery" />
+        <DownChargingStationSingleStatistics :queryData="singleQuery" />
       </div>
-      <el-table v-loading="listLoading" :key="chargingStationSectionList.networkName" :data="chargingStationSingleList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading" :data="chargingStationSingleList" class="stats-nested-table" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
-      		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
+      		<template slot-scope="scope"><span>{{ scope.$index + (singlePage.page - 1) * singlePage.limit + 1 }}</span></template>
       	</el-table-column>
-        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="统计维度" align="center">
+          <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="归属运营商" prop="operatorName" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="充电概况" align="center">
+          <el-table-column label="充电次数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电时长(小时)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
+            <template slot-scope="scope">
+              <span>{{ formatChargeDurationHours(scope.row.totalChargeDurations) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="归属运营商" prop="operatorName" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="原价费用" align="center">
+          <el-table-column label="应收金额(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="实收金额(元)" prop="realityPayMoney" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="总设备数(台)" prop="totalDevice" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="优惠抵扣" align="center">
+          <el-table-column label="运营商优惠券抵扣(元)" prop="operatorCouponDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+          <el-table-column label="运营商电站活动抵扣(元)" prop="operatorStationActivityDiscountAmount" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台优惠券抵扣(元)" prop="platformCouponDiscountAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台电站活动抵扣(元)" prop="platformStationActivityDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
         </el-table-column>
-      	<el-table-column label="充电次数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="充电时长(小时)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
-      		<template slot-scope="scope">
-      			<span>{{ formatChargeDurationHours(scope.row.totalChargeDurations) }}</span>
-      		</template>
-      	</el-table-column>
-      	<el-table-column label="应收金额(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="实收金额(元)" prop="realityPayMoney" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
+        <el-table-column label="用户实付" align="center">
+          <el-table-column label="用户实付电费(元)" prop="userActualElectricityAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户实付服务费(元)" prop="userActualServiceAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+        </el-table-column>
       </el-table>
       <div class="pagination-container">
-      	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
+      	<el-pagination :current-page="singlePage.page" :page-sizes="[10,20,30,50]" :page-size="singlePage.limit"
       		:total="chargingStationSingleTotal" background layout="total, sizes, prev, pager, next, jumper"
       		@size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
 
       <div class="report-header">
         <div class="title-section">
-          <!-- 标题 -->
           <span class="title">金额明细</span>
-          <!-- 带有统计说明的图标提示 -->
-          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
-            <el-icon><i class="el-icon-question"></i></el-icon>
-          </el-tooltip>
+          <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
         </div>
-        <!-- 靠右的导出按钮 -->
-        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
-        <DownChargingStationFundStatistics :queryData="listQuery" />
+        <DownChargingStationFundStatistics :queryData="fundQuery" />
       </div>
-      <el-table v-loading="listLoading2" :key="chargingStationSectionList.networkName" :data="chargingStationFundList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading2" :data="chargingStationFundList" class="stats-nested-table" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox2">
       	<el-table-column type="index" width="55" label="序号" align="center">
-      		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
+      		<template slot-scope="scope"><span>{{ scope.$index + (fundPage.page - 1) * fundPage.limit + 1 }}</span></template>
       	</el-table-column>
-        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="统计维度" align="center">
+          <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="归属运营商" prop="operatorName" align="center" :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="充电概况" align="center">
+          <el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="归属运营商" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="原价费用" align="center">
+          <el-table-column label="原价电费(元)" prop="electricityPrice" align="center" sortable min-width="110" :show-overflow-tooltip="isPc" />
+          <el-table-column label="原价服务费(元)" prop="servicePrice" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电总收益(元)" prop="totalIncome" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="运营设备总数(台)" prop="deviceCount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="支付方式" align="center">
+          <el-table-column label="余额支付(元)" prop="balancePaymentAmount" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="微信支付(元)" prop="wechatPaymentAmount" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="微信支付分(元)" prop="wechatScorePaymentAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
+          <el-table-column label="刷卡支付(元)" prop="swipeCardPaymentAmount" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="投币支付(元)" prop="insertCoinsPaymentAmount" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
+          <el-table-column label="支付宝支付(元)" prop="alipayPaymentAmount" align="center" sortable min-width="130" :show-overflow-tooltip="isPc" />
+          <el-table-column label="月卡支付(元)" prop="monthCardPaymentAmount" align="center" sortable min-width="120" :show-overflow-tooltip="isPc" />
         </el-table-column>
-      	<el-table-column label="在线设备总数(台)" prop="onlineDeviceCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="离线设备总数(台)" prop="offlineDeviceCount" sortable align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="充电口总数(个)" prop="portCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="总充电收益(元)" prop="totalIncome" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="余额支付(元)" prop="balancePaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-        <el-table-column label="微信支付(元)" prop="wechatPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="优惠抵扣" align="center">
+          <el-table-column label="运营商优惠券抵扣(元)" prop="operatorCouponDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+          <el-table-column label="运营商电站活动抵扣(元)" prop="operatorStationActivityDiscountAmount" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台优惠券抵扣(元)" prop="platformCouponDiscountAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台电站活动抵扣(元)" prop="platformStationActivityDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="微信支付分(元)" prop="wechatScorePaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="刷卡支付(元)" prop="swipeCardPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="投币支付(元)" prop="insertCoinsPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="支付宝支付(元)" prop="alipayPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
-        </el-table-column>
-        <el-table-column label="月卡支付(元)" prop="monthCardPaymentAmount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="用户实付" align="center">
+          <el-table-column label="用户实付电费(元)" prop="userActualElectricityAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户实付服务费(元)" prop="userActualServiceAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户实付合计(元)" prop="userActualPayAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
         </el-table-column>
       </el-table>
       <div class="pagination-container">
-      	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
+      	<el-pagination :current-page="fundPage.page" :page-sizes="[10,20,30,50]" :page-size="fundPage.limit"
       		:total="chargingStationFundTotal" background layout="total, sizes, prev, pager, next, jumper"
       		@size-change="handleSizeChange2" @current-change="handleCurrentChange2" />
       </div>
 
       <div class="report-header">
         <div class="title-section">
-          <!-- 标题 -->
           <span class="title">汇总列表</span>
-          <!-- 带有统计说明的图标提示 -->
-          <el-tooltip content="报告统计口径说明" placement="top" effect="dark">
-            <el-icon><i class="el-icon-question"></i></el-icon>
-          </el-tooltip>
+          <StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
         </div>
-        <!-- 靠右的导出按钮 -->
-        <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
-        <DownChargingStationStatistics :queryData="listQuery" />
+        <DownChargingStationStatistics :queryData="sectionQuery" />
       </div>
-      <el-table v-loading="listLoading1" :key="chargingStationSectionList.networkName" :data="chargingStationSectionList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading1" :data="chargingStationSectionList" class="stats-nested-table" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox1">
       	<el-table-column type="index" width="55" label="序号" align="center">
-      		<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
+      		<template slot-scope="scope"><span>{{ scope.$index + (sectionPage.page - 1) * sectionPage.limit + 1 }}</span></template>
       	</el-table-column>
-        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="统计维度" align="center">
+          <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="归属运营商" prop="operatorName" align="center" :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="充电站名称" prop="networkName" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="充电概况" align="center">
+          <el-table-column label="充电次数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="充电时长(小时)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
+            <template slot-scope="scope">
+              <span>{{ formatChargeDurationHours(scope.row.totalChargeDurations) }}</span>
+            </template>
+          </el-table-column>
+          <el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="归属运营商" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="原价费用" align="center">
+          <el-table-column label="应收金额(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="实收金额(元)" prop="realityPayMoney" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
-        <el-table-column label="总设备数(台)" prop="totalDevice" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="优惠抵扣" align="center">
+          <el-table-column label="运营商优惠券抵扣(元)" prop="operatorCouponDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
+          <el-table-column label="运营商电站活动抵扣(元)" prop="operatorStationActivityDiscountAmount" align="center" sortable min-width="170" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台优惠券抵扣(元)" prop="platformCouponDiscountAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+          <el-table-column label="平台电站活动抵扣(元)" prop="platformStationActivityDiscountAmount" align="center" sortable min-width="160" :show-overflow-tooltip="isPc" />
         </el-table-column>
-      	<el-table-column label="充电次数(笔)" prop="totalChargeNumber" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="充电时长(小时)" prop="totalChargeDurations" sortable align="center" :show-overflow-tooltip="isPc">
-      		<template slot-scope="scope">
-      			<span>{{ formatChargeDurationHours(scope.row.totalChargeDurations) }}</span>
-      		</template>
-      	</el-table-column>
-      	<el-table-column label="应收金额(元)" prop="actualPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="实收金额(元)" prop="realityPayMoney" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="电费(元)" prop="electricityPrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="服务费(元)" prop="servicePrice" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="使用电量(度)" prop="totalPower" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
+        <el-table-column label="用户实付" align="center">
+          <el-table-column label="用户实付电费(元)" prop="userActualElectricityAmount" align="center" sortable min-width="140" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户实付服务费(元)" prop="userActualServiceAmount" align="center" sortable min-width="150" :show-overflow-tooltip="isPc" />
+        </el-table-column>
       </el-table>
       <div class="pagination-container">
-      	<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30,50]" :page-size="listQuery.limit"
+      	<el-pagination :current-page="sectionPage.page" :page-sizes="[10,20,30,50]" :page-size="sectionPage.limit"
       		:total="chargingStationSectionTotal" background layout="total, sizes, prev, pager, next, jumper"
       		@size-change="handleSizeChange1" @current-change="handleCurrentChange1" />
       </div>
@@ -259,6 +239,10 @@
   import DownChargingStationStatistics from './components/DownChargingStationStatistics'
   import DownChargingStationFundStatistics from './components/DownChargingStationFundStatistics'
   import DownChargingStationSingleStatistics from './components/DownChargingStationSingleStatistics'
+  import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+  import StatsTimeRangeFilter, { defaultRangeForTimeType } from './components/StatsTimeRangeFilter.vue'
+  import { caliberForPage } from './statsCaliberCopy.js'
+  import './styles/statsNestedTable.css'
   import {
     chargingStationSection,
     chargingStationSectionSummary,
@@ -275,75 +259,71 @@
     components: {
       DownChargingStationStatistics,
       DownChargingStationFundStatistics,
-      DownChargingStationSingleStatistics
+      DownChargingStationSingleStatistics,
+      StatsCaliberDialog,
+      StatsTimeRangeFilter
     },
     data() {
+      const range = defaultRangeForTimeType(3)
       return {
         summaryTotal: {
           totalChargeNumber: 0,
           totalChargeDurations: 0,
-          totalDevice: 0,
           actualPrice: 0,
           realityPayMoney: 0,
           electricityPrice: 0,
           servicePrice: 0,
           totalPower: 0
         },
-        page: 1,
-        limit: 10,
-        chargingStationSectionTotal: 10,
-        chargingStationSingleTotal: 10,
-        chargingStationFundTotal: 10,
-        tableKey: 0,
-        tableKey1: 0,
-        tableKey2: 0,
+        chargingStationSectionTotal: 0,
+        chargingStationSingleTotal: 0,
+        chargingStationFundTotal: 0,
         listLoading: false,
         listLoading1: false,
         listLoading2: false,
         chargingStationSingleList: [],
         chargingStationSectionList: [],
         chargingStationFundList: [],
+        singlePage: { page: 1, limit: 10 },
+        fundPage: { page: 1, limit: 10 },
+        sectionPage: { page: 1, limit: 10 },
         listQuery: {
         	timeType: 3,
-        	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
-        	endTime: this.formatDate(new Date(),3),
+        	startTime: range[0],
+        	endTime: range[1],
+        	ruleId: null,
         	merchantId: '',
         	chargingStationIds: '',
-        	page: 1,
-        	limit: 10,
         },
-        timeType: [
-          {
-            title: '日',
-            id: 3,
-          },
-          {
-            title: '月',
-            id: 2,
-          },
-        ],
-        datePickerType: 'daterange',  // 日期选择器的类型
-        dateFormat: 'yyyy-MM-dd',  // 默认日期格式
-        dateValueFormat: 'yyyy-MM-dd', // 默认传递的值的格式
-        defaultDateRange: [
-          this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3), // 一周前的日期
-          this.formatDate(new Date(),3)  // 今天的日期
-        ],
-        pickerOptions: {
-          disabledDate(time) {
-            return false;
-            // return time.getTime() > Date.now() + 6 * 24 * 60 * 60 * 1000 || time.getTime() < Date.now();
-          }
-        },
+        caliber: caliberForPage('station'),
         merchantList: [],
         chargingStationList: [],
+        ruleIdOptions: [],
         isPc: true,
+      }
+    },
+    computed: {
+      filterQuery() {
+        const q = Object.assign({}, this.listQuery)
+        if (Array.isArray(q.chargingStationIds)) {
+          q.chargingStationIds = q.chargingStationIds.join(',')
+        }
+        if (q.ruleId == null || q.ruleId === '') delete q.ruleId
+        return q
+      },
+      singleQuery() {
+        return Object.assign({}, this.filterQuery, this.singlePage)
+      },
+      fundQuery() {
+        return Object.assign({}, this.filterQuery, this.fundPage)
+      },
+      sectionQuery() {
+        return Object.assign({}, this.filterQuery, this.sectionPage)
       }
     },
     methods: {
       getChargingStationSectionSummary() {
-        const listQuery = JSON.parse(JSON.stringify(this.listQuery))
-        chargingStationSectionSummary(listQuery).then(res => {
+        chargingStationSectionSummary(this.filterQuery).then(res => {
           if (res.code == 200 && res.data) {
             this.summaryTotal = {
               actualPrice: Number(res.data.actualPrice) || 0,
@@ -352,8 +332,7 @@
               servicePrice: Number(res.data.servicePrice) || 0,
               totalPower: Number(res.data.totalPower) || 0,
               totalChargeNumber: Number(res.data.totalChargeNumber) || 0,
-              totalChargeDurations: Number(res.data.totalChargeDurations) || 0,
-              totalDevice: Number(res.data.totalDevice) || 0
+              totalChargeDurations: Number(res.data.totalChargeDurations) || 0
             }
           } else {
             this.$message.error(res.msg || '合计统计失败')
@@ -364,8 +343,7 @@
               servicePrice: 0,
               totalPower: 0,
               totalChargeNumber: 0,
-              totalChargeDurations: 0,
-              totalDevice: 0
+              totalChargeDurations: 0
             }
           }
         }).catch(() => {
@@ -377,8 +355,7 @@
             servicePrice: 0,
             totalPower: 0,
             totalChargeNumber: 0,
-            totalChargeDurations: 0,
-            totalDevice: 0
+            totalChargeDurations: 0
           }
         })
       },
@@ -414,37 +391,8 @@
         const intWithComma = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
         return parts[1] ? `${intWithComma}.${parts[1]}` : intWithComma
       },
-      handleDimensionChange(value) {
-        console.log("value：",value)
-        if (value === 3) {
-          // 日维度，设置为日期范围选择
-          this.datePickerType = 'daterange';
-          this.dateFormat = 'yyyy-MM-dd';
-          this.dateValueFormat = 'yyyy-MM-dd';
-          this.defaultDateRange = [
-            this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),value), // 一周前的日期
-            this.formatDate(new Date(),value)  // 今天的日期
-          ]
-          console.log("defaultDateRange",this.defaultDateRange)
-        } else if (value === 2) {
-          // 月维度，设置为月份范围选择
-          this.datePickerType = 'monthrange';
-          this.dateFormat = 'yyyy-MM';
-          this.dateValueFormat = 'yyyy-MM';
-          //当前时间
-          let currentDate = new Date();
-          // 设置三个月前的日期
-          let threeMonthsAgo = new Date();
-          threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
-          // 格式化日期输出
-          this.defaultDateRange = [
-            this.formatDate(threeMonthsAgo, value),  // 三个月前的日期
-            this.formatDate(new Date(), value)      // 今天的日期
-          ]
-          console.log("defaultDateRange",this.defaultDateRange)
-        }
-        this.listQuery.startTime = this.defaultDateRange[0]
-        this.listQuery.endTime = this.defaultDateRange[1]
+      onTimeChange() {
+        this.handleFilter()
       },
       getMerchantList() {
         getMerchant().then(res => {
@@ -468,104 +416,88 @@
       },
       getChargingStationSingleList() {
         this.listLoading = true
-        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
-        chargingStationSingle(listQuery).then(res => {
+        chargingStationSingle(this.singleQuery).then(res => {
+          this.listLoading = false
           if (res.code == 200) {
-            this.listLoading = false
             this.chargingStationSingleTotal = res.count
             this.chargingStationSingleList = res.data
-            // console.log("chargingStationSingleList：",res.data)
-            // this.$forceUpdate()
-          }else {
-						this.$message.error(res.msg)
-					}
+          } else {
+            this.$message.error(res.msg)
+          }
+        }).catch(() => {
+          this.listLoading = false
+          this.$message.error('明细列表加载失败')
         })
       },
       getChargingStationSectionList() {
         this.listLoading1 = true
-        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
-        chargingStationSection(listQuery).then(res => {
+        chargingStationSection(this.sectionQuery).then(res => {
+          this.listLoading1 = false
           if (res.code == 200) {
-            this.listLoading1 = false
             this.chargingStationSectionTotal = res.count
             this.chargingStationSectionList = res.data
-            // console.log("chargingStationSectionList：",res.data)
-            // this.$forceUpdate()
-          }else {
-      			this.$message.error(res.msg)
-      		}
+          } else {
+            this.$message.error(res.msg)
+          }
+        }).catch(() => {
+          this.listLoading1 = false
+          this.$message.error('汇总列表加载失败')
         })
       },
       getChargingStationFundList() {
         this.listLoading2 = true
-        let listQuery = JSON.parse(JSON.stringify(this.listQuery))
-        chargingStationFund(listQuery).then(res => {
+        chargingStationFund(this.fundQuery).then(res => {
+          this.listLoading2 = false
           if (res.code == 200) {
-            this.listLoading2 = false
             this.chargingStationFundTotal = res.count
             this.chargingStationFundList = res.data
-            // console.log("chargingStationFundList：",res.data)
-            // this.$forceUpdate()
-          }else {
-      			this.$message.error(res.msg)
-      		}
+          } else {
+            this.$message.error(res.msg)
+          }
+        }).catch(() => {
+          this.listLoading2 = false
+          this.$message.error('金额明细加载失败')
         })
       },
-      dateChange(e) {
-      	if (e) {
-      		this.listQuery.startTime = e[0]
-      		this.listQuery.endTime = e[1]
-      	} else {
-      		this.listQuery.startTime = ''
-      		this.listQuery.endTime = ''
-      	}
-      	this.handleFilter()
-      },
       handleFilter() {
-      	this.listQuery.page = 1
-        this.listQuery.limit = 10
+        this.singlePage.page = 1
+        this.fundPage.page = 1
+        this.sectionPage.page = 1
         this.getChargingStationSingleList()
         this.getChargingStationFundList()
         this.getChargingStationSectionList()
         this.getChargingStationSectionSummary()
       },
       handleSizeChange(val) {
-      	this.listQuery.limit = val
+        this.singlePage.limit = val
+        this.singlePage.page = 1
       	this.getChargingStationSingleList()
       },
       handleCurrentChange(val) {
-      	this.listQuery.page = val
+        this.singlePage.page = val
       	this.getChargingStationSingleList()
       },
       handleSizeChange1(val) {
-      	this.listQuery.limit = val
+        this.sectionPage.limit = val
+        this.sectionPage.page = 1
       	this.getChargingStationSectionList()
       },
       handleCurrentChange1(val) {
-      	this.listQuery.page = val
+        this.sectionPage.page = val
       	this.getChargingStationSectionList()
       },
       handleSizeChange2(val) {
-      	this.listQuery.limit = val
+        this.fundPage.limit = val
+        this.fundPage.page = 1
       	this.getChargingStationFundList()
       },
       handleCurrentChange2(val) {
-      	this.listQuery.page = val
+        this.fundPage.page = val
       	this.getChargingStationFundList()
       },
-      // 将日期格式化为 'yyyy-MM-dd' 的方法
-      formatDate(date,timeType) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份补齐两位
-        const day = date.getDate().toString().padStart(2, '0'); // 日期补齐两位
-        if (timeType === 3) {
-          return `${year}-${month}-${day}`;
-        } else{
-          return `${year}-${month}`;
-        }
-      }
     },
     created() {
+      this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
       this.getMerchantList()
       this.getChargingStationList()
       this.getChargingStationSingleList()
@@ -662,10 +594,6 @@
   background: linear-gradient(135deg, #a855f7, #6366f1);
 }
 
-.summary-card--device-total {
-  background: linear-gradient(135deg, #22c55e, #4ade80);
-}
-
 .summary-card--electric {
   background: linear-gradient(135deg, #f97316, #fb923c);
 }
@@ -700,10 +628,6 @@
 
 .summary-card--duration .summary-card-icon {
   background-image: url(../../assets/home-panel/order-panel.png);
-}
-
-.summary-card--device-total .summary-card-icon {
-  background-image: url(../../assets/home-panel/device-panel.png);
 }
 
 .summary-card--electric .summary-card-icon {

@@ -33,9 +33,7 @@
 </script>
 
 <style lang="scss" scoped>
-  .fixed-header+.app-main {
-    padding-top: 50px;
-  }
+  $content-gap: 15px;
 
   .hasTagsView {
     .app-main {
@@ -44,17 +42,28 @@
       position: relative;
       overflow: hidden;
       background: #e9eff8;
-      padding: 15px;
+      padding: $content-gap;
 
       .app-content {
         background: white;
         min-height: calc(100vh - 84px);
       }
     }
+  }
 
-    .fixed-header+.app-main {
-      padding-top: 84px;
-    }
+  /* 固定顶栏占位 + 与左右/底一致的内容间距（须写在 padding 之后以免被覆盖） */
+  .fixed-header+.app-main {
+    padding-top: 50px + $content-gap;
+  }
+
+  /* mix：水平菜单 60 + 面包屑 50 + 间距 */
+  .mix-header.fixed-header+.app-main {
+    padding-top: 110px + $content-gap;
+  }
+
+  /* sidebar：合并顶栏 60 + 间距 */
+  .sidebar-combined-header.fixed-header+.app-main {
+    padding-top: 60px + $content-gap;
   }
 
 </style>

@@ -1,25 +1,12 @@
 <template>
   <div class="app-container">
     <div class="filter-container">
-      <el-select v-model="listQuery.timeType" style="width: 150px;margin-right: 20px ;" class="filter-item"
-      	placeholder="时间维度" @change="handleDimensionChange">
-      	<el-option v-for="item in timeType" :key="item.id" :label="item.title" :value="item.id"/>
-      </el-select>
-      <el-date-picker
-        class="filter-item"
-        style="margin-right: 20px ;"
-        v-model="defaultDateRange"
-        range-separator="至"
-        start-placeholder="开始日期"
-        end-placeholder="结束日期"
-        @change="dateChange"
-        :type="datePickerType"
-        :format="dateFormat"
-        :value-format="dateValueFormat"
-        :default-value="defaultDateRange"
-        :picker-options="pickerOptions"
-        :clearable="false">
-      </el-date-picker>
+      <StatsTimeRangeFilter
+        :time-type.sync="listQuery.timeType"
+        :start.sync="listQuery.startTime"
+        :end.sync="listQuery.endTime"
+        @change="onTimeChange"
+      />
       <el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入用户编号" v-model="listQuery.userCode" class="filter-item" clearable
       	@keyup.enter.native="handleFilter" @clear="handleFilter()" />
       <el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入用户手机号" v-model="listQuery.phoneNumber" class="filter-item" clearable
@@ -87,26 +74,22 @@
         <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
         <DownChargingUserTradingSingle :queryData="listQuery" />
       </div>
-      <el-table v-loading="listLoading1" :key="chargingUserTradingSingleList.userCode" :data="chargingUserTradingSingleList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading1" :key="chargingUserTradingSingleList.userCode" :data="chargingUserTradingSingleList" class="stats-nested-table" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(listQuery.page - 1) * listQuery.limit + 1}} </span></template>
       	</el-table-column>
-        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="统计维度" align="center">
+          <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户编号" prop="userCode" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户名称" prop="userName" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户手机" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc" />
         </el-table-column>
-      	<el-table-column label="用户编号" prop="userCode" align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="用户名称" prop="userName" align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="用户手机" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="支付总数(次)" prop="payCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="支付金额(元)" prop="payMoneyCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="退款总数(次)" prop="refundCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-        <el-table-column label="退款金额(元)" prop="refundMoneyCount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="充电概况" align="center">
+          <el-table-column label="支付总数(次)" prop="payCount" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="支付金额(元)" prop="payMoneyCount" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="退款总数(次)" prop="refundCount" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="退款金额(元)" prop="refundMoneyCount" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
       </el-table>
       <div class="pagination-container">
@@ -128,26 +111,22 @@
         <!-- <el-button type="primary" icon="el-icon-download" class="export-button">导出</el-button> -->
         <DownChargingUserTradingSection :queryData="listQuery" />
       </div>
-      <el-table v-loading="listLoading" :key="chargingUserTradingList.userCode" :data="chargingUserTradingList" element-loading-text="拼命加载中......"
+      <el-table v-loading="listLoading" :key="chargingUserTradingList.userCode" :data="chargingUserTradingList" class="stats-nested-table" element-loading-text="拼命加载中......"
         fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
       	<el-table-column type="index" width="55" label="序号" align="center">
       		<template slot-scope="scope"><span>{{scope.$index+(listQuery.page - 1) * listQuery.limit + 1}} </span></template>
       	</el-table-column>
-        <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc">
+        <el-table-column label="统计维度" align="center">
+          <el-table-column label="日期" prop="datetime" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户编号" prop="userCode" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户名称" prop="userName" align="center" :show-overflow-tooltip="isPc" />
+          <el-table-column label="用户手机" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc" />
         </el-table-column>
-      	<el-table-column label="用户编号" prop="userCode" align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="用户名称" prop="userName" align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="用户手机" prop="phoneNumber" align="center" :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="支付总数(次)" prop="payCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="支付金额(元)" prop="payMoneyCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-      	<el-table-column label="退款总数(次)" prop="refundCount" align="center" sortable :show-overflow-tooltip="isPc">
-      	</el-table-column>
-        <el-table-column label="退款金额(元)" prop="refundMoneyCount" align="center" sortable :show-overflow-tooltip="isPc">
+        <el-table-column label="充电概况" align="center">
+          <el-table-column label="支付总数(次)" prop="payCount" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="支付金额(元)" prop="payMoneyCount" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="退款总数(次)" prop="refundCount" align="center" sortable :show-overflow-tooltip="isPc" />
+          <el-table-column label="退款金额(元)" prop="refundMoneyCount" align="center" sortable :show-overflow-tooltip="isPc" />
         </el-table-column>
       </el-table>
       <div class="pagination-container">
@@ -164,6 +143,8 @@
   import UserTradingLineStackedAreaChart from './components/UserTradingLineStackedAreaChart.vue'
   import DownChargingUserTradingSingle from './components/DownChargingUserTradingSingle'
   import DownChargingUserTradingSection from './components/DownChargingUserTradingSection'
+  import StatsTimeRangeFilter, { defaultRangeForTimeType } from './components/StatsTimeRangeFilter.vue'
+  import './styles/statsNestedTable.css'
   import {
     findDealerList,
     chargingUserTradingCurve,
@@ -182,9 +163,11 @@
       UserTradingLineChart,
       UserTradingLineStackedAreaChart,
       DownChargingUserTradingSingle,
-      DownChargingUserTradingSection
+      DownChargingUserTradingSection,
+      StatsTimeRangeFilter
     },
     data() {
+      const range = defaultRangeForTimeType(3)
       return {
         lineChartData: {
           payCount: [],
@@ -206,36 +189,13 @@
         chargingUserTradingSingleList: [],
         listQuery: {
         	timeType: 3,
-        	startTime: this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3),
-        	endTime: this.formatDate(new Date(),3),
+        	startTime: range[0],
+        	endTime: range[1],
         	adminId: '',
         	userCode: '',
           phoneNumber: '',
         	page: 1,
         	limit: 20,
-        },
-        timeType: [
-          {
-            title: '日',
-            id: 3,
-          },
-          {
-            title: '月',
-            id: 2,
-          },
-        ],
-        datePickerType: 'daterange',  // 日期选择器的类型
-        dateFormat: 'yyyy-MM-dd',  // 默认日期格式
-        dateValueFormat: 'yyyy-MM-dd', // 默认传递的值的格式
-        defaultDateRange: [
-          this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),3), // 一周前的日期
-          this.formatDate(new Date(),3)  // 今天的日期
-        ],
-        pickerOptions: {
-          disabledDate(time) {
-            return false;
-            // return time.getTime() > Date.now() + 7 * 24 * 60 * 60 * 1000 || time.getTime() < Date.now();
-          }
         },
         dealerList: [],
         chargingStationList: [],
@@ -286,37 +246,8 @@
         const intWithComma = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
         return parts[1] ? `${intWithComma}.${parts[1]}` : intWithComma
       },
-      handleDimensionChange(value) {
-        console.log("value：",value)
-        if (value === 3) {
-          // 日维度，设置为日期范围选择
-          this.datePickerType = 'daterange';
-          this.dateFormat = 'yyyy-MM-dd';
-          this.dateValueFormat = 'yyyy-MM-dd';
-          this.defaultDateRange = [
-            this.formatDate(new Date(Date.now() - 6 * 24 * 60 * 60 * 1000),value), // 一周前的日期
-            this.formatDate(new Date(),value)  // 今天的日期
-          ]
-          console.log("defaultDateRange",this.defaultDateRange)
-        } else if (value === 2) {
-          // 月维度，设置为月份范围选择
-          this.datePickerType = 'monthrange';
-          this.dateFormat = 'yyyy-MM';
-          this.dateValueFormat = 'yyyy-MM';
-          //当前时间
-          let currentDate = new Date();
-          // 设置三个月前的日期
-          let threeMonthsAgo = new Date();
-          threeMonthsAgo.setMonth(currentDate.getMonth() - 3);
-          // 格式化日期输出
-          this.defaultDateRange = [
-            this.formatDate(threeMonthsAgo, value),  // 三个月前的日期
-            this.formatDate(new Date(), value)      // 今天的日期
-          ]
-          console.log("defaultDateRange",this.defaultDateRange)
-        }
-        this.listQuery.startTime = this.defaultDateRange[0]
-        this.listQuery.endTime = this.defaultDateRange[1]
+      onTimeChange() {
+        this.handleFilter()
       },
       getDealerList() {
       	findDealerList().then(res => {
@@ -384,16 +315,6 @@
       handleSetLineChartData(type) {
         this.lineChartData = lineChartData[type]
       },
-      dateChange(e) {
-      	if (e) {
-      		this.listQuery.startTime = e[0]
-      		this.listQuery.endTime = e[1]
-      	} else {
-      		this.listQuery.startTime = ''
-      		this.listQuery.endTime = ''
-      	}
-      	this.handleFilter()
-      },
       handleFilter() {
       	this.listQuery.page = 1
         this.listQuery.limit = 20
@@ -417,17 +338,6 @@
       	this.listQuery.page = val
       	this.getChargingUserTradingSingleList()
       },
-      // 将日期格式化为 'yyyy-MM-dd' 的方法
-      formatDate(date,timeType) {
-        const year = date.getFullYear();
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // 月份补齐两位
-        const day = date.getDate().toString().padStart(2, '0'); // 日期补齐两位
-        if (timeType === 3) {
-          return `${year}-${month}-${day}`;
-        } else{
-          return `${year}-${month}`;
-        }
-      }
     },
     created() {
       // this.getDealerList()
@@ -464,11 +374,6 @@
 .export-button {
   background-color: #409EFF;
   color: white;
-}
-
-#userChargingPage {
-  	margin-top: 80px;
-  	/* margin-left: 10px; */
 }
 
 /* 顶部统计卡片统一样式 */

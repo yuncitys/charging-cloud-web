@@ -4,6 +4,15 @@
 			<div class="statistics-search-bar">
 				<el-input style="width: 200px; margin-right: 20px ;" placeholder="请输入设备号" v-model="listQuery.deviceCode" class="filter-item" clearable
 					@keyup.enter.native="handleFilter" @clear="handleFilter()" />
+				<el-select style="width: 130px;margin-right: 20px ;" class="filter-item" v-model="listQuery.ruleId" clearable @change="handleFilter()"
+				placeholder="全部业态">
+					<el-option
+					v-for="item in ruleIdOptions"
+					:key="'rule-' + item.value"
+					:label="item.label"
+					:value="item.value">
+					</el-option>
+				</el-select>
 				<el-select style="width: 200px;margin-right: 20px ;" class="filter-item" v-model="listQuery.merchantId" filterable clearable @change="handleFilter()"
 				placeholder="请选择商户">
 					<el-option
@@ -22,19 +31,21 @@
 					:value="item.id">
 					</el-option>
 				</el-select>
-				<el-date-picker v-model="time" type="datetimerange" range-separator="至" class="filter-item"
-					style="margin-right: 20px ;" start-placeholder="开始日期" end-placeholder="结束日期" @change="dateChange"
-					format="yyyy-MM-dd" value-format="yyyy-MM-dd HH:mm:ss" :default-time="['00:00:00', '23:59:59']">
-				</el-date-picker>
+				<StatsTimeRangeFilter
+					:time-type.sync="statsTimeType"
+					:start.sync="statsStart"
+					:end.sync="statsEnd"
+					@change="onStatsTimeChange"
+				/>
 				<el-button type="primary" style="margin-right: 20px ;" class="filter-item" @click="handleFilter" icon="el-icon-search">
 					查询
 				</el-button>
-				<downDeviceReportsExcel :queryData="listQuery" />
+				<downDeviceReportsExcel :queryData="buildQuery()" />
 			</div>
 			<div class="report-header">
 				<div class="title-section">
-					<span class="title">实时经营统计</span>
-					<span class="headerSpan2">数据更新至{{dateYear}}</span>
+					<span class="title">经营统计</span>
+					<StatsCaliberDialog :intro="caliber.intro" :fields="caliber.fields" />
 				</div>
 			</div>
 			<div class="">
@@ -56,47 +67,45 @@
 			</div>
 			<!-- <businessDevList></businessDevList> -->
 			<div id="page">
-				<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
+				<el-table v-loading="listLoading" :key="tableKey" :data="list" class="stats-nested-table" element-loading-text="拼命加载中......" fithighlight-current-row style="width: 100%;" align="center" id="tableBox">
 					<el-table-column type="index" width="55" label="序号" align="center">
 						<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 					</el-table-column>
-					<el-table-column prop="ruleId" label="产品类型" align="center" :show-overflow-tooltip="isPc">
-						<template slot-scope="scope">
-							<span>{{ $dict.formatDeviceRule(scope.row.ruleId) }}桩</span>
-						</template>
+					<el-table-column label="统计维度" align="center">
+						<el-table-column prop="ruleId" label="产品类型" align="center" min-width="100" show-overflow-tooltip>
+							<template slot-scope="scope">
+								<span>{{ $dict.formatDeviceRule(scope.row.ruleId) }}桩</span>
+							</template>
+						</el-table-column>
+						<el-table-column prop="deviceCode" label="设备号" align="center" min-width="140" show-overflow-tooltip />
+						<el-table-column prop="deviceName" label="设备名称" align="center" min-width="120" show-overflow-tooltip />
+						<el-table-column prop="deviceTypeName" label="设备类型" align="center" min-width="110" show-overflow-tooltip />
+						<el-table-column prop="networkName" label="站点名称" align="center" min-width="150" show-overflow-tooltip />
+						<el-table-column prop="networkAddress" label="站点地址" align="center" min-width="160" show-overflow-tooltip />
 					</el-table-column>
-					<el-table-column prop="deviceCode" label="设备号" align="center" :show-overflow-tooltip="isPc">
+					<el-table-column label="充电概况" align="center">
+						<el-table-column prop="orderCount" label="订单总数" align="center" sortable min-width="100" />
+						<el-table-column prop="totalDuration" label="充电时长（小时）" align="center" sortable min-width="140">
+							<template slot-scope="scope">
+								<span>{{ formatChargeDurationHours(scope.row.totalDuration) }}</span>
+							</template>
+						</el-table-column>
+						<el-table-column prop="totalPower" label="使用电量（度）" align="center" sortable min-width="130" />
 					</el-table-column>
-					<el-table-column prop="deviceStatus" label="设备状态" align="center" :show-overflow-tooltip="isPc">
-						<template slot-scope="scope">
-							<el-tag type="danger" v-if="scope.row.deviceStatus == 0">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
-							<el-tag type="success" v-if="scope.row.deviceStatus == 1">{{ $dict.formatDeviceStatus(scope.row.deviceStatus) }}</el-tag>
-						</template>
+					<el-table-column label="原价费用" align="center">
+						<el-table-column prop="totalElectricityPrice" label="电费（元）" align="center" sortable min-width="110" />
+						<el-table-column prop="totalServicePrice" label="服务费（元）" align="center" sortable min-width="110" />
+						<el-table-column prop="totalActualMoney" label="应收金额（元）" align="center" sortable min-width="130" />
 					</el-table-column>
-					<el-table-column prop="deviceName" label="设备名称" align="center" :show-overflow-tooltip="isPc">
+					<el-table-column label="优惠抵扣" align="center">
+						<el-table-column prop="operatorCouponDiscountAmount" label="运营商优惠券抵扣（元）" align="center" sortable min-width="180" />
+						<el-table-column prop="operatorStationActivityDiscountAmount" label="运营商电站活动抵扣（元）" align="center" sortable min-width="190" />
+						<el-table-column prop="platformCouponDiscountAmount" label="平台优惠券抵扣（元）" align="center" sortable min-width="170" />
+						<el-table-column prop="platformStationActivityDiscountAmount" label="平台电站活动抵扣（元）" align="center" sortable min-width="180" />
 					</el-table-column>
-					<el-table-column prop="deviceTypeName" label="设备类型" align="center" :show-overflow-tooltip="isPc">
-					</el-table-column>
-					<el-table-column prop="networkName" label="站点名称" align="center" :show-overflow-tooltip="isPc">
-					</el-table-column>
-					<el-table-column prop="networkAddress" label="站点地址" align="center" :show-overflow-tooltip="isPc">
-					</el-table-column>
-					<el-table-column prop="orderCount" label="订单总数" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-count" label-class-name="col-header-count">
-					</el-table-column>
-					<el-table-column prop="totalDuration" label="充电时长（小时）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-duration" label-class-name="col-header-duration">
-						<template slot-scope="scope">
-							<span>{{ formatChargeDurationHours(scope.row.totalDuration) }}</span>
-						</template>
-					</el-table-column>
-					<el-table-column prop="totalPower" label="使用电量" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-energy" label-class-name="col-header-energy">
-					</el-table-column>
-					<el-table-column prop="totalElectricityPrice" label="电费" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
-					</el-table-column>
-					<el-table-column prop="totalServicePrice" label="服务费" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
-					</el-table-column>
-					<el-table-column prop="totalActualMoney" label="应收金额（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
-					</el-table-column>
-					<el-table-column prop="totalRealityPayMoney" label="实收金额（元）" align="center" sortable :show-overflow-tooltip="isPc" class-name="col-money" label-class-name="col-header-money">
+					<el-table-column label="用户实付" align="center">
+						<el-table-column prop="userActualElectricityAmount" label="用户实付电费（元）" align="center" sortable min-width="150" />
+						<el-table-column prop="userActualServiceAmount" label="用户实付服务费（元）" align="center" sortable min-width="160" />
 					</el-table-column>
 				</el-table>
 				<div class="pagination-container">
@@ -126,16 +135,29 @@
 	import businessBusList from './businessBusList.vue'
 	import deviceAdmin from '../device/components/deviceAdmin.vue'
 	import downDeviceReportsExcel from './components/downDeviceReportsExcel.vue'
+	import StatsCaliberDialog from './components/StatsCaliberDialog.vue'
+	import StatsTimeRangeFilter, { defaultRangeForTimeType, dayBoundsToDateTime, monthBoundsToDateTime } from './components/StatsTimeRangeFilter.vue'
+	import { caliberForPage } from './statsCaliberCopy.js'
+	import './styles/statsNestedTable.css'
+
+	const _defaultStatsRange = defaultRangeForTimeType(3)
+	const _defaultDayBounds = dayBoundsToDateTime(_defaultStatsRange[0], _defaultStatsRange[1])
+
 	export default {
 		name: 'businessStatistics1',
 		components: {
       		deviceAdmin,
 			businessDevList,
 			businessBusList,
-      		downDeviceReportsExcel
+      		downDeviceReportsExcel,
+			StatsCaliberDialog,
+			StatsTimeRangeFilter
 		},
 		data() {
 			return {
+				statsTimeType: 3,
+				statsStart: _defaultStatsRange[0],
+				statsEnd: _defaultStatsRange[1],
 				activeName: 'first',
 				page: 1,
 				limit: 10,
@@ -144,20 +166,21 @@
 				listQuery: {
 					page: 1,
 					limit: 10,
+					ruleId: null,
 					merchantId: '',
 					deviceCode: '',
 					allocationStatus: 1,
 					chargingStationIds:'',
-					createTimeStart: '',
-					createTimeEnd: ''
+					createTimeStart: _defaultDayBounds.start,
+					createTimeEnd: _defaultDayBounds.end
 				},
+				ruleIdOptions: [],
 				tableKey: 0,
 				isChildUpdate1: true,
 				isChildUpdate2: false,
 				loading: false,
         		listLoading: false,
-				dateYear: '',
-        		time: '',
+				caliber: caliberForPage('business'),
 				statisticsList: [
 					{
 						title: '实收总金额（元）',
@@ -185,10 +208,6 @@
 					},
           			{
 						title: '总充电服务费（元）',
-						data: ''
-					},
-					{
-						title: '运营设备数（台）',
 						data: ''
 					},
 				],
@@ -231,7 +250,6 @@
 				if (title.indexOf('总充电时长') !== -1) return 'cardItem--duration'
 				if (title.indexOf('总充电电费') !== -1) return 'cardItem--electricity'
 				if (title.indexOf('总充电服务费') !== -1) return 'cardItem--service-fee'
-				if (title.indexOf('运营设备数') !== -1) return 'cardItem--device-count'
 				return ''
 			},
 			/**
@@ -348,9 +366,17 @@
 			// 		this.getLists()
 			// 	})
 			// },
+			buildQuery() {
+				const q = Object.assign({}, this.listQuery)
+				if (q.ruleId == null || q.ruleId === '') delete q.ruleId
+				if (Array.isArray(q.chargingStationIds)) {
+					q.chargingStationIds = q.chargingStationIds.join(',')
+				}
+				return q
+			},
 			getReportsStatistics() {
 				this.loading = true
-				let listQuery = this.listQuery
+				let listQuery = this.buildQuery()
 				let statisticsList = this.statisticsList
 				getReportsStatistics(listQuery).then(res => {
 					if (res.code == 200) {
@@ -370,8 +396,6 @@
 								item.data = reportCount.totalRealityPayMoney || 0
 							} else if (item.title == '应收总金额（元）') {
 								item.data = reportCount.totalActualMoney || 0
-							} else if (item.title == '运营设备数（台）') {
-								item.data = reportCount.totalDevice || 0
 							}
 						})
 						this.statisticsList = statisticsList
@@ -384,13 +408,25 @@
 				})
 			},
 			getChargingStationList() {
-				getChargingStationList(0).then(res => {
+				return getChargingStationList(0).then(res => {
 					if (res.code == 200) {
 						this.chargingStationList = res.data;
 					} else {
 						this.$message.error(res.msg)
 					}
 				})
+			},
+			// 工作台下钻：route.query.stationId 命中站点列表时预填；非法 id 静默忽略
+			applyRouteStation() {
+				const q = this.$route && this.$route.query ? this.$route.query.stationId : ''
+				const id = Array.isArray(q) ? q[0] : q
+				if (id === undefined || id === null || id === '') return
+				const hit = (this.chargingStationList || []).find(item => String(item.id) === String(id))
+				if (hit) {
+					this.listQuery.chargingStationIds = [hit.id]
+					const mid = hit.merchantId !== undefined && hit.merchantId !== null ? hit.merchantId : hit.merchant_id
+					this.listQuery.merchantId = (mid === undefined || mid === null) ? '' : mid
+				}
 			},
 			getMerchantList() {
 				getMerchant().then(res => {
@@ -403,20 +439,20 @@
 					this.merchantList = []
 				})
 			},
-			dateChange(e) {
-				console.log(e)
-				if (e) {
-					this.listQuery.createTimeStart = e[0]
-					this.listQuery.createTimeEnd = e[1]
-				} else {
-					this.listQuery.createTimeStart = ''
-					this.listQuery.createTimeEnd = ''
-				}
+			applyStatsTimeToQuery(timeType, start, end) {
+				const bounds = timeType === 2
+					? monthBoundsToDateTime(start, end)
+					: dayBoundsToDateTime(start, end)
+				this.listQuery.createTimeStart = bounds.start
+				this.listQuery.createTimeEnd = bounds.end
+			},
+			onStatsTimeChange({ timeType, start, end }) {
+				this.applyStatsTimeToQuery(timeType, start, end)
 				this.handleFilter()
 			},
 			getLists() {
 				this.listLoading = true
-				getDeviceStatistics(this.listQuery).then(res => {
+				getDeviceStatistics(this.buildQuery()).then(res => {
 					if (res.code == 200) {
 						this.list = res.data
 						this.total = res.count
@@ -441,48 +477,44 @@
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
-			},
-			formatTime(time, fmt) {
-				if (!time) return '';
-				else {
-					const date = new Date(time);
-					const o = {
-						'M+': date.getMonth() + 1,
-						'd+': date.getDate(),
-						'H+': date.getHours(),
-						'm+': date.getMinutes(),
-						's+': date.getSeconds(),
-						'q+': Math.floor((date.getMonth() + 3) / 3),
-						S: date.getMilliseconds(),
-					};
-					if (/(y+)/.test(fmt))
-						fmt = fmt.replace(
-							RegExp.$1,
-							(date.getFullYear() + '').substr(4 - RegExp.$1.length)
-						);
-					for (const k in o) {
-						if (new RegExp('(' + k + ')').test(fmt)) {
-							fmt = fmt.replace(
-								RegExp.$1,
-								RegExp.$1.length === 1 ?
-								o[k] :
-								('00' + o[k]).substr(('' + o[k]).length)
-							);
-						}
-					}
-					return fmt;
-				}
 			}
 		},
 		created() {
 			this.$dict.getSelector('device_rule')
 			this.$dict.getSelector('device_status')
+			this.$dict.getDeviceRuleOptions().then(list => { this.ruleIdOptions = list || [] })
 			// this.getRouters()
 			this.getMerchantList()
-			this.getChargingStationList()
-			this.getReportsStatistics()
-			this.getLists()
-			this.dateYear = this.formatTime(new Date(), 'yyyy-MM-dd')
+			const drillStationId = this.$route && this.$route.query ? this.$route.query.stationId : ''
+			if (drillStationId) {
+				// keep-alive 首次会连着触发 activated；跳过一次避免双查
+				this._skipDrillActivatedOnce = true
+				// 下钻场景：等站点列表返回后预填，再统一发起一次查询
+				this.getChargingStationList().catch(() => {}).then(() => {
+					this.applyRouteStation()
+					this.handleFilter()
+				})
+			} else {
+				this.getChargingStationList()
+				this.getReportsStatistics()
+				this.getLists()
+			}
+		},
+		activated() {
+			const q = this.$route && this.$route.query ? this.$route.query.stationId : ''
+			const id = Array.isArray(q) ? q[0] : q
+			if (id === undefined || id === null || id === '') return
+			if (this._skipDrillActivatedOnce) {
+				this._skipDrillActivatedOnce = false
+				return
+			}
+			const ensure = (this.chargingStationList && this.chargingStationList.length)
+				? Promise.resolve()
+				: this.getChargingStationList().catch(() => {})
+			ensure.then(() => {
+				this.applyRouteStation()
+				this.handleFilter()
+			})
 		},
 	}
 </script>
@@ -516,19 +548,6 @@
 
 	.statistics-search-bar {
 		margin-bottom: 20px;
-	}
-
-	.headerSpan1 {
-		font-size: 20px;
-		color: #333;
-		font-weight: 700;
-	}
-
-	.headerSpan2 {
-		font-size: 14px;
-		color: #aaa;
-		display: inline-block;
-		margin-left: 30px;
 	}
 
 	.business-statistics-header {
@@ -624,9 +643,6 @@
 		background: linear-gradient(135deg, #14b8a6, #06b6d4);
 	}
 
-	.cardItem--device-count {
-		background: linear-gradient(135deg, #22c55e, #4ade80);
-	}
 
 	.cardItem--charge-fee .cardIcon,
 	.cardItem--receivable-total .cardIcon,
@@ -634,8 +650,7 @@
 		background-image: url(../../assets/home-panel/trade-panel.png);
 	}
 
-	.cardItem--power .cardIcon,
-	.cardItem--device-count .cardIcon {
+	.cardItem--power .cardIcon {
 		background-image: url(../../assets/home-panel/device-panel.png);
 	}
 
@@ -666,41 +681,4 @@
   display: none;
 }
 
-/* 表头不换行 */
-#businessStatisticsPage .el-table th .cell {
-  white-space: nowrap;
-}
-
-/* 去除列之间竖线，保留行分隔线 */
-#businessStatisticsPage .el-table td,
-#businessStatisticsPage .el-table th {
-  border-right: none !important;
-}
-</style>
-
-<style>
-/* Field specific styling */
-.el-table th.col-header-money,
-.el-table td.col-money {
-  color: #ff7043;
-  font-weight: 500;
-}
-
-.el-table th.col-header-count,
-.el-table td.col-count {
-  color: #409EFF;
-  font-weight: 500;
-}
-
-.el-table th.col-header-energy,
-.el-table td.col-energy {
-  color: #26a69a;
-  font-weight: 500;
-}
-
-.el-table th.col-header-duration,
-.el-table td.col-duration {
-  color: #8e44ad;
-  font-weight: 500;
-}
 </style>
