@@ -20,6 +20,7 @@
 
 		    <app-main />
 		  </div>
+		  <ops-agent-chat v-if="canUseOpsAgent" />
 		</div>
 	</div>
 </template>
@@ -31,6 +32,7 @@ import topSidebar from './components/topSidebar/topSidebar';
 import ResizeMixin from './mixin/ResizeHandler'
 import { mapState, mapGetters } from 'vuex'
 import Frame from '@/components/Common/Frame'
+import OpsAgentChat from '@/components/OpsAgentChat'
 export default {
   name: 'Layout',
   components: {
@@ -42,7 +44,8 @@ export default {
     SidebarOnly,
     TagsView,
     topSidebar,
-	Frame
+	Frame,
+    OpsAgentChat
   },
   mixins: [ResizeMixin],
   computed: {
@@ -54,6 +57,9 @@ export default {
       fixedHeader: state => state.settings.fixedHeader
     }),
     ...mapGetters(['menuLayout']),
+    canUseOpsAgent() {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':agent:chat'))
+    },
     classObj() {
       return {
         hideSidebar: !this.sidebar.opened,

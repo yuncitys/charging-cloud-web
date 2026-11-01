@@ -1,0 +1,165 @@
+/**
+ * Turn technical agent/ops errors into plain Chinese for non-dev users.
+ */
+
+import { ACTION_LABELS, toolLabel } from './toolLabels'
+
+export function actionLabel(action) {
+  if (!action) {
+    return '该操作'
+  }
+  const fromSummary = summarizeAction(action.summary)
+  if (fromSummary) {
+    return fromSummary
+  }
+  const key = action.toolName || action.tool || ''
+  return ACTION_LABELS[key] || toolLabel(key) || '该操作'
+}
+
+export function summarizeAction(summary) {
+  if (!summary) {
+    return ''
+  }
+  if (typeof summary === 'object') {
+    return labelFromObj(summary)
+  }
+  const s = String(summary).trim()
+  if (!s) {
+    return ''
+  }
+  if (s.charAt(0) === '{') {
+    try {
+      return labelFromObj(JSON.parse(s))
+    } catch (e) {
+      return s.length > 40 ? s.slice(0, 40) + '…' : s
+    }
+  }
+  return s.length > 40 ? s.slice(0, 40) + '…' : s
+}
+
+function labelFromObj(obj) {
+  if (!obj || typeof obj !== 'object') {
+    return ''
+  }
+  const parts = parsePendingFields(obj)
+  const name = parts.actionName || '操作'
+  let label = parts.order ? name + '（订单 ' + parts.order + '）' : name
+  if (parts.amount != null && parts.amount !== '') {
+    label += '，金额 ' + parts.amount + ' 元'
+  }
+  return label
+}
+
+/**
+ * Parse pending-action summary (object or JSON string) into display fields.
+ */
+export function parsePendingFields(summary) {
+  let obj = summary
+  if (typeof summary === 'string') {
+    const s = summary.trim()
+    if (!s) {
+      return { actionName: '', order: '', amount: '', raw: '' }
+    }
+    if (s.charAt(0) === '{') {
+      try {
+        obj = JSON.parse(s)
+      } catch (e) {
+        return { actionName: '', order: '', amount: '', raw: s }
+      }
+    } else {
+      return { actionName: '', order: '', amount: '', raw: s }
+    }
+  }
+  if (!obj || typeof obj !== 'object') {
+    return { actionName: '', order: '', amount: '', raw: '' }
+  }
+  const tool = obj.tool || obj.toolName || ''
+  const order = obj.orderCode || obj.payId || obj.payCode || ''
+  const amount = obj.amount != null && obj.amount !== '' ? String(obj.amount) : ''
+  const actionName = ACTION_LABELS[tool] || toolLabel(tool) || tool || ''
+  return { actionName, order: order ? String(order) : '', amount, raw: '' }
+}
+
+export function humanizeOpsError(raw, action) {
+  const text = raw == null ? '' : String(raw)
+  const label = actionLabel(action)
+
+  if (!text) {
+    return label + '没有成功。请稍后重试，或换一个真实订单再试。'
+  }
+
+  // Prefer nested msg from JSON blobs
+  const msg = extractMsg(text)
+  if (msg) {
+    if (/交易账单不存在|账单不存在|订单不存在|不存在/.test(msg)) {
+      return '没有查到对应的交易/账单记录，所以无法完成' + label + '。\n请确认订单号是否正确，或到订单列表核对后再试。'
+    }
+    if (isPermissionDenied(msg) || isPermissionDenied(text)) {
+      return '当前账号没有「' + label + '」权限，请联系管理员开通后再试。'
+    }
+    if (/超时|timeout/i.test(msg)) {
+      return label + '处理超时了，请稍后再试一次。'
+    }
+    if (/idempotency|already used|terminal/i.test(msg) || /idempotency|already used|terminal/i.test(text)) {
+      return '这个操作已经成功执行过了，不能再重复提交。\n请到订单页确认当前状态；若确需再操作，请换订单号或联系运维。'
+    }
+    // Generic business msg — still plain language wrapper
+    return label + '没有成功：' + msg + '\n如有疑问，请到订单/财务页面核对，或联系运维同事。'
+  }
+
+  if (isPermissionDenied(text)) {
+    return '当前账号没有「' + label + '」权限，请联系管理员开通后再试。'
+  }
+  if (/idempotency|already used|terminal/i.test(text)) {
+    return '这个操作已经成功执行过了，不能再重复提交。\n请到订单页确认当前状态；若确需再操作，请换订单号。'
+  }
+  if (/timeout|超时/i.test(text)) {
+    return label + '处理超时了，请稍后再试。'
+  }
+
+  return label + '没有成功。请稍后重试；若一直失败，请把订单号发给运维同事协助排查。'
+}
+
+export function isPermissionDenied(raw) {
+  if (raw == null || raw === '') {
+    return false
+  }
+  const text = String(raw)
+  // Do not match bare「权限」— many business msgs mention 权限 without being denials.
+  return /没有访问权限|无权限|权限不足|未授权|请联系管理员授权|forbidden|unauthorized|"code"\s*:\s*401|"code"\s*:\s*403/i.test(text)
+}
+
+function extractMsg(text) {
+  const m = /"msg"\s*:\s*"([^"]+)"/.exec(text)
+  if (m) {
+    return m[1]
+  }
+  try {
+    const start = text.indexOf('{')
+    if (start >= 0) {
+      const obj = JSON.parse(text.slice(start))
+      if (obj && obj.msg) {
+        return String(obj.msg)
+      }
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  // plain Chinese error without JSON
+  if (/[\u4e00-\u9fff]/.test(text) && !/downstream rejected/i.test(text)) {
+    return text.length > 80 ? text.slice(0, 80) + '…' : text
+  }
+  return ''
+}
+
+export function formatConfirmResult(action, result) {
+  const label = actionLabel(action)
+  const status = result && String(result.status || '').toUpperCase()
+  const codeOk = result && (result.code === 200 || result.code === '200')
+  if (status === 'EXECUTED' || (codeOk && status !== 'FAILED')) {
+    return '已完成：' + label + '执行成功。'
+  }
+  // Confirm succeeded; downstream (refund/stop) failed — never phrase as「确认失败」
+  const raw = (result && (result.userMessage || result.error || result.msg)) || ''
+  return humanizeOpsError(raw, action)
+}

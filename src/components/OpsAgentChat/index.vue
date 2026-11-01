@@ -1,0 +1,2400 @@
+<template>
+  <div class="ops-agent-chat">
+    <!-- minimized dock -->
+    <div v-show="!panelOpen" class="ops-agent-chat__dock">
+      <div
+        v-for="item in minimizedList"
+        :key="'min-' + item.id"
+        class="ops-agent-chat__dock-chip"
+        :title="item.title"
+        @click="reopenConversation(item.id)"
+      >
+        <i class="el-icon-chat-dot-round" />
+        <span class="ops-agent-chat__dock-title">{{ displayTitle(item) }}</span>
+        <i
+          class="el-icon-close ops-agent-chat__dock-close"
+          @click.stop="closeConversationWindow(item.id)"
+        />
+      </div>
+      <div class="ops-agent-chat__fab" title="运维助手" @click="openPanel">
+        <i class="el-icon-chat-dot-round" />
+        <span
+          v-if="fabPendingCount > 0"
+          class="ops-agent-chat__fab-badge"
+          :title="'有 ' + fabPendingCount + ' 项待确认'"
+        >
+          {{ fabPendingCount > 99 ? '99+' : fabPendingCount }}
+        </span>
+      </div>
+    </div>
+
+    <transition name="ops-agent-chat-slide">
+      <div
+        v-show="panelOpen"
+        ref="panel"
+        class="ops-agent-chat__panel"
+        tabindex="0"
+        :style="panelStyle"
+        @keydown.esc.stop.prevent="panelOpen = false"
+      >
+        <!-- resize handle (bottom-left; panel is anchored bottom-right) -->
+        <div
+          class="ops-agent-chat__resize"
+          title="拖拽调整大小"
+          @mousedown.prevent="startResize"
+        />
+
+        <div
+          :class="['ops-agent-chat__sidebar', { 'is-collapsed': !sidebarOpen }]"
+          :style="sidebarStyle"
+        >
+          <div class="ops-agent-chat__sidebar-head">
+            <el-input
+              v-model="searchQuery"
+              size="mini"
+              clearable
+              prefix-icon="el-icon-search"
+              placeholder="搜索标题或消息"
+              class="ops-agent-chat__search"
+            />
+            <i
+              class="el-icon-s-fold ops-agent-chat__icon-btn"
+              title="收起列表"
+              @click="toggleSidebar(false)"
+            />
+          </div>
+          <div
+            v-show="sidebarOpen"
+            class="ops-agent-chat__sidebar-resize"
+            title="拖拽调整会话区宽度"
+            @mousedown.prevent="startSidebarResize"
+          />
+          <div class="ops-agent-chat__conv-list">
+            <div v-if="sessionsLoading && !conversations.length" class="ops-agent-chat__conv-loading">
+              <div
+                v-for="n in 4"
+                :key="'sk-' + n"
+                class="ops-agent-chat__conv-skeleton"
+              >
+                <div class="ops-agent-chat__skel-line ops-agent-chat__skel-line--title" />
+                <div class="ops-agent-chat__skel-line ops-agent-chat__skel-line--meta" />
+              </div>
+              <div class="ops-agent-chat__conv-loading-tip">
+                <i class="el-icon-loading" />
+                <span>正在加载会话…</span>
+              </div>
+            </div>
+            <template v-else>
+              <div
+                v-for="c in filteredConversations"
+                :key="c.id"
+                :class="['ops-agent-chat__conv-item', { 'is-active': c.id === activeId }]"
+                @click="switchConversation(c.id)"
+              >
+                <div class="ops-agent-chat__conv-title-wrap">
+                  <input
+                    v-if="renamingId === c.id"
+                    ref="renameInput"
+                    v-model="renameDraft"
+                    class="ops-agent-chat__rename-input"
+                    @click.stop
+                    @keydown.enter.prevent="commitRename(c)"
+                    @keydown.esc.prevent="renamingId = null"
+                    @blur="commitRename(c)"
+                  >
+                  <span
+                    v-else
+                    ref="convTitles"
+                    :data-cid="c.id"
+                    :class="['ops-agent-chat__conv-title', { 'is-overflow': !!titleOverflowMap[c.id] }]"
+                    :title="displayTitle(c)"
+                  >{{ displayTitle(c) }}</span>
+                  <el-dropdown
+                    v-if="renamingId !== c.id"
+                    trigger="click"
+                    placement="bottom-end"
+                    class="ops-agent-chat__conv-more"
+                    @command="cmd => onConvMenuCommand(cmd, c)"
+                  >
+                    <button
+                      type="button"
+                      class="ops-agent-chat__conv-more-btn"
+                      title="更多"
+                      @click.stop
+                    >
+                      <i class="el-icon-more" />
+                    </button>
+                    <el-dropdown-menu slot="dropdown" class="ops-agent-chat-menu">
+                      <el-dropdown-item command="rename">重命名</el-dropdown-item>
+                      <el-dropdown-item command="delete">
+                        <span class="ops-agent-chat-menu__danger">删除</span>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </el-dropdown>
+                </div>
+                <span
+                  class="ops-agent-chat__conv-time"
+                  :title="formatAbsoluteDateTime(c.updatedAt)"
+                >
+                  <span class="ops-agent-chat__conv-rel">{{ formatRelativeTime(c.updatedAt) }}</span>
+                  <span class="ops-agent-chat__conv-abs">{{ formatDateYmd(c.updatedAt) }}</span>
+                </span>
+              </div>
+              <div v-if="!filteredConversations.length" class="ops-agent-chat__empty">
+                <template v-if="sessionsLoadError">
+                  <div>会话加载失败</div>
+                  <button type="button" class="ops-agent-chat__empty-retry" @click="syncSessionsFromServer(true)">
+                    点击重试
+                  </button>
+                </template>
+                <template v-else>
+                  {{ searchQuery.trim() ? '无匹配会话' : '暂无会话' }}
+                </template>
+              </div>
+              <button
+                v-else-if="sessionsHasMore"
+                type="button"
+                class="ops-agent-chat__conv-more-load"
+                :disabled="sessionsLoadingMore"
+                @click="loadMoreConversations"
+              >
+                <i :class="sessionsLoadingMore ? 'el-icon-loading' : 'el-icon-arrow-down'" />
+                <span>更多</span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <div class="ops-agent-chat__main">
+          <div class="ops-agent-chat__header">
+            <div class="ops-agent-chat__title">
+              <i
+                v-if="!sidebarOpen"
+                class="el-icon-s-unfold ops-agent-chat__icon-btn"
+                title="会话列表"
+                @click="toggleSidebar(true)"
+              />
+              <span class="ops-agent-chat__title-text" :title="displayTitle(activeConversation)">
+                {{ displayTitle(activeConversation) }}
+              </span>
+              <el-tag v-if="activeConversation.mockMode" size="mini" type="warning" effect="plain">Mock</el-tag>
+            </div>
+            <div class="ops-agent-chat__header-actions">
+              <el-dropdown trigger="click" @command="applySizePreset">
+                <span class="ops-agent-chat__icon-btn" title="窗口大小">
+                  <i class="el-icon-full-screen" />
+                </span>
+                <el-dropdown-menu slot="dropdown" class="ops-agent-chat-menu">
+                  <el-dropdown-item command="compact">紧凑</el-dropdown-item>
+                  <el-dropdown-item command="default">标准</el-dropdown-item>
+                  <el-dropdown-item command="large">宽松</el-dropdown-item>
+                  <el-dropdown-item command="auto" divided>按屏幕自适应</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+              <el-tooltip content="新建对话" placement="top">
+                <i class="el-icon-plus ops-agent-chat__icon-btn ops-agent-chat__new-btn" @click="createConversation" />
+              </el-tooltip>
+              <el-tooltip content="收起到底部" placement="top">
+                <i class="el-icon-minus ops-agent-chat__icon-btn" @click="minimizePanel" />
+              </el-tooltip>
+              <el-tooltip content="关闭（Esc）" placement="top">
+                <i class="el-icon-close ops-agent-chat__close" @click="panelOpen = false" />
+              </el-tooltip>
+            </div>
+          </div>
+
+          <div ref="messageList" class="ops-agent-chat__messages">
+            <message-bubble
+              v-for="(msg, index) in activeConversation.messages"
+              :key="activeId + '-' + index"
+              :message="msg"
+            />
+
+            <div v-if="sending" class="ops-agent-chat__typing">
+              <span /><span /><span />
+              <em v-if="processStatus" class="ops-agent-chat__typing-text">{{ processStatus }}</em>
+            </div>
+
+            <pending-action-card
+              v-for="item in activeConversation.pendingActions"
+              :key="'pa-' + item.id"
+              :action="item"
+              @cancel="onPendingCancel"
+              @confirmed="onActionConfirmed"
+              @confirm-failed="onActionConfirmFailed"
+            />
+          </div>
+
+          <div v-if="showShortcuts" class="ops-agent-chat__shortcuts">
+            <div class="ops-agent-chat__shortcuts-label">试试这样问</div>
+            <div class="ops-agent-chat__shortcuts-grid">
+              <button
+                v-for="item in shortcuts"
+                :key="item.label"
+                type="button"
+                class="ops-agent-chat__suggest"
+                :class="'is-' + (item.tone || 'blue')"
+                :disabled="sending"
+                @click="useShortcut(item)"
+              >
+                <span class="ops-agent-chat__suggest-icon" :class="'is-' + (item.tone || 'blue')">
+                  <i :class="item.icon || 'el-icon-chat-dot-round'" />
+                </span>
+                <span class="ops-agent-chat__suggest-body">
+                  <span class="ops-agent-chat__suggest-title">{{ item.label }}</span>
+                  <span class="ops-agent-chat__suggest-desc">{{ item.desc }}</span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="ops-agent-chat__footer">
+            <div
+              v-if="pageContextHint"
+              class="ops-agent-chat__ctx-hint"
+              title="当前页上下文会随本条消息一并发送，便于助手定位订单/站点"
+            >
+              <i class="el-icon-link" />
+              <span>将附带当前页：{{ pageContextHint }}</span>
+            </div>
+            <div class="ops-agent-chat__composer">
+              <textarea
+                ref="composer"
+                v-model="inputText"
+                class="ops-agent-chat__input"
+                rows="1"
+                :disabled="sending"
+                placeholder="输入问题，Enter 发送，Shift+Enter 换行"
+                @keydown="onComposerKeydown"
+                @input="autoGrowComposer"
+              />
+              <el-button
+                v-if="sending"
+                size="small"
+                class="ops-agent-chat__stop"
+                @click="stopGenerating"
+              >
+                停止
+              </el-button>
+              <el-button
+                v-else
+                type="primary"
+                size="small"
+                class="ops-agent-chat__send"
+                :disabled="!inputText.trim()"
+                @click="sendMessage"
+              >
+                发送
+              </el-button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </div>
+</template>
+
+<script>
+import {
+  sendChat,
+  stopChatGeneration,
+  cancelAction,
+  listSessions,
+  createSession,
+  listSessionMessages,
+  listSessionPending,
+  renameSession,
+  deleteSession,
+  fetchAgentUiConfig
+} from '@/api/opsAgent/chat'
+import { sendChatStream } from '@/api/opsAgent/chatStream'
+import { listToolPool } from '@/api/opsAgent/toolPool'
+import { setToolLabelMap } from './toolLabels'
+import {
+  SIZE_PRESETS,
+  PANEL_MIN_W,
+  PANEL_MIN_H,
+  VIEWPORT_GUTTER,
+  SIDEBAR_MIN,
+  SIDEBAR_MAX,
+  COMPOSER_MIN_H,
+  COMPOSER_MAX_H,
+  SESSION_LIST_INITIAL,
+  SESSION_LIST_MORE
+} from './panelLayout'
+import PendingActionCard from './PendingActionCard.vue'
+import MessageBubble from './MessageBubble.vue'
+import { actionLabel, formatConfirmResult } from './friendlyText'
+import {
+  createEmptyConversation,
+  fromSessionSummary,
+  mapServerMessages,
+  titleFromMessage,
+  displayConversationTitle,
+  isDefaultConversationTitle,
+  sortConversations,
+  loadUiPrefs,
+  saveUiPrefs,
+  suggestPanelSize,
+  loadActiveId,
+  saveActiveId,
+  loadDockedIds,
+  saveDockedIds,
+  clearLegacyLocalConversations,
+  WELCOME_TEXT,
+  setWelcomeText
+} from './sessionStore'
+
+const PAGE_CONTEXT_KEYS = ['orderId', 'orderCode', 'stationId', 'deviceCode']
+
+const FALLBACK_SHORTCUTS = [
+  { label: '查单', desc: '按订单号看状态和金额', icon: 'el-icon-search', tone: 'blue', fillOnly: true, text: '查一下订单' },
+  { label: '退款排障', desc: '扣款未启动时走确认退款', icon: 'el-icon-wallet', tone: 'amber', fillOnly: true, text: '订单扣了钱没启动，能不能退（请补上订单号）' },
+  { label: '枪离线 SOP', desc: '逐步排查枪不在线', icon: 'el-icon-document', tone: 'green', text: '枪离线怎么处理' },
+  { label: '远程停充', desc: '订单关不掉时远程停止', icon: 'el-icon-switch-button', tone: 'red', fillOnly: true, text: '订单关不掉，帮我停充（请补上订单号）' }
+]
+
+export default {
+  name: 'OpsAgentChat',
+  components: { PendingActionCard, MessageBubble },
+  data() {
+    const adminId = this.resolveAdminId()
+    const ui = loadUiPrefs()
+    clearLegacyLocalConversations()
+    return {
+      panelOpen: false,
+      sidebarOpen: ui.sidebarOpen,
+      sidebarWidth: ui.sidebarWidth,
+      panelWidth: ui.panelWidth,
+      panelHeight: ui.panelHeight,
+      searchQuery: '',
+      inputText: '',
+      sending: false,
+      /** Mid-run SSE status, e.g. 「正在查询订单…」 */
+      processStatus: '',
+      sessionsLoading: false,
+      sessionsLoadingMore: false,
+      sessionsLoadError: false,
+      sessionsHasMore: false,
+      sessionsTotal: 0,
+      messagesLoadingIds: {},
+      adminId,
+      activeId: loadActiveId(adminId),
+      conversations: [],
+      dockedIds: loadDockedIds(adminId),
+      renamingId: null,
+      renameDraft: '',
+      shortcuts: FALLBACK_SHORTCUTS.slice(),
+      searchTimer: null,
+      serverSearchActive: false,
+      resizing: false,
+      resizeStart: null,
+      sidebarResizing: false,
+      sidebarResizeStart: null,
+      /** bumps every minute so relative times stay fresh while panel is open */
+      timeTick: 0,
+      timeTickTimer: null,
+      /** cid -> whether title overflows current sidebar width */
+      titleOverflowMap: {},
+      titleMeasureTimer: null,
+      /** Abort in-flight SSE when sending again / destroying */
+      _chatAbort: null
+    }
+  },
+  computed: {
+    panelStyle() {
+      return {
+        width: this.panelWidth + 'px',
+        height: this.panelHeight + 'px'
+      }
+    },
+    sidebarStyle() {
+      if (!this.sidebarOpen) {
+        return {}
+      }
+      return {
+        width: this.sidebarWidth + 'px'
+      }
+    },
+    /** FAB badge = pending L2 confirms, not session count */
+    fabPendingCount() {
+      let n = 0
+      ;(this.conversations || []).forEach(c => {
+        n += (c.pendingActions || []).length
+      })
+      return n
+    },
+    pageContextHint() {
+      const ctx = this.buildPageContext()
+      if (!ctx) {
+        return ''
+      }
+      const parts = []
+      if (ctx.orderCode) {
+        parts.push('订单 ' + ctx.orderCode)
+      } else if (ctx.orderId) {
+        parts.push('订单Id ' + ctx.orderId)
+      }
+      if (ctx.stationId) {
+        parts.push('站点 ' + ctx.stationId)
+      }
+      if (ctx.deviceCode) {
+        parts.push('设备 ' + ctx.deviceCode)
+      }
+      return parts.join(' · ')
+    },
+    sortedConversations() {
+      // touch timeTick so relative labels recompute
+      void this.timeTick
+      return sortConversations(this.conversations)
+    },
+    filteredConversations() {
+      // Server search (q param) already narrowed conversations; skip client re-filter.
+      if (this.serverSearchActive) {
+        return this.sortedConversations
+      }
+      const q = (this.searchQuery || '').trim().toLowerCase()
+      if (!q) {
+        return this.sortedConversations
+      }
+      return this.sortedConversations.filter(c => {
+        const title = (this.displayTitle(c) || '').toLowerCase()
+        if (title.includes(q)) {
+          return true
+        }
+        const msgs = c.messages || []
+        return msgs.some(m => m && m.text && String(m.text).toLowerCase().includes(q))
+      })
+    },
+    activeConversation() {
+      const found = this.conversations.find(c => c.id === this.activeId)
+      return found || createEmptyConversation({ title: '新对话' })
+    },
+    minimizedList() {
+      return this.dockedIds
+        .map(id => this.conversations.find(c => c.id === id))
+        .filter(Boolean)
+    },
+    showShortcuts() {
+      const c = this.activeConversation
+      const msgs = c.messages || []
+      if (this.messagesLoadingIds[c.id]) {
+        return false
+      }
+      if (!c.messagesLoaded && msgs.length === 0) {
+        return false
+      }
+      return !msgs.some(m => m && m.role === 'user')
+    }
+  },
+  mounted() {
+    // Prefetch summaries so FAB badge / dock chips survive refresh without opening panel
+    this.prefetchSessionSummaries()
+    this.loadAgentUiBootstrap()
+  },
+  watch: {
+    searchQuery() {
+      if (this.searchTimer) {
+        clearTimeout(this.searchTimer)
+      }
+      this.searchTimer = setTimeout(() => {
+        this.runServerSessionSearch()
+      }, 320)
+    },
+    activeId(val) {
+      this.persistActive()
+      this.scrollToBottom()
+      this.focusComposer()
+      if (val && this.panelOpen) {
+        this.ensureMessagesLoaded(val)
+      }
+    },
+    dockedIds: {
+      deep: true,
+      handler(val) {
+        saveDockedIds(this.adminId != null ? this.adminId : this.currentAdminId(), val)
+      }
+    },
+    panelOpen(val) {
+      if (val) {
+        this.syncSessionsFromServer()
+        this.focusComposer()
+        this.startTimeTick()
+        this.scheduleMeasureTitles()
+      } else {
+        this.stopTimeTick()
+      }
+    },
+    sidebarWidth() {
+      this.scheduleMeasureTitles()
+    },
+    sidebarOpen() {
+      this.scheduleMeasureTitles()
+    },
+    filteredConversations() {
+      this.scheduleMeasureTitles()
+    },
+    renamingId() {
+      this.scheduleMeasureTitles()
+    }
+  },
+  beforeDestroy() {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer)
+      this.searchTimer = null
+    }
+    this.abortInFlightChat()
+    this.stopTimeTick()
+    this.unbindResize()
+    this.unbindSidebarResize()
+    if (this.titleMeasureTimer) {
+      clearTimeout(this.titleMeasureTimer)
+      this.titleMeasureTimer = null
+    }
+  },
+  methods: {
+    scheduleMeasureTitles() {
+      if (this.titleMeasureTimer) {
+        clearTimeout(this.titleMeasureTimer)
+      }
+      this.titleMeasureTimer = setTimeout(() => {
+        this.titleMeasureTimer = null
+        this.measureTitleOverflow()
+      }, 40)
+    },
+    measureTitleOverflow() {
+      const els = this.$refs.convTitles
+      const list = !els ? [] : Array.isArray(els) ? els : [els]
+      const map = {}
+      list.forEach(el => {
+        if (!el || !el.getAttribute) {
+          return
+        }
+        const id = el.getAttribute('data-cid')
+        if (!id) {
+          return
+        }
+        map[id] = el.scrollWidth > el.clientWidth + 1
+      })
+      this.titleOverflowMap = map
+    },
+    startTimeTick() {
+      this.stopTimeTick()
+      this.timeTick += 1
+      this.timeTickTimer = setInterval(() => {
+        this.timeTick += 1
+      }, 60 * 1000)
+    },
+    stopTimeTick() {
+      if (this.timeTickTimer) {
+        clearInterval(this.timeTickTimer)
+        this.timeTickTimer = null
+      }
+    },
+    resolveAdminId() {
+      const adminUser = this.$store && this.$store.getters ? this.$store.getters.adminUser : null
+      return adminUser && adminUser.id != null ? adminUser.id : null
+    },
+    currentAdminId() {
+      return this.resolveAdminId()
+    },
+    persistActive() {
+      saveActiveId(this.adminId != null ? this.adminId : this.currentAdminId(), this.activeId)
+    },
+    parseSessionPage(res, loadedBefore) {
+      const list = res && Array.isArray(res.data) ? res.data : []
+      const totalRaw = res && res.count != null ? Number(res.count) : list.length
+      const total = Number.isFinite(totalRaw) ? totalRaw : 0
+      const before = loadedBefore != null ? loadedBefore : 0
+      const hasMore = res && typeof res.hasMore === 'boolean'
+        ? res.hasMore
+        : before + list.length < total
+      return { list, total, hasMore: !!hasMore }
+    },
+    loadMoreConversations() {
+      if (!this.sessionsHasMore || this.sessionsLoadingMore) {
+        return Promise.resolve()
+      }
+      this.sessionsLoadingMore = true
+      const offset = this.conversations.length
+      return listSessions({ offset, limit: SESSION_LIST_MORE })
+        .then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.warning((res && res.msg) || '加载更多会话失败')
+            return
+          }
+          const page = this.parseSessionPage(res, offset)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
+            append: true,
+            createIfEmpty: false,
+            loadActiveMessages: false
+          })
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('加载更多会话失败，请稍后重试')
+        })
+        .finally(() => {
+          this.sessionsLoadingMore = false
+          this.scheduleMeasureTitles()
+        })
+    },
+    /** 当前激活会话若不在已加载页内，继续向服务端拉页直到找到或没有更多 */
+    ensureActiveLoadedFromServer() {
+      if (!this.activeId || this.conversations.some(c => c.id === this.activeId)) {
+        return Promise.resolve()
+      }
+      if (!this.sessionsHasMore) {
+        if (this.conversations.length) {
+          this.activeId = this.conversations[0].id
+        }
+        return Promise.resolve()
+      }
+      return this.loadMoreConversations().then(() => this.ensureActiveLoadedFromServer())
+    },
+    prefetchSessionSummaries() {
+      return listSessions({ offset: 0, limit: SESSION_LIST_INITIAL })
+        .then(res => {
+          if (!res || res.code !== 200) {
+            return
+          }
+          const page = this.parseSessionPage(res, 0)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
+            createIfEmpty: false,
+            loadActiveMessages: false
+          }).then(() => this.ensureActiveLoadedFromServer())
+        })
+        .catch(() => {
+          /* dock/badge stay empty until user opens panel */
+        })
+    },
+    applySessionRows(rows, options) {
+      const opts = options || {}
+      const prevById = {}
+      this.conversations.forEach(c => {
+        if (c && c.id) {
+          prevById[c.id] = c
+        }
+      })
+      const mapped = (rows || []).map(row => {
+        const summary = fromSessionSummary(row)
+        const prev = prevById[summary.id]
+        if (prev && prev.messagesLoaded) {
+          summary.messages = prev.messages
+          summary.messagesLoaded = true
+          summary.pendingActions = prev.pendingActions || []
+          summary.mockMode = prev.mockMode
+        }
+        return summary
+      })
+      let next
+      if (opts.append) {
+        const seen = {}
+        next = []
+        this.conversations.forEach(c => {
+          if (c && c.id && !seen[c.id]) {
+            seen[c.id] = true
+            next.push(c)
+          }
+        })
+        mapped.forEach(c => {
+          if (c && c.id && !seen[c.id]) {
+            seen[c.id] = true
+            next.push(c)
+          }
+        })
+      } else {
+        next = mapped
+      }
+      this.conversations = next
+      this.dockedIds = (this.dockedIds || []).filter(id => next.some(c => c.id === id))
+      if (!next.length) {
+        if (opts.createIfEmpty) {
+          return this.createConversation()
+        }
+        return Promise.resolve()
+      }
+      const preferred = this.activeId && next.some(c => c.id === this.activeId)
+        ? this.activeId
+        : (opts.append ? this.activeId : next[0].id)
+      if (preferred && preferred !== this.activeId) {
+        this.activeId = preferred
+      }
+      if (opts.loadActiveMessages && this.activeId) {
+        return this.ensureMessagesLoaded(this.activeId)
+      }
+      return Promise.resolve()
+    },
+    syncSessionsFromServer(force) {
+      if (this._sessionsSyncPromise && !force) {
+        return this._sessionsSyncPromise
+      }
+      this.sessionsLoading = true
+      this.sessionsLoadError = false
+      const syncGen = (this._sessionsSyncGen = (this._sessionsSyncGen || 0) + 1)
+      this._sessionsSyncPromise = listSessions({ offset: 0, limit: SESSION_LIST_INITIAL })
+        .then(res => {
+          if (syncGen !== this._sessionsSyncGen) {
+            return
+          }
+          if (!res || res.code !== 200) {
+            this.sessionsLoadError = true
+            this.$message && this.$message.warning((res && res.msg) || '加载会话列表失败')
+            return
+          }
+          this.sessionsLoadError = false
+          const page = this.parseSessionPage(res, 0)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
+            createIfEmpty: true,
+            loadActiveMessages: true
+          })
+        })
+        .catch(() => {
+          if (syncGen !== this._sessionsSyncGen) {
+            return
+          }
+          this.sessionsLoadError = true
+          this.$message && this.$message.warning('加载会话列表失败，请稍后重试')
+        })
+        .then(() => {
+          if (syncGen !== this._sessionsSyncGen) {
+            return
+          }
+          this.sessionsLoading = false
+          this._sessionsSyncPromise = null
+          return this.ensureActiveLoadedFromServer()
+        })
+        .finally(() => {
+          if (syncGen === this._sessionsSyncGen) {
+            this.scheduleMeasureTitles()
+          }
+        })
+      return this._sessionsSyncPromise
+    },
+    ensureMessagesLoaded(id) {
+      const conv = this.conversations.find(c => c.id === id)
+      if (!conv || conv.messagesLoaded || this.messagesLoadingIds[id]) {
+        return Promise.resolve()
+      }
+      this.$set(this.messagesLoadingIds, id, true)
+      return Promise.all([
+        listSessionMessages(id),
+        listSessionPending(id).catch(() => null)
+      ])
+        .then(([res, pendingRes]) => {
+          if (!res || res.code !== 200) {
+            return
+          }
+          const idx = this.conversations.findIndex(c => c.id === id)
+          if (idx < 0) {
+            return
+          }
+          const next = Object.assign({}, this.conversations[idx])
+          next.messages = mapServerMessages(res.data)
+          next.messagesLoaded = true
+          if (pendingRes && pendingRes.code === 200 && Array.isArray(pendingRes.data)) {
+            next.pendingActions = pendingRes.data.map(row => ({
+              id: row.id,
+              summary: row.summary
+            }))
+          } else {
+            next.pendingActions = next.pendingActions || []
+          }
+          if (isDefaultConversationTitle(next.title)) {
+            const derived = this.deriveTitleFromMessages(next.messages)
+            if (derived) {
+              next.title = derived
+              renameSession(id, derived).catch(() => {})
+            }
+          }
+          this.$set(this.conversations, idx, next)
+          if (this.activeId === id) {
+            this.scrollToBottom()
+          }
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('加载会话消息失败')
+        })
+        .finally(() => {
+          this.$delete(this.messagesLoadingIds, id)
+        })
+    },
+    deriveTitleFromMessages(messages) {
+      if (!Array.isArray(messages)) {
+        return ''
+      }
+      for (let i = 0; i < messages.length; i++) {
+        const m = messages[i]
+        if (m && m.role === 'user' && m.text) {
+          const t = titleFromMessage(m.text)
+          return isDefaultConversationTitle(t) ? '' : t
+        }
+      }
+      return ''
+    },
+    persistUi() {
+      saveUiPrefs({
+        panelWidth: this.panelWidth,
+        panelHeight: this.panelHeight,
+        sidebarOpen: this.sidebarOpen,
+        sidebarWidth: this.sidebarWidth
+      })
+    },
+    toggleSidebar(open) {
+      this.sidebarOpen = open
+      if (open) {
+        this.sidebarWidth = this.clampSidebarWidth(this.sidebarWidth)
+      }
+      this.persistUi()
+    },
+    clampSidebarWidth(w) {
+      const min = SIDEBAR_MIN
+      const maxByPanel = Math.max(min, this.panelWidth - 240)
+      const max = Math.min(SIDEBAR_MAX, maxByPanel)
+      return Math.min(max, Math.max(min, Number(w) || min))
+    },
+    startSidebarResize(e) {
+      if (!this.sidebarOpen) {
+        return
+      }
+      this.sidebarResizing = true
+      this.sidebarResizeStart = {
+        x: e.clientX,
+        w: this.sidebarWidth
+      }
+      document.addEventListener('mousemove', this.onSidebarResizeMove)
+      document.addEventListener('mouseup', this.onSidebarResizeEnd)
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'col-resize'
+    },
+    onSidebarResizeMove(e) {
+      if (!this.sidebarResizing || !this.sidebarResizeStart) {
+        return
+      }
+      const dw = e.clientX - this.sidebarResizeStart.x
+      this.sidebarWidth = this.clampSidebarWidth(this.sidebarResizeStart.w + dw)
+      this.scheduleMeasureTitles()
+    },
+    onSidebarResizeEnd() {
+      this.sidebarResizing = false
+      this.sidebarResizeStart = null
+      this.unbindSidebarResize()
+      this.persistUi()
+      this.scheduleMeasureTitles()
+    },
+    unbindSidebarResize() {
+      document.removeEventListener('mousemove', this.onSidebarResizeMove)
+      document.removeEventListener('mouseup', this.onSidebarResizeEnd)
+      if (!this.resizing) {
+        document.body.style.userSelect = ''
+        document.body.style.cursor = ''
+      }
+    },
+    applySizePreset(cmd) {
+      if (cmd === 'auto') {
+        const s = suggestPanelSize()
+        this.panelWidth = s.panelWidth
+        this.panelHeight = s.panelHeight
+      } else {
+        const p = SIZE_PRESETS[cmd] || SIZE_PRESETS.default
+        this.panelWidth = p.panelWidth
+        this.panelHeight = p.panelHeight
+      }
+      this.clampToViewport()
+      this.persistUi()
+    },
+    clampToViewport() {
+      const maxW = Math.max(PANEL_MIN_W, window.innerWidth - VIEWPORT_GUTTER)
+      const maxH = Math.max(PANEL_MIN_H, window.innerHeight - VIEWPORT_GUTTER)
+      this.panelWidth = Math.min(this.panelWidth, maxW)
+      this.panelHeight = Math.min(this.panelHeight, maxH)
+      this.panelWidth = Math.max(PANEL_MIN_W, this.panelWidth)
+      this.panelHeight = Math.max(PANEL_MIN_H, this.panelHeight)
+      this.sidebarWidth = this.clampSidebarWidth(this.sidebarWidth)
+    },
+    startResize(e) {
+      this.resizing = true
+      this.resizeStart = {
+        x: e.clientX,
+        y: e.clientY,
+        w: this.panelWidth,
+        h: this.panelHeight
+      }
+      document.addEventListener('mousemove', this.onResizeMove)
+      document.addEventListener('mouseup', this.onResizeEnd)
+      document.body.style.userSelect = 'none'
+      document.body.style.cursor = 'nwse-resize'
+    },
+    onResizeMove(e) {
+      if (!this.resizing || !this.resizeStart) {
+        return
+      }
+      // anchored bottom-right: drag left-up grows
+      const dw = this.resizeStart.x - e.clientX
+      const dh = this.resizeStart.y - e.clientY
+      this.panelWidth = this.resizeStart.w + dw
+      this.panelHeight = this.resizeStart.h + dh
+      this.clampToViewport()
+    },
+    onResizeEnd() {
+      this.resizing = false
+      this.resizeStart = null
+      this.unbindResize()
+      this.persistUi()
+    },
+    unbindResize() {
+      document.removeEventListener('mousemove', this.onResizeMove)
+      document.removeEventListener('mouseup', this.onResizeEnd)
+      document.body.style.userSelect = ''
+      document.body.style.cursor = ''
+    },
+    patchActive(mutator) {
+      const idx = this.conversations.findIndex(c => c.id === this.activeId)
+      if (idx < 0) {
+        return
+      }
+      const next = Object.assign({}, this.conversations[idx])
+      mutator(next)
+      next.updatedAt = Date.now()
+      this.$set(this.conversations, idx, next)
+    },
+    openPanel() {
+      // Mark loading before paint so empty list never flashes「暂无会话」
+      if (!this.conversations.length) {
+        this.sessionsLoading = true
+        this.sessionsLoadError = false
+      }
+      this.clampToViewport()
+      this.panelOpen = true
+      this.dockedIds = []
+      this.scrollToBottom()
+      this.focusComposer()
+    },
+    minimizePanel() {
+      if (!this.dockedIds.includes(this.activeId)) {
+        this.dockedIds = [this.activeId].concat(this.dockedIds).slice(0, 5)
+      }
+      this.panelOpen = false
+    },
+    reopenConversation(id) {
+      this.switchConversation(id)
+      this.panelOpen = true
+      this.dockedIds = this.dockedIds.filter(x => x !== id)
+      this.scrollToBottom()
+    },
+    closeConversationWindow(id) {
+      this.dockedIds = this.dockedIds.filter(x => x !== id)
+    },
+    createConversation() {
+      return createSession()
+        .then(res => {
+          if (!res || res.code !== 200 || !res.data || !res.data.id) {
+            this.$message && this.$message.error((res && res.msg) || '新建会话失败')
+            return
+          }
+          const conv = fromSessionSummary(res.data)
+          conv.messages = [{
+            role: 'assistant',
+            text: WELCOME_TEXT,
+            toolTrace: null,
+            traceOpen: false
+          }]
+          conv.messagesLoaded = true
+          const existed = this.conversations.some(c => c.id === conv.id)
+          this.conversations = [conv].concat(this.conversations.filter(c => c.id !== conv.id))
+          if (!existed) {
+            this.sessionsTotal = (this.sessionsTotal || 0) + 1
+          }
+          this.activeId = conv.id
+          this.inputText = ''
+          this.searchQuery = ''
+          this.panelOpen = true
+          this.sidebarOpen = true
+          this.persistUi()
+          this.persistActive()
+          this.resetComposerHeight()
+          this.scrollToBottom()
+          this.focusComposer()
+        })
+        .catch(() => {
+          this.$message && this.$message.error('新建会话失败，请稍后重试')
+        })
+    },
+    switchConversation(id) {
+      if (id === this.activeId) {
+        return
+      }
+      if (this.sending) {
+        this.$message && this.$message.warning('请等待当前回复完成再切换')
+        return
+      }
+      this.activeId = id
+      this.inputText = ''
+      this.resetComposerHeight()
+      this.ensureMessagesLoaded(id)
+      this.scrollToBottom()
+    },
+    focusComposer() {
+      this.$nextTick(() => {
+        const el = this.$refs.composer
+        if (el && el.focus) {
+          el.focus()
+        }
+      })
+    },
+    autoGrowComposer() {
+      const el = this.$refs.composer
+      if (!el) {
+        return
+      }
+      el.style.height = 'auto'
+      const next = Math.min(COMPOSER_MAX_H, Math.max(COMPOSER_MIN_H, el.scrollHeight))
+      el.style.height = next + 'px'
+    },
+    resetComposerHeight() {
+      this.$nextTick(() => {
+        const el = this.$refs.composer
+        if (el) {
+          el.style.height = COMPOSER_MIN_H + 'px'
+        }
+      })
+    },
+    onComposerKeydown(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        this.sendMessage()
+      }
+    },
+    displayTitle(c) {
+      return displayConversationTitle(c)
+    },
+    onConvMenuCommand(cmd, c) {
+      if (!c) {
+        return
+      }
+      if (cmd === 'rename') {
+        this.startRename(c)
+      } else if (cmd === 'delete') {
+        this.deleteConversation(c.id)
+      }
+    },
+    startRename(c) {
+      this.renamingId = c.id
+      this.renameDraft = this.displayTitle(c)
+      this.$nextTick(() => {
+        const el = this.$refs.renameInput
+        const input = Array.isArray(el) ? el[0] : el
+        if (input && input.focus) {
+          input.focus()
+          input.select && input.select()
+        }
+      })
+    },
+    commitRename(c) {
+      if (this.renamingId !== c.id) {
+        return
+      }
+      const title = (this.renameDraft || '').trim() || c.title
+      this.renamingId = null
+      const idx = this.conversations.findIndex(x => x.id === c.id)
+      if (idx >= 0) {
+        this.$set(this.conversations, idx, Object.assign({}, this.conversations[idx], {
+          title,
+          updatedAt: Date.now()
+        }))
+      }
+      renameSession(c.id, title)
+        .then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.warning((res && res.msg) || '重命名失败')
+            return
+          }
+          if (res.data && idx >= 0) {
+            this.$set(this.conversations, idx, Object.assign({}, this.conversations[idx], {
+              title: res.data.title || title,
+              updatedAt: Date.now()
+            }))
+          }
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('重命名失败')
+        })
+    },
+    deleteConversation(id) {
+      this.$confirm('删除后各端都无法再打开该会话，确定删除？', '删除会话', {
+        type: 'warning',
+        confirmButtonText: '删除',
+        cancelButtonText: '取消'
+      }).then(() => {
+        return deleteSession(id).then(res => {
+          if (!res || res.code !== 200) {
+            this.$message && this.$message.error((res && res.msg) || '删除失败')
+            return
+          }
+          this.conversations = this.conversations.filter(c => c.id !== id)
+          this.dockedIds = this.dockedIds.filter(x => x !== id)
+          this.sessionsTotal = Math.max(0, (this.sessionsTotal || 0) - 1)
+          this.sessionsHasMore = this.conversations.length < this.sessionsTotal
+          if (!this.conversations.length) {
+            return this.createConversation()
+          }
+          if (this.activeId === id) {
+            this.activeId = this.sortedConversations[0].id
+            this.ensureMessagesLoaded(this.activeId)
+          }
+          this.$message && this.$message.success('已删除')
+        })
+      }).catch(() => {})
+    },
+    buildPageContext() {
+      const route = this.$route
+      const ctx = {}
+      PAGE_CONTEXT_KEYS.forEach(key => {
+        const fromQuery = route.query[key]
+        const fromParams = route.params[key]
+        const val = fromQuery != null && fromQuery !== '' ? fromQuery : fromParams
+        if (val != null && val !== '') {
+          ctx[key] = String(val)
+        }
+      })
+      return Object.keys(ctx).length ? ctx : null
+    },
+    formatRelativeTime(ts) {
+      if (!ts) {
+        return ''
+      }
+      void this.timeTick
+      const diffMs = Date.now() - Number(ts)
+      if (Number.isNaN(diffMs)) {
+        return ''
+      }
+      if (diffMs < 60 * 1000) {
+        return '刚刚'
+      }
+      const mins = Math.floor(diffMs / (60 * 1000))
+      if (mins < 60) {
+        return mins + '分钟前'
+      }
+      const hours = Math.floor(mins / 60)
+      if (hours < 24) {
+        return hours + '小时前'
+      }
+      const days = Math.floor(hours / 24)
+      if (days < 30) {
+        return days + '天前'
+      }
+      const months = Math.floor(days / 30)
+      if (months < 12) {
+        return months + '个月前'
+      }
+      return Math.floor(months / 12) + '年前'
+    },
+    formatDateYmd(ts) {
+      if (!ts) {
+        return ''
+      }
+      const d = new Date(ts)
+      if (Number.isNaN(d.getTime())) {
+        return ''
+      }
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return y + '/' + m + '/' + day
+    },
+    formatAbsoluteDateTime(ts) {
+      if (!ts) {
+        return ''
+      }
+      const d = new Date(ts)
+      if (Number.isNaN(d.getTime())) {
+        return ''
+      }
+      const ymd = this.formatDateYmd(ts)
+      const hh = String(d.getHours()).padStart(2, '0')
+      const mm = String(d.getMinutes()).padStart(2, '0')
+      return ymd + ' ' + hh + ':' + mm
+    },
+    scrollToBottom() {
+      this.$nextTick(() => {
+        const el = this.$refs.messageList
+        if (el) {
+          el.scrollTop = el.scrollHeight
+        }
+      })
+    },
+    useShortcut(item) {
+      this.inputText = item.text
+      this.$nextTick(() => {
+        this.autoGrowComposer()
+        this.focusComposer()
+        if (item && item.fillOnly) {
+          return
+        }
+        this.sendMessage()
+      })
+    },
+    sendMessage() {
+      const text = this.inputText.trim()
+      if (!text || this.sending) {
+        return
+      }
+      this.sending = true
+      this.inputText = ''
+      this.resetComposerHeight()
+      const ensureReady = (!this.activeId || !this.conversations.some(c => c.id === this.activeId))
+        ? this.createConversation()
+        : Promise.resolve()
+
+      Promise.resolve(ensureReady).then(() => {
+        const convId = this.activeId
+        const before = this.conversations.find(c => c.id === convId)
+        if (!before || !before.id) {
+          this.sending = false
+          this.inputText = text
+          this.$message && this.$message.error('会话未就绪，请稍后重试')
+          return
+        }
+        const sessionId = before.sessionId || before.id
+        const isFirstUser = !((before.messages) || []).some(m => m.role === 'user')
+
+        this.patchActive(c => {
+          c.messages = c.messages.concat([{
+            role: 'user',
+            text,
+            toolTrace: null
+          }])
+          if (isFirstUser || !c.title || c.title === '新对话') {
+            c.title = titleFromMessage(text)
+          }
+          c.messagesLoaded = true
+        })
+        this.scrollToBottom()
+
+        const payload = {
+          sessionId,
+          message: text,
+          pageContext: this.buildPageContext()
+        }
+        this.deliverAssistantReply(convId, payload)
+          .finally(() => {
+            this.processStatus = ''
+            this.sending = false
+            this.scrollToBottom()
+            this.focusComposer()
+          })
+      })
+    },
+    applyConversation(targetId, mutator) {
+      const idx = this.conversations.findIndex(c => c.id === targetId)
+      if (idx < 0) {
+        return
+      }
+      const next = Object.assign({}, this.conversations[idx])
+      mutator(next)
+      next.updatedAt = Date.now()
+      this.$set(this.conversations, idx, next)
+    },
+    alignSessionId(targetId, sessionId) {
+      if (!sessionId) {
+        return targetId
+      }
+      this.applyConversation(targetId, c => {
+        c.sessionId = sessionId
+        if (c.id !== sessionId) {
+          c.id = sessionId
+        }
+      })
+      if (this.activeId === targetId && targetId !== sessionId) {
+        this.activeId = sessionId
+      }
+      return sessionId
+    },
+    mergePendingActions(targetId, pendingActions) {
+      if (!Array.isArray(pendingActions) || !pendingActions.length) {
+        return
+      }
+      this.applyConversation(targetId, c => {
+        const existing = c.pendingActions || []
+        const merged = existing.slice()
+        pendingActions.forEach(pa => {
+          if (!merged.some(x => x.id === pa.id)) {
+            merged.push(pa)
+          }
+        })
+        c.pendingActions = merged
+      })
+    },
+    abortInFlightChat() {
+      if (typeof this._chatAbort === 'function') {
+        try {
+          this._chatAbort()
+        } catch (e) {
+          /* ignore */
+        }
+      }
+      this._chatAbort = null
+    },
+    stripStreamingAssistant(targetId) {
+      const id = targetId || this.activeId
+      if (!id) {
+        return
+      }
+      this.applyConversation(id, c => {
+        const msgs = (c.messages || []).slice()
+        const last = msgs[msgs.length - 1]
+        if (last && last.role === 'assistant' && last.streaming) {
+          msgs.pop()
+          c.messages = msgs
+        }
+      })
+    },
+    /** After SSE abort: leave a short assistant line so the thread does not look dead. */
+    appendStoppedNotice(targetId) {
+      const id = targetId || this.activeId
+      if (!id) {
+        return
+      }
+      const text = '已停止生成。需要的话可以换个说法再发，或补充信息后继续。'
+      this.applyConversation(id, c => {
+        const msgs = (c.messages || []).slice()
+        const last = msgs[msgs.length - 1]
+        if (last && last.role === 'assistant' && last.stopped) {
+          return
+        }
+        msgs.push({
+          role: 'assistant',
+          text,
+          toolTrace: null,
+          stopped: true
+        })
+        c.messages = msgs
+      })
+      this.scrollToBottom()
+    },
+    stopGenerating() {
+      const id = this.activeId
+      const conv = this.conversations.find(c => c.id === id)
+      const sessionId = conv && (conv.sessionId || conv.id)
+      this.abortInFlightChat()
+      this.stripStreamingAssistant(id)
+      this.appendStoppedNotice(id)
+      this.processStatus = ''
+      this.sending = false
+      // Persist stop notice server-side; abort alone may not land before refresh.
+      if (sessionId) {
+        stopChatGeneration(sessionId).catch(() => {})
+      }
+      this.focusComposer()
+    },
+    loadAgentUiBootstrap() {
+      fetchAgentUiConfig()
+        .then(res => {
+          if (!res || res.code !== 200 || !res.data) {
+            return
+          }
+          const data = res.data
+          if (data.welcomeText) {
+            setWelcomeText(data.welcomeText)
+          }
+          if (Array.isArray(data.shortcuts) && data.shortcuts.length) {
+            this.shortcuts = data.shortcuts.map(s => ({
+              label: s.label || '',
+              desc: s.desc || '',
+              text: s.text || '',
+              fillOnly: !!s.fillOnly,
+              icon: s.icon || 'el-icon-chat-dot-round',
+              tone: s.tone || 'blue'
+            }))
+          }
+        })
+        .catch(() => {})
+      listToolPool()
+        .then(res => {
+          let rows = null
+          if (Array.isArray(res)) {
+            rows = res
+          } else if (res && res.code === 200 && Array.isArray(res.data)) {
+            rows = res.data
+          }
+          if (rows) {
+            setToolLabelMap(rows)
+          }
+        })
+        .catch(() => {})
+    },
+    runServerSessionSearch() {
+      const q = (this.searchQuery || '').trim()
+      if (!q) {
+        this.serverSearchActive = false
+        return this.syncSessionsFromServer(true)
+      }
+      this.serverSearchActive = true
+      this.sessionsLoading = true
+      return listSessions({ offset: 0, limit: SESSION_LIST_INITIAL, q })
+        .then(res => {
+          if (!res || res.code !== 200) {
+            return
+          }
+          const page = this.parseSessionPage(res, 0)
+          this.sessionsTotal = page.total
+          this.sessionsHasMore = page.hasMore
+          return this.applySessionRows(page.list, {
+            createIfEmpty: false,
+            loadActiveMessages: false
+          })
+        })
+        .catch(() => {
+          this.$message && this.$message.warning('搜索会话失败')
+        })
+        .finally(() => {
+          this.sessionsLoading = false
+        })
+    },
+    deliverAssistantReply(convId, payload) {
+      // Prefer SSE for typing feel; fall back to JSON chat if stream fails
+      this.abortInFlightChat()
+      let liveId = convId
+      let gotToken = false
+      let aborted = false
+      this.processStatus = ''
+      const streamReq = sendChatStream(payload, {
+        onMeta: meta => {
+          if (meta && meta.sessionId) {
+            liveId = this.alignSessionId(liveId, meta.sessionId)
+          }
+        },
+        onStatus: text => {
+          if (aborted || !text) {
+            return
+          }
+          this.processStatus = text
+          this.scrollToBottom()
+        },
+        onToken: chunk => {
+          if (!chunk) {
+            return
+          }
+          this.processStatus = ''
+          if (!gotToken) {
+            gotToken = true
+            this.applyConversation(liveId, c => {
+              c.messages = c.messages.concat([{
+                role: 'assistant',
+                text: chunk,
+                toolTrace: null,
+                streaming: true
+              }])
+            })
+          } else {
+            this.applyConversation(liveId, c => {
+              const msgs = c.messages.slice()
+              const last = msgs[msgs.length - 1]
+              if (last && last.role === 'assistant' && last.streaming) {
+                msgs[msgs.length - 1] = Object.assign({}, last, {
+                  text: (last.text || '') + chunk
+                })
+                c.messages = msgs
+              }
+            })
+          }
+          this.scrollToBottom()
+        },
+        onPending: list => {
+          const arr = Array.isArray(list) ? list : []
+          this.mergePendingActions(liveId, arr)
+        },
+        onTrace: trace => {
+          this.applyConversation(liveId, c => {
+            const msgs = c.messages.slice()
+            const last = msgs[msgs.length - 1]
+            if (last && last.role === 'assistant') {
+              msgs[msgs.length - 1] = Object.assign({}, last, {
+                toolTrace: Array.isArray(trace) ? trace : null,
+                streaming: false
+              })
+              c.messages = msgs
+            }
+          })
+        },
+        onDonePayload: done => {
+          this.processStatus = ''
+          if (done && done.stopped) {
+            this.stripStreamingAssistant(liveId)
+            this.appendStoppedNotice(liveId)
+            return
+          }
+          this.applyConversation(liveId, c => {
+            if (done && typeof done.mockMode === 'boolean') {
+              c.mockMode = done.mockMode
+            }
+            if (done && done.sessionId) {
+              c.sessionId = done.sessionId
+            }
+            const msgs = c.messages.slice()
+            const last = msgs[msgs.length - 1]
+            if (last && last.role === 'assistant' && last.streaming) {
+              msgs[msgs.length - 1] = Object.assign({}, last, { streaming: false })
+              c.messages = msgs
+            }
+          })
+          if (done && done.sessionId) {
+            liveId = this.alignSessionId(liveId, done.sessionId)
+          }
+        }
+      })
+      const abortFn = () => {
+        aborted = true
+        if (streamReq && typeof streamReq.abort === 'function') {
+          streamReq.abort()
+        }
+        this.stripStreamingAssistant(liveId)
+      }
+      this._chatAbort = abortFn
+      return streamReq.catch(err => {
+        if (aborted || (err && err.name === 'AbortError')) {
+          this.stripStreamingAssistant(liveId)
+          return
+        }
+        // Stream unavailable → classic JSON chat
+        return sendChat(payload).then(res => {
+          if (aborted) {
+            return
+          }
+          if (res.code !== 200) {
+            this.applyConversation(liveId, c => {
+              c.messages = c.messages.concat([{
+                role: 'assistant',
+                text: res.msg || '请求失败，请稍后重试',
+                toolTrace: null
+              }])
+            })
+            return
+          }
+          if (res.sessionId) {
+            liveId = this.alignSessionId(liveId, res.sessionId)
+          }
+          this.applyConversation(liveId, c => {
+            if (typeof res.mockMode === 'boolean') {
+              c.mockMode = res.mockMode
+            }
+            if (res.assistantText) {
+              c.messages = c.messages.concat([{
+                role: 'assistant',
+                text: res.assistantText,
+                toolTrace: Array.isArray(res.toolTrace) ? res.toolTrace : null
+              }])
+            }
+          })
+          this.mergePendingActions(liveId, res.pendingActions)
+        }).catch(() => {
+          if (aborted) {
+            return
+          }
+          this.applyConversation(liveId, c => {
+            c.messages = c.messages.concat([{
+              role: 'assistant',
+              text: '网络异常，请检查连接后重试',
+              toolTrace: null
+            }])
+          })
+        })
+      }).finally(() => {
+        if (this._chatAbort === abortFn) {
+          this._chatAbort = null
+        }
+      })
+    },
+    dismissPending(id) {
+      this.patchActive(c => {
+        c.pendingActions = (c.pendingActions || []).filter(p => p.id !== id)
+      })
+    },
+    onPendingCancel(action) {
+      const id = action && action.id != null ? action.id : action
+      cancelAction(id).then(res => {
+        if (res && res.code === 200) {
+          this.dismissPending(id)
+          const followUp =
+            (res.message && String(res.message).trim()) ||
+            ('好的，已取消「' +
+              actionLabel(typeof action === 'object' ? action : null) +
+              '」，没有执行任何操作。有需要可以直接说下一步。')
+          this.patchActive(c => {
+            c.messages = c.messages.concat([{
+              role: 'assistant',
+              text: followUp,
+              toolTrace: null
+            }])
+          })
+          this.scrollToBottom()
+        } else {
+          const msg = res && res.msg
+          // 英文/技术性报错不直接展示给运维
+          this.$message.error(msg && /[\u4e00-\u9fff]/.test(msg) ? msg : '取消失败，请稍后重试')
+        }
+      }).catch(() => this.$message.error('取消失败，请稍后重试'))
+    },
+    onActionConfirmed({ action, result }) {
+      // Card goes away once confirm was processed; success/failure both echo in chat.
+      this.dismissPending(action.id)
+      this.patchActive(c => {
+        c.messages = c.messages.concat([{
+          role: 'assistant',
+          text: formatConfirmResult(action, result),
+          toolTrace: null
+        }])
+      })
+      this.scrollToBottom()
+    },
+    onActionConfirmFailed({ action, error }) {
+      // Only when confirm itself did not take effect (network / lifecycle). Keep card for retry.
+      const detail = error && (error.msg || error.message)
+      const tip = detail && /[\u4e00-\u9fff]/.test(String(detail))
+        ? String(detail)
+        : '确认请求没有提交成功，请稍后重试；确认卡仍保留。'
+      this.$message && this.$message.warning(tip)
+    }
+  }
+}
+</script>
+
+<style lang="scss" scoped>
+.ops-agent-chat {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 2000;
+
+  &__dock {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  &__dock-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 200px;
+    padding: 6px 10px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+    cursor: pointer;
+    font-size: 12px;
+    color: #303133;
+
+    &:hover {
+      background: #f5f7fa;
+    }
+  }
+
+  &__dock-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 140px;
+  }
+
+  &__dock-close {
+    color: #c0c4cc;
+    font-size: 12px;
+
+    &:hover {
+      color: #f56c6c;
+    }
+  }
+
+  &__fab {
+    position: relative;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: #409eff;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.45);
+
+    &:hover {
+      background: #66b1ff;
+    }
+  }
+
+  &__fab-badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border-radius: 9px;
+    background: #f56c6c;
+    color: #fff;
+    font-size: 11px;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  &__panel {
+    position: relative;
+    max-width: calc(100vw - 48px);
+    max-height: calc(100vh - 48px);
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.16);
+    display: flex;
+    overflow: hidden;
+  }
+
+  &__resize {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 16px;
+    height: 16px;
+    cursor: nwse-resize;
+    z-index: 3;
+    background:
+      linear-gradient(135deg, transparent 50%, #c0c4cc 50%, #c0c4cc 60%, transparent 60%),
+      linear-gradient(135deg, transparent 70%, #c0c4cc 70%, #c0c4cc 80%, transparent 80%);
+
+    &:hover {
+      background:
+        linear-gradient(135deg, transparent 50%, #909399 50%, #909399 60%, transparent 60%),
+        linear-gradient(135deg, transparent 70%, #909399 70%, #909399 80%, transparent 80%);
+    }
+  }
+
+  &__sidebar {
+    position: relative;
+    flex-shrink: 0;
+    border-right: 1px solid #ebeef5;
+    background: #f7f8fa;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+
+    &.is-collapsed {
+      width: 0 !important;
+      border-right: none;
+      overflow: hidden;
+    }
+  }
+
+  &__sidebar-resize {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    width: 6px;
+    height: 100%;
+    cursor: col-resize;
+    z-index: 4;
+    background: transparent;
+
+    &:hover {
+      background: rgba(64, 158, 255, 0.28);
+    }
+  }
+
+  &__sidebar-head {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 8px 8px;
+  }
+
+  &__search {
+    flex: 1;
+    min-width: 0;
+  }
+
+  &__conv-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 6px 8px;
+  }
+
+  &__conv-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 8px 8px 8px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 2px;
+
+    &:hover {
+      background: #eef2f7;
+
+      .ops-agent-chat__conv-more {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .ops-agent-chat__conv-title {
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+      }
+
+      .ops-agent-chat__conv-more-btn {
+        background: linear-gradient(90deg, rgba(238, 242, 247, 0), #eef2f7 36%);
+      }
+    }
+
+    &.is-active {
+      background: #ecf5ff;
+
+      .ops-agent-chat__conv-more {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .ops-agent-chat__conv-title {
+        -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+        mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 28px), transparent 100%);
+      }
+
+      .ops-agent-chat__conv-more-btn {
+        background: linear-gradient(90deg, rgba(236, 245, 255, 0), #ecf5ff 36%);
+      }
+    }
+  }
+
+  &__conv-title-wrap {
+    position: relative;
+    min-width: 0;
+    width: 100%;
+  }
+
+  &__conv-title {
+    display: block;
+    font-size: 12px;
+    color: #303133;
+    overflow: hidden;
+    white-space: nowrap;
+    line-height: 1.4;
+    /* full text when it fits; fade only when overflowing (or hover/active above) */
+    -webkit-mask-image: none;
+    mask-image: none;
+
+    &.is-overflow {
+      -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+      mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 16px), transparent 100%);
+    }
+  }
+
+  &__conv-time {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: #c0c4cc;
+    line-height: 1.3;
+  }
+
+  &__conv-rel {
+    flex-shrink: 0;
+  }
+
+  &__conv-abs {
+    color: #d3d4d6;
+    white-space: nowrap;
+  }
+
+  &__conv-more {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s;
+    line-height: 1;
+    z-index: 1;
+  }
+
+  &__conv-more-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 28px;
+    height: 22px;
+    padding: 0 2px 0 14px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #909399;
+    cursor: pointer;
+    font-size: 14px;
+
+    &:hover {
+      color: #409eff;
+    }
+  }
+
+  &__rename-input {
+    width: 100%;
+    border: 1px solid #409eff;
+    border-radius: 3px;
+    padding: 1px 4px;
+    font-size: 12px;
+    outline: none;
+  }
+
+  &__empty {
+    text-align: center;
+    color: #c0c4cc;
+    font-size: 12px;
+    padding: 16px 8px;
+  }
+
+  &__empty-retry {
+    margin-top: 8px;
+    border: none;
+    background: transparent;
+    color: #409eff;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 0;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__conv-more-load {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    margin: 4px 0 2px;
+    padding: 8px 6px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #909399;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+
+    &:hover:not(:disabled) {
+      background: #eef2f7;
+      color: #606266;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.7;
+    }
+
+    i {
+      font-size: 12px;
+    }
+  }
+
+  &__conv-loading {
+    padding: 8px 6px 12px;
+  }
+
+  &__conv-skeleton {
+    padding: 8px 6px;
+    margin-bottom: 4px;
+  }
+
+  &__skel-line {
+    height: 10px;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #f0f2f5 25%, #e6e8eb 37%, #f0f2f5 63%);
+    background-size: 400% 100%;
+    animation: ops-agent-skel 1.2s ease infinite;
+
+    &--title {
+      width: 72%;
+      margin-bottom: 8px;
+    }
+
+    &--meta {
+      width: 42%;
+      height: 8px;
+    }
+  }
+
+  &__conv-loading-tip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #909399;
+
+    .el-icon-loading {
+      font-size: 14px;
+      color: #409eff;
+    }
+  }
+
+  &__main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid #ebeef5;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  &__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  &__title-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 200px;
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  &__icon-btn,
+  &__close {
+    cursor: pointer;
+    font-size: 16px;
+    color: #909399;
+    line-height: 1;
+
+    &:hover {
+      color: #606266;
+    }
+  }
+
+  &__messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 14px;
+    min-height: 0;
+    background: #fafbfc;
+  }
+
+  &__typing {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 4px;
+
+    > span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #c0c4cc;
+      animation: ops-agent-bounce 1.2s infinite ease-in-out;
+
+      &:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+    }
+  }
+
+  &__typing-text {
+    margin-left: 6px;
+    font-style: normal;
+    font-size: 12px;
+    color: #909399;
+  }
+
+  &__shortcuts {
+    padding: 6px 12px 12px;
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0.65) 0%, rgba(255, 255, 255, 0) 100%);
+  }
+
+  &__shortcuts-label {
+    font-size: 12px;
+    color: #64748b;
+    padding: 2px 2px 8px;
+    letter-spacing: 0.02em;
+  }
+
+  &__shortcuts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  &__suggest {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 10px;
+    padding: 10px 10px 9px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+
+    &:hover:not(:disabled) {
+      border-color: #94a3b8;
+      background: #fff;
+      transform: translateY(-1px);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    &.is-blue:hover:not(:disabled) { border-color: #5b7c99; }
+    &.is-amber:hover:not(:disabled) { border-color: #b8893d; }
+    &.is-green:hover:not(:disabled) { border-color: #4a8f6f; }
+    &.is-red:hover:not(:disabled) { border-color: #c45b5b; }
+  }
+
+  &__suggest-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+
+    &.is-blue {
+      background: #ecf5ff;
+      color: #409eff;
+    }
+
+    &.is-amber {
+      background: #fdf6ec;
+      color: #e6a23c;
+    }
+
+    &.is-green {
+      background: #f0f9eb;
+      color: #67c23a;
+    }
+
+    &.is-red {
+      background: #fef0f0;
+      color: #f56c6c;
+    }
+  }
+
+  &__suggest-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  &__suggest-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #334155;
+    line-height: 1.3;
+  }
+
+  &__suggest-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  &__footer {
+    padding: 10px 12px 8px;
+    border-top: 1px solid #ebeef5;
+    background: #fff;
+  }
+
+  &__ctx-hint {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: #f4f8ff;
+    border: 1px solid #d6e4ff;
+    color: #606266;
+    font-size: 12px;
+    line-height: 1.4;
+
+    i {
+      color: #409eff;
+      font-size: 13px;
+    }
+  }
+
+  &__composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+
+  &__input {
+    flex: 1;
+    min-width: 0;
+    min-height: 36px;
+    max-height: 120px;
+    resize: none;
+    border: 1px solid #dcdfe6;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #303133;
+    outline: none;
+    font-family: inherit;
+    box-sizing: border-box;
+    background: #fff;
+
+    &:focus {
+      border-color: #409eff;
+    }
+
+    &:disabled {
+      background: #f5f7fa;
+      color: #c0c4cc;
+    }
+  }
+
+  &__send,
+  &__stop {
+    flex-shrink: 0;
+    height: 36px;
+    min-width: 56px;
+    padding: 0 14px;
+    margin: 0;
+    border-radius: 8px !important;
+    font-size: 13px;
+    line-height: 34px;
+    box-sizing: border-box;
+    border-width: 1px;
+    border-style: solid;
+  }
+
+  &__stop {
+    border-color: #dcdfe6 !important;
+    background: #fff !important;
+    color: #606266 !important;
+
+    &:hover,
+    &:focus {
+      border-color: #c0c4cc !important;
+      color: #303133 !important;
+      background: #f5f7fa !important;
+    }
+  }
+
+  &__hint {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #c0c4cc;
+    line-height: 1.2;
+  }
+}
+
+@keyframes ops-agent-bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0.7);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.ops-agent-chat-slide-enter-active,
+.ops-agent-chat-slide-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.ops-agent-chat-slide-enter,
+.ops-agent-chat-slide-leave-to {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+@keyframes ops-agent-skel {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+</style>
+
+<!-- dropdown menus are teleported to body; keep compact spacing consistent -->
+<style lang="scss">
+.ops-agent-chat-menu {
+  min-width: 96px !important;
+  padding: 4px 0 !important;
+
+  .el-dropdown-menu__item,
+  .el-dropdown-item {
+    padding: 0 14px !important;
+    line-height: 28px !important;
+    font-size: 12px !important;
+    color: #606266;
+  }
+
+  .el-dropdown-menu__item--divided,
+  .el-dropdown-item--divided {
+    margin-top: 4px !important;
+
+    &::before {
+      margin: 0 8px !important;
+      height: 0 !important;
+      border-top: 1px solid #ebeef5 !important;
+    }
+  }
+
+  .ops-agent-chat-menu__danger {
+    color: #f56c6c;
+  }
+}
+</style>

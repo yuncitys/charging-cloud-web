@@ -1,0 +1,291 @@
+/**
+ * Ops Agent chat helpers.
+ * Conversations are server-owned; localStorage only keeps UI prefs + last activeId.
+ */
+
+import {
+  DEFAULT_UI,
+  PANEL_MIN_W,
+  PANEL_MIN_H,
+  PANEL_MAX_W,
+  PANEL_MAX_H,
+  SIDEBAR_MIN,
+  SIDEBAR_MAX,
+  suggestPanelSize as suggestPanelSizeFromLayout
+} from './panelLayout'
+
+const UI_KEY = 'ops_agent_ui_prefs_v1'
+const ACTIVE_KEY = 'ops_agent_active_session_v1'
+const DOCK_KEY = 'ops_agent_docked_sessions_v1'
+/** Legacy multi-conversation blob — cleared on sync so it cannot override server. */
+const LEGACY_STORE_KEY = 'ops_agent_conversations_v2'
+const LEGACY_SESSION_KEY = 'ops_agent_session_id'
+
+export let WELCOME_TEXT =
+  '我是运维助手。可以查单、排障退款、查 SOP、建议远程停充（高风险需确认）。\n点下方快捷场景，或直接粘贴订单号。'
+
+export function setWelcomeText(text) {
+  if (text != null && String(text).trim()) {
+    WELCOME_TEXT = String(text)
+  }
+}
+
+export function createEmptyConversation(partial) {
+  const now = Date.now()
+  const id = partial && partial.id ? partial.id : null
+  return Object.assign(
+    {
+      id,
+      sessionId: id,
+      title: '新对话',
+      updatedAt: now,
+      createdAt: now,
+      messages: [
+        {
+          role: 'assistant',
+          text: WELCOME_TEXT,
+          toolTrace: null,
+          traceOpen: false
+        }
+      ],
+      pendingActions: [],
+      mockMode: false,
+      messagesLoaded: false
+    },
+    partial || {},
+    {
+      // keep id / sessionId aligned when server id is known
+      id: (partial && (partial.id || partial.sessionId)) || id,
+      sessionId: (partial && (partial.sessionId || partial.id)) || id
+    }
+  )
+}
+
+export function fromSessionSummary(row) {
+  const id = row && row.id != null ? String(row.id) : null
+  const updatedAt = toMillis(row && (row.updateTime || row.updatedAt))
+  const createdAt = toMillis(row && (row.createTime || row.createdAt)) || updatedAt
+  return createEmptyConversation({
+    id,
+    sessionId: id,
+    title: (row && row.title) || '新对话',
+    updatedAt: updatedAt || Date.now(),
+    createdAt: createdAt || Date.now(),
+    messages: [],
+    messagesLoaded: false,
+    pendingActions: []
+  })
+}
+
+export function mapServerMessages(rows) {
+  if (!Array.isArray(rows) || !rows.length) {
+    return [
+      {
+        role: 'assistant',
+        text: WELCOME_TEXT,
+        toolTrace: null,
+        traceOpen: false
+      }
+    ]
+  }
+  return rows.map(row => {
+    const toolTrace = parseToolTrace(row && row.toolTraceJson)
+    return {
+      role: row.role === 'user' ? 'user' : 'assistant',
+      text: row.content != null ? String(row.content) : '',
+      toolTrace,
+      traceOpen: false,
+      createdAt: toMillis(row.createTime)
+    }
+  })
+}
+
+function parseToolTrace(raw) {
+  if (!raw) {
+    return null
+  }
+  if (Array.isArray(raw)) {
+    return raw
+  }
+  try {
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+    return Array.isArray(parsed) ? parsed : null
+  } catch (e) {
+    return null
+  }
+}
+
+function toMillis(v) {
+  if (v == null || v === '') {
+    return 0
+  }
+  if (typeof v === 'number') {
+    return v
+  }
+  const t = new Date(v).getTime()
+  return Number.isNaN(t) ? 0 : t
+}
+
+/**
+ * Build a conversation title from the first user message.
+ * Do NOT append ellipsis — the sidebar fades visually when width is insufficient.
+ */
+export function titleFromMessage(text) {
+  if (!text) {
+    return '新对话'
+  }
+  const t = String(text).replace(/\s+/g, ' ').trim()
+  if (!t) {
+    return '新对话'
+  }
+  return t.length > 120 ? t.slice(0, 120) : t
+}
+
+/**
+ * Prefer persisted server title. Only fall back to first user message when title is
+ * still the default (legacy rows / not yet saved) so the sidebar does not "jump"
+ * after opening a conversation.
+ */
+export function displayConversationTitle(conv) {
+  if (!conv) {
+    return '新对话'
+  }
+  const stored = normalizeStoredTitle(conv.title)
+  if (stored) {
+    return stored
+  }
+  const msgs = conv.messages || []
+  for (let i = 0; i < msgs.length; i++) {
+    const m = msgs[i]
+    if (m && m.role === 'user' && m.text) {
+      return titleFromMessage(m.text)
+    }
+  }
+  return '新对话'
+}
+
+export function isDefaultConversationTitle(title) {
+  if (title == null || !String(title).trim()) {
+    return true
+  }
+  const t = String(title).trim()
+  return t === '新对话' || t === 'ops chat'
+}
+
+function normalizeStoredTitle(title) {
+  if (isDefaultConversationTitle(title)) {
+    return ''
+  }
+  return String(title).trim()
+}
+
+export function sortConversations(list) {
+  return list.slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+}
+
+export function loadActiveId(adminId) {
+  try {
+    const raw = localStorage.getItem(ACTIVE_KEY)
+    if (!raw) {
+      return null
+    }
+    const parsed = JSON.parse(raw)
+    if (adminId != null && parsed.adminId != null && parsed.adminId !== adminId) {
+      return null
+    }
+    return parsed.activeId || null
+  } catch (e) {
+    return null
+  }
+}
+
+export function saveActiveId(adminId, activeId) {
+  try {
+    localStorage.setItem(ACTIVE_KEY, JSON.stringify({ adminId, activeId }))
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** Minimized dock chips (session ids), scoped by admin. */
+export function loadDockedIds(adminId) {
+  try {
+    const raw = localStorage.getItem(DOCK_KEY)
+    if (!raw) {
+      return []
+    }
+    const parsed = JSON.parse(raw)
+    if (adminId != null && parsed.adminId != null && parsed.adminId !== adminId) {
+      return []
+    }
+    return Array.isArray(parsed.dockedIds) ? parsed.dockedIds.filter(Boolean) : []
+  } catch (e) {
+    return []
+  }
+}
+
+export function saveDockedIds(adminId, dockedIds) {
+  try {
+    localStorage.setItem(DOCK_KEY, JSON.stringify({
+      adminId,
+      dockedIds: Array.isArray(dockedIds) ? dockedIds.filter(Boolean).slice(0, 5) : []
+    }))
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** Drop legacy local conversation blobs so they cannot fight the server. */
+export function clearLegacyLocalConversations() {
+  try {
+    localStorage.removeItem(LEGACY_STORE_KEY)
+    sessionStorage.removeItem(LEGACY_SESSION_KEY)
+  } catch (e) {
+    /* ignore */
+  }
+}
+
+/** Prefer a readable size that fits the viewport; caller may override with saved prefs. */
+export function suggestPanelSize() {
+  return suggestPanelSizeFromLayout()
+}
+
+export function loadUiPrefs() {
+  try {
+    const raw = localStorage.getItem(UI_KEY)
+    if (!raw) {
+      return Object.assign({}, DEFAULT_UI, suggestPanelSize())
+    }
+    const parsed = JSON.parse(raw)
+    const suggested = suggestPanelSize()
+    return {
+      panelWidth: clamp(parsed.panelWidth || suggested.panelWidth, PANEL_MIN_W, PANEL_MAX_W),
+      panelHeight: clamp(parsed.panelHeight || suggested.panelHeight, PANEL_MIN_H, PANEL_MAX_H),
+      sidebarOpen: parsed.sidebarOpen !== false,
+      sidebarWidth: clamp(
+        parsed.sidebarWidth != null ? parsed.sidebarWidth : DEFAULT_UI.sidebarWidth,
+        SIDEBAR_MIN,
+        SIDEBAR_MAX
+      )
+    }
+  } catch (e) {
+    return Object.assign({}, DEFAULT_UI, suggestPanelSize())
+  }
+}
+
+export function saveUiPrefs(prefs) {
+  localStorage.setItem(UI_KEY, JSON.stringify({
+    panelWidth: prefs.panelWidth,
+    panelHeight: prefs.panelHeight,
+    sidebarOpen: prefs.sidebarOpen !== false,
+    sidebarWidth: clamp(
+      prefs.sidebarWidth != null ? prefs.sidebarWidth : DEFAULT_UI.sidebarWidth,
+      SIDEBAR_MIN,
+      SIDEBAR_MAX
+    )
+  }))
+}
+
+function clamp(n, min, max) {
+  return Math.min(max, Math.max(min, Number(n) || min))
+}
