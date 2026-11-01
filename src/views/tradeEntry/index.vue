@@ -85,7 +85,8 @@
           <span>{{ row.managerMobile }}</span>
         </template>
       </el-table-column>
-      <el-table-column label="入驻状态" width="100" align="center">
+      <!-- 最长文案如「待签署协议」；100px 会被 cell 省略号裁成末尾小点 -->
+      <el-table-column label="入驻状态" width="130" align="center">
         <template slot-scope="{row}">
           <el-tag :type="row.status | statusTypeFilter">{{ row.status | statusFilter }}</el-tag>
         </template>
@@ -162,6 +163,7 @@
                   command="cancel"
                   icon="el-icon-circle-close"
                   divided
+                  :disabled="row._cancelling"
                 >
                   注销进件
                 </el-dropdown-item>
@@ -173,12 +175,21 @@
     </el-table>
 
     <pagination v-show="total>0" :total="total" :page.sync="listQuery.page" :limit.sync="listQuery.limit" @pagination="getList" />
+
+    <!-- 渠道操作等待：轻遮罩 + 白卡片，避免全屏深灰 -->
+    <div v-if="channelOverlayVisible" class="trade-entry-submit-mask">
+      <div class="trade-entry-submit-card">
+        <i class="el-icon-loading trade-entry-submit-spinner" />
+        <div class="trade-entry-submit-title">{{ channelOverlayTitle }}</div>
+        <div class="trade-entry-submit-desc">{{ channelOverlayDesc }}</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import { listTradeEntry, delTradeEntry, removeTradeEntry, submitTradeEntry, auditTradeEntry } from '@/api/pay/tradeEntry'
-import { formatServiceProvider, isLocalChannel, loadServiceProviderDict } from '@/utils/payChannel'
+import { formatServiceProvider, isLocalChannel, loadServiceProviderDict, supportsEntryEdit } from '@/utils/payChannel'
 import Pagination from '@/components/Pagination'
 import { formatDictLabel } from '@/utils/dictionary'
 
@@ -225,6 +236,9 @@ export default {
       list: null,
       total: 0,
       listLoading: true,
+      channelOverlayVisible: false,
+      channelOverlayTitle: '',
+      channelOverlayDesc: '',
       dateRange: [],
       statusOptions: [],
       auditStatusOptions: [],
@@ -329,6 +343,9 @@ export default {
       return Number(row && row.status) === 0 && Number(row && row.auditStatus) === 10
     },
     canEditEntry(row) {
+      if (!supportsEntryEdit(row && row.serviceProviderId)) {
+        return false
+      }
       const status = Number(row && row.status)
       return [30, 32].includes(status)
     },
@@ -402,34 +419,72 @@ export default {
         type: 'warning'
       }).then(() => {
         this.$set(row, '_submitting', true)
+        this.showChannelOverlay(
+          '正在提交渠道进件',
+          '渠道需上传证照图片，通常十几秒内完成，请勿重复点击'
+        )
         submitTradeEntry(row.busTradeMerNo).then(res => {
-          this.$set(row, '_submitting', false)
           if (res && res.code === 200) {
-            this.$message.success('提交进件成功')
+            this.$message({ type: 'success', message: '提交进件成功', duration: 5000 })
             this.getList()
           } else {
-            this.$message.error((res && res.msg) || '提交进件失败')
+            this.$message({
+              type: 'error',
+              message: (res && res.msg) || '提交进件失败',
+              duration: 5000
+            })
           }
         }).catch(() => {
+          this.$message({ type: 'error', message: '提交进件失败', duration: 5000 })
+        }).finally(() => {
+          this.hideChannelOverlay()
           this.$set(row, '_submitting', false)
-          this.$message.error('提交进件失败')
         })
       }).catch(() => {})
     },
+    showChannelOverlay(title, desc) {
+      this.channelOverlayTitle = title
+      this.channelOverlayDesc = desc
+      this.channelOverlayVisible = true
+    },
+    hideChannelOverlay() {
+      this.channelOverlayVisible = false
+      this.channelOverlayTitle = ''
+      this.channelOverlayDesc = ''
+    },
     handleCancel(row) {
-      this.$confirm('确认注销该商户？注销后该账户将无法使用，是否继续？', '提示', {
-        confirmButtonText: '确定',
+      this.$confirm('确认注销该商户？注销后该账户将无法使用，是否继续？', '注销进件', {
+        confirmButtonText: '确定注销',
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        delTradeEntry(row.id).then(() => {
-          this.$message({
-            type: 'success',
-            message: '注销成功'
-          })
-          this.getList()
+        this.$set(row, '_cancelling', true)
+        this.showChannelOverlay(
+          '正在向渠道申请注销',
+          '渠道可能需要审核，请勿重复点击；完成后请查询状态确认结果'
+        )
+        delTradeEntry(row.id).then(res => {
+          if (res && res.code === 200) {
+            this.$message({
+              type: 'success',
+              message: (res && res.msg) || '注销成功',
+              duration: 5000
+            })
+            this.getList()
+          } else {
+            this.$message({
+              type: 'error',
+              message: (res && res.msg) || '注销失败',
+              duration: 5000
+            })
+          }
+        }).catch(() => {
+          this.$message({ type: 'error', message: '注销失败', duration: 5000 })
+        }).finally(() => {
+          this.hideChannelOverlay()
+          this.$set(row, '_cancelling', false)
         })
-      })
+      }).catch(() => {})
     },
     handleRemove(row) {
       this.$confirm('此操作将永久删除该商户，是否继续？', '警告', {
@@ -459,6 +514,47 @@ export default {
 }
 .filter-item {
   margin: 0 12px 12px 0 !important;
+}
+
+.trade-entry-submit-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.18);
+  backdrop-filter: blur(2px);
+}
+
+.trade-entry-submit-card {
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  padding: 28px 24px 24px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.12);
+  text-align: center;
+}
+
+.trade-entry-submit-spinner {
+  font-size: 32px;
+  color: #409eff;
+  margin-bottom: 12px;
+}
+
+.trade-entry-submit-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #303133;
+  line-height: 1.4;
+}
+
+.trade-entry-submit-desc {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #909399;
+  line-height: 1.6;
 }
 
 </style>

@@ -104,7 +104,7 @@
                 <el-input v-model="form.managerMobile" />
               </el-form-item>
             </el-col>
-            <el-col v-if="isWxPartner" :span="12">
+            <el-col v-if="isWxPartner || isHuifu" :span="12">
               <el-form-item label="联系邮箱">
                 <el-input v-model="form.managerEmail" />
               </el-form-item>
@@ -156,7 +156,7 @@
             </el-col>
             <el-col :span="12">
               <el-form-item label="商户编号">
-                <el-input v-model="form.merchantNo" />
+                <el-input v-model="form.merchantNo" :placeholder="merchantNoPlaceholder" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
@@ -172,7 +172,7 @@
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="交易商户类型">
+              <el-form-item label="主体类型">
                 <el-select v-model="form.tradeMerType" style="width: 100%">
                   <el-option
                     v-for="item in tradeMerTypeOptions"
@@ -231,7 +231,7 @@
               </el-form-item>
             </el-col>
           </el-row>
-          <el-row>
+          <el-row v-if="String(form.tradeMerType) !== '2'">
             <el-col :span="24">
               <el-form-item label="营业执照">
                 <el-image
@@ -605,7 +605,7 @@
                 <el-input v-model="form.settBankBranchId" />
               </el-form-item>
             </el-col>
-            <el-col :span="12">
+            <el-col :span="24">
               <el-form-item label="银行账号">
                 <el-input v-model="form.settBankAccNo" />
               </el-form-item>
@@ -618,6 +618,43 @@
             <el-col v-if="form.settBankAccType === '0010' && !isWxPartner" :span="12">
               <el-form-item label="银行预留手机号">
                 <el-input v-model="form.mobileNo" />
+              </el-form-item>
+            </el-col>
+            <template v-if="isHuifu">
+              <el-col :span="8">
+                <el-form-item label="开户省">
+                  <el-select v-model="form.settBankProvinceId" style="width: 100%" disabled>
+                    <el-option v-for="item in provinceList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户市">
+                  <el-select v-model="form.settBankRegionId" style="width: 100%" disabled>
+                    <el-option v-for="item in settBankCityList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="开户区">
+                  <el-select v-model="form.settBankCountyId" style="width: 100%" disabled>
+                    <el-option v-for="item in settBankAreaList" :key="item.id" :label="item.fullName" :value="item.id" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </template>
+            <el-col v-if="isHuifu && String(form.tradeMerType) === '2'" :span="24">
+              <el-form-item label="结算银行卡正面">
+                <el-image
+                  style="width: 200px; height: 120px"
+                  :src="form.settBankCardImg"
+                  :preview-src-list="[form.settBankCardImg]"
+                  fit="contain"
+                >
+                  <div slot="error" class="image-slot">
+                    <i class="el-icon-picture-outline"></i>
+                  </div>
+                </el-image>
               </el-form-item>
             </el-col>
           </el-row>
@@ -670,6 +707,8 @@ export default {
       areaList: [],
       legCityList: [],
       legAreaList: [],
+      settBankCityList: [],
+      settBankAreaList: [],
       busKindOptions: [],
       merchantList: [],
       merTypeOptions: [],
@@ -741,8 +780,20 @@ export default {
     isWxPartner() {
       return this.form.serviceProviderId === 'wxpay_partner'
     },
+    isHuifu() {
+      return this.form.serviceProviderId === 'huifu'
+    },
     isLocal() {
       return isLocalChannel(this.form.serviceProviderId)
+    },
+    merchantNoPlaceholder() {
+      if (this.isHuifu) {
+        return '渠道审核通过后自动回写 huifu_id，勿手工乱填'
+      }
+      if (this.isLocal) {
+        return '默认渠道留空则审核通过时自动生成'
+      }
+      return '渠道商户号由支付渠道回写，勿手工乱填'
     },
     merchantName() {
       const id = this.form && this.form.merchantId
@@ -861,6 +912,8 @@ export default {
           this.$set(this.form, 'storeEntranceImg', url)
         } else if (ft === '06') {
           this.$set(this.form, 'storeInteriorImg', url)
+        } else if (ft === '12') {
+          this.$set(this.form, 'settBankCardImg', url)
         }
       })
     },
@@ -896,6 +949,16 @@ export default {
         if (this.form.corLegCity) {
           getAreaSelector(this.form.corLegCity).then(res => {
             this.legAreaList = res.data
+          })
+        }
+        if (this.form.settBankProvinceId) {
+          getAreaSelector(this.form.settBankProvinceId).then(res => {
+            this.settBankCityList = res.data
+          })
+        }
+        if (this.form.settBankRegionId) {
+          getAreaSelector(this.form.settBankRegionId).then(res => {
+            this.settBankAreaList = res.data
           })
         }
       }).catch(err => {
