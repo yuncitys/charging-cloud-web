@@ -1,0 +1,35 @@
+---
+description: docs/superpowers specs/plans 按功能分支 slug 落盘（覆盖 skill 默认扁平路径）
+alwaysApply: true
+---
+
+# 文档按功能分支归档
+
+设计 spec、实施 plan **必须**按功能 slug 分目录，不要写到 `plans/`、`specs/` 根下。
+
+## Slug
+
+- 与 git 分支对齐，去掉 `feature/`、`fix/` 前缀（如 `feature/operator-workbench-web` → `operator-workbench-web`）。
+- 已有目录见：`docs/superpowers/plans/README.md`、`docs/superpowers/specs/README.md`。
+- 新功能先建同名 slug 子目录。
+
+## 写入路径（覆盖 Superpowers skill 默认）
+
+| 类型 | 路径 |
+|------|------|
+| Spec | `docs/superpowers/specs/<slug>/YYYY-MM-DD-<topic>-design.md` |
+| Plan | `docs/superpowers/plans/<slug>/YYYY-MM-DD-<topic>.md` |
+| SQL（若本仓有） | `docs/sql/<slug>/<name>_<YYYYMMDD>.sql` |
+
+brainstorming / writing-plans 若写到扁平的 `docs/superpowers/specs/` 或 `plans/` 根目录，视为违规，应改写到对应 `<slug>/`。
+
+## 禁止
+
+- 在 `docs/superpowers/plans/`、`docs/superpowers/specs/` 根目录新增业务文件（仅 `README.md` 除外）。
+
+## 示例
+
+```text
+docs/superpowers/specs/operator-workbench-web/2026-10-26-operator-workbench-design.md
+docs/superpowers/plans/operator-workbench-web/2026-10-26-operator-workbench.md
+```

@@ -1,0 +1,11 @@
+---
+description: 禁止向客户远程 codeup-cld 推送未付费新功能
+alwaysApply: true
+---
+
+# 禁止推送 codeup-cld
+
+- `codeup-cld` 是**客户**的远程仓库，**一律不要** `git push codeup-cld`（含任何分支、标签、`--delete` 以外的主动同步）。
+- 客户未付费前，不能把我们新开发的功能推过去；误推会导致对方拿到未授权代码。
+- 需要推送 / 建 PR 时只用 GitHub `origin`（或用户明确指定的非客户远程）。
+- 即使用户只说「push」，也**不要**默认推 `codeup-cld`；只有用户**逐字明确要求**推客户远程时才可以。

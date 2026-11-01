@@ -23,5 +23,8 @@ package-lock.json
 yarn.lock
 
 .worktrees/
-.cursor/
+# Cursor 本地态忽略；rules 需入库以便团队/agent 共用
+.cursor/*
+!.cursor/rules/
+!.cursor/rules/*.mdc
 .pw-artifacts/

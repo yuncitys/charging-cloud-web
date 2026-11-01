@@ -1,0 +1,43 @@
+---
+description: 改后端服务后用 java-project-runner MCP 重启，禁止手写 kill/nohup
+alwaysApply: true
+---
+
+# Java 服务重启：只用 java-project-runner MCP
+
+改完可运行的 Spring Boot 服务后，**必须**用 MCP 命名空间 `user-java-project-runner` 重启，**禁止**手写 `kill` / `pkill` / `nohup java -jar`（除非 MCP 不可用且用户明确要求兜底）。
+
+## 流程
+
+1. `project_list`（可选）确认 `projectId`。
+2. 有代码变更需要重新打包：`project_restart`，`rebuild: true`，`profile` 默认 `local`（用户另有指定除外）。
+3. 仅进程挂了、jar 已是新的：`project_restart` 可不带 `rebuild`，或 `project_start`。
+4. 用 `project_logs` / `project_status` 确认 `Started …Application` 或业务成功日志；失败再排查，不要换手动起进程。
+
+## 已注册 projectId（路径以 registry 为准）
+
+| projectId | 典型路径归属 |
+|-----------|----------------|
+| `sharecharge-agent` | ops-agent **worktree** |
+| `sharecharge-web` | 主仓 `charging-cloud`（非 ops-agent worktree） |
+| `sharecharge-gateway` | 主仓 `charging-cloud` |
+| `sharecharge-auth` | 主仓 |
+| `sharecharge-system` | 主仓 |
+| `sharecharge-applet` | 主仓 |
+| `sharecharge-pay` | 主仓 |
+| `sharecharge-job` | 主仓 |
+| `sharecharge-transport` | 主仓 |
+| `sharecharge-interconnection` | 主仓 |
+
+改哪个模块的代码，就重启对应 `projectId`。一次改多个服务则分别 `project_restart`。
+
+## 路径注意
+
+- `sharecharge-agent` 指向 **`.worktrees/ops-agent`**；在该 worktree 改 agent 后重启该 id。
+- `sharecharge-web` 与其余业务服务指向 **主仓** `~/DevelopProject/charging-cloud/...`；改主仓对应模块后重启对应 id。若实际改的是 worktree 副本而 registry 仍是主仓，先 `project_update` 改 path，或征得用户同意后再重启，避免起错代码。
+- 多 worktree 共用 `*-api:1.0.0` 时，编依赖方前先用**当前分支**对 api 模块 `mvn install`，避免本机旧包盖掉新接口。
+
+## 不要做的事
+
+- 不要按端口盲杀。
+- 不要新开一套与 registry 不一致的手工启动命令，导致 runner 丢管。
