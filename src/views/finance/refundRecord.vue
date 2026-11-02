@@ -39,39 +39,16 @@
 				<el-table-column type="index" width="55" label="序号" align="center">
 					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
 				</el-table-column>
-        		<el-table-column label="运营商户" prop="operatorName" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
 				<el-table-column label="退款编号" prop="refundCode" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column label="支付编号" prop="payCode" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column label="第三方退款编号" prop="thirdRefundCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
 				<el-table-column label="用户ID" prop="userCode" align="center" :show-overflow-tooltip='isPc'>
 				</el-table-column>
-				<!-- <el-table-column label="用户头像" prop="headImg" align="center">
-					<template slot-scope="scope" style="text-align: center;">
-						<imgView :imgSrc="scope.row.headImg" />
-					</template>
-				</el-table-column> -->
 				<el-table-column label="退款金额" prop="refundMoney" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
-				<el-table-column label="退款来源" prop="refundSource" align="center" :show-overflow-tooltip='isPc'>
-					<template slot-scope="scope">
-						<span>{{ refundSourceLabel(scope.row.refundSource) }}</span>
-					</template>
-				</el-table-column>
-				<el-table-column label="退款渠道" prop="channel" align="center" :show-overflow-tooltip='isPc'>
-					<template slot-scope="scope">
-						<span>{{ refundChannelLabel(scope.row.channel) }}</span>
-					</template>
 				</el-table-column>
 				<el-table-column label="退款状态" prop="status" align="center" :show-overflow-tooltip="isPc">
 					<template slot-scope="scope">
 						<span>{{ refundStatusLabel(scope.row.status) }}</span>
 					</template>
-				</el-table-column>
-				<el-table-column prop="result" label="处理结果" align="center" :show-overflow-tooltip="isPc">
 				</el-table-column>
 				<el-table-column prop="reconcileStatus" label="对账状态" align="center" width="110">
 					<template slot-scope="scope">
@@ -89,22 +66,14 @@
 						<el-tag v-else size="small" type="danger">{{ reconcileLabel(scope.row.reconcileStatus) }}</el-tag>
 					</template>
 				</el-table-column>
-				<el-table-column prop="remark" label="退款说明" align="center" :show-overflow-tooltip='isPc'>
-				</el-table-column>
 				<el-table-column prop="createTime" label="退款时间" align="center" sortable :show-overflow-tooltip='isPc'>
 					<template slot-scope="scope">
 						<span>{{ scope.row.createTime | formatDate }}</span>
 					</template>
 				</el-table-column>
-				<el-table-column prop="updateTime" label="成功时间" align="center" sortable :show-overflow-tooltip='isPc'>
+				<el-table-column label="操作" align="center" width="90" fixed="right">
 					<template slot-scope="scope">
-						<span>{{ scope.row.updateTime | formatDate }}</span>
-					</template>
-				</el-table-column>
-				<el-table-column v-if="canReconcile" label="操作" align="center" width="90" fixed="right">
-					<template slot-scope="scope">
-						<el-button v-if="scope.row.reconcileStatus === 'PENDING'" type="text" size="small"
-							@click="openReconcile(scope.row)">对账处理</el-button>
+						<el-button type="primary" size="mini" @click="handleDetail(scope.row)">详情</el-button>
 					</template>
 				</el-table-column>
 			</el-table>
@@ -115,37 +84,13 @@
 			</div>
 		</div>
 		<downloadProgress ref="downloadProgress" />
-		<el-dialog title="人工对账处理" :visible.sync="reconcileVisible" width="520px" :close-on-click-modal="false">
-			<div style="margin-bottom: 15px; line-height: 1.8;">
-				<div>退款编号：{{ reconcileRow.refundCode }}</div>
-				<div>退款金额：{{ reconcileRow.refundMoney }}</div>
-				<div style="word-break: break-all;">处理结果：{{ reconcileRow.result }}</div>
-			</div>
-			<el-form ref="reconcileForm" :model="reconcileForm" :rules="reconcileRules" label-width="90px">
-				<el-form-item label="处理结论" prop="reconcileStatus">
-					<el-radio-group v-model="reconcileForm.reconcileStatus">
-						<el-radio label="DONE">已处理</el-radio>
-						<el-radio label="IGNORED">无需处理</el-radio>
-					</el-radio-group>
-				</el-form-item>
-				<el-form-item label="处理说明" prop="reconcileRemark">
-					<el-input v-model="reconcileForm.reconcileRemark" type="textarea" :rows="4" maxlength="255"
-						show-word-limit placeholder="请填写核实情况与处理方式，如：已在后台扣回用户余额 30 元" />
-				</el-form-item>
-			</el-form>
-			<div slot="footer">
-				<el-button @click="reconcileVisible = false">取消</el-button>
-				<el-button type="primary" :loading="reconcileSubmitting" @click="submitReconcile">确定</el-button>
-			</div>
-		</el-dialog>
 	</div>
 </template>
 
 <script>
 	import {
 		getList,
-		downloadExcel,
-		reconcileRefund
+		downloadExcel
 	} from '@/api/finance/refundRecord.js'
 	import {
 		parseTime
@@ -187,24 +132,7 @@
 					{ value: 'DONE', label: '已处理' },
 					{ value: 'IGNORED', label: '无需处理' }
 				],
-				reconcileVisible: false,
-				reconcileSubmitting: false,
-				reconcileRow: {},
-				reconcileForm: {
-					reconcileStatus: 'DONE',
-					reconcileRemark: ''
-				},
-				reconcileRules: {
-					reconcileStatus: [{ required: true, message: '请选择处理结论', trigger: 'change' }],
-					reconcileRemark: [{ required: true, whitespace: true, message: '请填写处理说明', trigger: 'blur' }]
-				},
-
 				time: ''
-			}
-		},
-		computed: {
-			canReconcile() {
-				return this.btnAuthen.permsVerifAuthention(':finance:refundRecord:reconcile')
 			}
 		},
 		filters: {
@@ -238,34 +166,8 @@
 			reconcileTagType(value) {
 				return value === 'DONE' ? 'success' : 'info'
 			},
-			openReconcile(row) {
-				this.reconcileRow = row
-				this.reconcileForm = { reconcileStatus: 'DONE', reconcileRemark: '' }
-				this.reconcileVisible = true
-				this.$nextTick(() => {
-					this.$refs.reconcileForm && this.$refs.reconcileForm.clearValidate()
-				})
-			},
-			submitReconcile() {
-				this.$refs.reconcileForm.validate(valid => {
-					if (!valid) return
-					this.reconcileSubmitting = true
-					reconcileRefund({
-						id: this.reconcileRow.id,
-						reconcileStatus: this.reconcileForm.reconcileStatus,
-						reconcileRemark: this.reconcileForm.reconcileRemark.trim()
-					}).then(res => {
-						if (res.code == 200) {
-							this.$message.success(res.msg || '处理成功')
-							this.reconcileVisible = false
-							this.getLists()
-						} else {
-							this.$message.error(res.msg)
-						}
-					}).finally(() => {
-						this.reconcileSubmitting = false
-					})
-				})
+			handleDetail(row) {
+				this.$router.push({ path: '/finance/refundRecordDetail', query: { id: row.id } })
 			},
 			getLists() {
 				this.listLoading = true
