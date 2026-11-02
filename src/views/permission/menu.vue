@@ -6,10 +6,11 @@
 					<addPage type="parent" @getLists="getLists" />
 				</div>
 				<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" :fit="false" class="menu-table"
-					highlight-current-row row-key="id" :tree-props="{children: 'children', hasChildren: 'hasChildren'}" id="tableBox">
-					<el-table-column prop="id" label="id" align="center" :show-overflow-tooltip="isPc" min-width="80">
+					highlight-current-row row-key="id" :tree-props="{ children: 'children' }" id="tableBox">
+					<!-- 展开箭头固定在首列：双层目录下页面 indent 较大，放 id 列会被挤没，按钮层看起来像「没了」 -->
+					<el-table-column prop="title" label="菜单名称" align="left" :show-overflow-tooltip="isPc" min-width="220">
 					</el-table-column>
-					<el-table-column prop="title" label="菜单名称" align="center" :show-overflow-tooltip="isPc" min-width="180">
+					<el-table-column prop="id" label="id" align="center" :show-overflow-tooltip="isPc" min-width="80">
 					</el-table-column>
 					<el-table-column prop="menuType" label="类型" align="center" min-width="100">
 						<template slot-scope="scope">
@@ -99,11 +100,26 @@
 		methods: {
 			menuTypeLabel,
 			menuTypeTag,
+			normalizeMenuTree(nodes) {
+				if (!Array.isArray(nodes)) {
+					return []
+				}
+				return nodes.map(node => {
+					const next = Object.assign({}, node)
+					const children = this.normalizeMenuTree(node.children)
+					if (children.length) {
+						next.children = children
+					} else {
+						delete next.children
+					}
+					return next
+				})
+			},
 			getLists() {
 				this.listLoading = true
 				getList(this.listQuery).then(res => {
 					if (res.code == 200) {
-						this.list = res.data
+						this.list = this.normalizeMenuTree(res.data)
 						this.total = res.count
 						this.listLoading = false
 					} else {
