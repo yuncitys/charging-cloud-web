@@ -53,17 +53,7 @@
 				<el-table-column prop="reconcileStatus" label="对账状态" align="center" width="110">
 					<template slot-scope="scope">
 						<span v-if="!scope.row.reconcileStatus">—</span>
-						<el-tooltip v-else-if="scope.row.reconcileStatus !== 'PENDING'" placement="top">
-							<div slot="content">
-								处理人：{{ scope.row.reconcileBy || '—' }}<br />
-								处理时间：{{ scope.row.reconcileTime | formatDate }}<br />
-								说明：{{ scope.row.reconcileRemark || '—' }}
-							</div>
-							<el-tag size="small" :type="reconcileTagType(scope.row.reconcileStatus)">
-								{{ reconcileLabel(scope.row.reconcileStatus) }}
-							</el-tag>
-						</el-tooltip>
-						<el-tag v-else size="small" type="danger">{{ reconcileLabel(scope.row.reconcileStatus) }}</el-tag>
+						<el-tag v-else size="small" :type="reconcileTagType(scope.row.reconcileStatus)">{{ reconcileLabel(scope.row.reconcileStatus) }}</el-tag>
 					</template>
 				</el-table-column>
 				<el-table-column prop="createTime" label="退款时间" align="center" sortable :show-overflow-tooltip='isPc'>
@@ -95,14 +85,12 @@
 	import {
 		parseTime
 	} from '@/utils/index'
-	import imgView from '@/components/Common/imgView.vue'
 	import downloadProgress from '@/components/Common/downloadProgress.vue'
 	import { formatDictLabel } from '@/utils/dictionary'
 
 	export default {
 		name: 'refundRecord',
 		components: {
-			imgView,
 			downloadProgress
 		},
 		data() {

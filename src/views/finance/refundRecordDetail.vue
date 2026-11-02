@@ -111,19 +111,31 @@
 				return this.canReconcile && this.detail.reconcileStatus === 'PENDING'
 			}
 		},
+		watch: {
+			'$route.query.id': {
+				handler() {
+					this.initDetail()
+				},
+				immediate: true
+			}
+		},
 		created() {
 			this.$dict.getSelector('finance_refund_status')
 			this.$dict.getSelector('finance_refund_source')
 			this.$dict.getSelector('finance_refund_channel')
-			const id = this.$route.query.id
-			if (id === undefined || id === null || id === '') {
-				this.$message.error('退款记录ID不能为空')
-				this.handleBack()
-				return
-			}
-			this.loadDetail()
 		},
 		methods: {
+			initDetail() {
+				if (this.$route.name !== 'refundRecordDetail') return
+				const id = this.$route.query.id
+				if (id === undefined || id === null || id === '') {
+					this.$message.error('退款记录ID不能为空')
+					this.handleBack()
+					return
+				}
+				this.detail = {}
+				this.loadDetail()
+			},
 			handleBack() {
 				if (window.history.length > 1) {
 					this.$router.back()
