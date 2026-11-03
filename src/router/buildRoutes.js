@@ -16,7 +16,11 @@ const LAYOUT_NAMES = {
   tradeEntry: 'TradeEntry',
   permission: 'Permission',
   interconnection: 'organization',
-  iotCard: 'iotcard'
+  iotCard: 'iotcard',
+  // URL 第一段与子页 name 曾撞车，Layout 父路由单独命名
+  chargingCustomer: 'ChargingCustomerLayout',
+  chargingCustomerCar: 'ChargingCustomerCarLayout',
+  chargingCustomerDriver: 'ChargingCustomerDriverLayout'
 }
 
 /**

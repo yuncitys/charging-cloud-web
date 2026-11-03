@@ -53,7 +53,7 @@ export default [
   {
     path: '/interconnection/merchantList',
     component: () => import('@/views/interconnection/merchantList'),
-    name: 'merchantList',
+    name: 'InterconnectionMerchantList',
     meta: {
       title: '互联商户管理',
       icon: 'el-icon-s-check'

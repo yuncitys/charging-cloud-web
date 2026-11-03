@@ -5,31 +5,31 @@
 // 充电客户
 
 export default [
-{
-        path: '/chargingCustomer/index',
-        component: () => import('@/views/chargingCustomer/index'),
-        name: 'chargingCustomer',
-        meta: {
-          title: '充电客户管理',
-          icon: 'el-icon-s-check',
-        }
-      },
-{
-        path: '/chargingCustomerCar/index',
-        component: () => import('@/views/chargingCustomerCar/index'),
-        name: 'chargingCustomerCar',
-        meta: {
-          title: '客户车辆',
-          icon: 'el-icon-s-check',
-        }
-      },
-{
-        path: '/chargingCustomerDriver/index',
-        component: () => import('@/views/chargingCustomerDriver/index'),
-        name: 'chargingCustomerDriver',
-        meta: {
-          title: '客户司机',
-          icon: 'peoples',
-        }
-      }
+  {
+    path: '/chargingCustomer/index',
+    component: () => import('@/views/chargingCustomer/index'),
+    name: 'ChargingCustomer',
+    meta: {
+      title: '充电客户管理',
+      icon: 'el-icon-s-check'
+    }
+  },
+  {
+    path: '/chargingCustomerCar/index',
+    component: () => import('@/views/chargingCustomerCar/index'),
+    name: 'ChargingCustomerCar',
+    meta: {
+      title: '客户车辆',
+      icon: 'el-icon-s-check'
+    }
+  },
+  {
+    path: '/chargingCustomerDriver/index',
+    component: () => import('@/views/chargingCustomerDriver/index'),
+    name: 'ChargingCustomerDriver',
+    meta: {
+      title: '客户司机',
+      icon: 'peoples'
+    }
+  }
 ]
