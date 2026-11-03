@@ -155,6 +155,19 @@ YunCharge是一套用于二轮电单车和四轮充电桩充电领域的运营�
 - Markdown to html
 ```
 
+### 环境要求
+
+- Node.js **22.x**（LTS）。请用 [nvm](https://github.com/nvm-sh/nvm) 管理版本：
+
+```bash
+nvm install 22
+cd charging-cloud-web
+nvm use          # 读取仓库根目录 .nvmrc
+node -v          # 应为 v22.x
+```
+
+不要用系统自带的旧 Node 直接 `npm install`。
+
 ### 开发
 
 ```

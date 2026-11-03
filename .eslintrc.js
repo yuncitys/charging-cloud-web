@@ -1,7 +1,8 @@
 module.exports = {
   root: true,
   parserOptions: {
-    parser: 'babel-eslint',
+    parser: '@babel/eslint-parser',
+    requireConfigFile: false,
     sourceType: 'module'
   },
   env: {
@@ -16,10 +17,7 @@ module.exports = {
   rules: {
     "vue/max-attributes-per-line": [2, {
       "singleline": 10,
-      "multiline": {
-        "max": 1,
-        "allowFirstLine": false
-      }
+      "multiline": 1
     }],
     "vue/singleline-html-element-content-newline": "off",
     "vue/multiline-html-element-content-newline":"off",

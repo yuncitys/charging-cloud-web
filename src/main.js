@@ -20,17 +20,20 @@ import './utils/error-log' // error log
 import './directives' // global directives
 
 import VueQuillEditor from 'vue-quill-editor'
-Vue.use(VueQuillEditor);
+Vue.use(VueQuillEditor)
 import 'quill/dist/quill.core.css'
 import 'quill/dist/quill.snow.css'
 import 'quill/dist/quill.bubble.css'
-import Editor from './components/editor/edit.vue';
-Vue.component("Editor", Editor);
+import { ensureQuillModules } from './components/editor/quillModules'
+ensureQuillModules()
+import Editor from './components/editor/edit.vue'
+// 历史全局名 <Editor>，保留单词注册
+// eslint-disable-next-line vue/multi-word-component-names
+Vue.component('Editor', Editor)
 
 import Print from 'vue-print-nb'
-Vue.prototype.$print = Print;
+Vue.prototype.$print = Print
 Vue.use(Print)
-
 
 import Global from './utils/global_variable.js'
 
@@ -46,7 +49,6 @@ import * as filters from './filters' // global filters
 import vueSeamlessScroll from 'vue-seamless-scroll'
 Vue.use(vueSeamlessScroll)
 
-
 import echarts from 'echarts'
 Vue.prototype.$echarts = echarts
 // 全局混入
@@ -55,10 +57,6 @@ Vue.mixin({
     return {
       isPc: true
     }
-  },
-  created() {
-    //判断是否是PC端
-    this.isPc = !this.$common.isMobile()
   },
   computed: {
     isDark() {
@@ -69,6 +67,10 @@ Vue.mixin({
       return isDark
     }
   },
+  created() {
+    // 判断是否是PC端
+    this.isPc = !this.$common.isMobile()
+  }
 })
 
 /**
