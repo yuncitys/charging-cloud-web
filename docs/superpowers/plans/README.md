@@ -10,6 +10,7 @@
 | `menu-permission-refactor/` | feature/menu-permission-refactor | 1 |
 | `mine-asset-summary/` | mine asset summary | 1 |
 | `operator-workbench-web/` | feature/operator-workbench-web | 9 |
+| `refund-record-detail/` | refund record list/detail split | 1 |
 | `report-summary-cards/` | report summary cards | 1 |
 | `router-refactor/` | router refactor | 1 |
 | `settlement-ledger/` | settlement subsidy drawer | 1 |

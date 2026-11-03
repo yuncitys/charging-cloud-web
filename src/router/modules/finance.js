@@ -107,6 +107,17 @@ export default [
       }
     },
 {
+      path: '/finance/refundRecordDetail',
+      component: () => import('@/views/finance/refundRecordDetail'),
+      name: 'refundRecordDetail',
+      hidden: true,
+      meta: {
+        title: '退款记录详情',
+        icon: 'el-icon-document',
+        authFollow: '/finance/refundRecord',
+      }
+    },
+{
       path: '/finance/monthUserOperRecord',
       component: () => import('@/views/finance/monthUserOperRecord'),
       name: 'monthUserOperRecord',
