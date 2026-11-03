@@ -4,6 +4,7 @@
 
 | 目录 | 对应分支 / 说明 | 文件数 |
 |------|----------------|--------|
+| `node22-vue-cli5/` | Node 22 + Vue CLI 5 tooling | 1 |
 | `device-log-filters/` | device log filters | 1 |
 | `dictionary-management/` | feature/dictionary-management | 1 |
 | `marketing-center/` | marketing center / coupon | 4 |
