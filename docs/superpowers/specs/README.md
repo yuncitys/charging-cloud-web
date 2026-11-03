@@ -10,6 +10,7 @@
 | `marketing-center/` | marketing center / coupon | 4 |
 | `mine-asset-summary/` | mine asset summary | 1 |
 | `operator-workbench-web/` | feature/operator-workbench-web | 12 |
+| `refund-record-detail/` | refund record list/detail split | 1 |
 | `report-summary-cards/` | report summary cards | 1 |
 | `settlement-ledger/` | settlement subsidy drawer | 1 |
 | `station-finance-day-bill/` | station finance day bill web | 1 |
