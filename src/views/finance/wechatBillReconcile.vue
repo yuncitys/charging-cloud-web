@@ -68,7 +68,7 @@
         <el-table-column label="用户标识" prop="userOpenid" align="center" min-width="220" show-overflow-tooltip />
         <el-table-column label="钱包支付" prop="walletPayAmount" align="center" min-width="100" />
         <el-table-column label="钱包退款" prop="walletRefundAmount" align="center" min-width="100" />
-        <el-table-column label="钱包净额" prop="walletNetAmount" align="center" min-width="100" sortable />
+        <el-table-column label="钱包净额" prop="walletNetAmount" align="center" min-width="100" />
         <el-table-column label="预缴支付" prop="prepayPayAmount" align="center" min-width="100" />
         <el-table-column label="预缴退款" prop="prepayRefundAmount" align="center" min-width="100" />
         <el-table-column label="预缴净额" prop="prepayNetAmount" align="center" min-width="100" />
