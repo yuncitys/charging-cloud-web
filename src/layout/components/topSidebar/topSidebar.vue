@@ -1,5 +1,5 @@
 <template>
-  <div class="divElmenu" :class="{'sidebar-only-mode': menuLayout !== 'mix'}" ref="divElmenu">
+  <div ref="divElmenu" class="divElmenu" :class="{'sidebar-only-mode': menuLayout !== 'mix'}">
     <el-menu
       v-if="menuLayout === 'mix'"
       :key="'top-menu-' + pActiveMenu"
@@ -10,9 +10,10 @@
       :active-text-color="variables.menuActiveText"
       :collapse-transition="false"
       mode="horizontal"
-      class="top-elmenu">
+      class="top-elmenu"
+    >
       <template v-for="item in list">
-        <el-menu-item :index="item.title" :key="item.title" ref="subMenuitem">
+        <el-menu-item :key="item.title" ref="subMenuitem" :index="item.title">
           <div @click="onClick(item)">
             <span>{{ item.title }}</span>
           </div>
@@ -20,14 +21,14 @@
       </template>
       <el-menu-item v-if="rightMoreMeunList.length > 0">
         <el-dropdown trigger="click" class="topEldrop">
-          <span class="el-dropdown-link" >
-            更多...<i class="el-icon-arrow-down el-icon--right"></i>
+          <span class="el-dropdown-link">
+            更多...<i class="el-icon-arrow-down el-icon--right" />
           </span>
           <el-dropdown-menu slot="dropdown" class="top-dropdown-menu">
             <el-dropdown-item v-for="item in rightMoreMeunList" :key="item.title">
               <el-menu-item :index="item.title">
                 <div @click="onClick(item)">
-                  <i :class="item.icon"></i>
+                  <i :class="item.icon" />
                   <span>{{ item.title }}</span>
                 </div>
               </el-menu-item>
@@ -56,18 +57,18 @@
       >
         <div class="right-menu-item hover-effect layout-toggle-btn" @click="toggleMenuLayout">
           <svg v-if="menuLayout === 'mix'" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="18" rx="1"/>
-            <rect x="13" y="3" width="8" height="4" rx="1"/>
-            <rect x="13" y="10" width="8" height="4" rx="1"/>
-            <rect x="13" y="17" width="8" height="4" rx="1"/>
+            <rect x="3" y="3" width="7" height="18" rx="1" />
+            <rect x="13" y="3" width="8" height="4" rx="1" />
+            <rect x="13" y="10" width="8" height="4" rx="1" />
+            <rect x="13" y="17" width="8" height="4" rx="1" />
           </svg>
           <svg v-else viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="7" height="18" rx="1"/>
-            <line x1="13" y1="3" x2="21" y2="3"/>
-            <line x1="13" y1="8" x2="21" y2="8"/>
-            <line x1="13" y1="13" x2="21" y2="13"/>
-            <line x1="13" y1="18" x2="21" y2="18"/>
-            <line x1="13" y1="21" x2="21" y2="21"/>
+            <rect x="3" y="3" width="7" height="18" rx="1" />
+            <line x1="13" y1="3" x2="21" y2="3" />
+            <line x1="13" y1="8" x2="21" y2="8" />
+            <line x1="13" y1="13" x2="21" y2="13" />
+            <line x1="13" y1="18" x2="21" y2="18" />
+            <line x1="13" y1="21" x2="21" y2="21" />
           </svg>
         </div>
       </el-tooltip>
@@ -91,193 +92,193 @@
 </template>
 
 <script>
-  import Screenfull from '@/components/Screenfull'
-  import LangSelect from '@/components/LangSelect'
-  import HeaderSearch from '@/components/HeaderSearch'
-  import AdminMessageBell from './AdminMessageBell.vue'
-  import {
-    mapGetters
-  } from 'vuex';
-  import variables from '@/styles/variables.scss'
-  import {
-    logout
-  } from '@/api/user'
-  import { findFirstLeafHref, findTopMenuByPath, getNavChildren } from '@/utils/menuNav'
-  export default {
-    components: {
-      Screenfull,
-      LangSelect,
-      HeaderSearch,
-      AdminMessageBell
+import Screenfull from '@/components/Screenfull'
+import LangSelect from '@/components/LangSelect'
+import HeaderSearch from '@/components/HeaderSearch'
+import AdminMessageBell from './AdminMessageBell.vue'
+import {
+  mapGetters
+} from 'vuex'
+import variables from '@/styles/js-variables'
+import {
+  logout
+} from '@/api/user'
+import { findFirstLeafHref, findTopMenuByPath, getNavChildren } from '@/utils/menuNav'
+export default {
+  components: {
+    Screenfull,
+    LangSelect,
+    HeaderSearch,
+    AdminMessageBell
+  },
+  data() {
+    return {
+      pActiveMenu: 'Dashboard',
+      topOffsetWidth: 0,
+      lists: [],
+      elmenuMore: []
+    }
+  },
+  created() {
+    if (window.localStorage.getItem('pActiveMenu')) {
+      this.pActiveMenu = window.localStorage.getItem('pActiveMenu')
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'permission_routes',
+      'sidebar',
+      'device',
+      'menuLayout'
+    ]),
+    userName() {
+      return this.$store.getters.adminUser.adminName
     },
-    data() {
-      return {
-        pActiveMenu: 'Dashboard',
-        topOffsetWidth: 0,
-        lists: [],
-        elmenuMore: []
+    variables() {
+      return variables
+    },
+    isCollapse() {
+      return !this.sidebar.opened
+    },
+    list() {
+      return this.$store.getters.meunList
+    },
+    rightMoreMeunList() {
+      return this.$store.getters.rightMoreMeunList
+    }
+  },
+  watch: {
+    // 混合模式：顶栏/侧栏由一级菜单状态驱动，路由变化（搜索、标签页、直链）时需同步
+    $route: {
+      immediate: true,
+      handler(route) {
+        this.syncMixMenuByRoute(route)
       }
     },
-    created() {
-      if (window.localStorage.getItem("pActiveMenu")) {
-        this.pActiveMenu = window.localStorage.getItem("pActiveMenu")
-      };
-    },
-    computed: {
-      ...mapGetters([
-        'permission_routes',
-        'sidebar',
-        'device',
-        'menuLayout'
-      ]),
-      userName() {
-        return this.$store.getters.adminUser.adminName
-      },
-      variables() {
-        return variables
-      },
-      isCollapse() {
-        return !this.sidebar.opened
-      },
-      list() {
-        return this.$store.getters.meunList
-      },
-      rightMoreMeunList() {
-        return this.$store.getters.rightMoreMeunList
-      },
-    },
-    watch: {
-      // 混合模式：顶栏/侧栏由一级菜单状态驱动，路由变化（搜索、标签页、直链）时需同步
-      $route: {
-        immediate: true,
-        handler(route) {
-          this.syncMixMenuByRoute(route)
-        }
-      },
-      menuLayout(val) {
-        if (val === 'mix') {
-          this.syncMixMenuByRoute(this.$route)
-        }
-      },
-      // 菜单异步加载完成后，再按当前路由补一次同步
-      list() {
-        this.syncMixMenuByRoute(this.$route)
-      },
-      rightMoreMeunList() {
+    menuLayout(val) {
+      if (val === 'mix') {
         this.syncMixMenuByRoute(this.$route)
       }
     },
-    methods: {
-      /**
+    // 菜单异步加载完成后，再按当前路由补一次同步
+    list() {
+      this.syncMixMenuByRoute(this.$route)
+    },
+    rightMoreMeunList() {
+      this.syncMixMenuByRoute(this.$route)
+    }
+  },
+  mounted() {
+    this.$store.commit('permission/setTopOffsetWidth', this.$refs.divElmenu.offsetWidth)
+    // 组件挂载后宽度才准确，重新按实际宽度分割顶部菜单
+    this.$store.dispatch('permission/splitMenuByWidth', this.$refs.divElmenu.offsetWidth)
+  },
+  methods: {
+    /**
        * 按当前路由定位一级菜单，同步顶栏高亮与左侧子菜单。
        * HeaderSearch 只 push 路由，不会走 onClick，必须在这里补齐。
        */
-      syncMixMenuByRoute(route) {
-        if (this.menuLayout !== 'mix' || !route) {
-          return
+    syncMixMenuByRoute(route) {
+      if (this.menuLayout !== 'mix' || !route) {
+        return
+      }
+      if (route.path && route.path.startsWith('/redirect/')) {
+        return
+      }
+      const menus = [].concat(this.list || [], this.rightMoreMeunList || [])
+      if (!menus.length) {
+        return
+      }
+      let top = findTopMenuByPath(menus, route.path)
+      if (!top) {
+        const follow = route.meta && (route.meta.authFollow || route.meta.activeMenu)
+        if (follow) {
+          top = findTopMenuByPath(menus, follow)
         }
-        if (route.path && route.path.startsWith('/redirect/')) {
-          return
-        }
-        const menus = [].concat(this.list || [], this.rightMoreMeunList || [])
-        if (!menus.length) {
-          return
-        }
-        let top = findTopMenuByPath(menus, route.path)
-        if (!top) {
-          const follow = route.meta && (route.meta.authFollow || route.meta.activeMenu)
-          if (follow) {
-            top = findTopMenuByPath(menus, follow)
-          }
-        }
-        if (!top) {
-          return
-        }
-        this.applyTopMenuState(top)
-        window.localStorage.setItem('activeMenu', route.path)
-      },
-      /** 仅更新混合菜单 UI 状态，不负责跳转 */
-      applyTopMenuState(item) {
-        if (!item) {
-          return
-        }
-        this.pActiveMenu = item.title
-        window.localStorage.setItem('pActiveMenu', item.title)
-        const navChildren = getNavChildren(item)
-        if (navChildren.length > 0) {
-          const children = item.children || navChildren
-          this.$store.commit('permission/setLeftMeunList', children)
-          window.localStorage.setItem('leftMeunList', JSON.stringify(children))
-          this.$store.dispatch('app/openSideBar')
-        } else {
+      }
+      if (!top) {
+        return
+      }
+      this.applyTopMenuState(top)
+      window.localStorage.setItem('activeMenu', route.path)
+    },
+    /** 仅更新混合菜单 UI 状态，不负责跳转 */
+    applyTopMenuState(item) {
+      if (!item) {
+        return
+      }
+      this.pActiveMenu = item.title
+      window.localStorage.setItem('pActiveMenu', item.title)
+      const navChildren = getNavChildren(item)
+      if (navChildren.length > 0) {
+        const children = item.children || navChildren
+        this.$store.commit('permission/setLeftMeunList', children)
+        window.localStorage.setItem('leftMeunList', JSON.stringify(children))
+        this.$store.dispatch('app/openSideBar')
+      } else {
+        window.localStorage.removeItem('leftMeunList')
+        this.$store.commit('permission/setLeftMeunList', [])
+        this.$store.dispatch('app/closeSideBar', {
+          withoutAnimation: false
+        })
+      }
+    },
+    onClick(item) {
+      this.applyTopMenuState(item)
+      const targetHref = findFirstLeafHref(item) || item.href
+      if (!targetHref) {
+        return
+      }
+      this.$router.push({ path: targetHref })
+      window.localStorage.setItem('activeMenu', targetHref)
+    },
+    toggleMenuLayout() {
+      const next = this.menuLayout === 'mix' ? 'sidebar' : 'mix'
+      this.$store.dispatch('app/setMenuLayout', next)
+      // 切换到左侧菜单模式时，确保侧边栏展开（避免菜单以折叠 icon-only 模式渲染）
+      if (next === 'sidebar') {
+        this.$store.dispatch('app/openSideBar')
+      }
+    },
+    async logout() {
+      const logoutFrom = {
+        grandType: 'password'
+      }
+      logout(logoutFrom).then(res => {
+        if (res.code === 200) {
+          this.$store.dispatch('permission/resetPermission')
+          this.$store.dispatch('user/resetToken')
+          this.$router.push(`/login?redirect=${this.$route.fullPath}`)
+          window.localStorage.removeItem('activeMenu')
+          window.localStorage.removeItem('pActiveMenu')
           window.localStorage.removeItem('leftMeunList')
-          this.$store.commit('permission/setLeftMeunList', [])
           this.$store.dispatch('app/closeSideBar', {
             withoutAnimation: false
           })
+        } else {
+          this.$message({
+            message: res.msg,
+            type: 'error',
+            duration: 5 * 1000
+          })
         }
-      },
-      onClick(item) {
-        this.applyTopMenuState(item)
-        const targetHref = findFirstLeafHref(item) || item.href
-        if (!targetHref) {
-          return
-        }
-        this.$router.push({ path: targetHref })
-        window.localStorage.setItem('activeMenu', targetHref)
-      },
-      toggleMenuLayout() {
-        const next = this.menuLayout === 'mix' ? 'sidebar' : 'mix'
-        this.$store.dispatch('app/setMenuLayout', next)
-        // 切换到左侧菜单模式时，确保侧边栏展开（避免菜单以折叠 icon-only 模式渲染）
-        if (next === 'sidebar') {
-          this.$store.dispatch('app/openSideBar')
-        }
-      },
-      async logout() {
-        let logoutFrom = {
-          grandType: 'password'
-        }
-        logout(logoutFrom).then(res => {
-          if (res.code == 200) {
-            this.$store.dispatch('permission/resetPermission')
-            this.$store.dispatch('user/resetToken')
-            this.$router.push(`/login?redirect=${this.$route.fullPath}`);
-            window.localStorage.removeItem("activeMenu");
-            window.localStorage.removeItem("pActiveMenu");
-            window.localStorage.removeItem("leftMeunList");
-            this.$store.dispatch('app/closeSideBar', {
-              withoutAnimation: false
-            })
-          } else {
-            Message({
-              message: res.msg,
-              type: 'error',
-              duration: 5 * 1000
-            })
-          }
-        })
-      },
-      setPwd() {
-        this.$router.push({
-          name: 'setPwd'
-        })
-      },
-      largeScreen() {
-       const {
-					href
-				} = this.$router.resolve({
-					name: "largeScreen",
-				});
-				window.open(href, '_blank');
-      },
+      })
     },
-    mounted() {
-      this.$store.commit('permission/setTopOffsetWidth', this.$refs.divElmenu.offsetWidth);
-      // 组件挂载后宽度才准确，重新按实际宽度分割顶部菜单
-      this.$store.dispatch('permission/splitMenuByWidth', this.$refs.divElmenu.offsetWidth);
+    setPwd() {
+      this.$router.push({
+        name: 'setPwd'
+      })
     },
+    largeScreen() {
+      const {
+        href
+      } = this.$router.resolve({
+        name: 'largeScreen'
+      })
+      window.open(href, '_blank')
+    }
   }
+}
 
 </script>
 <style lang="scss" scoped>

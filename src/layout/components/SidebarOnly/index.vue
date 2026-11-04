@@ -2,12 +2,12 @@
   <div class="sidebar-only-wrapper">
     <!-- Logo 区域 -->
     <div class="sidebar-only-logo">
-      <div class="logo-inner" v-if="!isCollapse">
-        <img :src="logoData.LOGO_IMG" class="logo-img" v-if="logoData.LOGO_IMG" />
+      <div v-if="!isCollapse" class="logo-inner">
+        <img v-if="logoData.LOGO_IMG" :src="logoData.LOGO_IMG" class="logo-img">
         <span class="logo-text" :title="logoData.TITLE || '智慧充电运营平台'">{{ logoData.TITLE || '智慧充电运营平台' }}</span>
       </div>
-      <div class="logo-inner logo-inner--collapse" v-else>
-        <img :src="logoData.LOGO_IMG" class="logo-img" v-if="logoData.LOGO_IMG" />
+      <div v-else class="logo-inner logo-inner--collapse">
+        <img v-if="logoData.LOGO_IMG" :src="logoData.LOGO_IMG" class="logo-img">
       </div>
     </div>
 
@@ -36,7 +36,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import variables from '@/styles/variables.scss'
+import variables from '@/styles/js-variables'
 import SidebarOnlyItem from './SidebarOnlyItem'
 
 export default {

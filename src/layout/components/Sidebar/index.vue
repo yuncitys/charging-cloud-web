@@ -4,21 +4,21 @@
     <el-scrollbar wrap-class="scrollbar-wrapper">
       <!-- logo -->
       <div>
-        <div class="logoBox" v-if="!isCollapse">
+        <div v-if="!isCollapse" class="logoBox">
           <div class="logoItem flex">
             <div class="logoImgBox">
-              <img :src="logoData.LOGO_IMG" class="logoImg" v-if="logoData.LOGO_IMG" />
+              <img v-if="logoData.LOGO_IMG" :src="logoData.LOGO_IMG" class="logoImg">
               <!-- <img src="../../../assets/logo.png" class="logoImg" v-else/> -->
             </div>
             <div class="logoText" :title="logoData.TITLE ? logoData.TITLE : '智慧充电运营平台'">
-              {{logoData.TITLE ? logoData.TITLE : '智慧充电运营平台'}}
+              {{ logoData.TITLE ? logoData.TITLE : '智慧充电运营平台' }}
             </div>
           </div>
         </div>
-        <div class="logoBox" v-if="isCollapse">
+        <div v-if="isCollapse" class="logoBox">
           <div class="logoItem flex">
             <div>
-              <img :src="logoData.LOGO_IMG" class="logoImg" v-if="logoData.LOGO_IMG" />
+              <img v-if="logoData.LOGO_IMG" :src="logoData.LOGO_IMG" class="logoImg">
               <!-- <img src="../../../assets/logo-xy.png" class="logoImg"
                 style="width: 20px;height: 20px;margin-left: 10px;" /> -->
             </div>
@@ -26,10 +26,18 @@
         </div>
       </div>
 
-      <el-menu :default-active="activeMenu" :collapse="isCollapse" :background-color="variables.menuBg"
-        :text-color="variables.menuText" :unique-opened="true" :active-text-color="variables.menuActiveText"
-        :collapse-transition="false" mode="vertical" class="leftElmenuClass sidebar-only-menu"
-        @select="handleMenuSelect">
+      <el-menu
+        :default-active="activeMenu"
+        :collapse="isCollapse"
+        :background-color="variables.menuBg"
+        :text-color="variables.menuText"
+        :unique-opened="true"
+        :active-text-color="variables.menuActiveText"
+        :collapse-transition="false"
+        mode="vertical"
+        class="leftElmenuClass sidebar-only-menu"
+        @select="handleMenuSelect"
+      >
         <sidebar-only-item
           v-for="item in leftMeunList"
           :key="String(item.id || item.title)"
@@ -41,80 +49,77 @@
 </template>
 
 <script>
-  import {
-    mapGetters
-  } from 'vuex'
-  import Logo from './Logo'
-  import SidebarItem from './SidebarItem'
-  import SidebarOnlyItem from '../SidebarOnly/SidebarOnlyItem'
-  import variables from '@/styles/variables.scss'
-  import subMenu from "./subMenu";
-  export default {
-    data() {
-      return {
-        activeMenu: ''
-      }
-    },
-    //监听执行
-    watch: {
-      $route(route) {
-        let paths = this.$route.path;
-        this.activeMenu = paths;
-      },
-    },
-    created() {
-      // let list = window.sessionStorage.getItem("leftmeunList");
-      let list = window.localStorage.getItem("leftMeunList");
-      if (list) {
-        this.$store.commit('permission/setLeftMeunList', JSON.parse(list));
-      }else{
-        this.$store.commit('permission/setLeftMeunList', []);
-      }
-      // this.activeMenu = window.sessionStorage.getItem("activeMenu");
-      this.activeMenu = window.localStorage.getItem("activeMenu") || this.$route.path;
-    },
-    methods: {
-      handleMenuSelect(index) {
-        if (index && index.startsWith('/')) {
-          if (this.$route.path !== index) {
-            this.$router.push({ path: index })
-          }
-          this.activeMenu = index
-          window.localStorage.setItem("activeMenu", index)
+import {
+  mapGetters
+} from 'vuex'
+import Logo from './Logo'
+import SidebarOnlyItem from '../SidebarOnly/SidebarOnlyItem'
+import variables from '@/styles/js-variables'
+export default {
+  name: 'LayoutSidebar',
+  components: {
+    SidebarOnlyItem,
+    Logo
+  },
+  data() {
+    return {
+      activeMenu: ''
+    }
+  },
+  // 监听执行
+  watch: {
+    $route(route) {
+      const paths = this.$route.path
+      this.activeMenu = paths
+    }
+  },
+  created() {
+    // let list = window.sessionStorage.getItem("leftmeunList");
+    const list = window.localStorage.getItem('leftMeunList')
+    if (list) {
+      this.$store.commit('permission/setLeftMeunList', JSON.parse(list))
+    } else {
+      this.$store.commit('permission/setLeftMeunList', [])
+    }
+    // this.activeMenu = window.sessionStorage.getItem("activeMenu");
+    this.activeMenu = window.localStorage.getItem('activeMenu') || this.$route.path
+  },
+  methods: {
+    handleMenuSelect(index) {
+      if (index && index.startsWith('/')) {
+        if (this.$route.path !== index) {
+          this.$router.push({ path: index })
         }
-      },
-      onClick(name) {
-        this.handleMenuSelect(name)
+        this.activeMenu = index
+        window.localStorage.setItem('activeMenu', index)
       }
     },
-    components: {
-      SidebarItem,
-      SidebarOnlyItem,
-      Logo,
-      subMenu
+    onClick(name) {
+      this.handleMenuSelect(name)
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'permission_routes',
+      'sidebar'
+    ]),
+    showLogo() {
+      return this.$store.state.settings.sidebarLogo
     },
-    computed: {
-      ...mapGetters([
-        'permission_routes',
-        'sidebar',
-      ]),
-      showLogo() {
-        return this.$store.state.settings.sidebarLogo
-      },
-      variables() {
-        return variables
-      },
-      isCollapse() {
-        return !this.sidebar.opened
-      },
-      leftMeunList() {
-        return this.$store.getters.leftMeunList
-      },
-      logoData() {
-        return this.$store.getters.logoData
-      }
+    variables() {
+      return variables
+    },
+    isCollapse() {
+      return !this.sidebar.opened
+    },
+    leftMeunList() {
+      return this.$store.getters.leftMeunList
+    },
+    logoData() {
+      return this.$store.getters.logoData
     }
   }
+}
 
 </script>
 <style scoped lang="scss">
@@ -300,7 +305,6 @@
       }
     }
   }
-
 
   .leftElmenuClass.sidebar-only-menu.el-menu--collapse {
     .el-menu-item {

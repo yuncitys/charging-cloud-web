@@ -24,8 +24,7 @@ $--font-path: "~element-ui/lib/theme-chalk/fonts";
 
 @import "~element-ui/packages/theme-chalk/src/index";
 
-// the :export directive is the magic sauce for webpack
-// https://www.bluematador.com/blog/how-to-share-variables-between-js-and-sass
+// JS 侧主题色请改 src/styles/js-variables.js（CLI5 下此处 :export 不能再被 JS import）
 :export {
   theme: $--color-primary;
 }
