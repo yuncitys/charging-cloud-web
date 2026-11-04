@@ -67,7 +67,7 @@ module.exports = {
 					// 展开输出方式 expanded
 					// 紧凑输出方式 compact
 					// 压缩输出方式 compressed
-				}	
+				}
 			}
 		}
 	},
@@ -83,9 +83,26 @@ module.exports = {
 				net: false,
 				path: require.resolve('path-browserify')
 			}
-		}
+		},
 	},
 	chainWebpack(config) {
+		// vue-loader@15 对普通 <style> 生成 `import style0 from '...'`（副作用注入）。
+		// css-loader@6 抽取后无 default → webpack 假阳性。
+		// ignoreWarnings 只影响 stats；@soda/friendly-errors 仍读 compilation.warnings，需一并清掉。
+		const isStyle0Warning = (warning) =>
+			/imported as 'style\d+'/.test(String((warning && warning.message) || warning))
+
+		config.set('ignoreWarnings', [isStyle0Warning])
+		config.plugin('filter-style0-warnings').use(
+			class FilterStyle0WarningsPlugin {
+				apply(compiler) {
+					compiler.hooks.afterCompile.tap('FilterStyle0WarningsPlugin', (compilation) => {
+						compilation.warnings = compilation.warnings.filter((w) => !isStyle0Warning(w))
+					})
+				}
+			}
+		)
+
 		config.plugin('provide').use(webpack.ProvidePlugin, [{
 			'window.Quill': 'quill'
 		}])

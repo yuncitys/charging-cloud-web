@@ -1,21 +1,16 @@
 import {
-  login,
-  logout,
-  getInfo
+  login
 } from '@/api/user'
 import {
   getToken,
-  setTokenByExpires,
   setToken,
+  setTokenByExpires,
   removeToken
 } from '@/utils/auth'
-import router, {
-  resetRouter
-} from '@/router'
 import {
-  MessageBox,
   Message
 } from 'element-ui'
+
 const state = {
   token: getToken(),
   name: '',
@@ -43,26 +38,16 @@ const mutations = {
 }
 
 const actions = {
-
   // 用户名登录
   login({
     commit
   }, userInfo) {
-    const {
-      username,
-      password,
-      rememberMe,
-      grant_type
-    } = userInfo
-    console.log(userInfo)
     return new Promise((resolve, reject) => {
       login(userInfo).then(response => {
         const {
-          data,
+          data
         } = response
-        let res = response
-        console.log(response)
-        if (response.code == 200) {
+        if (response.code === 200) {
           commit('SET_TOKEN', data.token)
           if (userInfo.rememberMe) {
             setTokenByExpires(data.token, 7)
@@ -82,19 +67,6 @@ const actions = {
     })
   },
 
-
-  // 注销登录：清除token，remove token
-  resetToken({
-    commit
-  }) {
-    return new Promise(resolve => {
-      removeToken() // must remove  token  first
-      commit('RESET_STATE')
-      resolve()
-    })
-  },
-
-
   // remove token
   resetToken({
     commit
@@ -104,36 +76,6 @@ const actions = {
       commit('SET_ROLES', [])
       removeToken()
       resolve()
-    })
-  },
-
-
-  // dynamically modify permissions
-  async changeRoles({
-    commit,
-    dispatch
-  }, role) {
-    const token = role + '-token'
-
-    commit('SET_TOKEN', token)
-    setToken(token)
-
-    const {
-      roles
-    } = await dispatch('getInfo')
-
-    resetRouter()
-
-    // generate accessible routes map based on roles
-    const accessRoutes = await dispatch('permission/generateRoutes', roles, {
-      root: true
-    })
-    // dynamically add accessible routes
-    router.addRoutes(accessRoutes)
-
-    // reset visited views and cached views
-    dispatch('tagsView/delAllViews', null, {
-      root: true
     })
   }
 }
