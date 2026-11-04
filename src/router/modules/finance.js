@@ -97,6 +97,26 @@ export default [
     }
   },
   {
+    path: '/finance/wechatBillReconcile',
+    component: () => import('@/views/finance/wechatBillReconcile'),
+    name: 'wechatBillReconcile',
+    meta: {
+      title: '微信账单对账',
+      icon: 'el-icon-document'
+    }
+  },
+  {
+    path: '/finance/wechatBillReconcileDetail',
+    component: () => import('@/views/finance/wechatBillReconcileDetail'),
+    name: 'wechatBillReconcileDetail',
+    hidden: true,
+    meta: {
+      title: '微信账单对账明细',
+      icon: 'el-icon-document',
+      authFollow: '/finance/wechatBillReconcile'
+    }
+  },
+  {
     path: '/finance/refundRecord',
     component: () => import('@/views/finance/refundRecord'),
     name: 'refundRecord',
