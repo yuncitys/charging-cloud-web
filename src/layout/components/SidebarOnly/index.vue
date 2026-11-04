@@ -36,7 +36,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
-import variables from '@/styles/js-variables'
+import variables from '@/styles/tokens.module.scss'
 import SidebarOnlyItem from './SidebarOnlyItem'
 
 export default {

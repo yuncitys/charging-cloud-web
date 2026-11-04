@@ -1,4 +1,4 @@
-import variables from '@/styles/js-variables'
+import variables from '@/styles/tokens.module.scss'
 import defaultSettings from '@/settings'
 
 const { showSettings, tagsView, fixedHeader, sidebarLogo, supportPinyinSearch } = defaultSettings

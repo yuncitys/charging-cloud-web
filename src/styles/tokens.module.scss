@@ -1,0 +1,14 @@
+@import './palette';
+
+:export {
+  theme: $color-primary;
+  menuText: $menuText;
+  menuActiveText: $menuActiveText;
+  menuActiveBg: $menuActiveBg;
+  subMenuActiveText: $subMenuActiveText;
+  menuBg: $menuBg;
+  menuHover: $menuHover;
+  subMenuBg: $subMenuBg;
+  subMenuHover: $subMenuHover;
+  sideBarWidth: $sideBarWidth;
+}

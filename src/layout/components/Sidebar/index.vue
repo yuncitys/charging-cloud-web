@@ -54,7 +54,7 @@ import {
 } from 'vuex'
 import Logo from './Logo'
 import SidebarOnlyItem from '../SidebarOnly/SidebarOnlyItem'
-import variables from '@/styles/js-variables'
+import variables from '@/styles/tokens.module.scss'
 export default {
   name: 'LayoutSidebar',
   components: {

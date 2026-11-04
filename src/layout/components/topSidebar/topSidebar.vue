@@ -99,7 +99,7 @@ import AdminMessageBell from './AdminMessageBell.vue'
 import {
   mapGetters
 } from 'vuex'
-import variables from '@/styles/js-variables'
+import variables from '@/styles/tokens.module.scss'
 import {
   logout
 } from '@/api/user'

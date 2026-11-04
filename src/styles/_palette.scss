@@ -1,0 +1,15 @@
+// 主题/侧栏共享色板（唯一数据源）。
+// SCSS：variables.scss / element-variables.scss @import
+// JS：只通过 tokens.module.scss 的 :export 读取（勿直接 import 本文件或其它已抽 CSS 的 scss）
+
+$color-primary: #1890ff;
+
+$menuText: #3a3b3b;
+$menuActiveText: #51c53b;
+$menuActiveBg: linear-gradient(45deg, #32b946, #51c53b, #62cc35, #7ad52c);
+$subMenuActiveText: #f4f4f5;
+$menuBg: white;
+$menuHover: #263445;
+$subMenuBg: white;
+$subMenuHover: #001528;
+$sideBarWidth: 190px;

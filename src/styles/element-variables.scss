@@ -3,8 +3,10 @@
 * So I modified the default color and you can modify it to your liking.
 **/
 
+@import './palette';
+
 /* theme color */
-$--color-primary: #1890ff;
+$--color-primary: $color-primary;
 $--color-success: #13ce66;
 $--color-warning: #ffba00;
 $--color-danger: #ff4949;
@@ -23,8 +25,3 @@ $--table-border: 1px solid #dfe6ec;
 $--font-path: "~element-ui/lib/theme-chalk/fonts";
 
 @import "~element-ui/packages/theme-chalk/src/index";
-
-// JS 侧主题色请改 src/styles/js-variables.js（CLI5 下此处 :export 不能再被 JS import）
-:export {
-  theme: $--color-primary;
-}
