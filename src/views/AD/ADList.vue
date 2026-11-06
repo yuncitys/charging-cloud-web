@@ -105,8 +105,8 @@
       <el-table-column prop="sorting" label="排序" align="center" width="80" />
       <el-table-column label="生效状态" align="center" width="120">
         <template slot-scope="scope">
-          <el-tag size="small" :type="effectiveType(resolveEffectiveStatus(scope.row))">
-            {{ effectiveLabel(resolveEffectiveStatus(scope.row)) }}
+          <el-tag size="small" :type="effectiveType(resolveStatus(scope.row))">
+            {{ effectiveLabel(resolveStatus(scope.row)) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -201,6 +201,10 @@ export default {
     this.getLists()
   },
   methods: {
+    // 模板只能访问实例方法，因此把映射函数包装成 method 暴露给模板
+    resolveStatus(row) {
+      return resolveEffectiveStatus(row)
+    },
     effectiveLabel(code) {
       return effectiveStatusLabel(code)
     },
