@@ -19,7 +19,10 @@ function encodeForm(data) {
  * effectiveStatus 不是后端筛选项，已在列表层做展示映射，这里不传。
  */
 export function page(query = {}) {
-  const { page: pageNum, limit, placementCode, itemStatus, itemTitle } = query
+  const { placementCode, itemStatus, itemTitle } = query
+  // 后端 QueryRequest 的 page/limit 是原始 int，缺失或非数字会直接 400，必须兜底为正整数
+  const pageNum = Number.parseInt(query.page, 10) > 0 ? Number.parseInt(query.page, 10) : 1
+  const limit = Number.parseInt(query.limit, 10) > 0 ? Number.parseInt(query.limit, 10) : 10
   const params = { page: pageNum, limit }
   if (placementCode) params['params[placementCode]'] = placementCode
   if (itemStatus !== undefined && itemStatus !== '' && itemStatus !== null) {

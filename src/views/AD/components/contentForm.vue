@@ -3,14 +3,18 @@
  * 用法：ref 调用 open() 新增，open(row) 编辑
  -->
 <template>
-  <el-dialog
+  <el-drawer
     :visible.sync="visible"
     :title="isEdit ? '编辑内容' : '新增内容'"
-    width="680px"
-    :close-on-click-modal="false"
+    direction="rtl"
+    size="680px"
+    :close-on-press-escape="false"
+    :wrapper-closable="false"
+    custom-class="content-form-drawer"
     append-to-body
     @closed="onClosed"
   >
+    <div class="content-form-drawer__body">
     <el-form
       ref="form"
       v-loading="submitting"
@@ -132,12 +136,13 @@
         <el-switch v-model="form.itemStatus" :active-value="1" :inactive-value="0" />
       </el-form-item>
     </el-form>
+    </div>
 
-    <div slot="footer">
+    <div class="content-form-drawer__footer">
       <el-button @click="visible = false">取消</el-button>
       <el-button type="primary" :loading="submitting" @click="submit">确定</el-button>
     </div>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <script>
@@ -370,5 +375,29 @@ export default {
 	font-size: 12px;
 	line-height: 1.5;
 	margin-left: 8px;
+}
+</style>
+
+<style>
+/* 抽屉：内容区可滚动，底部按钮固定，与项目其他抽屉风格一致 */
+.content-form-drawer {
+	display: flex;
+	flex-direction: column;
+}
+.content-form-drawer .el-drawer__body {
+	flex: 1;
+	overflow-y: auto;
+	padding: 0 20px 20px;
+}
+.content-form-drawer__body {
+	padding-top: 8px;
+}
+.content-form-drawer__footer {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	padding: 12px 20px;
+	border-top: 1px solid #ebeef5;
+	background: #fff;
 }
 </style>
