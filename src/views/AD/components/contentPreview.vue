@@ -28,7 +28,7 @@
 
 <script>
 import { preview as previewContentItem } from '@/api/AD/contentItem.js'
-import { LINK_TYPE_LABEL, effectiveStatusLabel, effectiveStatusType } from '../constants.js'
+import { LINK_TYPE_LABEL, effectiveStatusLabel, effectiveStatusType, resolveEffectiveStatus } from '../constants.js'
 
 export default {
   name: 'ContentPreview',
@@ -41,10 +41,10 @@ export default {
   },
   computed: {
     effectiveLabel() {
-      return this.data ? effectiveStatusLabel(this.data.effectiveStatus) : ''
+      return this.data ? effectiveStatusLabel(resolveEffectiveStatus(this.data)) : ''
     },
     effectiveType() {
-      return this.data ? effectiveStatusType(this.data.effectiveStatus) : 'info'
+      return this.data ? effectiveStatusType(resolveEffectiveStatus(this.data)) : 'info'
     },
     linkText() {
       if (!this.data) return '—'

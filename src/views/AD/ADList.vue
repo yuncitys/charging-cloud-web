@@ -105,8 +105,8 @@
       <el-table-column prop="sorting" label="排序" align="center" width="80" />
       <el-table-column label="生效状态" align="center" width="120">
         <template slot-scope="scope">
-          <el-tag size="small" :type="effectiveType(scope.row.effectiveStatus)">
-            {{ effectiveLabel(scope.row.effectiveStatus) }}
+          <el-tag size="small" :type="effectiveType(resolveEffectiveStatus(scope.row))">
+            {{ effectiveLabel(resolveEffectiveStatus(scope.row)) }}
           </el-tag>
         </template>
       </el-table-column>
@@ -167,7 +167,8 @@ import {
   EFFECTIVE_STATUS_OPTIONS,
   CONTENT_PERMS,
   effectiveStatusLabel,
-  effectiveStatusType
+  effectiveStatusType,
+  resolveEffectiveStatus
 } from './constants.js'
 
 export default {
@@ -220,15 +221,15 @@ export default {
     },
     getLists() {
       this.listLoading = true
-      const params = { ...this.listQuery }
-      // 空筛选不传，避免后端把空串当成条件
-      Object.keys(params).forEach(k => {
-        if (params[k] === '' || params[k] == null) delete params[k]
-      })
-      pageContentItem(params).then(res => {
+      // effectiveStatus 不是后端筛选参数，由前端对当前页结果做过滤
+      const { effectiveStatus, ...serverQuery } = this.listQuery
+      pageContentItem(serverQuery).then(res => {
         this.listLoading = false
         if (res && res.code === 200) {
-          this.list = res.data || []
+          const rows = res.data || []
+          this.list = effectiveStatus
+            ? rows.filter(row => resolveEffectiveStatus(row) === effectiveStatus)
+            : rows
           this.total = res.count || 0
         } else {
           this.$message.error((res && res.msg) || '列表加载失败')

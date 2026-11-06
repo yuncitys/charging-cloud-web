@@ -73,3 +73,27 @@ export const CONTENT_PERMS = {
   delete: ':AD:Content:delete',
   status: ':AD:Content:status'
 }
+
+/**
+ * 把后端返回的 effective / effectiveReason 映射为前端生效状态编码。
+ * 后端只返回布尔值与原因文案，文案与 ContentEffectiveRule 的 REASON_* 一一对应。
+ * 无法归入任一已知原因时保守展示为“未生效”。
+ */
+const REASON_TO_STATUS = {
+  '已过期': 'EXPIRED',
+  '未生效': 'NOT_STARTED',
+  '已下线': 'NOT_STARTED',
+  '已删除': 'NOT_STARTED',
+  '活动已停用': 'ACTIVITY_DISABLED',
+  '活动不存在': 'ACTIVITY_DISABLED',
+  '活动不在有效期内': 'ACTIVITY_DISABLED',
+  '活动类型不支持': 'ACTIVITY_DISABLED'
+}
+
+export function resolveEffectiveStatus(row) {
+  if (!row) return ''
+  if (row.effective === true) return 'EFFECTIVE'
+  if (row.effectiveStatus) return row.effectiveStatus
+  const reason = row.effectiveReason || row.reason || ''
+  return REASON_TO_STATUS[reason] || 'NOT_STARTED'
+}
