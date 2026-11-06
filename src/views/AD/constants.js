@@ -66,12 +66,19 @@ export const SOURCE_LABEL = {
 }
 
 /** 权限码：沿用 :AD:Content:* 体系 */
+/**
+ * 与后端 @SaCheckPermission 及 db_menu 中的权限码保持一致（见 content_placement_menu_perms_20261106.sql）：
+ * - list  ：查看（列表、预览、活动搜索）
+ * - edit  ：新增/编辑/上下线/生成推广内容（后端 save/status/fromActivity 均校验此码）
+ * - delete：删除
+ * 不再使用 query/add/status，它们在后端与数据库中都不存在。
+ */
 export const CONTENT_PERMS = {
-  query: ':AD:Content:query',
-  add: ':AD:Content:add',
+  query: ':AD:Content:list',
+  add: ':AD:Content:edit',
   edit: ':AD:Content:edit',
   delete: ':AD:Content:delete',
-  status: ':AD:Content:status'
+  status: ':AD:Content:edit'
 }
 
 /**
