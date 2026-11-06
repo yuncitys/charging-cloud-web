@@ -34,7 +34,7 @@ export default [
       component: () => import('@/views/AD/ADList'),
       name: 'ADList',
       meta: {
-        title: '广告轮播图',
+        title: '运营内容管理',
         icon: 'el-icon-star-off',
       }
     },

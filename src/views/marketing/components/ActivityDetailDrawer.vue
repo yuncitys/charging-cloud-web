@@ -253,8 +253,10 @@
 
     <div class="marketing-activity-drawer__footer">
       <el-button @click="visibleSync = false">关闭</el-button>
+      <el-button v-if="canShowPromote" @click="openPromote">生成推广内容</el-button>
       <el-button v-if="canShowEdit" type="primary" @click="handleEdit">编辑</el-button>
     </div>
+    <ActivityPromoteDialog ref="promoteDialog" />
   </el-drawer>
 </template>
 
@@ -265,10 +267,13 @@ import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, 
 import { canEditMarketingActivity, hasActivityEditAction } from '../utils/marketingActivityAuth'
 import { MARKETING_PERMS } from '../constants/marketingPermissions'
 import { parseTime } from '@/utils/index'
+import ActivityPromoteDialog from '@/views/AD/components/ActivityPromoteDialog.vue'
+import { CONTENT_PERMS } from '@/views/AD/constants.js'
 import '../styles/marketing.scss'
 
 export default {
   name: 'ActivityDetailDrawer',
+  components: { ActivityPromoteDialog },
   filters: {
     formatDate(time) {
       if (!time) return '—'
@@ -313,6 +318,12 @@ export default {
       return this.activity &&
         hasActivityEditAction(this.activityType, MARKETING_PERMS.activityUpdate) &&
         canEditMarketingActivity(this.activity)
+    },
+    /** 生成推广内容：仅进行中(1)或未开始(2)的活动，且具备 AD 内容新增权限 */
+    canShowPromote() {
+      if (!this.activity) return false
+      const status = String(this.activity.activityStatus)
+      return (status === '1' || status === '2') && this.btnAuthen.permsVerifAuthention(CONTENT_PERMS.add)
     },
     showInitiator() {
       return ['3', '4', '5', '6'].includes(this.activityType)
@@ -376,7 +387,7 @@ export default {
     }
   },
   created() {
-    ;['marketing_activity_status', 'marketing_send_type', 'marketing_send_status', 'marketing_limit_type', 'marketing_activity_user_scope', 'marketing_activity_station_scope', 'marketing_activity_initiator'].forEach(code => {
+    ['marketing_activity_status', 'marketing_send_type', 'marketing_send_status', 'marketing_limit_type', 'marketing_activity_user_scope', 'marketing_activity_station_scope', 'marketing_activity_initiator'].forEach(code => {
       this.$dict.getSelector(code)
     })
   },
@@ -436,6 +447,9 @@ export default {
     handleEdit() {
       this.$emit('edit', this.activity)
       this.visibleSync = false
+    },
+    openPromote() {
+      this.$refs.promoteDialog.open(this.activity)
     }
   }
 }

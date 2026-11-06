@@ -168,12 +168,16 @@
 
     <div class="marketing-activity-drawer__footer">
       <el-button @click="visibleSync = false">关闭</el-button>
+      <el-button v-if="canShowPromote" @click="openPromote">生成推广内容</el-button>
       <el-button v-if="canShowEdit" type="primary" @click="handleEdit">编辑</el-button>
     </div>
+    <ActivityPromoteDialog ref="promoteDialog" />
   </el-drawer>
 </template>
 
 <script>
+import ActivityPromoteDialog from '@/views/AD/components/ActivityPromoteDialog.vue'
+import { CONTENT_PERMS } from '@/views/AD/constants.js'
 import { activityDetail } from '@/api/marketing/marketing'
 import { getMerchant } from '@/api/merchant/merchant'
 import { getActivityStatusLabel, getActivityStatusTagType, getActivityTypeMeta, getActivityInitiatorLabel } from '../constants/activityTypes'
@@ -198,6 +202,7 @@ import '../styles/marketing.scss'
 
 export default {
   name: 'DiscountActivityDetailDrawer',
+  components: { ActivityPromoteDialog },
   filters: {
     formatDate(time) {
       if (!time) return '—'
@@ -246,6 +251,12 @@ export default {
       return this.activity &&
         hasActivityEditAction(this.activityType, MARKETING_PERMS.activityUpdate) &&
         canEditMarketingActivity(this.activity)
+    },
+    /** 生成推广内容：仅进行中(1)或未开始(2)的活动，且具备 AD 内容新增权限 */
+    canShowPromote() {
+      if (!this.activity) return false
+      const status = String(this.activity.activityStatus)
+      return (status === '1' || status === '2') && this.btnAuthen.permsVerifAuthention(CONTENT_PERMS.add)
     },
     initiatorLabel() {
       if (!this.activity) return '—'
@@ -313,7 +324,7 @@ export default {
     }
   },
   created() {
-    ;['marketing_activity_status','marketing_discount_fee_type','marketing_rate_type','marketing_rate_setting_type','marketing_discount_value_mode','marketing_discount_station_scope','marketing_discount_user_scope','marketing_participant_type','marketing_activity_initiator'].forEach(c => this.$dict.getSelector(c))
+    ['marketing_activity_status', 'marketing_discount_fee_type', 'marketing_rate_type', 'marketing_rate_setting_type', 'marketing_discount_value_mode', 'marketing_discount_station_scope', 'marketing_discount_user_scope', 'marketing_participant_type', 'marketing_activity_initiator'].forEach(c => this.$dict.getSelector(c))
   },
   methods: {
     formatRateValue,
@@ -362,6 +373,9 @@ export default {
     handleEdit() {
       this.$emit('edit', this.activity)
       this.visibleSync = false
+    },
+    openPromote() {
+      this.$refs.promoteDialog.open(this.activity)
     }
   }
 }

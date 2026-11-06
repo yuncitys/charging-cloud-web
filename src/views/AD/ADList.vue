@@ -1,198 +1,325 @@
 <template>
-	<div class="app-container">
-		<div class="filter-container">
-			<div style="margin: 15px 0;">
-				<!-- 新增广告 -->
-				<addPage @getLists="getLists" />
-			</div>
+  <div class="app-container">
+    <div class="filter-container">
+      <el-form :inline="true" class="filter-form" @submit.native.prevent>
+        <el-form-item label="展示位">
+          <el-select
+            v-model="listQuery.placementCode"
+            clearable
+            placeholder="全部展示位"
+            style="width: 200px;"
+            @change="handleFilter"
+          >
+            <el-option
+              v-for="item in placementOptions"
+              :key="item.placementCode"
+              :label="item.placementName ? `${item.placementName}（${item.placementCode}）` : item.placementCode"
+              :value="item.placementCode"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="上线状态">
+          <el-select
+            v-model="listQuery.itemStatus"
+            clearable
+            placeholder="全部"
+            style="width: 130px;"
+            @change="handleFilter"
+          >
+            <el-option label="已上线" :value="1" />
+            <el-option label="已下线" :value="0" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="生效状态">
+          <el-select
+            v-model="listQuery.effectiveStatus"
+            clearable
+            placeholder="全部"
+            style="width: 160px;"
+            @change="handleFilter"
+          >
+            <el-option v-for="item in effectiveOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" icon="el-icon-search" @click="handleFilter">查询</el-button>
+          <el-button @click="resetFilter">重置</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(CONTENT_PERMS.add)"
+            type="primary"
+            icon="el-icon-plus"
+            @click="onAdd"
+          >新增内容</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
 
-			<el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......"  fit
-				highlight-current-row style="width: 100%;" align="center" id="tableBox">
-				<el-table-column type="index" width="55" label="序号" align="center">
-					<template slot-scope="scope"><span>{{scope.$index+(page - 1) * limit + 1}} </span></template>
-				</el-table-column>
-				<el-table-column prop="imageTitle" label="广告名称" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="types" label="广告类型" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope">
-						<el-tag type="success">{{ $dict.formatAdMediaType(scope.row.types) }}</el-tag>
-					</template>
-				</el-table-column>
-				<el-table-column prop="imageUrl" label="预览" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope" style="text-align: center;">
-						<imgView :width="200" :height="200" v-if="scope.row.types == 1" :radius="false"
-							:imgSrc="scope.row.imageUrl" />
-						<video v-if="scope.row.types == 2" :src="scope.row.imageUrl"
-							style="height: 200px;width: 200px;" controls="controls">您的浏览器不支持视频播放</video>
-					</template>
-				</el-table-column>
-				<!-- <el-table-column prop="image_link" label="跳转链接" align="center" width="150"
-					:show-overflow-tooltip='true'>
-				</el-table-column> -->
-				<el-table-column prop="sorting" label="排序" align="center" :show-overflow-tooltip="isPc">
-				</el-table-column>
-				<el-table-column prop="createTime" label="创建时间" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope">
-						<span>{{ scope.row.createTime | formatDate }}</span>
-					</template>
-				</el-table-column>
-				<el-table-column prop="updateTime" label="更新时间" align="center" :show-overflow-tooltip="isPc">
-					<template slot-scope="scope">
-						<span>{{ scope.row.updateTime | formatDate }}</span>
-					</template>
-				</el-table-column>
-				<el-table-column label="操作" width="200">
-					<template slot-scope="scope">
-						<div style="display: flex;justify-content: center;align-items: center;">
-							<!-- 编辑广告 -->
-							<editPage :row_data="scope.row" @getLists="getLists" />
-							<el-button type="danger" @click="del(scope.row.id)" style="margin-left: 10px;"
-								icon="el-icon-delete" v-if="btnAuthen.permsVerifAuthention(':AD:ADList:delete')">
-								删除
-							</el-button>
-						</div>
-					</template>
-				</el-table-column>
-			</el-table>
-			<div class="pagination-container">
-				<el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
-					:total="total" background layout="total, sizes, prev, pager, next, jumper"
-					@size-change="handleSizeChange" @current-change="handleCurrentChange" />
-			</div>
-			<!-- 查看图片 -->
-			<el-dialog :visible.sync="showImg" :append-to-body="true">
-				<img width="100%" :src="tableImg" alt="" height="600" />
-			</el-dialog>
-		</div>
-	</div>
+    <el-table
+      id="tableBox"
+      v-loading="listLoading"
+      :data="list"
+      element-loading-text="拼命加载中......"
+      fit
+      highlight-current-row
+      style="width: 100%;"
+      align="center"
+    >
+      <el-table-column type="index" width="55" label="序号" align="center">
+        <template slot-scope="scope"><span>{{ scope.$index + (listQuery.page - 1) * listQuery.limit + 1 }}</span></template>
+      </el-table-column>
+      <el-table-column label="缩略图" align="center" width="120">
+        <template slot-scope="scope">
+          <img v-if="scope.row.itemType !== 2 && scope.row.mediaUrl" :src="scope.row.mediaUrl" class="thumb" alt="">
+          <video v-else-if="scope.row.mediaUrl" :src="scope.row.mediaUrl" class="thumb" />
+          <span v-else>—</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="itemTitle" label="标题" align="center" min-width="140" :show-overflow-tooltip="true" />
+      <el-table-column label="展示位" align="center" min-width="140">
+        <template slot-scope="scope">
+          <el-tag
+            v-for="code in scope.row.placementCodes || []"
+            :key="code"
+            size="mini"
+            type="info"
+            style="margin: 2px;"
+          >{{ placementName(code) }}</el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="跳转" align="center" min-width="180" :show-overflow-tooltip="true">
+        <template slot-scope="scope">
+          <span>{{ linkTypeLabel(scope.row.linkType) }}</span>
+          <span v-if="scope.row.linkType !== 'NONE' && scope.row.linkValue" class="link-value">
+            ：{{ scope.row.linkValue }}
+          </span>
+          <span v-if="scope.row.linkType === 'ACTIVITY' && scope.row.activityName" class="link-value">
+            （{{ scope.row.activityName }}）
+          </span>
+        </template>
+      </el-table-column>
+      <el-table-column label="生效时间" align="center" min-width="220">
+        <template slot-scope="scope">
+          <span>{{ scope.row.startTime || '立即' }} ~ {{ scope.row.endTime || '长期' }}</span>
+        </template>
+      </el-table-column>
+      <el-table-column prop="sorting" label="排序" align="center" width="80" />
+      <el-table-column label="生效状态" align="center" width="120">
+        <template slot-scope="scope">
+          <el-tag size="small" :type="effectiveType(scope.row.effectiveStatus)">
+            {{ effectiveLabel(scope.row.effectiveStatus) }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column label="上线" align="center" width="90">
+        <template slot-scope="scope">
+          <el-switch
+            :value="scope.row.itemStatus === 1"
+            :disabled="!canStatus || scope.row._switching"
+            @change="val => onSwitch(scope.row, val)"
+          />
+        </template>
+      </el-table-column>
+      <el-table-column label="操作" align="center" width="200" fixed="right">
+        <template slot-scope="scope">
+          <el-button type="text" size="small" @click="onPreview(scope.row)">预览</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(CONTENT_PERMS.edit)"
+            type="text"
+            size="small"
+            @click="onEdit(scope.row)"
+          >编辑</el-button>
+          <el-button
+            v-if="btnAuthen.permsVerifAuthention(CONTENT_PERMS.delete)"
+            type="text"
+            size="small"
+            class="danger-text"
+            @click="onDelete(scope.row)"
+          >删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <div class="pagination-container">
+      <el-pagination
+        :current-page="listQuery.page"
+        :page-sizes="[10, 20, 30, 50]"
+        :page-size="listQuery.limit"
+        :total="total"
+        background
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+
+    <content-form ref="contentForm" @saved="getLists" />
+    <content-preview ref="contentPreview" />
+  </div>
 </template>
 
 <script>
-	import {
-		getList,
-		deleteImageCarousel,
-		addImageCarousel,
-		updateImageCarousel,
-		uploadImg
-	} from '@/api/AD/ADList.js'
-	import {
-		parseTime
-	} from '@/utils/index'
-	import addPage from './components/addPage.vue'
-	import editPage from './components/editPage.vue'
-	import imgView from '@/components/Common/imgView.vue'
-	export default {
-		name: 'ADList',
-		components: {
-			addPage,
-			editPage,
-			imgView
-		},
-		data() {
-			return {
-				listLoading: true,
-				page: 1,
-				limit: 10,
-				list: [],
-				total: 10,
-				listQuery: {
-					page: 1,
-					limit: 10
-				},
-				tableKey: 0,
-				tableImg: '',
-				showImg: false
-			}
-		},
-		filters: {
-			formatDate: function(time) {
-				if (!time) {
-					return ''
-				}
-				return parseTime(time)
-			},
-		},
-		methods: {
-			getLists() {
-				this.listLoading = true
-				getList(this.listQuery).then(res => {
-					if (res.code == 200) {
-						console.log(res)
-						this.list = res.data
-						this.total = res.count
-						this.listLoading = false
-					} else {
-						this.$message.error(res.msg)
-					}
-				})
-			},
-			del(id) {
-				this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
-					confirmButtonText: '是',
-					cancelButtonText: '否',
-					type: 'warning'
-				}).then(() => {
-					let data = {
-						id
-					}
-					console.log(data)
-					deleteImageCarousel(data).then(res => {
-						if (res.code == 200) {
-							this.$message({
-								type: 'success',
-								message: res.msg
-							})
-							this.getLists()
-						} else {
-							this.$message.error(res.msg)
-						}
-					})
-				})
-			},
-			handleSizeChange(val) {
-				this.listQuery.limit = val
-				this.getLists()
-			},
-			handleCurrentChange(val) {
-				this.listQuery.page = val
-				this.getLists()
-			},
-			showBigImg(imgUrl) {
-				this.tableImg = imgUrl
-				this.showImg = true
-			},
-		},
-		created() {
-			this.getLists()
-		},
-	}
+import { page as pageContentItem, status as updateStatus, remove as deleteContentItem } from '@/api/AD/contentItem.js'
+import { list as listPlacement } from '@/api/AD/contentPlacement.js'
+import ContentForm from './components/contentForm.vue'
+import ContentPreview from './components/contentPreview.vue'
+import {
+  LINK_TYPE_LABEL,
+  EFFECTIVE_STATUS_OPTIONS,
+  CONTENT_PERMS,
+  effectiveStatusLabel,
+  effectiveStatusType
+} from './constants.js'
+
+export default {
+  name: 'ADList',
+  components: { ContentForm, ContentPreview },
+  data() {
+    return {
+      CONTENT_PERMS,
+      listLoading: false,
+      list: [],
+      total: 0,
+      placementOptions: [],
+      effectiveOptions: EFFECTIVE_STATUS_OPTIONS,
+      listQuery: {
+        page: 1,
+        limit: 10,
+        placementCode: '',
+        itemStatus: '',
+        effectiveStatus: ''
+      }
+    }
+  },
+  computed: {
+    canStatus() {
+      return this.btnAuthen.permsVerifAuthention(CONTENT_PERMS.status)
+    }
+  },
+  created() {
+    this.loadPlacements()
+    this.getLists()
+  },
+  methods: {
+    effectiveLabel(code) {
+      return effectiveStatusLabel(code)
+    },
+    effectiveType(code) {
+      return effectiveStatusType(code)
+    },
+    linkTypeLabel(type) {
+      return LINK_TYPE_LABEL[type] || type || '—'
+    },
+    placementName(code) {
+      const hit = this.placementOptions.find(i => i.placementCode === code)
+      return hit && hit.placementName ? hit.placementName : code
+    },
+    loadPlacements() {
+      listPlacement().then(res => {
+        if (res && res.code === 200) this.placementOptions = res.data || []
+      })
+    },
+    getLists() {
+      this.listLoading = true
+      const params = { ...this.listQuery }
+      // 空筛选不传，避免后端把空串当成条件
+      Object.keys(params).forEach(k => {
+        if (params[k] === '' || params[k] == null) delete params[k]
+      })
+      pageContentItem(params).then(res => {
+        this.listLoading = false
+        if (res && res.code === 200) {
+          this.list = res.data || []
+          this.total = res.count || 0
+        } else {
+          this.$message.error((res && res.msg) || '列表加载失败')
+        }
+      }).catch(() => {
+        this.listLoading = false
+      })
+    },
+    handleFilter() {
+      this.listQuery.page = 1
+      this.getLists()
+    },
+    resetFilter() {
+      this.listQuery = { ...this.listQuery, page: 1, placementCode: '', itemStatus: '', effectiveStatus: '' }
+      this.getLists()
+    },
+    handleSizeChange(val) {
+      this.listQuery.limit = val
+      this.listQuery.page = 1
+      this.getLists()
+    },
+    handleCurrentChange(val) {
+      this.listQuery.page = val
+      this.getLists()
+    },
+    onAdd() {
+      this.$refs.contentForm.open()
+    },
+    onEdit(row) {
+      this.$refs.contentForm.open(row)
+    },
+    onPreview(row) {
+      this.$refs.contentPreview.open(row.id)
+    },
+    onSwitch(row, val) {
+      const itemStatus = val ? 1 : 0
+      const text = val ? '上线' : '下线'
+      this.$confirm(`确认${text}该内容？`, '提示', { type: 'warning' }).then(() => {
+        this.$set(row, '_switching', true)
+        return updateStatus({ id: row.id, itemStatus })
+      }).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success(res.msg || `${text}成功`)
+          this.getLists()
+        } else {
+          this.$message.error((res && res.msg) || `${text}失败`)
+        }
+      }).catch(() => {}).finally(() => {
+        this.$set(row, '_switching', false)
+      })
+    },
+    onDelete(row) {
+      this.$confirm('删除后该内容将不再展示，确定删除吗？', '警告', {
+        confirmButtonText: '是',
+        cancelButtonText: '否',
+        type: 'warning'
+      }).then(() => deleteContentItem({ id: row.id })).then(res => {
+        if (res && res.code === 200) {
+          this.$message.success(res.msg || '删除成功')
+          this.getLists()
+        } else {
+          this.$message.error((res && res.msg) || '删除失败')
+        }
+      }).catch(() => {})
+    }
+  }
+}
 </script>
 
-<style scoped="scoped">
-	.avatar-uploader-icon {
-		border: 1px dashed #d9d9d9 !important;
-		border-radius: 6px;
-		cursor: pointer;
-		position: relative;
-		overflow: hidden;
-	}
-
-	.avatar-uploader-icon {
-		font-size: 28px;
-		color: #8c939d;
-		width: 178px;
-		height: 178px;
-		line-height: 178px;
-		text-align: center;
-	}
-
-	.avatar {
-		width: 178px;
-		height: 178px;
-		display: block;
-	}
-
-	.BigImg:hover {
-		cursor: pointer;
-	}
+<style scoped>
+.filter-container {
+	margin-bottom: 12px;
+}
+.filter-form {
+	margin-bottom: -10px;
+}
+.thumb {
+	width: 100px;
+	height: 60px;
+	object-fit: cover;
+	border-radius: 4px;
+}
+.link-value {
+	color: #909399;
+	font-size: 12px;
+}
+.danger-text {
+	color: #f56c6c;
+}
+.pagination-container {
+	padding: 20px 0 0;
+	text-align: right;
+}
 </style>
