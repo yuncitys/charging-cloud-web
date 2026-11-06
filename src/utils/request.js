@@ -85,8 +85,19 @@ service.interceptors.response.use(
 	// },
 	error => {
 		console.log('err' + error) // for debug
+		// 按真实原因提示，统一使用 toast（超时 / 接口不存在 / 服务端异常 / 网络断开）
+		let message = '网络异常，请检查网络连接'
+		if (error && error.code === 'ECONNABORTED') {
+			message = '请求超时，请稍后重试'
+		} else if (error && error.response) {
+			const status = error.response.status
+			if (status === 404) message = '接口不存在（404），请检查服务或接口地址'
+			else if (status >= 500) message = `服务端异常（${status}），请稍后重试`
+			else if (status === 401 || status === 403) message = `无权限访问（${status}）`
+			else message = `请求失败（${status}）`
+		}
 		Message({
-			message: '请求超时',
+			message,
 			type: 'error',
 			duration: 5 * 1000
 		})

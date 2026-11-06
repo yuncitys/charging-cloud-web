@@ -235,6 +235,7 @@ export default {
           this.$message.error((res && res.msg) || '列表加载失败')
         }
       }).catch(() => {
+        // 错误已由请求层 toast 提示，这里只收起加载态，避免未捕获的 Uncaught 错误
         this.listLoading = false
       })
     },
