@@ -78,7 +78,7 @@
       <el-table-column label="展示位" align="center" min-width="140">
         <template slot-scope="scope">
           <el-tag
-            v-for="code in scope.row.placementCodes || []"
+            v-for="code in placementCodesOf(scope.row)"
             :key="code"
             size="mini"
             type="info"
@@ -119,22 +119,20 @@
           />
         </template>
       </el-table-column>
-      <el-table-column label="操作" align="center" width="200" fixed="right">
+      <el-table-column label="操作" align="center" width="150" fixed="right">
         <template slot-scope="scope">
-          <el-button type="text" size="small" @click="onPreview(scope.row)">预览</el-button>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(CONTENT_PERMS.edit)"
-            type="text"
-            size="small"
-            @click="onEdit(scope.row)"
-          >编辑</el-button>
-          <el-button
-            v-if="btnAuthen.permsVerifAuthention(CONTENT_PERMS.delete)"
-            type="text"
-            size="small"
-            class="danger-text"
-            @click="onDelete(scope.row)"
-          >删除</el-button>
+          <el-button size="mini" @click="onPreview(scope.row)">预览</el-button>
+          <el-dropdown
+            v-if="canEdit || canDelete"
+            trigger="click"
+            @command="cmd => onMore(cmd, scope.row)"
+          >
+            <el-button size="mini">更多<i class="el-icon-arrow-down el-icon--right" /></el-button>
+            <el-dropdown-menu slot="dropdown">
+              <el-dropdown-item v-if="canEdit" command="edit"><i class="el-icon-edit" /> 编辑</el-dropdown-item>
+              <el-dropdown-item v-if="canDelete" command="delete" divided class="danger-text"><i class="el-icon-delete" /> 删除</el-dropdown-item>
+            </el-dropdown-menu>
+          </el-dropdown>
         </template>
       </el-table-column>
     </el-table>
@@ -168,7 +166,8 @@ import {
   CONTENT_PERMS,
   effectiveStatusLabel,
   effectiveStatusType,
-  resolveEffectiveStatus
+  resolveEffectiveStatus,
+  rowPlacementCodes
 } from './constants.js'
 
 export default {
@@ -194,6 +193,12 @@ export default {
   computed: {
     canStatus() {
       return this.btnAuthen.permsVerifAuthention(CONTENT_PERMS.status)
+    },
+    canEdit() {
+      return this.btnAuthen.permsVerifAuthention(CONTENT_PERMS.edit)
+    },
+    canDelete() {
+      return this.btnAuthen.permsVerifAuthention(CONTENT_PERMS.delete)
     }
   },
   created() {
@@ -217,6 +222,9 @@ export default {
     placementName(code) {
       const hit = this.placementOptions.find(i => i.placementCode === code)
       return hit && hit.placementName ? hit.placementName : code
+    },
+    placementCodesOf(row) {
+      return rowPlacementCodes(row)
     },
     loadPlacements() {
       listPlacement().then(res => {
@@ -266,8 +274,13 @@ export default {
     onEdit(row) {
       this.$refs.contentForm.open(row)
     },
+    onMore(command, row) {
+      if (command === 'edit') this.onEdit(row)
+      else if (command === 'delete') this.onDelete(row)
+    },
     onPreview(row) {
-      this.$refs.contentPreview.open(row.id)
+      const placementText = this.placementCodesOf(row).map(code => this.placementName(code)).join('、')
+      this.$refs.contentPreview.open(row.id, { placementText })
     },
     onSwitch(row, val) {
       const itemStatus = val ? 1 : 0

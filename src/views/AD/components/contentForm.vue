@@ -15,127 +15,127 @@
     @closed="onClosed"
   >
     <div class="content-form-drawer__body">
-    <el-form
-      ref="form"
-      v-loading="submitting"
-      :model="form"
-      :rules="rules"
-      label-width="110px"
-      label-position="left"
-    >
-      <el-form-item label="标题" prop="itemTitle">
-        <el-input v-model="form.itemTitle" placeholder="请输入标题" maxlength="60" show-word-limit clearable />
-      </el-form-item>
-
-      <el-form-item label="素材类型" prop="itemType">
-        <el-radio-group v-model="form.itemType" @change="onItemTypeChange">
-          <el-radio :label="1">图片</el-radio>
-          <el-radio :label="2">视频</el-radio>
-        </el-radio-group>
-      </el-form-item>
-
-      <el-form-item label="素材" prop="mediaUrl">
-        <uploadFile ref="upload" v-model="form.mediaUrl" />
-      </el-form-item>
-
-      <el-form-item label="展示位" prop="placementCodes">
-        <el-select v-model="form.placementCodes" multiple filterable placeholder="请选择展示位" style="width: 100%;">
-          <el-option
-            v-for="item in placementOptions"
-            :key="item.placementCode"
-            :label="item.placementName ? `${item.placementName}（${item.placementCode}）` : item.placementCode"
-            :value="item.placementCode"
-          />
-        </el-select>
-      </el-form-item>
-
-      <el-form-item label="跳转类型" prop="linkType">
-        <el-select v-model="form.linkType" placeholder="请选择跳转类型" style="width: 100%;" @change="onLinkTypeChange">
-          <el-option v-for="item in linkTypes" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
-      </el-form-item>
-
-      <template v-if="form.linkType === 'ACTIVITY'">
-        <el-form-item label="活动类型">
-          <el-select
-            v-model="activityType"
-            clearable
-            placeholder="全部类型（可选）"
-            style="width: 100%;"
-            @change="onActivityTypeChange"
-          >
-            <el-option v-for="item in ACTIVITY_BIND_TYPES" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+      <el-form
+        ref="form"
+        v-loading="submitting"
+        :model="form"
+        :rules="rules"
+        label-width="110px"
+        label-position="left"
+      >
+        <el-form-item label="标题" prop="itemTitle">
+          <el-input v-model="form.itemTitle" placeholder="请输入标题" maxlength="60" show-word-limit clearable />
         </el-form-item>
-        <el-form-item label="营销活动" prop="activityId">
-          <el-select
-            v-model="form.activityId"
-            filterable
-            remote
-            clearable
-            reserve-keyword
-            placeholder="输入活动名称搜索"
-            :remote-method="searchActivity"
-            :loading="activityLoading"
-            style="width: 100%;"
-            @visible-change="onActivitySelectOpen"
-            @change="onActivityChange"
-          >
+
+        <el-form-item label="素材类型" prop="itemType">
+          <el-radio-group v-model="form.itemType" @change="onItemTypeChange">
+            <el-radio :label="1">图片</el-radio>
+            <el-radio :label="2">视频</el-radio>
+          </el-radio-group>
+        </el-form-item>
+
+        <el-form-item label="素材" prop="mediaUrl">
+          <uploadFile ref="upload" v-model="form.mediaUrl" />
+        </el-form-item>
+
+        <el-form-item label="展示位" prop="placementCodes">
+          <el-select v-model="form.placementCodes" multiple filterable placeholder="请选择展示位" style="width: 100%;">
             <el-option
-              v-for="item in activityList"
-              :key="item.activityId"
-              :label="activityLabel(item)"
-              :value="item.activityId"
+              v-for="item in placementOptions"
+              :key="item.placementCode"
+              :label="item.placementName ? `${item.placementName}（${item.placementCode}）` : item.placementCode"
+              :value="item.placementCode"
             />
           </el-select>
-          <div class="form-tip">可搜索充值领取、充电领取、电站折扣、用户折扣四类活动</div>
         </el-form-item>
-      </template>
 
-      <el-form-item
-        v-else-if="['STATION', 'GOODS'].includes(form.linkType)"
-        :label="form.linkType === 'STATION' ? '电站 ID' : '商品 ID'"
-        prop="linkValue"
-      >
-        <el-input
-          v-model="form.linkValue"
-          :placeholder="form.linkType === 'STATION' ? '请输入电站 ID' : '请输入商品 ID'"
-          clearable
-        />
-      </el-form-item>
+        <el-form-item label="跳转类型" prop="linkType">
+          <el-select v-model="form.linkType" placeholder="请选择跳转类型" style="width: 100%;" @change="onLinkTypeChange">
+            <el-option v-for="item in linkTypes" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
 
-      <el-form-item v-else-if="form.linkType === 'PAGE'" label="页面路径" prop="linkValue">
-        <el-input v-model="form.linkValue" placeholder="如 /pages/xxx/xxx" clearable />
-      </el-form-item>
+        <template v-if="form.linkType === 'ACTIVITY'">
+          <el-form-item label="活动类型">
+            <el-select
+              v-model="activityType"
+              clearable
+              placeholder="全部类型（可选）"
+              style="width: 100%;"
+              @change="onActivityTypeChange"
+            >
+              <el-option v-for="item in ACTIVITY_BIND_TYPES" :key="item.value" :label="item.label" :value="item.value" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="营销活动" prop="activityId">
+            <el-select
+              v-model="form.activityId"
+              filterable
+              remote
+              clearable
+              reserve-keyword
+              placeholder="输入活动名称搜索"
+              :remote-method="searchActivity"
+              :loading="activityLoading"
+              style="width: 100%;"
+              @visible-change="onActivitySelectOpen"
+              @change="onActivityChange"
+            >
+              <el-option
+                v-for="item in activityList"
+                :key="item.activityId"
+                :label="activityLabel(item)"
+                :value="item.activityId"
+              />
+            </el-select>
+            <div class="form-tip">可搜索充值领取、充电领取、电站折扣、用户折扣四类活动</div>
+          </el-form-item>
+        </template>
 
-      <el-form-item v-else-if="form.linkType === 'H5'" label="外链地址" prop="linkValue">
-        <el-input v-model="form.linkValue" placeholder="须以 http:// 或 https:// 开头" clearable />
-      </el-form-item>
+        <el-form-item
+          v-else-if="['STATION', 'GOODS'].includes(form.linkType)"
+          :label="form.linkType === 'STATION' ? '电站 ID' : '商品 ID'"
+          prop="linkValue"
+        >
+          <el-input
+            v-model="form.linkValue"
+            :placeholder="form.linkType === 'STATION' ? '请输入电站 ID' : '请输入商品 ID'"
+            clearable
+          />
+        </el-form-item>
 
-      <el-form-item label="生效时间">
-        <el-date-picker
-          v-model="timeRange"
-          type="datetimerange"
-          value-format="yyyy-MM-dd HH:mm:ss"
-          range-separator="至"
-          start-placeholder="开始时间（可空）"
-          end-placeholder="结束时间（可空）"
-          style="width: 100%;"
-          clearable
-          @change="onTimeChange"
-        />
-        <div class="form-tip">不填表示立即生效、长期有效</div>
-      </el-form-item>
+        <el-form-item v-else-if="form.linkType === 'PAGE'" label="页面路径" prop="linkValue">
+          <el-input v-model="form.linkValue" placeholder="如 /pages/xxx/xxx" clearable />
+        </el-form-item>
 
-      <el-form-item label="排序" prop="sorting">
-        <el-input-number v-model="form.sorting" :min="0" :max="99999" controls-position="right" />
-        <span class="form-tip">数值越小越靠前</span>
-      </el-form-item>
+        <el-form-item v-else-if="form.linkType === 'H5'" label="外链地址" prop="linkValue">
+          <el-input v-model="form.linkValue" placeholder="须以 http:// 或 https:// 开头" clearable />
+        </el-form-item>
 
-      <el-form-item label="上线" prop="itemStatus">
-        <el-switch v-model="form.itemStatus" :active-value="1" :inactive-value="0" />
-      </el-form-item>
-    </el-form>
+        <el-form-item label="生效时间">
+          <el-date-picker
+            v-model="timeRange"
+            type="datetimerange"
+            value-format="yyyy-MM-dd HH:mm:ss"
+            range-separator="至"
+            start-placeholder="开始时间（可空）"
+            end-placeholder="结束时间（可空）"
+            style="width: 100%;"
+            clearable
+            @change="onTimeChange"
+          />
+          <div class="form-tip">不填表示立即生效、长期有效</div>
+        </el-form-item>
+
+        <el-form-item label="排序" prop="sorting">
+          <el-input-number v-model="form.sorting" :min="0" :max="99999" controls-position="right" />
+          <span class="form-tip">数值越小越靠前</span>
+        </el-form-item>
+
+        <el-form-item label="上线" prop="itemStatus">
+          <el-switch v-model="form.itemStatus" :active-value="1" :inactive-value="0" />
+        </el-form-item>
+      </el-form>
     </div>
 
     <div class="content-form-drawer__footer">
@@ -149,7 +149,7 @@
 import uploadFile from '@/components/Common/uploadFile.vue'
 import { save as saveContentItem, activityOptions } from '@/api/AD/contentItem.js'
 import { list as listPlacement } from '@/api/AD/contentPlacement.js'
-import { LINK_TYPES, ACTIVITY_BIND_TYPES, DEFAULT_PLACEMENT_CODE } from '../constants.js'
+import { LINK_TYPES, ACTIVITY_BIND_TYPES, DEFAULT_PLACEMENT_CODE, rowPlacementCodes } from '../constants.js'
 
 const HTTP_URL_REG = /^https?:\/\/.+/i
 
@@ -241,7 +241,7 @@ export default {
         itemTitle: row.itemTitle || '',
         itemType: row.itemType || 1,
         mediaUrl: row.mediaUrl || '',
-        placementCodes: row.placementCodes || (row.placementCode ? [row.placementCode] : []),
+        placementCodes: rowPlacementCodes(row),
         linkType: row.linkType || 'NONE',
         linkValue: row.linkValue || '',
         activityId: row.linkType === 'ACTIVITY' ? (row.activityId || row.linkValue || '') : '',

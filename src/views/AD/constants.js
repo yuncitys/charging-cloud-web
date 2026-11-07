@@ -97,6 +97,19 @@ const REASON_TO_STATUS = {
   '活动类型不支持': 'ACTIVITY_DISABLED'
 }
 
+/**
+ * 取内容行绑定的展示位编码数组。
+ * 后端列表行可能返回 placementCodes（数组或逗号分隔字符串），也可能只返回单数 placementCode，
+ * 这里统一兜底，避免列表与表单各自取值导致展示位显示为空。
+ */
+export function rowPlacementCodes(row) {
+  if (!row) return []
+  const codes = row.placementCodes
+  if (Array.isArray(codes)) return codes.filter(Boolean)
+  if (typeof codes === 'string' && codes.trim()) return codes.split(',').map(s => s.trim()).filter(Boolean)
+  return row.placementCode ? [row.placementCode] : []
+}
+
 export function resolveEffectiveStatus(row) {
   if (!row) return ''
   if (row.effective === true) return 'EFFECTIVE'
