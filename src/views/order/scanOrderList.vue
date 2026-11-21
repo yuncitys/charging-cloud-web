@@ -14,8 +14,7 @@
 
     <div class="filter-container order-list-toolbar">
       <el-tabs v-if="fixedRuleId === null" v-model="activeName" type="card" @tab-click="handleClick">
-        <el-tab-pane v-for="(item, index) in ruleIdList" :key="item.id" :label="item.title" :name="item.id">
-        </el-tab-pane>
+        <el-tab-pane v-for="item in ruleIdList" :key="item.id" :label="item.title" :name="item.id" />
       </el-tabs>
 
       <div class="filter-container" style="margin: 15px 0;">
@@ -70,17 +69,25 @@
         </el-row>
       </div>
 
-      <el-table v-loading="listLoading" :key="tableKey" :data="list" element-loading-text="拼命加载中......" fit
+      <el-table
+        id="tableBox"
+        :key="tableKey"
+        v-loading="listLoading"
+        :data="list"
+        element-loading-text="拼命加载中......"
+        fit
         :max-height="tableMaxHeight"
-        style="width: 100%;" id="tableBox" class="order-layout-table">
+        style="width: 100%;"
+        class="order-layout-table"
+      >
         <el-table-column label="订单信息" min-width="260">
           <template slot-scope="scope">
             <div class="order-layout-col order-layout-col--order">
-              <div class="order-layout-item" v-if="formThead.orderType"><span>类型：</span><span class="order-layout-value" v-overflow-title>{{ orderTypeText(scope.row.orderType) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.orderCode"><span>业务单号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.orderCode) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.payCode"><span>支付单号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.payCode) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.channel"><span>渠道：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userLabel) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.createTime"><span>订单创建：</span><span class="order-layout-value" v-overflow-title>{{ scope.row.createTime | formatDate }}</span></div>
+              <div v-if="formThead.orderType" class="order-layout-item"><span>类型：</span><span v-overflow-title class="order-layout-value">{{ orderTypeText(scope.row.orderType) }}</span></div>
+              <div v-if="formThead.orderCode" class="order-layout-item"><span>业务单号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.orderCode) }}</span></div>
+              <div v-if="formThead.payCode" class="order-layout-item"><span>支付单号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.payCode) }}</span></div>
+              <div v-if="formThead.channel" class="order-layout-item"><span>渠道：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.userLabel) }}</span></div>
+              <div v-if="formThead.createTime" class="order-layout-item"><span>订单创建：</span><span v-overflow-title class="order-layout-value">{{ scope.row.createTime | formatDate }}</span></div>
             </div>
           </template>
         </el-table-column>
@@ -88,11 +95,11 @@
         <el-table-column label="电站信息" min-width="230">
           <template slot-scope="scope">
             <div class="order-layout-col order-layout-col--station">
-              <div class="order-layout-item" v-if="formThead.networkName"><span>电站名称：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.networkName) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.deviceCode"><span>桩编号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.deviceCode) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.devicePort"><span>端口/枪号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.devicePort) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.electricOut"><span>设备类型：</span><span class="order-layout-value" v-overflow-title>{{ electricOutText(scope.row.electricOut) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.networkAddress"><span>设备地址：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.networkAddress) }}</span></div>
+              <div v-if="formThead.networkName" class="order-layout-item"><span>电站名称：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.networkName) }}</span></div>
+              <div v-if="formThead.deviceCode" class="order-layout-item"><span>桩编号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.deviceCode) }}</span></div>
+              <div v-if="formThead.devicePort" class="order-layout-item"><span>端口/枪号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.devicePort) }}</span></div>
+              <div v-if="formThead.electricOut" class="order-layout-item"><span>设备类型：</span><span v-overflow-title class="order-layout-value">{{ electricOutText(scope.row.electricOut) }}</span></div>
+              <div v-if="formThead.networkAddress" class="order-layout-item"><span>设备地址：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.networkAddress) }}</span></div>
             </div>
           </template>
         </el-table-column>
@@ -100,15 +107,15 @@
         <el-table-column label="用户信息" min-width="260">
           <template slot-scope="scope">
             <div class="order-layout-col order-layout-col--user">
-              <div class="order-layout-item" v-if="formThead.userCode"><span>用户编号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userCode) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.userName"><span>用户帐号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userAccount) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.companyName"><span>企业名称：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.companyName) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.plateNumber"><span>车牌号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.plateNumber) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.phoneNumber"><span>手机号：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.phoneNumber) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.vinCode"><span>VIN码：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.vinCode) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.startType"><span>启动方式：</span><span class="order-layout-value" v-overflow-title>{{ startTypeText(scope.row.startType) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.startCash"><span>开始前余额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userStartCash) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.endCash"><span>扣费后余额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.userEndCash) }}</span></div>
+              <div v-if="formThead.userCode" class="order-layout-item"><span>用户编号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.userCode) }}</span></div>
+              <div v-if="formThead.userName" class="order-layout-item"><span>用户帐号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.userAccount) }}</span></div>
+              <div v-if="formThead.companyName" class="order-layout-item"><span>企业名称：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.companyName) }}</span></div>
+              <div v-if="formThead.plateNumber" class="order-layout-item"><span>车牌号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.plateNumber) }}</span></div>
+              <div v-if="formThead.phoneNumber" class="order-layout-item"><span>手机号：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.phoneNumber) }}</span></div>
+              <div v-if="formThead.vinCode" class="order-layout-item"><span>VIN码：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.vinCode) }}</span></div>
+              <div v-if="formThead.startType" class="order-layout-item"><span>启动方式：</span><span v-overflow-title class="order-layout-value">{{ startTypeText(scope.row.startType) }}</span></div>
+              <div v-if="formThead.startCash" class="order-layout-item"><span>开始前余额：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.userStartCash) }}</span></div>
+              <div v-if="formThead.endCash" class="order-layout-item"><span>扣费后余额：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.userEndCash) }}</span></div>
             </div>
           </template>
         </el-table-column>
@@ -116,13 +123,13 @@
         <el-table-column label="充电信息" min-width="260">
           <template slot-scope="scope">
             <div class="order-layout-col order-layout-col--charge">
-              <div class="order-layout-item" v-if="formThead.orderStatus"><span>充电状态：</span><span class="order-layout-value" v-overflow-title>{{ orderStatusText(scope.row.orderStatus) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.startTime"><span>充电开始时间：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.startTimeAll) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.endTime"><span>充电结束时间：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.endTimeAll) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.actualDuration"><span>实际充电时长：</span><span class="order-layout-value" v-overflow-title>{{ durationWithMinute(scope.row.actualDuration) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.hours"><span>工作时长/电量：</span><span class="order-layout-value" v-overflow-title>{{ hoursWithUnit(scope.row.hours, scope.row.chargeMod) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.priceType"><span>计费类型：</span><span class="order-layout-value" v-overflow-title>{{ priceTypeText(scope.row.priceType) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.stopReason"><span>停止原因：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.stopReason) }}</span></div>
+              <div v-if="formThead.orderStatus" class="order-layout-item"><span>充电状态：</span><span v-overflow-title class="order-layout-value">{{ orderStatusText(scope.row.orderStatus) }}</span></div>
+              <div v-if="formThead.startTime" class="order-layout-item"><span>充电开始时间：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.startTimeAll) }}</span></div>
+              <div v-if="formThead.endTime" class="order-layout-item"><span>充电结束时间：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.endTimeAll) }}</span></div>
+              <div v-if="formThead.actualDuration" class="order-layout-item"><span>实际充电时长：</span><span v-overflow-title class="order-layout-value">{{ durationWithMinute(scope.row.actualDuration) }}</span></div>
+              <div v-if="formThead.hours" class="order-layout-item"><span>工作时长/电量：</span><span v-overflow-title class="order-layout-value">{{ hoursWithUnit(scope.row.hours, scope.row.chargeMod) }}</span></div>
+              <div v-if="formThead.priceType" class="order-layout-item"><span>计费类型：</span><span v-overflow-title class="order-layout-value">{{ priceTypeText(scope.row.priceType) }}</span></div>
+              <div v-if="formThead.stopReason" class="order-layout-item"><span>停止原因：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.stopReason) }}</span></div>
             </div>
           </template>
         </el-table-column>
@@ -130,14 +137,14 @@
         <el-table-column label="付款详情" min-width="280">
           <template slot-scope="scope">
             <div class="order-layout-col order-layout-col--pay">
-              <div class="order-layout-item" v-if="formThead.totalPower"><span>订单电量：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.totalPower) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.totalPrice"><span>订单原价金额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.totalPrice) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.electricityPrice"><span>基础电费：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.electricityPrice) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.servicePrice"><span>服务费：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.servicePrice) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.actualPrice"><span>订单支付金额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.actualPrice) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.realityPayMoney"><span>订单实付金额：</span><span class="order-layout-value" v-overflow-title>{{ disp(scope.row.realityPayMoney) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.payStatus"><span>支付状态：</span><span class="order-layout-value" v-overflow-title>{{ payStatusText(scope.row.payStatus) }}</span></div>
-              <div class="order-layout-item" v-if="formThead.payType"><span>支付方式：</span><span class="order-layout-value" v-overflow-title>{{ payTypeText(scope.row.payType) }}</span></div>
+              <div v-if="formThead.totalPower" class="order-layout-item"><span>订单电量：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.totalPower) }}</span></div>
+              <div v-if="formThead.totalPrice" class="order-layout-item"><span>订单原价金额：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.totalPrice) }}</span></div>
+              <div v-if="formThead.electricityPrice" class="order-layout-item"><span>基础电费：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.electricityPrice) }}</span></div>
+              <div v-if="formThead.servicePrice" class="order-layout-item"><span>服务费：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.servicePrice) }}</span></div>
+              <div v-if="formThead.actualPrice" class="order-layout-item"><span>订单支付金额：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.actualPrice) }}</span></div>
+              <div v-if="formThead.realityPayMoney" class="order-layout-item"><span>订单实付金额：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.realityPayMoney) }}</span></div>
+              <div v-if="formThead.payStatus" class="order-layout-item"><span>支付状态：</span><span v-overflow-title class="order-layout-value">{{ payStatusText(scope.row.payStatus) }}</span></div>
+              <div v-if="formThead.payType" class="order-layout-item"><span>支付方式：</span><span v-overflow-title class="order-layout-value">{{ payTypeText(scope.row.payType) }}</span></div>
             </div>
           </template>
         </el-table-column>
@@ -146,24 +153,37 @@
           <template slot-scope="scope">
             <div class="order-layout-actions">
               <el-button
+                v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
                 size="mini"
                 type="primary"
                 icon="el-icon-view"
                 @click="goOrderDetail(scope.row)"
-                v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
               >详情</el-button>
               <el-dropdown v-if="advancedActions" size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
                 <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-top: 8px;">更多</el-button>
                 <el-dropdown-menu slot="dropdown">
-                  <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
-                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1">结束订单</el-dropdown-item>
-                  <el-dropdown-item command="handleAbnormalOrderSettlement" icon="el-icon-warning-outline"
-                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement') && scope.row.orderStatus == 1">异常结算</el-dropdown-item>
-                  <el-dropdown-item command="handleOrderRefund" icon="el-icon-money"
-                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)">订单退款</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:closeOrder') && scope.row.orderStatus == 1"
+                    command="handleCloseOrder"
+                    icon="el-icon-caret-right"
+                  >结束订单</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormalOrderSettlement') && scope.row.orderStatus == 1"
+                    command="handleAbnormalOrderSettlement"
+                    icon="el-icon-warning-outline"
+                  >异常结算</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)"
+                    command="handleOrderRefund"
+                    icon="el-icon-money"
+                  >订单退款</el-dropdown-item>
                   <el-dropdown-item command="handleOrderSplitRecord" icon="el-icon-s-operation">分账明细</el-dropdown-item>
-                  <el-dropdown-item command="handleDeleteOrder" icon="el-icon-delete" divided
-                    v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')">删除</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="btnAuthen.permsVerifAuthention(':order:scanOrderList:delete')"
+                    command="handleDeleteOrder"
+                    icon="el-icon-delete"
+                    divided
+                  >删除</el-dropdown-item>
                 </el-dropdown-menu>
               </el-dropdown>
             </div>
@@ -171,446 +191,448 @@
         </el-table-column>
       </el-table>
       <div class="pagination-container">
-        <el-pagination :current-page="listQuery.page" :page-sizes="[10,20,30, 50]" :page-size="listQuery.limit"
-          :total="total" background layout="total, sizes, prev, pager, next, jumper" @size-change="handleSizeChange"
-          @current-change="handleCurrentChange" />
+        <el-pagination
+          :current-page="listQuery.page"
+          :page-sizes="[10,20,30, 50]"
+          :page-size="listQuery.limit"
+          :total="total"
+          background
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  import {
-    getList,
-    deleteOrder,
-    closeOrder,
-    downloadExcel,
-    orderRefund,
-    abnormalOrderSettlement,
-  } from '@/api/order/scanOrderList.js'
-  import {
-    getChargingStationList
-  } from '@/api/netWorkDot/netWorkDotList.js'
-  import {
-    parseTime,
-    numTime,
-    formatSeconds,
-    getNowTime
-  } from '@/utils/index'
-  import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
-  import OrderSearchPanel from './components/OrderSearchPanel.vue'
-  import imgView from '@/components/Common/imgView.vue'
-  import { createDefaultListQuery, sanitizeOrderListQuery } from './utils/orderListQuery.js'
+import {
+  getList,
+  deleteOrder,
+  closeOrder,
+  orderRefund,
+  abnormalOrderSettlement
+} from '@/api/order/scanOrderList.js'
+import {
+  getChargingStationList
+} from '@/api/netWorkDot/netWorkDotList.js'
+import {
+  parseTime
+} from '@/utils/index'
+import { getRuleIdTabs, getDefaultRuleIdTabName, getDefaultRuleIdNumber } from '@/utils/ruleIdTabs'
+import OrderSearchPanel from './components/OrderSearchPanel.vue'
+import { createDefaultListQuery, sanitizeOrderListQuery } from './utils/orderListQuery.js'
 
-  const DEFAULT_THEAD = {
-    orderCode: true,
-    payCode: true,
-    deviceCode: true,
-    userName: false,
-    totalPrice: false,
-    orderType: false,
-    devicePort: true,
-    electricityPrice: true,
-    servicePrice: true,
-    networkName: true,
-    networkAddress: false,
-    electricOut: true,
-    payStatus: true,
-    orderStatus: true,
-    stopReason: true,
-    hours: true,
-    priceType: true,
-    actualDuration: true,
-    startTime: true,
-    endTime: true,
-    createTime: false,
-    actualPrice: true,
-    realityPayMoney: true,
-    totalPower: true,
-    userCode: true,
-    phoneNumber: true,
-    companyName: true,
-    plateNumber: true,
-    vinCode: true,
-    startType: true,
-    payType: true,
-    channel: true,
-    startCash: true,
-    endCash: true
-  }
+const DEFAULT_THEAD = {
+  orderCode: true,
+  payCode: true,
+  deviceCode: true,
+  userName: false,
+  totalPrice: false,
+  orderType: false,
+  devicePort: true,
+  electricityPrice: true,
+  servicePrice: true,
+  networkName: true,
+  networkAddress: false,
+  electricOut: true,
+  payStatus: true,
+  orderStatus: true,
+  stopReason: true,
+  hours: true,
+  priceType: true,
+  actualDuration: true,
+  startTime: true,
+  endTime: true,
+  createTime: false,
+  actualPrice: true,
+  realityPayMoney: true,
+  totalPower: true,
+  userCode: true,
+  phoneNumber: true,
+  companyName: true,
+  plateNumber: true,
+  vinCode: true,
+  startType: true,
+  payType: true,
+  channel: true,
+  startCash: true,
+  endCash: true
+}
 
 import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 
-  export default {
-    name: 'scanOrderList',
-    components: {
-      OrderSearchPanel,
-      imgView
-    },
-    props: {
-      // 订单类型：1 扫码（默认）/ 4 互联互通
-      orderType: {
-        type: Number,
-        default: 1
-      },
-      // 是否展示资金/状态机类操作（结束订单、异常结算、退款、分账明细、删除）
-      advancedActions: {
-        type: Boolean,
-        default: true
-      },
-      // 列显示预设，仅作用于无本地缓存时的首次渲染
-      defaultThead: {
-        type: Object,
-        default: null
-      },
-      // 固定 ruleId（如互联互通订单只有新能源汽车 rule_id=2）：设值后不展示汽车/单车 tab
-      fixedRuleId: {
-        type: Number,
-        default: null
+export default {
+  // eslint-disable-next-line vue/name-property-casing, vue/component-definition-name-casing -- 与路由 name 保持一致，keep-alive include 才能命中
+  name: 'scanOrderList',
+  components: {
+    OrderSearchPanel
+  },
+  filters: {
+    formatDate: function(time) {
+      if (!time) {
+        return ''
       }
+      return parseTime(time)
+    }
+  },
+  props: {
+    // 订单类型：1 扫码（默认）/ 4 互联互通
+    orderType: {
+      type: Number,
+      default: 1
     },
-    data() {
-      return {
-        activeName: this.fixedRuleId != null ? String(this.fixedRuleId) : getDefaultRuleIdTabName(),
-        listLoading: true,
-        page: 1,
-        limit: 10,
-        list: [],
-        total: 10,
-        tableKey: 0,
-        tableMaxHeight: 620,
-        chargingStationList: [],
-        listQuery: createDefaultListQuery(this.orderType, this.fixedRuleId != null ? this.fixedRuleId : getDefaultRuleIdNumber()),
-        cacheKey: `scanOrderList:${this.orderType}`,
-        formThead: { ...DEFAULT_THEAD, ...(this.defaultThead || {}) },
-        payTags: [],
-        tags: [],
-        time: ''
+    // 是否展示资金/状态机类操作（结束订单、异常结算、退款、分账明细、删除）
+    advancedActions: {
+      type: Boolean,
+      default: true
+    },
+    // 列显示预设，仅作用于无本地缓存时的首次渲染
+    defaultThead: {
+      type: Object,
+      default: null
+    },
+    // 固定 ruleId（如互联互通订单只有新能源汽车 rule_id=2）：设值后不展示汽车/单车 tab
+    fixedRuleId: {
+      type: Number,
+      default: null
+    }
+  },
+  data() {
+    return {
+      activeName: this.fixedRuleId != null ? String(this.fixedRuleId) : getDefaultRuleIdTabName(),
+      listLoading: true,
+      page: 1,
+      limit: 10,
+      list: [],
+      total: 10,
+      tableKey: 0,
+      tableMaxHeight: 620,
+      chargingStationList: [],
+      listQuery: createDefaultListQuery(this.orderType, this.fixedRuleId != null ? this.fixedRuleId : getDefaultRuleIdNumber()),
+      cacheKey: `scanOrderList:${this.orderType}`,
+      formThead: { ...DEFAULT_THEAD, ...(this.defaultThead || {}) },
+      payTags: [],
+      tags: [],
+      time: ''
+    }
+  },
+  computed: {
+    ruleIdList() {
+      return getRuleIdTabs()
+    },
+    exportKeys() {
+      return Object.keys(this.formThead).filter((k) => this.formThead[k] === true)
+    }
+  },
+  watch: {
+    formThead: {
+      handler(newVal) {
+        // 这里做持久化或别的业务
+        window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
+      },
+      deep: true // 监听内部任意属性变化
+    }
+  },
+  mounted() {
+    this.$dict.getSelector('order_type')
+    this.$dict.getSelector('electric_out_type')
+    this.$dict.getSelector('order_pay_method')
+    this.$dict.getSelector('order_start_type')
+    this.$dict.getSelector('price_type')
+    this.getChargingStationList(this.activeName)
+  },
+  created() {
+    // 进入页面时读缓存
+    this.$dict.getSelectorOptions('order_status', { numeric: true }).then(list => {
+      this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
+    })
+    this.$dict.getSelectorOptions('order_pay_status', { numeric: true }).then(list => {
+      this.payTags = (list || []).map(item => ({ id: item.value, title: item.label }))
+    })
+    const raw = localStorage.getItem(this.cacheKey) ||
+        (this.orderType === 1 ? localStorage.getItem('scanOrderList') : null)
+    if (raw) {
+      try {
+        this.formThead = JSON.parse(raw)
+      } catch (e) {
+        console.warn('parse cache error', e)
       }
-    },
-    computed: {
-      ruleIdList() {
-        return getRuleIdTabs()
-      },
-      exportKeys() {
-        return Object.keys(this.formThead).filter((k) => this.formThead[k] === true)
+    }
+    // 路由跳转读参数
+    const orderCode = this.$route.query.orderCode
+    if (orderCode !== undefined && orderCode !== '') {
+      this.listQuery.orderCode = orderCode
+      this.getLists()
+    } else {
+      this.getLists()
+    }
+  },
+  methods: {
+    disp(v) {
+      if (v === null || v === undefined || v === '') {
+        return '-'
       }
+      return v
     },
-    filters: {
-      formatDate: function (time) {
-        if (!time) {
-          return ''
-        }
-        return parseTime(time)
-      },
+    orderTypeText(type) {
+      const label = formatDictLabel('order_type', type)
+      return label === String(type) ? this.disp(type) : label
     },
-    watch: {
-      formThead: {
-        handler(newVal) {
-          // 这里做持久化或别的业务
-          window.localStorage.setItem(this.cacheKey, JSON.stringify(newVal))
-        },
-        deep: true   // 监听内部任意属性变化
+    electricOutText(type) {
+      const label = formatDictLabel('electric_out_type', type)
+      return label === String(type) ? this.disp(type) : label
+    },
+    hoursWithUnit(hours, chargeMod) {
+      const value = this.disp(hours)
+      if (value === '-') return value
+      if (chargeMod === 0 || String(chargeMod) === '0') return `${value} 分钟`
+      if (chargeMod === 1 || String(chargeMod) === '1') return `${value} kw/h`
+      if (chargeMod === 2 || String(chargeMod) === '2') return `${value} 元`
+      return value
+    },
+    durationWithMinute(duration) {
+      const value = this.disp(duration)
+      if (value === '-') return value
+      return `${value} 分钟`
+    },
+    startTypeText(startType) {
+      const label = formatDictLabel('order_start_type', startType)
+      return label === String(startType) ? this.disp(startType) : label
+    },
+    priceTypeText(type) {
+      const label = formatDictLabel('price_type', type)
+      return label === String(type) ? this.disp(type) : label
+    },
+    orderStatusText(status) {
+      const label = this.$dict.getOrderStatus(status)
+      return label === String(status) ? this.disp(status) : label
+    },
+    payStatusText(status) {
+      return this.formatOrderPayStatus(status)
+    },
+    formatOrderPayStatus(status) {
+      const label = formatDictLabel('order_pay_status', status)
+      return label === String(status) ? this.disp(status) : label
+    },
+    payTypeText(payType) {
+      if (!payType) return '-'
+      const code = normalizeOrderPayMethodCode(payType)
+      const label = formatDictLabel('order_pay_method', code)
+      return label === code ? this.disp(payType) : label
+    },
+    goOrderDetail(row) {
+      if (!row || row.id == null) {
+        this.$message.warning('缺少订单 ID')
+        return
       }
+      this.$router.push({ path: '/order/orderDetail', query: { orderId: row.id }})
     },
-    mounted() {
-      this.$dict.getSelector('order_type')
-      this.$dict.getSelector('electric_out_type')
-      this.$dict.getSelector('order_pay_method')
-      this.$dict.getSelector('order_start_type')
-      this.$dict.getSelector('price_type')
-      this.getChargingStationList(this.activeName)
-    },
-    methods: {
-      disp(v) {
-        if (v === null || v === undefined || v === '') {
-          return '-'
-        }
-        return v
-      },
-      orderTypeText(type) {
-        const label = formatDictLabel('order_type', type)
-        return label === String(type) ? this.disp(type) : label
-      },
-      electricOutText(type) {
-        const label = formatDictLabel('electric_out_type', type)
-        return label === String(type) ? this.disp(type) : label
-      },
-      hoursWithUnit(hours, chargeMod) {
-        const value = this.disp(hours)
-        if (value === '-') return value
-        if (chargeMod === 0 || String(chargeMod) === '0') return `${value} 分钟`
-        if (chargeMod === 1 || String(chargeMod) === '1') return `${value} kw/h`
-        if (chargeMod === 2 || String(chargeMod) === '2') return `${value} 元`
-        return value
-      },
-      durationWithMinute(duration) {
-        const value = this.disp(duration)
-        if (value === '-') return value
-        return `${value} 分钟`
-      },
-      startTypeText(startType) {
-        const label = formatDictLabel('order_start_type', startType)
-        return label === String(startType) ? this.disp(startType) : label
-      },
-      priceTypeText(type) {
-        const label = formatDictLabel('price_type', type)
-        return label === String(type) ? this.disp(type) : label
-      },
-      orderStatusText(status) {
-        const label = this.$dict.getOrderStatus(status)
-        return label === String(status) ? this.disp(status) : label
-      },
-      payStatusText(status) {
-        return this.formatOrderPayStatus(status)
-      },
-      formatOrderPayStatus(status) {
-        const label = formatDictLabel('order_pay_status', status)
-        return label === String(status) ? this.disp(status) : label
-      },
-      payTypeText(payType) {
-        if (!payType) return '-'
-        const code = normalizeOrderPayMethodCode(payType)
-        const label = formatDictLabel('order_pay_method', code)
-        return label === code ? this.disp(payType) : label
-      },
-      goOrderDetail(row) {
-        if (!row || row.id == null) {
-          this.$message.warning('缺少订单 ID')
-          return
-        }
-        this.$router.push({ path: '/order/orderDetail', query: { orderId: row.id }})
-      },
-      getChargingStationList(ruleId){
-        const data = {
-          ruleId: ruleId
-        }
-        getChargingStationList(data).then(res => {
-          if (res.code == 200) {
-            this.chargingStationList = res.data;
-          } else {
-            this.$message.error(res.msg)
-          }
-        })
-      },
-      // 更多操作触发
-      handleCommand(command, row) {
-        switch (command) {
-          case "handleCloseOrder":
-            this.closeOrder(row.id);
-            break;
-          case "handleAbnormalOrderSettlement":
-            this.abnormalOrderSettlement(row.orderCode);
-            break;
-          case "handleOrderRefund":
-            this.orderRefund(row.orderCode)
-            break;
-          case "handleOrderSplitRecord":
-            this.toOrderSplitRecord(row.orderCode)
-            break;
-          case "handleDeleteOrder":
-            this.deleteOrder(row.orderCode)
-            break;
-          default:
-            break;
-        }
-      },
-      //资金流水
-      toOrderSplitRecord(orderCode) {
-      	this.$router.push({
-      		name: 'orderSplitRecord',
-      		query: {
-      			bizOrderCode: orderCode
-      		}
-      	})
-      },
-      //切换导航
-      handleClick(tab, event) {
-        this.getChargingStationList(tab.name)
-        this.listQuery.ruleId = tab.name
-        this.listQuery.page = 1,
-        this.listQuery.limit = 10,
-        this.getLists()
-      },
-      //显示退款按钮
-      showReturn(orderStatus, payStatus) {
-        let flag = false
-        if ((orderStatus === 2 || orderStatus === 3) && payStatus === 1) {
-          flag = true
-        }
-        return flag
-      },
-      dateChange(e) {
-        console.log(e)
-        if (e) {
-          this.listQuery.createTimeStart = e[0]
-          this.listQuery.createTimeEnd = e[1]
+    getChargingStationList(ruleId) {
+      const data = {
+        ruleId: ruleId
+      }
+      getChargingStationList(data).then(res => {
+        if (res.code === 200) {
+          this.chargingStationList = res.data
         } else {
-          this.listQuery.createTimeStart = ''
-          this.listQuery.createTimeEnd = ''
+          this.$message.error(res.msg)
         }
-        this.handleFilter()
-      },
-      handleFilter(e) {
-        this.listQuery.page = 1
-        this.getLists()
-      },
-      resetSearch() {
-        const ruleId = this.listQuery.ruleId
-        this.listQuery = createDefaultListQuery(this.orderType, ruleId)
-        this.time = ''
-        this.listQuery.page = 1
-        this.getLists()
-      },
-      getLists() {
-        this.listLoading = true
-        const listQuery = sanitizeOrderListQuery(this.listQuery)
-        getList(listQuery).then(res => {
-          if (res.code == 200) {
-            console.log(res)
-            let list = res.data || []
-            
-            this.list = list
-            this.total = res.count
-            this.listLoading = false
+      })
+    },
+    // 更多操作触发
+    handleCommand(command, row) {
+      switch (command) {
+        case 'handleCloseOrder':
+          this.closeOrder(row.id)
+          break
+        case 'handleAbnormalOrderSettlement':
+          this.abnormalOrderSettlement(row.orderCode)
+          break
+        case 'handleOrderRefund':
+          this.orderRefund(row.orderCode)
+          break
+        case 'handleOrderSplitRecord':
+          this.toOrderSplitRecord(row.orderCode)
+          break
+        case 'handleDeleteOrder':
+          this.deleteOrder(row.orderCode)
+          break
+        default:
+          break
+      }
+    },
+    // 资金流水
+    toOrderSplitRecord(orderCode) {
+      this.$router.push({
+        name: 'orderSplitRecord',
+        query: {
+          bizOrderCode: orderCode
+        }
+      })
+    },
+    // 切换导航
+    handleClick(tab, event) {
+      this.getChargingStationList(tab.name)
+      this.listQuery.ruleId = tab.name
+      this.listQuery.page = 1
+      this.listQuery.limit = 10
+      this.getLists()
+    },
+    // 显示退款按钮
+    showReturn(orderStatus, payStatus) {
+      let flag = false
+      if ((orderStatus === 2 || orderStatus === 3) && payStatus === 1) {
+        flag = true
+      }
+      return flag
+    },
+    dateChange(e) {
+      console.log(e)
+      if (e) {
+        this.listQuery.createTimeStart = e[0]
+        this.listQuery.createTimeEnd = e[1]
+      } else {
+        this.listQuery.createTimeStart = ''
+        this.listQuery.createTimeEnd = ''
+      }
+      this.handleFilter()
+    },
+    handleFilter(e) {
+      this.listQuery.page = 1
+      this.getLists()
+    },
+    resetSearch() {
+      const ruleId = this.listQuery.ruleId
+      this.listQuery = createDefaultListQuery(this.orderType, ruleId)
+      this.time = ''
+      this.listQuery.page = 1
+      this.getLists()
+    },
+    getLists() {
+      this.listLoading = true
+      const listQuery = sanitizeOrderListQuery(this.listQuery)
+      getList(listQuery).then(res => {
+        if (res.code === 200) {
+          console.log(res)
+          const list = res.data || []
+
+          this.list = list
+          this.total = res.count
+          this.listLoading = false
+        } else {
+          this.$message.error(res.msg)
+        }
+      })
+    },
+    // 删除订单
+    deleteOrder(orderCode) {
+      this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
+        confirmButtonText: '是',
+        cancelButtonText: '否',
+        type: 'warning'
+      }).then(() => {
+        const data = {
+          orderCode
+        }
+        console.log(data)
+        deleteOrder(data).then(res => {
+          if (res.code === 200) {
+            this.$message({
+              type: 'success',
+              message: res.msg
+            })
+            this.getLists()
           } else {
             this.$message.error(res.msg)
           }
         })
-      },
-      //删除订单
-      deleteOrder(orderCode) {
-        this.$confirm('这一操作将永久删除该记录。你想继续吗?', '警告', {
-          confirmButtonText: '是',
-          cancelButtonText: '否',
-          type: 'warning'
-        }).then(() => {
-          let data = {
-            orderCode
-          }
-          console.log(data)
-          deleteOrder(data).then(res => {
-            if (res.code == 200) {
-              this.$message({
-                type: 'success',
-                message: res.msg
-              })
-              this.getLists()
-            } else {
-              this.$message.error(res.msg)
-            }
-          })
-        })
-      },
-      handleSizeChange(val) {
-        this.listQuery.limit = val
-        this.getLists()
-      },
-      handleCurrentChange(val) {
-        this.listQuery.page = val
-        this.getLists()
-      },
-      //结束订单
-      closeOrder(id) {
-        this.$confirm('是否结束订单?', '警告', {
-          confirmButtonText: '是',
-          cancelButtonText: '否',
-          type: 'warning'
-        }).then(() => {
-          let data = {
-            id: id
-          }
-          closeOrder(data).then(res => {
-            if (res.code == 200) {
-              this.$message.success(res.msg)
-              this.getLists()
-            } else {
-              this.$message.error(res.msg)
-            }
-          })
-        })
-      },
-      abnormalOrderSettlement(orderCode){
-        this.$confirm('是否要异常结束订单?', '警告', {
-          confirmButtonText: '是',
-          cancelButtonText: '否',
-          type: 'warning'
-        }).then(() => {
-          let data = {
-            orderCode: orderCode
-          }
-          abnormalOrderSettlement(data).then(res => {
-            if (res.code == 200) {
-              this.$message.success(res.msg)
-              this.getLists()
-            } else {
-              this.$message.error(res.msg)
-            }
-          })
-        })
-      },
-      orderRefundClick(item) {
-        this.$common.throttle(this.orderRefund(item.orderCode), 2000)
-      },
-      //退款
-      orderRefund(orderCode) {
-        this.$confirm('是否确认退款?', '警告', {
-          confirmButtonText: '是',
-          cancelButtonText: '否',
-          type: 'warning'
-        }).then(() => {
-          let data = {
-            orderCode: orderCode
-          }
-          orderRefund(data).then(res => {
-            if (res.code == 200) {
-              this.$message.success(res.msg)
-              this.getLists()
-            } else {
-              this.$message.error(res.msg)
-            }
-          })
-        })
-      },
-      //获取当前时间
-      getTime() {
-        var date = new Date()
-        var y = date.getFullYear()
-        var m = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1)
-        var d = (date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate())
-        var hh = (date.getHours() < 10 ? '0' + (date.getHours()) : date.getHours())
-        var mm = (date.getMinutes() < 10 ? '0' + (date.getMinutes()) : date.getMinutes())
-        var ss = (date.getSeconds() < 10 ? '0' + (date.getSeconds()) : date.getSeconds())
-        return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
-      },
+      })
     },
-    created() {
-      // 进入页面时读缓存
-      this.$dict.getSelectorOptions('order_status', { numeric: true }).then(list => {
-        this.tags = (list || []).map(item => ({ id: item.value, title: item.label }))
-      })
-      this.$dict.getSelectorOptions('order_pay_status', { numeric: true }).then(list => {
-        this.payTags = (list || []).map(item => ({ id: item.value, title: item.label }))
-      })
-      const raw = localStorage.getItem(this.cacheKey)
-        || (this.orderType === 1 ? localStorage.getItem('scanOrderList') : null)
-      if (raw) {
-        try {
-          this.formThead = JSON.parse(raw)
-        } catch (e) {
-          console.warn('parse cache error', e)
+    handleSizeChange(val) {
+      this.listQuery.limit = val
+      this.getLists()
+    },
+    handleCurrentChange(val) {
+      this.listQuery.page = val
+      this.getLists()
+    },
+    // 结束订单
+    closeOrder(id) {
+      this.$confirm('是否结束订单?', '警告', {
+        confirmButtonText: '是',
+        cancelButtonText: '否',
+        type: 'warning'
+      }).then(() => {
+        const data = {
+          id: id
         }
-      }
-      // 路由跳转读参数
-      const orderCode = this.$route.query.orderCode;
-      if (orderCode !== undefined && orderCode != '') {
-        this.listQuery.orderCode = orderCode;
-        this.getLists();
-      } else {
-        this.getLists();
-      }
+        closeOrder(data).then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg)
+            this.getLists()
+          } else {
+            this.$message.error(res.msg)
+          }
+        })
+      })
     },
+    abnormalOrderSettlement(orderCode) {
+      this.$confirm('是否要异常结束订单?', '警告', {
+        confirmButtonText: '是',
+        cancelButtonText: '否',
+        type: 'warning'
+      }).then(() => {
+        const data = {
+          orderCode: orderCode
+        }
+        abnormalOrderSettlement(data).then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg)
+            this.getLists()
+          } else {
+            this.$message.error(res.msg)
+          }
+        })
+      })
+    },
+    orderRefundClick(item) {
+      this.$common.throttle(this.orderRefund(item.orderCode), 2000)
+    },
+    // 退款
+    orderRefund(orderCode) {
+      this.$confirm('是否确认退款?', '警告', {
+        confirmButtonText: '是',
+        cancelButtonText: '否',
+        type: 'warning'
+      }).then(() => {
+        const data = {
+          orderCode: orderCode
+        }
+        orderRefund(data).then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg)
+            this.getLists()
+          } else {
+            this.$message.error(res.msg)
+          }
+        })
+      })
+    },
+    // 获取当前时间
+    getTime() {
+      var date = new Date()
+      var y = date.getFullYear()
+      var m = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1)
+      var d = (date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate())
+      var hh = (date.getHours() < 10 ? '0' + (date.getHours()) : date.getHours())
+      var mm = (date.getMinutes() < 10 ? '0' + (date.getMinutes()) : date.getMinutes())
+      var ss = (date.getSeconds() < 10 ? '0' + (date.getSeconds()) : date.getSeconds())
+      return y + '-' + m + '-' + d + ' ' + hh + ':' + mm + ':' + ss
+    }
   }
+}
 
 </script>
 
