@@ -13,7 +13,7 @@
     />
 
     <div class="filter-container order-list-toolbar">
-      <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+      <el-tabs v-if="fixedRuleId === null" v-model="activeName" type="card" @tab-click="handleClick">
         <el-tab-pane v-for="(item, index) in ruleIdList" :key="item.id" :label="item.title" :name="item.id">
         </el-tab-pane>
       </el-tabs>
@@ -262,11 +262,16 @@ import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary
       defaultThead: {
         type: Object,
         default: null
+      },
+      // 固定 ruleId（如互联互通订单只有新能源汽车 rule_id=2）：设值后不展示汽车/单车 tab
+      fixedRuleId: {
+        type: Number,
+        default: null
       }
     },
     data() {
       return {
-        activeName: getDefaultRuleIdTabName(),
+        activeName: this.fixedRuleId != null ? String(this.fixedRuleId) : getDefaultRuleIdTabName(),
         listLoading: true,
         page: 1,
         limit: 10,
@@ -275,7 +280,7 @@ import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary
         tableKey: 0,
         tableMaxHeight: 620,
         chargingStationList: [],
-        listQuery: createDefaultListQuery(this.orderType, getDefaultRuleIdNumber()),
+        listQuery: createDefaultListQuery(this.orderType, this.fixedRuleId != null ? this.fixedRuleId : getDefaultRuleIdNumber()),
         cacheKey: `scanOrderList:${this.orderType}`,
         formThead: { ...DEFAULT_THEAD, ...(this.defaultThead || {}) },
         payTags: [],

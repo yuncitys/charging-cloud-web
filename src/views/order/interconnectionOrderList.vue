@@ -1,5 +1,10 @@
 <template>
-  <scan-order-list :order-type="4" :advanced-actions="false" :default-thead="interconnectionThead" />
+  <scan-order-list
+    :order-type="4"
+    :advanced-actions="false"
+    :fixed-rule-id="2"
+    :default-thead="interconnectionThead"
+  />
 </template>
 
 <script>
