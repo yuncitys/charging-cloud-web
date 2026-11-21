@@ -42,6 +42,15 @@ export default [
       }
     },
 {
+      path: '/order/interconnectionOrderList',
+      component: () => import('@/views/order/interconnectionOrderList'),
+      name: 'interconnectionOrderList',
+      meta: {
+        title: '互联互通订单',
+        icon: 'el-icon-connection',
+      }
+    },
+{
       path: '/order/orderDetail',
       component: () => import('@/views/order/components/orderDetail.vue'),
       name: 'orderDetail',
