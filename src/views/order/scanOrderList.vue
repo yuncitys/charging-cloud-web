@@ -13,7 +13,7 @@
     />
 
     <div class="filter-container order-list-toolbar">
-      <el-tabs v-model="activeName" type="card" @tab-click="handleClick">
+      <el-tabs v-if="fixedRuleId === null" v-model="activeName" type="card" @tab-click="handleClick">
         <el-tab-pane v-for="(item, index) in ruleIdList" :key="item.id" :label="item.title" :name="item.id">
         </el-tab-pane>
       </el-tabs>
@@ -152,7 +152,7 @@
                 @click="goOrderDetail(scope.row)"
                 v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:findOrderInfoById')"
               >详情</el-button>
-              <el-dropdown size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
+              <el-dropdown v-if="advancedActions" size="mini" trigger="click" @command="(command) => handleCommand(command, scope.row)">
                 <el-button size="mini" type="primary" icon="el-icon-d-arrow-right" style="margin-top: 8px;">更多</el-button>
                 <el-dropdown-menu slot="dropdown">
                   <el-dropdown-item command="handleCloseOrder" icon="el-icon-caret-right"
@@ -202,7 +202,42 @@
   import imgView from '@/components/Common/imgView.vue'
   import { createDefaultListQuery, sanitizeOrderListQuery } from './utils/orderListQuery.js'
 
-  const ORDER_TYPE = 1
+  const DEFAULT_THEAD = {
+    orderCode: true,
+    payCode: true,
+    deviceCode: true,
+    userName: false,
+    totalPrice: false,
+    orderType: false,
+    devicePort: true,
+    electricityPrice: true,
+    servicePrice: true,
+    networkName: true,
+    networkAddress: false,
+    electricOut: true,
+    payStatus: true,
+    orderStatus: true,
+    stopReason: true,
+    hours: true,
+    priceType: true,
+    actualDuration: true,
+    startTime: true,
+    endTime: true,
+    createTime: false,
+    actualPrice: true,
+    realityPayMoney: true,
+    totalPower: true,
+    userCode: true,
+    phoneNumber: true,
+    companyName: true,
+    plateNumber: true,
+    vinCode: true,
+    startType: true,
+    payType: true,
+    channel: true,
+    startCash: true,
+    endCash: true
+  }
 
 import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 
@@ -212,9 +247,31 @@ import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary
       OrderSearchPanel,
       imgView
     },
+    props: {
+      // 订单类型：1 扫码（默认）/ 4 互联互通
+      orderType: {
+        type: Number,
+        default: 1
+      },
+      // 是否展示资金/状态机类操作（结束订单、异常结算、退款、分账明细、删除）
+      advancedActions: {
+        type: Boolean,
+        default: true
+      },
+      // 列显示预设，仅作用于无本地缓存时的首次渲染
+      defaultThead: {
+        type: Object,
+        default: null
+      },
+      // 固定 ruleId（如互联互通订单只有新能源汽车 rule_id=2）：设值后不展示汽车/单车 tab
+      fixedRuleId: {
+        type: Number,
+        default: null
+      }
+    },
     data() {
       return {
-        activeName: getDefaultRuleIdTabName(),
+        activeName: this.fixedRuleId != null ? String(this.fixedRuleId) : getDefaultRuleIdTabName(),
         listLoading: true,
         page: 1,
         limit: 10,
@@ -223,44 +280,9 @@ import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary
         tableKey: 0,
         tableMaxHeight: 620,
         chargingStationList: [],
-        listQuery: createDefaultListQuery(ORDER_TYPE, getDefaultRuleIdNumber()),
-        cacheKey: 'scanOrderList',
-        formThead: {
-          orderCode: true,
-          payCode: true,
-          deviceCode: true,
-          userName: false,
-          totalPrice: false,
-          orderType: false,
-          devicePort: true,
-          electricityPrice: true,
-          servicePrice: true,
-          networkName: true,
-          networkAddress: false,
-          electricOut: true,
-          payStatus: true,
-          orderStatus: true,
-          stopReason: true,
-          hours: true,
-          priceType: true,
-          actualDuration: true,
-          startTime: true,
-          endTime: true,
-          createTime: false,
-          actualPrice: true,
-          realityPayMoney: true,
-          totalPower: true,
-          userCode: true,
-          phoneNumber: true,
-          companyName: true,
-          plateNumber: true,
-          vinCode: true,
-          startType: true,
-          payType: true,
-          channel: true,
-          startCash: true,
-          endCash: true
-        },
+        listQuery: createDefaultListQuery(this.orderType, this.fixedRuleId != null ? this.fixedRuleId : getDefaultRuleIdNumber()),
+        cacheKey: `scanOrderList:${this.orderType}`,
+        formThead: { ...DEFAULT_THEAD, ...(this.defaultThead || {}) },
         payTags: [],
         tags: [],
         time: ''
@@ -435,7 +457,7 @@ import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary
       },
       resetSearch() {
         const ruleId = this.listQuery.ruleId
-        this.listQuery = createDefaultListQuery(ORDER_TYPE, ruleId)
+        this.listQuery = createDefaultListQuery(this.orderType, ruleId)
         this.time = ''
         this.listQuery.page = 1
         this.getLists()
@@ -571,6 +593,7 @@ import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary
         this.payTags = (list || []).map(item => ({ id: item.value, title: item.label }))
       })
       const raw = localStorage.getItem(this.cacheKey)
+        || (this.orderType === 1 ? localStorage.getItem('scanOrderList') : null)
       if (raw) {
         try {
           this.formThead = JSON.parse(raw)
