@@ -1,6 +1,6 @@
 <template>
   <div class="app-container station-map-page">
-    <div id="station-map" class="station-map-canvas"></div>
+    <div id="station-map" class="station-map-canvas" />
 
     <div class="station-map-filter">
       <el-select
@@ -15,9 +15,9 @@
       >
         <el-option
           v-for="city in cityOptions"
-          :key="city"
-          :label="city"
-          :value="city"
+          :key="city.code"
+          :label="city.name"
+          :value="city.code"
         />
       </el-select>
       <el-input
@@ -184,14 +184,16 @@ export default {
     matchCityOption(locatedCity) {
       const city = String(locatedCity || '').trim()
       if (!city || !this.cityOptions.length) return ''
-      if (this.cityOptions.indexOf(city) >= 0) return city
+      // cityOptions 为 { code, name }：定位得到的是城市名称，需匹配回库里的编码
+      const exact = this.cityOptions.find(option => option.name === city || option.code === city)
+      if (exact) return exact.code
       const normalize = value => String(value || '').replace(/(特别行政区|自治州|地区|盟|市)$/g, '')
       const locatedKey = normalize(city)
       const matched = this.cityOptions.find(option => {
-        const optionKey = normalize(option)
-        return optionKey === locatedKey || option.indexOf(locatedKey) >= 0 || city.indexOf(optionKey) >= 0
+        const optionKey = normalize(option.name)
+        return optionKey === locatedKey || option.name.indexOf(locatedKey) >= 0 || city.indexOf(optionKey) >= 0
       })
-      return matched || ''
+      return matched ? matched.code : ''
     },
     focusNearestStation(userPosition) {
       if (!userPosition || !this.markerPoints.length || !this.markers.length) return
@@ -230,12 +232,23 @@ export default {
     loadCities() {
       this.cityLoading = true
       return getStationMapCities(this.buildParams()).then(res => {
-        this.cityOptions = this.normalizeList(res).filter(city => city !== null && city !== undefined && city !== '')
+        this.cityOptions = this.normalizeList(res).map(item => this.normalizeCityOption(item)).filter(item => item.code)
       }).catch(() => {
         this.$message.error('城市列表加载失败')
       }).finally(() => {
         this.cityLoading = false
       })
+    },
+    // 后端返回 { code, name }：code 是库里存的城市编码，name 是展示名称
+    normalizeCityOption(item) {
+      if (item === null || item === undefined) return { code: '', name: '' }
+      if (typeof item === 'string') {
+        const code = item.trim()
+        return { code, name: code }
+      }
+      const code = String(item.code != null ? item.code : '').trim()
+      const name = String(item.name != null ? item.name : '').trim() || code
+      return { code, name }
     },
     loadPoints() {
       if (!this.map || !this.AMap) return Promise.resolve()
