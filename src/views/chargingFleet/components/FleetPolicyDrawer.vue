@@ -31,7 +31,7 @@
                 start-placeholder="开始时间"
                 end-placeholder="结束时间"
                 value-format="yyyy-MM-dd HH:mm:ss"
-                style="width: 100%;"
+                class="control-full"
                 clearable
               />
               <span class="hint">留空表示长期有效</span>
@@ -44,7 +44,7 @@
                 <el-radio :label="1">按商户</el-radio>
               </el-radio-group>
               <div v-if="form.stationScopeType" class="station-tree">
-                <el-input v-model="stationKeyword" placeholder="输入关键字过滤站点" clearable size="small" />
+                <el-input v-model="stationKeyword" placeholder="输入关键字过滤" clearable size="small" class="station-tree__search" />
                 <el-tree
                   ref="stationTree"
                   :data="stationTreeData"
@@ -55,7 +55,9 @@
                   :props="{ label: 'label', children: 'children' }"
                   class="station-tree__inner"
                 />
-                <div class="hint">只能选择机构已授权的站点（越权站点会被后端拒绝）</div>
+                <div class="hint">
+                  只展示机构已授权的{{ form.stationScopeType === 1 ? '商户（勾选商户即整个商户下站点可用）' : '站点' }}，越权配置会被后端拒绝
+                </div>
               </div>
             </el-form-item>
 
@@ -71,32 +73,44 @@
             </el-form-item>
 
             <el-form-item label="单次限额">
-              <el-input-number v-model="form.singleLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" style="width: 150px;" />
-              <span class="unit">元</span>
-              <el-input-number v-model="form.singleLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" style="width: 150px; margin-left: 16px;" />
-              <span class="unit">kWh</span>
+              <div class="limit-row">
+                <el-input-number v-model="form.singleLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" class="limit-row__input" />
+                <span class="unit">元</span>
+                <el-input-number v-model="form.singleLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" class="limit-row__input" />
+                <span class="unit">kWh</span>
+              </div>
             </el-form-item>
 
             <el-form-item label="日限额">
-              <el-input-number v-model="form.dayLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" style="width: 150px;" />
-              <span class="unit">元</span>
-              <el-input-number v-model="form.dayLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" style="width: 150px; margin-left: 16px;" />
-              <span class="unit">kWh</span>
+              <div class="limit-row">
+                <el-input-number v-model="form.dayLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" class="limit-row__input" />
+                <span class="unit">元</span>
+                <el-input-number v-model="form.dayLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" class="limit-row__input" />
+                <span class="unit">kWh</span>
+              </div>
             </el-form-item>
 
             <el-form-item label="月限额">
-              <el-input-number v-model="form.monthLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" style="width: 150px;" />
-              <span class="unit">元</span>
-              <el-input-number v-model="form.monthLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" style="width: 150px; margin-left: 16px;" />
-              <span class="unit">kWh</span>
+              <div class="limit-row">
+                <el-input-number v-model="form.monthLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" class="limit-row__input" />
+                <span class="unit">元</span>
+                <el-input-number v-model="form.monthLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" class="limit-row__input" />
+                <span class="unit">kWh</span>
+              </div>
+              <div class="hint hint--block">
+                <i class="el-icon-info" /> 限额留空或填 <strong>0</strong> 表示不限额；金额按实付（优惠后）统计，电量按订单充电量统计；
+                日/月累计按订单开始时间归集，每日 00:10 会用订单明细校准。
+              </div>
             </el-form-item>
 
             <el-form-item label="策略模板">
-              <el-select v-model="copyFromFleetId" placeholder="从同机构其它车队复制" clearable filterable style="width: 240px;">
-                <el-option v-for="f in siblingFleets" :key="f.id" :label="f.name" :value="f.id" />
-              </el-select>
-              <el-button size="small" :disabled="!copyFromFleetId" @click="handleCopy">复制</el-button>
-              <span class="hint">复制后默认不启用，确认无误再开启</span>
+              <div class="limit-row">
+                <el-select v-model="copyFromFleetId" placeholder="从同机构其它车队复制" clearable filterable class="limit-row__select">
+                  <el-option v-for="f in siblingFleets" :key="f.id" :label="f.name" :value="f.id" />
+                </el-select>
+                <el-button size="small" :disabled="!copyFromFleetId" @click="handleCopy">复制</el-button>
+              </div>
+              <div class="hint hint--block">复制后默认不启用，确认无误再开启</div>
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -206,6 +220,7 @@ export default {
       stationKeyword: '',
       stationTreeData: [],
       allowedStationIds: [],
+      orgScopeType: 2,
       siblingFleets: [],
       copyFromFleetId: null,
       usage: {
@@ -312,7 +327,9 @@ export default {
       return getChargingCustomerDetail(orgId).then(res => {
         this.stationTreeData = []
         if (res.code === 200) {
-          this.allowedStationIds = (res.data && res.data.dataId) || []
+          const detail = res.data || {}
+          this.orgScopeType = detail.stationScopeType == null ? 2 : detail.stationScopeType
+          this.allowedStationIds = detail.dataId || []
         }
         // 机构可用站点就绪后重建站点树并按当前范围回显勾选
         return this.$nextTick().then(() => {
@@ -337,12 +354,22 @@ export default {
       return getChargeStationTreeByMerchant().then(res => {
         if (res.code !== 200) return
         const allowed = new Set((this.allowedStationIds || []).map(String))
+        // 机构按商户授权时：直接展示机构授权商户，其下站点全部可用；
+        // 机构按电站授权时：只展示被授权站点（商户由站点反推）
+        const orgByMerchant = Number(this.orgScopeType) === 1
         const merchants = []
         ;(res.data || []).forEach(merchant => {
-          const stations = (merchant.chargingStationInfoVoList || [])
-            .filter(st => allowed.has(String(st.id)))
-            .map(st => ({ key: String(st.id), label: st.networkName, stationId: st.id }))
-          if (stations.length) {
+          const merchantKey = String(merchant.id)
+          const allStations = (merchant.chargingStationInfoVoList || []).map(st => ({
+            key: String(st.id), label: st.networkName, stationId: st.id
+          }))
+          if (orgByMerchant) {
+            if (!allowed.has(merchantKey)) return
+            if (!allStations.length) return
+            merchants.push({ key: 'merchant-' + merchant.id, label: merchant.name, merchantId: merchant.id, children: allStations })
+          } else {
+            const stations = allStations.filter(st => allowed.has(String(st.stationId)))
+            if (!stations.length) return
             merchants.push({ key: 'merchant-' + merchant.id, label: merchant.name, merchantId: merchant.id, children: stations })
           }
         })
@@ -376,7 +403,12 @@ export default {
         })
         return Array.from(ids)
       }
-      return checked.filter(n => n.stationId != null).map(n => n.stationId)
+      const allowed = new Set((this.allowedStationIds || []).map(String))
+      const orgByMerchant = Number(this.orgScopeType) === 1
+      return checked
+        .filter(n => n.stationId != null)
+        .map(n => n.stationId)
+        .filter(id => orgByMerchant || allowed.has(String(id)))
     },
     handleSave() {
       if (this.form.stationScopeType && !this.allowedStationIds.length) {
@@ -462,12 +494,29 @@ export default {
   color: #909399;
   font-size: 12px;
 }
+.control-full {
+  width: 100%;
+}
+.limit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.limit-row__input {
+  width: 180px;
+}
+.limit-row__select {
+  flex: 1;
+}
 .station-tree {
   margin-top: 8px;
   border: 1px solid #ebeef5;
   border-radius: 4px;
   padding: 8px;
   background: #fafafa;
+  width: 100%;
+}
+.station-tree__search {
   width: 100%;
 }
 .station-tree__inner {
@@ -520,5 +569,24 @@ export default {
   border-top: 1px solid #ebeef5;
   background: #fff;
   text-align: right;
+}
+/* 抽屉内控件宽度统一，避免长短不齐 */
+.policy-body >>> .el-form-item {
+  margin-bottom: 16px;
+}
+.policy-body >>> .el-select,
+.policy-body >>> .el-date-editor.el-input,
+.policy-body >>> .el-date-editor--datetimerange {
+  width: 100%;
+}
+.policy-body >>> .el-form-item__content > .el-select,
+.policy-body >>> .el-form-item__content > .el-input,
+.policy-body >>> .el-form-item__content > .el-date-editor {
+  max-width: 100%;
+}
+.hint--block {
+  display: block;
+  margin: 6px 0 0;
+  line-height: 18px;
 }
 </style>
