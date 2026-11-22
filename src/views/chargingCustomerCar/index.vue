@@ -7,7 +7,7 @@
         <el-select v-model="query.carType" class="filter-item" style="width: 160px;" placeholder="车辆类型" clearable>
           <el-option v-for="opt in carTypeOptions" :key="opt.value" :label="opt.label" :value="opt.value" />
         </el-select>
-        <el-select v-model="query.belongToId" class="filter-item" style="width: 200px;" placeholder="归属机构" clearable filterable>
+        <el-select v-model="query.belongToId" class="filter-item" style="width: 200px;" placeholder="归属机构" clearable filterable @change="onQueryOrgChange">
           <el-option v-for="opt in belongToOrgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
         </el-select>
         <el-select v-model="query.mainOrgId" class="filter-item" style="width: 200px;" placeholder="主机构" clearable filterable>
@@ -50,6 +50,9 @@
         <template slot-scope="scope">{{ propertyRightLabel(scope.row.propertyRight) }}</template>
       </el-table-column>
       <el-table-column prop="belongToName" label="归属机构" align="center" show-overflow-tooltip />
+      <el-table-column prop="fleetName" label="车队" align="center" width="130" show-overflow-tooltip>
+        <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
+      </el-table-column>
       <el-table-column prop="mainOrgName" label="主机构" align="center" show-overflow-tooltip />
       <el-table-column prop="createTime" label="创建时间" align="center">
         <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
@@ -96,8 +99,13 @@
             </el-select>
           </el-form-item>
           <el-form-item label="归属客户" prop="belongToId">
-            <el-select v-model="form.belongToId" placeholder="请选择" :disabled="isDetail" filterable style="width: 100%;">
+            <el-select v-model="form.belongToId" placeholder="请选择" :disabled="isDetail" filterable style="width: 100%;" @change="onFormOrgChange">
               <el-option v-for="opt in belongToOrgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="车队" prop="fleetId">
+            <el-select v-model="form.fleetId" placeholder="可空，未选择即未编队" clearable filterable :disabled="isDetail || !form.belongToId" style="width: 100%;">
+              <el-option v-for="opt in fleetOptions" :key="opt.id" :label="opt.name + (opt.status === 0 ? '（停用）' : '')" :value="opt.id" :disabled="opt.status === 0" />
             </el-select>
           </el-form-item>
           <el-form-item label="车辆产权" prop="propertyRight">
@@ -195,6 +203,7 @@ import {
   uploadCarFile
 } from '@/api/chargingCustomer/chargingCustomerCar'
 import { getOrganizationOptions } from '@/api/organization/organization'
+import { getFleetOptions } from '@/api/enterpriseFleet/fleet'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 
 export default {
@@ -218,8 +227,11 @@ export default {
         vinCode: '',
         carType: '',
         belongToId: '',
+        fleetId: null,
         mainOrgId: ''
       },
+      fleetOptions: [],
+      queryFleetOptions: [],
       carTypeOptions: [],
       purposeOptions: [],
       propertyRightOptions: [],
@@ -235,6 +247,7 @@ export default {
         propertyRight: '1',
         isDefault: 0,
         belongToId: '',
+        fleetId: null,
         mainOrgId: ''
       },
       rules: {
@@ -349,6 +362,7 @@ export default {
         vinCode: '',
         carType: '',
         belongToId: '',
+        fleetId: null,
         mainOrgId: ''
       })
       this.loadList()
@@ -381,6 +395,27 @@ export default {
         if (this.$refs.formRef) this.$refs.formRef.clearValidate()
       })
     },
+    loadFleetOptions(orgId, target) {
+      const key = target || 'fleetOptions'
+      if (!orgId) {
+        this[key] = []
+        return
+      }
+      getFleetOptions(orgId).then(res => {
+        if (res.code === 200) {
+          this[key] = res.data || []
+        }
+      })
+    },
+    onQueryOrgChange(val) {
+      this.query.fleetId = null
+      this.loadFleetOptions(val, 'queryFleetOptions')
+      this.loadList()
+    },
+    onFormOrgChange(val) {
+      this.form.fleetId = null
+      this.loadFleetOptions(val)
+    },
     openDrawer(mode, row) {
       if (mode === 'create' && !this.hasPerm(':charging:customer:car:add')) return
       if (mode === 'edit' && !this.hasPerm(':charging:customer:car:edit')) return
@@ -390,6 +425,7 @@ export default {
       if (!row) return
       this.form = Object.assign({}, this.form, row || {})
       this.form.isDefault = this.form.isDefault == null ? 0 : Number(this.form.isDefault)
+      this.loadFleetOptions(this.form.belongToId)
     },
     submit() {
       this.$refs.formRef.validate(valid => {

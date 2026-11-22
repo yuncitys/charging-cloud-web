@@ -51,6 +51,15 @@ export default [
       }
     },
 {
+      path: '/order/fleetOrderList',
+      component: () => import('@/views/order/fleetOrderList'),
+      name: 'fleetOrderList',
+      meta: {
+        title: '车队订单',
+        icon: 'el-icon-truck',
+      }
+    },
+{
       path: '/order/orderDetail',
       component: () => import('@/views/order/components/orderDetail.vue'),
       name: 'orderDetail',

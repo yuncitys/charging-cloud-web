@@ -276,14 +276,21 @@
           <el-form-item label="选择对象">
             <div class="allocation-user-panel">
               <div class="allocation-user-toolbar">
-                <el-checkbox :value="allocationAllChecked" @change="toggleSelectAllAllocationUsers">全选</el-checkbox>
-                <el-input v-model="allocationUserKeyword" placeholder="请输入关键字进行过滤" clearable class="allocation-user-search" />
+                <el-button size="mini" @click="checkAllAllocationTree(true)">全选</el-button>
+                <el-button size="mini" @click="checkAllAllocationTree(false)">清空</el-button>
+                <el-input v-model="allocationUserKeyword" placeholder="请输入账号/车队进行过滤" clearable class="allocation-user-search" />
               </div>
-              <el-checkbox-group v-model="allocationAdjustForm.targetIds" class="allocation-user-list">
-                <el-checkbox v-for="item in filteredAllocationUsers" :key="item.id" :label="item.id" class="allocation-user-item">
-                  {{ item.userAccount }}
-                </el-checkbox>
-              </el-checkbox-group>
+              <el-tree
+                ref="allocationTree"
+                :data="allocationTree"
+                show-checkbox
+                node-key="key"
+                default-expand-all
+                :filter-node-method="filterAllocationNode"
+                :props="{ label: 'label', children: 'children' }"
+                class="allocation-fleet-tree"
+                @check="syncAllocationSelection"
+              />
             </div>
           </el-form-item>
           <el-form-item label="备注">
@@ -395,6 +402,8 @@ export default {
         remark: ''
       },
       allocationUsers: [],
+      allocationGroups: [],
+      allocationTree: [],
       allocationUserKeyword: '',
       flowTypeOptions: [],
       organizationImg,
@@ -421,16 +430,6 @@ export default {
         ? '正数：每人增加；负数：每人扣回（不足则扣至0）'
         : '绝对值为目标余额；正数分配补齐，负数扣回补齐'
     },
-    filteredAllocationUsers() {
-      const keyword = String(this.allocationUserKeyword || '').trim().toLowerCase()
-      if (!keyword) return this.allocationUsers
-      return this.allocationUsers.filter(item => String(item.userAccount || '').toLowerCase().indexOf(keyword) > -1)
-    },
-    allocationAllChecked() {
-      if (!this.filteredAllocationUsers.length) return false
-      const selectedSet = new Set(this.allocationAdjustForm.targetIds || [])
-      return this.filteredAllocationUsers.every(item => selectedSet.has(item.id))
-    },
     canSaveCustomer() {
       if (this.drawerMode === 'edit') return this.hasPerm(':charging:customer:edit')
       if (this.drawerMode === 'create') return this.hasPerm(':charging:customer:add')
@@ -438,6 +437,12 @@ export default {
     }
   },
   watch: {
+    allocationUserKeyword(val) {
+      this.$nextTick(() => {
+        const tree = this.$refs.allocationTree
+        if (tree) tree.filter(String(val || '').trim())
+      })
+    },
     searchKey(val) {
       if (this.$refs.stationTree) this.$refs.stationTree.filter(val)
     }
@@ -677,28 +682,63 @@ export default {
       this.allocationAdjustForm = { operationObject: 'CHARGING_USER', operationMode: 'EQUAL', amount: '', targetIds: [], remark: '' }
       this.allocationUserKeyword = ''
       this.allocationUsers = []
+      this.allocationTree = []
+      this.allocationGroups = []
       this.loadAllocationUsers()
       this.allocationAdjustDrawerVisible = true
     },
     loadAllocationUsers() {
       if (!this.financeCustomer || !this.financeCustomer.id) return
+      this.allocationTree = []
+      this.allocationGroups = []
+      this.allocationUsers = []
       getChargingCustomerAllocationUsers(this.financeCustomer.id).then(res => {
-        if (res.code === 200) {
-          this.allocationUsers = res.data || []
-        } else {
+        if (res.code !== 200) {
           this.$message.error(res.msg || '查询充电用户失败')
+          return
         }
+        const data = res.data || {}
+        // 兼容：后端返回 { groups, users } 或历史平铺数组
+        const groups = Array.isArray(data) ? [{ fleetName: '未编队', status: 1, users: data }] : (data.groups || [])
+        const flat = Array.isArray(data) ? data : (data.users || [])
+        this.allocationGroups = groups
+        this.allocationUsers = flat
+        this.allocationTree = groups.map(group => {
+          const fleetId = group.fleetId
+          const users = group.users || []
+          return {
+            key: 'fleet-' + (fleetId == null ? 'unassigned' : fleetId),
+            label: `${group.fleetName || '未编队'}（${users.length}人）${group.status === 0 ? ' [已停用]' : ''}`,
+            disabled: group.status === 0,
+            children: users.map(user => ({
+              key: 'user-' + user.id,
+              label: `${user.userAccount || ''}（余额 ${user.cash == null ? 0 : user.cash} 元）`,
+              driverId: user.id
+            }))
+          }
+        })
+        this.$nextTick(() => {
+          this.checkAllAllocationTree(false)
+        })
       })
     },
-    toggleSelectAllAllocationUsers(checked) {
-      const filteredIds = this.filteredAllocationUsers.map(item => item.id)
-      const selected = new Set(this.allocationAdjustForm.targetIds || [])
-      if (checked) {
-        filteredIds.forEach(id => selected.add(id))
-      } else {
-        filteredIds.forEach(id => selected.delete(id))
-      }
-      this.allocationAdjustForm.targetIds = Array.from(selected)
+    filterAllocationNode(value, data) {
+      if (!value) return true
+      return String(data.label || '').toLowerCase().indexOf(String(value).toLowerCase()) > -1
+    },
+    checkAllAllocationTree(checked) {
+      const tree = this.$refs.allocationTree
+      if (!tree) return
+      tree.setCheckedKeys(checked ? this.allocationTree.filter(node => !node.disabled).map(node => node.key) : [])
+      this.syncAllocationSelection()
+    },
+    syncAllocationSelection() {
+      const tree = this.$refs.allocationTree
+      if (!tree) return
+      const ids = tree.getCheckedNodes()
+        .filter(node => node.driverId != null)
+        .map(node => node.driverId)
+      this.allocationAdjustForm.targetIds = ids
     },
     submitAllocationAdjust() {
       const raw = this.allocationAdjustForm.amount
@@ -993,5 +1033,11 @@ export default {
 .allocation-user-item ::v-deep .el-checkbox__label {
   line-height: 1.35;
   padding-left: 6px;
+}
+
+.allocation-fleet-tree {
+  max-height: 320px;
+  overflow: auto;
+  width: 100%;
 }
 </style>

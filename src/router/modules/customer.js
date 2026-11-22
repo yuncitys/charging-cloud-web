@@ -24,6 +24,15 @@ export default [
     }
   },
   {
+    path: '/chargingFleet/index',
+    component: () => import('@/views/chargingFleet/index'),
+    name: 'ChargingFleet',
+    meta: {
+      title: '车队管理',
+      icon: 'el-icon-truck'
+    }
+  },
+  {
     path: '/chargingCustomerDriver/index',
     component: () => import('@/views/chargingCustomerDriver/index'),
     name: 'ChargingCustomerDriver',

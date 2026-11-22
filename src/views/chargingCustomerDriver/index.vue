@@ -4,8 +4,11 @@
       <div class="search-row">
         <el-input v-model="query.userName" class="filter-item" style="width: 180px;" placeholder="姓名" clearable />
         <el-input v-model="query.phoneNumber" class="filter-item" style="width: 180px;" placeholder="手机号" clearable />
-        <el-select v-model="query.belongToId" class="filter-item" style="width: 200px;" placeholder="归属机构" clearable filterable>
+        <el-select v-model="query.belongToId" class="filter-item" style="width: 200px;" placeholder="归属机构" clearable filterable @change="onQueryOrgChange">
           <el-option v-for="opt in belongToOrgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
+        </el-select>
+        <el-select v-model="query.fleetId" class="filter-item" style="width: 180px;" placeholder="车队" clearable filterable>
+          <el-option v-for="opt in queryFleetOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
         </el-select>
         <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search">查询</el-button>
         <el-button class="filter-item" plain @click="resetQuery">清空</el-button>
@@ -41,6 +44,9 @@
         </template>
       </el-table-column>
       <el-table-column prop="belongToName" label="归属机构" align="center" show-overflow-tooltip />
+      <el-table-column prop="fleetName" label="车队" align="center" width="130" show-overflow-tooltip>
+        <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
+      </el-table-column>
       <el-table-column label="绑定车辆" align="center" min-width="150" show-overflow-tooltip>
         <template slot-scope="scope">
           <el-tag v-for="car in scope.row.cars" :key="car.id" size="mini" style="margin-right: 5px;">
@@ -109,6 +115,11 @@
           <el-form-item label="归属机构" prop="belongToId">
             <el-select v-model="form.belongToId" placeholder="请选择" filterable style="width: 100%;" :disabled="drawerMode === 'edit'" @change="onOrgChange">
               <el-option v-for="opt in belongToOrgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="车队" prop="fleetId">
+            <el-select v-model="form.fleetId" placeholder="可空，未选择即未编队" clearable filterable style="width: 100%;" :disabled="!form.belongToId">
+              <el-option v-for="opt in fleetOptions" :key="opt.id" :label="opt.name + (opt.status === 0 ? '（停用）' : '')" :value="opt.id" :disabled="opt.status === 0" />
             </el-select>
           </el-form-item>
           <el-form-item label="归属地区" required>
@@ -311,6 +322,7 @@ import {
 } from '@/api/chargingCustomer/chargingCustomerDriver'
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getCarListByOrgId } from '@/api/chargingCustomer/chargingCustomerCar'
+import { getFleetOptions } from '@/api/enterpriseFleet/fleet'
 import { getAreaSelector } from '@/api/area/index'
 import dictApi from '@/utils/dictionary'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
@@ -329,6 +341,8 @@ export default {
       total: 0,
       list: [],
       belongToOrgOptions: [],
+      fleetOptions: [],
+      queryFleetOptions: [],
       orgCars: [],
       provinceList: [],
       cityList: [],
@@ -338,7 +352,8 @@ export default {
         limit: 10,
         userName: '',
         phoneNumber: '',
-        belongToId: ''
+        belongToId: '',
+        fleetId: null
       },
       drawerVisible: false,
       drawerMode: 'create',
@@ -349,6 +364,7 @@ export default {
         phoneNumber: '',
         userPlatform: 2,
         belongToId: null,
+        fleetId: null,
         provinceId: '',
         regionId: '',
         countyId: '',
@@ -496,7 +512,8 @@ export default {
         limit: 10,
         userName: '',
         phoneNumber: '',
-        belongToId: ''
+        belongToId: '',
+        fleetId: null
       }
       this.loadList()
     },
@@ -508,7 +525,25 @@ export default {
       this.query.page = val
       this.loadList()
     },
+    loadFleetOptions(orgId, target) {
+      if (!orgId) {
+        this[target || 'fleetOptions'] = []
+        return
+      }
+      getFleetOptions(orgId).then(res => {
+        if (res.code === 200) {
+          this[target || 'fleetOptions'] = res.data || []
+        }
+      })
+    },
+    onQueryOrgChange(val) {
+      this.query.fleetId = null
+      this.loadFleetOptions(val, 'queryFleetOptions')
+      this.search()
+    },
     onOrgChange(val) {
+      this.form.fleetId = null
+      this.loadFleetOptions(val)
       this.form.carIds = []
       this.orgCars = []
       if (val) {
@@ -549,6 +584,7 @@ export default {
           phoneNumber: row.phoneNumber,
           userPlatform: row.userPlatform === null || row.userPlatform === undefined ? 2 : row.userPlatform,
           belongToId: row.belongToId,
+          fleetId: row.fleetId,
           provinceId: row.provinceId,
           regionId: row.regionId,
           countyId: row.countyId,
@@ -566,6 +602,7 @@ export default {
           })
         }
         if (row.belongToId) {
+          this.loadFleetOptions(row.belongToId)
           getCarListByOrgId(row.belongToId).then(res => {
             if (res.code === 200) {
               this.orgCars = res.data || []
