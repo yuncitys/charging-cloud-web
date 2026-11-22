@@ -174,7 +174,7 @@ export default {
         if (res.code === 200) {
           this.orgOptions = res.data || []
         }
-      })
+      }).catch(() => { this.orgOptions = [] })
     },
     loadDriverOptions(orgId) {
       this.driverOptions = []
@@ -183,7 +183,7 @@ export default {
         if (res.code === 200) {
           this.driverOptions = res.data || []
         }
-      })
+      }).catch(() => { this.driverOptions = [] })
     },
     loadList() {
       this.loading = true
@@ -275,7 +275,7 @@ export default {
         } else {
           this.$message.error(res.msg || '操作失败')
         }
-      })
+      }).catch(() => {})
     },
     handleDelete(row) {
       this.$confirm(`确认删除车队「${row.name}」？`, '提示', { type: 'warning' }).then(() => {
@@ -286,7 +286,7 @@ export default {
           } else {
             this.$message.error(res.msg || '删除失败')
           }
-        })
+        }).catch(() => {})
       }).catch(() => {})
     }
   }

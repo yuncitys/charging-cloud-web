@@ -132,8 +132,14 @@
       <div class="drawer-body">
         <el-form label-width="110px">
           <el-form-item label="归属客户" required>
-            <el-select v-model="batchImportForm.belongToId" placeholder="请选择归属客户" filterable style="width: 100%;">
+            <el-select v-model="batchImportForm.belongToId" placeholder="请选择归属客户" filterable style="width: 100%;" @change="onImportOrgChange">
               <el-option v-for="opt in belongToOrgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
+            </el-select>
+          </el-form-item>
+
+          <el-form-item label="车队" required>
+            <el-select v-model="batchImportForm.fleetId" placeholder="请选择车队" filterable style="width: 100%;" :disabled="!batchImportForm.belongToId">
+              <el-option v-for="opt in importFleetOptions" :key="opt.id" :label="opt.name + (opt.status === 0 ? '（停用）' : '')" :value="opt.id" :disabled="opt.status === 0" />
             </el-select>
           </el-form-item>
 
@@ -254,13 +260,16 @@ export default {
         plateNumber: [{ required: true, message: '请输入车牌号码', trigger: 'blur' }],
         purpose: [{ required: true, message: '请选择车辆用途', trigger: 'change' }],
         belongToId: [{ required: true, message: '请选择归属客户', trigger: 'change' }],
+        fleetId: [{ required: true, message: '请选择车队', trigger: 'change' }],
         propertyRight: [{ required: true, message: '请选择车辆产权', trigger: 'change' }]
       },
       importDrawerVisible: false,
       batchSaving: false,
       batchImportForm: {
-        belongToId: null
+        belongToId: null,
+        fleetId: null
       },
+      importFleetOptions: [],
       previewData: [],
       importQuery: {
         page: 1,
@@ -395,6 +404,10 @@ export default {
         if (this.$refs.formRef) this.$refs.formRef.clearValidate()
       })
     },
+    onImportOrgChange(orgId) {
+      this.batchImportForm.fleetId = null
+      this.loadFleetOptions(orgId, 'importFleetOptions')
+    },
     loadFleetOptions(orgId, target) {
       const key = target || 'fleetOptions'
       if (!orgId) {
@@ -405,7 +418,7 @@ export default {
         if (res.code === 200) {
           this[key] = res.data || []
         }
-      })
+      }).catch(() => {})
     },
     onQueryOrgChange(val) {
       this.query.fleetId = null
@@ -467,6 +480,10 @@ export default {
         this.$message.warning('请先选择归属客户')
         return
       }
+      if (!this.batchImportForm.fleetId) {
+        this.$message.warning('请先选择车队')
+        return
+      }
       const formData = new FormData()
       formData.append('file', file.file)
       this.batchSaving = true
@@ -499,6 +516,7 @@ export default {
       this.batchSaving = true
       submitCarImport({
         belongToId: this.batchImportForm.belongToId,
+        fleetId: this.batchImportForm.fleetId,
         carData: this.previewData
       }).then(res => {
         this.batchSaving = false

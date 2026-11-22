@@ -25,10 +25,10 @@
 
     <!-- 司机 -->
     <div v-else-if="step === 1">
-      <el-alert type="info" :closable="false" show-icon title="批量录入司机并指定车队；账号可用手机号，后续可在客户司机页调整。" />
-      <el-form label-width="90px" size="small" style="margin-top: 12px;">
-        <el-form-item label="所属车队">
-          <el-select v-model="driverFleetId" placeholder="可空（未编队）" clearable style="width: 100%;">
+      <el-alert type="info" :closable="false" show-icon title="司机必须归属车队；可手工逐行录入，也可下载模板批量导入。" />
+      <el-form ref="driverFormRef" :model="driverForm" :rules="driverRules" label-width="90px" size="small" style="margin-top: 12px;">
+        <el-form-item label="所属车队" prop="fleetId">
+          <el-select v-model="driverForm.fleetId" placeholder="请选择车队" style="width: 100%;">
             <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
           </el-select>
         </el-form-item>
@@ -52,15 +52,16 @@
       <div class="fleet-init-step__actions">
         <el-button size="mini" icon="el-icon-plus" @click="addDriverRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveDrivers">保存司机</el-button>
+        <el-button size="mini" icon="el-icon-upload2" @click="openImport('driver')">批量导入</el-button>
       </div>
     </div>
 
     <!-- 车辆 -->
     <div v-else>
       <el-alert type="info" :closable="false" show-icon title="批量录入车辆并指定车队（可空）；车辆类型固定为机构车辆，用途/产权可后续调整。" />
-      <el-form label-width="90px" size="small" style="margin-top: 12px;">
-        <el-form-item label="所属车队">
-          <el-select v-model="carFleetId" placeholder="可空（未编队）" clearable style="width: 100%;">
+      <el-form ref="carFormRef" :model="carForm" :rules="carRules" label-width="90px" size="small" style="margin-top: 12px;">
+        <el-form-item label="所属车队" prop="fleetId">
+          <el-select v-model="carForm.fleetId" placeholder="请选择车队" style="width: 100%;">
             <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
           </el-select>
         </el-form-item>
@@ -81,15 +82,57 @@
       <div class="fleet-init-step__actions">
         <el-button size="mini" icon="el-icon-plus" @click="addCarRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveCars">保存车辆</el-button>
+        <el-button size="mini" icon="el-icon-upload2" @click="openImport('car')">批量导入</el-button>
       </div>
     </div>
+
+    <!-- 批量导入弹窗（司机 / 车辆） -->
+    <el-dialog :title="importType === 'driver' ? '批量导入司机' : '批量导入车辆'" :visible.sync="importVisible" width="640px" append-to-body :close-on-click-modal="false">
+      <div v-if="!importPreview.length">
+        <el-alert type="info" :closable="false" show-icon :title="importType === 'driver' ? '导入的司机会统一挂到下面的车队' : '导入的车辆会统一挂到下面的车队'" />
+        <el-form label-width="90px" size="small" style="margin-top: 12px;">
+          <el-form-item label="所属车队" required>
+            <el-select v-model="importFleetId" placeholder="请选择车队" style="width: 100%;">
+              <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item :label="importType === 'driver' ? '司机数据' : '车辆数据'" required>
+            <el-upload
+              action="#"
+              :auto-upload="false"
+              :show-file-list="false"
+              accept=".xlsx,.xls"
+              :on-change="onImportFileChange"
+            >
+              <el-button size="small" icon="el-icon-folder-opened" :loading="importUploading">选择 Excel 文件</el-button>
+            </el-upload>
+            <span class="fleet-init-step__hint">仅支持 .xlsx / .xls，模板与「{{ importType === 'driver' ? '客户司机' : '客户车辆' }}」页一致</span>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div v-else>
+        <div class="fleet-init-step__hint">共解析 {{ importPreview.length }} 条，确认后导入到所选车队</div>
+        <el-table :data="importPreview" size="mini" border max-height="300" style="margin-top: 8px;">
+          <el-table-column v-if="importType === 'driver'" prop="userAccount" label="账号" width="140" />
+          <el-table-column v-if="importType === 'driver'" prop="userName" label="姓名" width="100" />
+          <el-table-column v-if="importType === 'driver'" prop="phoneNumber" label="手机号" />
+          <el-table-column v-if="importType === 'car'" prop="plateNumber" label="车牌号" width="150" />
+          <el-table-column v-if="importType === 'car'" prop="vinCode" label="车架号VIN" />
+        </el-table>
+      </div>
+      <span slot="footer">
+        <el-button size="small" @click="importVisible = false">取消</el-button>
+        <el-button v-if="importPreview.length" size="small" @click="resetImport">重新选择</el-button>
+        <el-button v-if="importPreview.length" size="small" type="primary" :loading="saving" @click="submitImport">确认导入</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { addFleet, getFleetOptions } from '@/api/enterpriseFleet/fleet'
-import { batchSaveDriver } from '@/api/chargingCustomer/chargingCustomerDriver'
-import { batchAddChargingCustomerCar } from '@/api/chargingCustomer/chargingCustomerCar'
+import { batchSaveDriver, previewDriverImport, submitDriverImport, uploadDriverFile } from '@/api/chargingCustomer/chargingCustomerDriver'
+import { batchAddChargingCustomerCar, previewCarImport, submitCarImport, uploadCarFile } from '@/api/chargingCustomer/chargingCustomerCar'
 
 /**
  * 「新增客户」向导里的第 2~4 步内容（车队 / 司机 / 车辆），由父级控制 step 与前后按钮。
@@ -116,10 +159,21 @@ export default {
         fleetCode: [{ required: true, message: '请输入车队编码', trigger: 'blur' }],
         name: [{ required: true, message: '请输入车队名称', trigger: 'blur' }]
       },
-      driverFleetId: null,
+      driverForm: { fleetId: null },
+      driverRules: {
+        fleetId: [{ required: true, message: '请选择车队', trigger: 'change' }]
+      },
       driverRows: [{ userAccount: '', userName: '', phoneNumber: '' }],
-      carFleetId: null,
-      carRows: [{ plateNumber: '', vinCode: '' }]
+      carForm: { fleetId: null },
+      carRules: {
+        fleetId: [{ required: true, message: '请选择车队', trigger: 'change' }]
+      },
+      carRows: [{ plateNumber: '', vinCode: '' }],
+      importVisible: false,
+      importType: 'driver',
+      importFleetId: null,
+      importPreview: [],
+      importUploading: false
     }
   },
   computed: {
@@ -148,7 +202,7 @@ export default {
         if (res.code === 200) {
           this.fleets = res.data || []
         }
-      })
+      }).catch(() => { this.fleets = [] })
     },
     addFleetCount() {
       return this.fleets.length
@@ -183,6 +237,79 @@ export default {
       this.driverRows.splice(index, 1)
       if (!this.driverRows.length) this.addDriverRow()
     },
+    openImport(type) {
+      const formRef = type === 'driver' ? 'driverFormRef' : 'carFormRef'
+      this.$refs[formRef].validate(valid => {
+        if (!valid) {
+          this.$message.warning('请先选择车队')
+          return
+        }
+        this.importType = type
+        this.importFleetId = type === 'driver' ? this.driverForm.fleetId : this.carForm.fleetId
+        this.importPreview = []
+        this.importVisible = true
+      })
+    },
+    onImportFileChange(file) {
+      const raw = file && file.raw
+      if (!raw) return
+      const formData = new FormData()
+      formData.append('file', raw)
+      this.importUploading = true
+      const upload = this.importType === 'driver' ? uploadDriverFile : uploadCarFile
+      const preview = this.importType === 'driver' ? previewDriverImport : previewCarImport
+      upload(formData).then(res => {
+        if (res.code === 200 && res.data && res.data.name) {
+          return preview(res.data.name).then(previewRes => {
+            this.importUploading = false
+            if (previewRes.code === 200) {
+              this.importPreview = previewRes.data || []
+              if (!this.importPreview.length) {
+                this.$message.warning('Excel 文件中未发现有效数据')
+              }
+            } else {
+              this.$message.error(previewRes.msg || '预览解析失败')
+            }
+          })
+        }
+        this.importUploading = false
+        this.$message.error(res.msg || '文件上传失败')
+      }).catch(() => { this.importUploading = false })
+    },
+    submitImport() {
+      if (!this.importFleetId) {
+        this.$message.warning('请先选择车队')
+        return
+      }
+      this.saving = true
+      const done = res => {
+        this.saving = false
+        if (res.code === 200) {
+          this.$message.success(res.msg || '导入成功')
+          this.importVisible = false
+          this.importPreview = []
+          this.$emit('changed')
+        } else {
+          this.$message.error(res.msg || '导入失败')
+        }
+      }
+      if (this.importType === 'driver') {
+        submitDriverImport({
+          belongToId: this.orgId(),
+          fleetId: this.importFleetId,
+          driverData: this.importPreview
+        }).then(done).catch(() => { this.saving = false })
+      } else {
+        submitCarImport({
+          belongToId: this.orgId(),
+          fleetId: this.importFleetId,
+          carData: this.importPreview
+        }).then(done).catch(() => { this.saving = false })
+      }
+    },
+    resetImport() {
+      this.importPreview = []
+    },
     handleSaveDrivers() {
       const rows = this.driverRows.filter(r => r.userAccount || r.userName || r.phoneNumber)
       if (!rows.length) {
@@ -199,6 +326,15 @@ export default {
           return
         }
       }
+      this.$refs.driverFormRef.validate(valid => {
+        if (!valid) {
+          this.$message.warning('请先选择车队')
+          return
+        }
+        this.doSaveDrivers(rows)
+      })
+    },
+    doSaveDrivers(rows) {
       this.saving = true
       batchSaveDriver({
         users: rows.map(row => ({
@@ -207,7 +343,7 @@ export default {
           phoneNumber: row.phoneNumber,
           userPlatform: 2,
           belongToId: this.orgId(),
-          fleetId: this.driverFleetId
+          fleetId: this.driverForm.fleetId
         }))
       }).then(res => {
         this.saving = false
@@ -233,6 +369,15 @@ export default {
         this.$message.warning('请先填写车牌号')
         return
       }
+      this.$refs.carFormRef.validate(valid => {
+        if (!valid) {
+          this.$message.warning('请先选择车队')
+          return
+        }
+        this.doSaveCars(rows)
+      })
+    },
+    doSaveCars(rows) {
       this.saving = true
       batchAddChargingCustomerCar({
         cars: rows.map(row => ({
@@ -244,7 +389,7 @@ export default {
           isDefault: 0,
           belongToId: this.orgId(),
           mainOrgId: this.orgId(),
-          fleetId: this.carFleetId
+          fleetId: this.carForm.fleetId
         }))
       }).then(res => {
         this.saving = false
@@ -262,6 +407,11 @@ export default {
 </script>
 
 <style scoped>
+.fleet-init-step__hint {
+  margin-left: 10px;
+  color: #909399;
+  font-size: 12px;
+}
 .fleet-init-step__actions {
   margin-top: 10px;
   display: flex;

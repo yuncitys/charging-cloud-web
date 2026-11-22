@@ -84,11 +84,19 @@ service.interceptors.response.use(
 	//   }
 	// },
 	error => {
-		console.log('err' + error) // for debug
+		const config = error.config || {}
+		const url = config.url || ''
+		const method = (config.method || '').toUpperCase()
+		const status = error.response && error.response.status
+		const isTimeout = error.code === 'ECONNABORTED' || /timeout/i.test(error.message || '')
+		// 打印可定位信息：方法、URL、HTTP 状态/超时
+		console.error(`[request] ${isTimeout ? 'TIMEOUT' : 'ERROR'} ${method} ${url}`, status || error.message)
 		Message({
-			message: '请求超时',
+			message: isTimeout
+				? `请求超时（${Math.round((config.timeout || 0) / 1000)}s）：${method} ${url}`
+				: `请求失败：${method} ${url}${status ? '（HTTP ' + status + '）' : ''}`,
 			type: 'error',
-			duration: 5 * 1000
+			duration: 6 * 1000
 		})
 		return Promise.reject(error)
 	}
