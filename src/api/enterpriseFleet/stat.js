@@ -38,3 +38,12 @@ export function getFleetCarStatRank(data) {
     data
   })
 }
+
+// 工作台：车队充电监控（拒绝率 / 停充次数 / 触顶 TOP5）
+export function getFleetMonitorOverview(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/monitor/overview',
+    method: 'get',
+    params
+  })
+}
