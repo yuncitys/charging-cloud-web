@@ -38,7 +38,9 @@ module.exports = {
 		client: {
 			overlay: {
 				warnings: false,
-				errors: true
+				// 只提示编译错误；运行时未捕获异常（如接口 500 未 catch）不再弹整屏红字，改由 request.js toast 提示
+				errors: true,
+				runtimeErrors: false
 			}
 		},
 		proxy: {
