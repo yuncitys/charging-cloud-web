@@ -6,8 +6,6 @@
       <line-chart :chart-data="lineChartData" />
     </el-row>
 
-    <fleet-charge-card />
-
     <el-row :gutter="32">
       <el-col :xs="24" :sm="24" :lg="8">
         <div class="chart-wrapper borRadduis10">
@@ -37,7 +35,6 @@
   import LineChart from './components/LineChart'
   import PieChart from './components/PieChart'
   import BarChart from './components/BarChart'
-  import FleetChargeCard from './components/FleetChargeCard'
   import {
     findHomePanelSummary,
     findHomeDailyTrend,
@@ -52,8 +49,7 @@
       PanelGroup,
       LineChart,
       PieChart,
-      BarChart,
-      FleetChargeCard
+      BarChart
     },
     data() {
       return {

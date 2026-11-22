@@ -26,7 +26,6 @@
           <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
           <el-button v-if="hasPerm(':charging:customer:edit')" size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
           <el-button v-if="hasPerm(':charging:customer:finance')" size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
-          <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" plain @click="openAccountDialog(scope.row)">后台账号</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -90,6 +89,35 @@
               <el-col :span="12">
                 <el-form-item label="联系方式" prop="contactInfo">
                   <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div v-if="drawerMode === 'create'" class="create-section">
+            <div class="create-section__title">
+              <i class="el-icon-user" /> 自助后台账号
+              <span class="create-section__desc">可选：开通后客户可登录后台，只读查看本机构车队、车辆、司机、报表、账单与对账</span>
+            </div>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="登录账号" prop="adminAccount">
+                  <el-input v-model="adminAccountForm.account" maxlength="20" placeholder="留空则不开通，至少 4 位" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="初始密码" prop="adminPassword">
+                  <el-input v-model="adminAccountForm.password" maxlength="20" show-password placeholder="至少 6 位" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="账号姓名">
+                  <el-input v-model="adminAccountForm.fullname" maxlength="20" placeholder="默认取客户名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="手机号">
+                  <el-input v-model="adminAccountForm.phone" maxlength="11" placeholder="选填" />
                 </el-form-item>
               </el-col>
             </el-row>
@@ -337,63 +365,13 @@
     </el-drawer>
     <downloadProgress ref="downloadProgress" />
 
-    <!-- 客户机构后台账号（role_type=5，只读查看本机构车队数据） -->
-    <el-dialog title="客户机构后台账号" :visible.sync="accountDialogVisible" width="720px" append-to-body>
-      <div class="account-org">客户机构：<strong>{{ accountOrg.name }}</strong></div>
-      <el-table v-loading="accountLoading" :data="accountList" size="small" border max-height="240">
-        <el-table-column prop="adminName" label="登录账号" min-width="130" />
-        <el-table-column prop="adminFullname" label="姓名" min-width="110" />
-        <el-table-column prop="adminPhone" label="手机号" min-width="130" />
-        <el-table-column label="状态" width="90" align="center">
-          <template slot-scope="scope">
-            <el-tag size="mini" :type="scope.row.freezeStatus === 1 ? 'danger' : 'success'">
-              {{ scope.row.freezeStatus === 1 ? '已冻结' : '正常' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="开通时间" min-width="150">
-          <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
-        </el-table-column>
-      </el-table>
-
-      <el-divider content-position="left">开通新账号</el-divider>
-      <el-form ref="accountForm" :model="accountForm" :rules="accountRules" label-width="90px" size="small">
-        <el-row :gutter="12">
-          <el-col :span="12">
-            <el-form-item label="登录账号" prop="account">
-              <el-input v-model="accountForm.account" maxlength="20" placeholder="至少 4 位" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="初始密码" prop="password">
-              <el-input v-model="accountForm.password" maxlength="20" placeholder="至少 6 位" show-password />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="姓名" prop="fullname">
-              <el-input v-model="accountForm.fullname" maxlength="20" placeholder="默认取机构名称" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="手机号" prop="phone">
-              <el-input v-model="accountForm.phone" maxlength="11" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <div class="account-hint">该账号登录运营后台后，只能只读查看本机构的车队、车辆、司机、报表、账单与对账数据。</div>
-      </el-form>
-      <span slot="footer">
-        <el-button size="small" @click="accountDialogVisible = false">关闭</el-button>
-        <el-button size="small" type="primary" :loading="accountSaving" @click="submitAccount">开通</el-button>
-      </span>
-    </el-dialog>
   </div>
 </template>
 
 <script>
 import { parseTime } from '@/utils/index'
 import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
-import { createCustomerAdminAccount, listCustomerAdminAccount } from '@/api/enterpriseFleet/customerAccount'
+import { createCustomerAdminAccount } from '@/api/enterpriseFleet/customerAccount'
 import {
   addChargingCustomer,
   adjustChargingCustomerAllocation,
@@ -419,16 +397,7 @@ export default {
   },
   data() {
     return {
-      accountDialogVisible: false,
-      accountLoading: false,
-      accountSaving: false,
-      accountOrg: {},
-      accountList: [],
-      accountForm: { account: '', password: '', fullname: '', phone: '' },
-      accountRules: {
-        account: [{ required: true, message: '请输入登录账号', trigger: 'blur' }, { min: 4, message: '至少 4 位', trigger: 'blur' }],
-        password: [{ required: true, message: '请输入初始密码', trigger: 'blur' }, { min: 6, message: '至少 6 位', trigger: 'blur' }]
-      },
+      adminAccountForm: { account: '', password: '', fullname: '', phone: '' },
       loading: false,
       total: 0,
       list: [],
@@ -462,7 +431,23 @@ export default {
         socialCreditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }],
         manageName: [{ required: true, message: '请输入管理员', trigger: 'blur' }],
         contactInfo: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
-        dataId: [{ required: true, message: '请选择站点', trigger: 'change' }]
+        dataId: [{ required: true, message: '请选择站点', trigger: 'change' }],
+        // 自助后台账号：留空不开通；填了账号则必须填 6 位以上密码
+        adminAccount: [{
+          validator: (rule, value, callback) => {
+            const f = this.adminAccountForm || {}
+            if (f.account && String(f.account).trim().length < 4) {
+              callback(new Error('登录账号至少 4 位'))
+              return
+            }
+            if (f.account && (!f.password || String(f.password).length < 6)) {
+              callback(new Error('请填写初始密码（至少 6 位）'))
+              return
+            }
+            callback()
+          },
+          trigger: 'blur'
+        }]
       },
       stationTreeData: [],
       treeProps: { children: 'children', label: 'label' },
@@ -559,52 +544,40 @@ export default {
     this.loadStationTree()
   },
   methods: {
-    openAccountDialog(row) {
-      this.accountOrg = row || {}
-      this.accountList = []
-      this.accountForm = { account: '', password: '', fullname: '', phone: '' }
-      this.accountDialogVisible = true
-      this.loadAccountList()
-    },
-    loadAccountList() {
-      if (!this.accountOrg.id) return
-      this.accountLoading = true
-      listCustomerAdminAccount(this.accountOrg.id).then(res => {
-        this.accountLoading = false
-        if (res.code === 200) this.accountList = res.data || []
-      }).catch(() => { this.accountLoading = false })
-    },
-    submitAccount() {
-      this.$refs.accountForm.validate(valid => {
-        if (!valid || !this.accountOrg.id) return
-        this.accountSaving = true
-        createCustomerAdminAccount(this.accountOrg.id, this.accountForm).then(res => {
-          this.accountSaving = false
-          if (res.code === 200) {
-            this.$message.success(res.msg || '开通成功')
-            this.accountForm = { account: '', password: '', fullname: '', phone: '' }
-            this.loadAccountList()
-          } else {
-            this.$message.error(res.msg || '开通失败')
-          }
-        }).catch(() => { this.accountSaving = false })
-      })
-    },
     hasPerm(permission) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
-    },
-    formatOrgFlowType(code) {
-      return this.$dict.formatDictLabel('finance_org_flow_type', code)
     },
     filterTreeNode(value, data) {
       if (!value) return true
       return String(data.label || '').indexOf(value) > -1
+    },
+    formatOrgFlowType(code) {
+      return this.$dict.formatDictLabel('finance_org_flow_type', code)
     },
     onTreeCheck() {
       if (this.isDetail) return
       if (!this.$refs.stationTree) return
       const keys = this.$refs.stationTree.getCheckedKeys()
       this.form.dataId = keys.filter(k => typeof k === 'number' || /^\d+$/.test(String(k))).map(v => Number(v))
+    },
+    // 客户创建完成后按需开通自助后台账号（失败不影响主流程）
+    createAdminAccountIfNeeded(orgId) {
+      const form = this.adminAccountForm || {}
+      if (!form.account) return Promise.resolve()
+      return createCustomerAdminAccount(orgId, {
+        account: form.account.trim(),
+        password: form.password,
+        fullname: form.fullname,
+        phone: form.phone
+      }).then(res => {
+        if (res.code === 200) {
+          this.$message.success('自助后台账号已开通')
+        } else {
+          this.$message.warning(`客户已创建，但账号开通失败：${res.msg || '请重试'}`)
+        }
+      }).catch(() => {
+        this.$message.warning('客户已创建，但账号开通失败，请稍后重试')
+      })
     },
     loadStationTree() {
       getChargeStationTreeByMerchant({}).then(res => {
@@ -675,6 +648,7 @@ export default {
       this.drawerVisible = true
       this.createStep = 0
       this.createdCustomer = null
+      this.adminAccountForm = { account: '', password: '', fullname: '', phone: '' }
       this.resetForm()
       if (!row) return
       getChargingCustomerDetail(row.id).then(res => {
@@ -725,6 +699,7 @@ export default {
             this.$message.success('客户已保存，请继续配置车队/司机/车辆')
             const created = res.data || {}
             this.createdCustomer = { id: created.id, name: created.name || this.form.name }
+            this.createAdminAccountIfNeeded(created.id)
             this.createStep = 1
             this.loadList()
           } else {
@@ -1255,14 +1230,5 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.account-org {
-  margin-bottom: 8px;
-  color: #606266;
-}
-.account-hint {
-  color: #909399;
-  font-size: 12px;
-  line-height: 18px;
 }
 </style>

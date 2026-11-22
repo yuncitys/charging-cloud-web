@@ -615,6 +615,71 @@
     </div>
 
     <div v-if="!canView && !canAlerts && !canFinance && !canMarketing" class="wb-block wb-error">暂无工作台数据权限</div>
+
+    <!-- 车队充电（企业车队限额命中与停充，实时） -->
+    <div v-if="canFleet" class="wb-row">
+      <div class="wb-block" v-loading="blocks.fleet.loading">
+        <div class="wb-block__head">
+          <span class="wb-block__title">车队充电</span>
+          <el-tooltip effect="dark" placement="top" popper-class="wb-tip-popper">
+            <div slot="content">{{ FLEET_TIP }}</div>
+            <i class="el-icon-question wb-col-help wb-head-help" />
+          </el-tooltip>
+          <span class="wb-block__sync" :title="fleetMeta.hoverTitle">{{ fleetMeta.syncShort }}</span>
+          <el-radio-group v-model="fleetRange" size="mini" class="wb-day-toggle" @change="loadFleet">
+            <el-radio-button label="week">近7天</el-radio-button>
+            <el-radio-button label="month">近30天</el-radio-button>
+          </el-radio-group>
+          <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/chargingFleet/index')">
+            车队管理 <i class="el-icon-arrow-right" />
+          </el-link>
+          <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/chargingFleet/reconcile')">
+            车队对账 <i class="el-icon-arrow-right" />
+          </el-link>
+        </div>
+        <div v-if="blocks.fleet.error" class="wb-error">
+          <span>{{ blocks.fleet.error }}</span>
+          <el-button size="mini" type="primary" @click="loadFleet">重试</el-button>
+        </div>
+        <template v-else>
+          <div class="wb-cards wb-cards--6">
+            <div class="wb-card">
+              <div class="wb-card__label">命中次数</div>
+              <div class="wb-card__value">{{ int(fleet.totalHits) }}</div>
+            </div>
+            <div class="wb-card">
+              <div class="wb-card__label">拒绝下单</div>
+              <div class="wb-card__value">{{ int(fleet.rejectCount) }}</div>
+            </div>
+            <div class="wb-card">
+              <div class="wb-card__label">拒绝率</div>
+              <div class="wb-card__value wb-card__value--warn">{{ fleet.rejectRate || 0 }}%</div>
+            </div>
+            <div class="wb-card">
+              <div class="wb-card__label">自动停充</div>
+              <div class="wb-card__value wb-card__value--danger">{{ int(fleet.stopCount) }}</div>
+            </div>
+            <div class="wb-card">
+              <div class="wb-card__label">涉及车队</div>
+              <div class="wb-card__value">{{ int(fleet.fleetCount) }}</div>
+            </div>
+            <div class="wb-card">
+              <div class="wb-card__label">涉及司机</div>
+              <div class="wb-card__value">{{ int(fleet.driverCount) }}</div>
+            </div>
+          </div>
+          <el-table :data="fleetTop" size="small" style="width: 100%" empty-text="所选区间内暂无车队限额命中">
+            <el-table-column label="车队" min-width="150">
+              <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
+            </el-table-column>
+            <el-table-column label="所属机构" prop="orgName" min-width="160" show-overflow-tooltip />
+            <el-table-column label="命中" prop="hits" width="80" align="right" />
+            <el-table-column label="拒绝下单" prop="rejectCount" width="100" align="right" />
+            <el-table-column label="自动停充" prop="stopCount" width="100" align="right" />
+          </el-table>
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -645,6 +710,7 @@ import {
   newUserPercent,
   ringStyle
 } from './chargeUser'
+import { getFleetMonitorOverview } from '@/api/enterpriseFleet/stat'
 import { SYNC, buildBlockMeta } from './blockMeta'
 
 const ALERT_META = {
@@ -666,6 +732,14 @@ const FIELD_TIPS = {
 const CHARGE_DATA_TIP =
   '切换「今 / 昨」查看当天充电概况：电量、订单数、金额、电费与服务费。' +
   '下方曲线固定对比今日和昨日各时段电量。今日大约每 15 分钟更新一次。'
+
+const FLEET_TIP =
+  '企业车队充电限额监控（近 7 / 30 天，实时）。\n' +
+  '命中次数：司机下单或充电中被车队策略拦截的次数。\n' +
+  '拒绝下单：下单校验未通过、订单未能启动的次数。\n' +
+  '拒绝率：拒绝下单 ÷ 命中次数。\n' +
+  '自动停充：充电过程中触达日/月限额，系统自动结束充电的次数。\n' +
+  '下方按车队列出命中次数最多的 5 个车队，可进入车队管理查看策略。'
 
 const FINANCE_TIP =
   '累计总收入：开业以来已结算到账的收入合计。\n' +
@@ -738,8 +812,13 @@ export default {
         marketing: newBlock(),
         chargeUser: newBlock(),
         terminal: newBlock(),
-        stationTop: newBlock()
+        stationTop: newBlock(),
+        fleet: newBlock()
       },
+      fleetRange: 'week',
+      fleet: {},
+      fleetTop: [],
+      FLEET_TIP,
       TERMINAL_STATES,
       terminalColumns: TERMINAL_COLUMNS,
       terminal: {},
@@ -804,6 +883,15 @@ export default {
     canAlerts() { return this.perm(':web:operatorWorkbench:alerts') },
     canFinance() { return this.perm(':web:operatorWorkbench:finance') },
     canMarketing() { return this.perm(':web:operatorWorkbench:marketing') },
+    canFleet() { return this.perm(':charging:customer:fleet:stat') },
+    fleetMeta() {
+      return buildBlockMeta({
+        periodType: 'CUSTOM',
+        periodStart: this.fleet.startDate,
+        periodEnd: this.fleet.endDate,
+        sync: SYNC.REALTIME
+      })
+    },
     anyLoading() {
       return Object.keys(this.blocks).some(k => this.blocks[k].loading)
     },
@@ -931,6 +1019,7 @@ export default {
       if (this.canAlerts) this.loadAlerts()
       if (this.canFinance) this.loadFinance()
       if (this.canMarketing) this.loadMarketing()
+      if (this.canFleet) this.loadFleet()
     },
     // 通用块加载：失败只影响本块
     runBlock(key, apiFn, onOk, withPage, extra) {
@@ -941,6 +1030,28 @@ export default {
       return apiFn(params).then(res => {
         if (res && res.code === 200) {
           onOk(res.data, res)
+        } else {
+          block.error = (res && res.msg) || '加载失败，请重试'
+        }
+      }).catch(e => {
+        block.error = (e && e.message) || '加载失败，请重试'
+      }).then(() => {
+        block.loading = false
+      })
+    },
+    loadFleet() {
+      const block = this.blocks.fleet
+      block.loading = true
+      block.error = ''
+      const end = new Date()
+      const start = new Date()
+      start.setDate(start.getDate() - (this.fleetRange === 'month' ? 29 : 6))
+      const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      return getFleetMonitorOverview({ startDate: fmt(start), endDate: fmt(end) }).then(res => {
+        if (res && res.code === 200) {
+          const data = res.data || {}
+          this.fleet = data.overview || {}
+          this.fleetTop = data.topFleets || []
         } else {
           block.error = (res && res.msg) || '加载失败，请重试'
         }
@@ -1529,6 +1640,8 @@ export default {
     font-weight: 600;
     color: #303133;
     margin-top: 6px;
+    &--warn { color: #e6a23c; }
+    &--danger { color: #f56c6c; }
   }
   .wb-card__sub {
     font-size: 12px;
