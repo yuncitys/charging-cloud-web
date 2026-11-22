@@ -11,8 +11,10 @@
           <el-option :value="1" label="启用" />
           <el-option :value="0" label="停用" />
         </el-select>
-        <el-button class="filter-item" type="primary" icon="el-icon-search" @click="search">查询</el-button>
-        <el-button class="filter-item" plain @click="resetQuery">清空</el-button>
+        <div class="search-row__actions">
+          <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
+          <el-button plain @click="resetQuery">清空</el-button>
+        </div>
       </div>
 
       <div class="action-row">
@@ -297,8 +299,19 @@ export default {
 .filter-container .search-row {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 10px;
   margin-bottom: 10px;
+}
+/* 全局 .filter-item 带 margin-bottom:10px，flex 行内会破坏换行时的垂直对齐 */
+.filter-container .search-row .filter-item {
+  margin-bottom: 0;
+}
+.filter-container .search-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
 }
 .filter-container .action-row {
   display: flex;
