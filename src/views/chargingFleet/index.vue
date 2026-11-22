@@ -43,12 +43,13 @@
       <el-table-column prop="createTime" label="创建时间" align="center" width="170">
         <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="240" align="center">
+      <el-table-column label="操作" width="300" align="center">
         <template slot-scope="scope">
           <el-button v-if="hasPerm(':charging:customer:fleet:edit')" size="mini" type="primary" @click="openDialog('edit', scope.row)">编辑</el-button>
           <el-button v-if="hasPerm(':charging:customer:fleet:status')" size="mini" :type="scope.row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(scope.row)">
             {{ scope.row.status === 1 ? '停用' : '启用' }}
           </el-button>
+          <el-button v-if="hasPerm(':charging:customer:fleet:policy')" size="mini" type="warning" @click="openPolicy(scope.row)">策略</el-button>
           <el-button v-if="hasPerm(':charging:customer:fleet:delete')" size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
@@ -106,6 +107,8 @@
         <el-button type="primary" :loading="saving" @click="submitForm">确定</el-button>
       </div>
     </el-drawer>
+
+    <fleet-policy-drawer :visible.sync="policyVisible" :fleet="policyFleet" @saved="loadList" />
   </div>
 </template>
 
@@ -114,10 +117,12 @@ import { parseTime } from '@/utils/index'
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getDriverPage } from '@/api/chargingCustomer/chargingCustomerDriver'
 import { addFleet, deleteFleet, getFleetPage, updateFleet, updateFleetStatus } from '@/api/enterpriseFleet/fleet'
+import FleetPolicyDrawer from './components/FleetPolicyDrawer.vue'
 
 export default {
   // eslint-disable-next-line vue/name-property-casing, vue/component-definition-name-casing -- 与路由 name 保持一致，keep-alive include 才能命中
   name: 'chargingFleet',
+  components: { FleetPolicyDrawer },
   filters: {
     formatDate(time) {
       return time ? parseTime(time) : '-'
@@ -139,6 +144,8 @@ export default {
         name: '',
         status: null
       },
+      policyVisible: false,
+      policyFleet: {},
       dialogVisible: false,
       dialogMode: 'create',
       form: {
@@ -217,6 +224,11 @@ export default {
     handleCurrentChange(val) {
       this.query.page = val
       this.loadList()
+    },
+    openPolicy(row) {
+      if (!this.hasPerm(':charging:customer:fleet:policy')) return
+      this.policyFleet = { id: row.id, name: row.name, orgId: row.orgId }
+      this.policyVisible = true
     },
     openDialog(mode, row) {
       this.dialogMode = mode
