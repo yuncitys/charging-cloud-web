@@ -55,8 +55,7 @@
         <el-steps v-if="drawerMode === 'create'" :active="createStep" finish-status="success" simple class="customer-create-steps">
           <el-step title="客户" description="基本信息与站点" />
           <el-step title="车队" description="组织分组" />
-          <el-step title="司机" description="账号与车队" />
-          <el-step title="车辆" description="车牌与车队" />
+          <el-step title="车辆与司机" description="先车后人，司机可绑定车辆" />
         </el-steps>
 
         <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="120px">
@@ -125,11 +124,11 @@
         />
       </div>
       <div class="drawer-footer">
-        <span v-if="drawerMode === 'create'" class="drawer-step-hint">第 {{ createStep + 1 }} 步 / 共 4 步</span>
+        <span v-if="drawerMode === 'create'" class="drawer-step-hint">第 {{ createStep + 1 }} 步 / 共 3 步</span>
         <el-button @click="drawerVisible = false">取消</el-button>
         <template v-if="drawerMode === 'create'">
           <el-button v-if="createStep > 0" @click="createStep -= 1">上一步</el-button>
-          <el-button v-if="createStep < 3" type="primary" :loading="saving" @click="handleCreateNext">下一步</el-button>
+          <el-button v-if="createStep < 2" type="primary" :loading="saving" @click="handleCreateNext">下一步</el-button>
           <el-button v-else type="primary" @click="handleCreateFinish">完成</el-button>
         </template>
         <el-button v-else-if="!isDetail && canSaveCustomer" type="primary" @click="submit">保存</el-button>
