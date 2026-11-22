@@ -47,7 +47,7 @@
     <!-- 司机 -->
     <template v-else-if="step === 1">
       <div class="fleet-step__tip">
-        <i class="el-icon-info" /> 司机必须归属车队。可逐行录入，也可下载模板整理后批量导入。
+        <i class="el-icon-info" /> 司机必须归属车队，可绑定车辆（可空）。车辆若还没建，可先完成本步，下一步添加车辆后回到本步再绑定。
       </div>
       <el-form ref="driverFormRef" :model="driverForm" :rules="driverRules" label-width="90px" size="small">
         <el-form-item label="所属车队" prop="fleetId">
@@ -65,6 +65,17 @@
           <el-input v-model="row.userAccount" size="small" placeholder="用户账号" class="fleet-step__row-input" />
           <el-input v-model="row.userName" size="small" placeholder="姓名" class="fleet-step__row-input" />
           <el-input v-model="row.phoneNumber" size="small" placeholder="11 位手机号" class="fleet-step__row-input" />
+          <el-select
+            v-model="row.carIds"
+            multiple
+            collapse-tags
+            clearable
+            size="small"
+            placeholder="绑定车辆（可空）"
+            class="fleet-step__row-select"
+          >
+            <el-option v-for="car in carOptions" :key="car.id" :label="car.plateNumber" :value="car.id" />
+          </el-select>
           <el-button size="mini" type="text" class="fleet-step__row-del" @click="removeDriverRow(index)">删除</el-button>
         </div>
       </div>
@@ -72,6 +83,7 @@
         <el-button size="mini" icon="el-icon-plus" @click="addDriverRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveDrivers">保存司机</el-button>
         <el-button size="mini" icon="el-icon-upload2" @click="openImport('driver')">批量导入</el-button>
+        <el-button size="mini" type="text" icon="el-icon-refresh" @click="loadCarOptions">刷新可绑定车辆（{{ carOptions.length }}）</el-button>
       </div>
 
       <el-card shadow="never" class="fleet-step__card fleet-step__card--list">
@@ -203,7 +215,8 @@ import {
   submitCarImport,
   uploadCarFile,
   downloadCarTemplate,
-  getChargingCustomerCarPage
+  getChargingCustomerCarPage,
+  getCarListByOrgId
 } from '@/api/chargingCustomer/chargingCustomerCar'
 
 /**
@@ -235,7 +248,8 @@ export default {
       driverRules: {
         fleetId: [{ required: true, message: '请选择车队', trigger: 'change' }]
       },
-      driverRows: [{ userAccount: '', userName: '', phoneNumber: '' }],
+      driverRows: [{ userAccount: '', userName: '', phoneNumber: '', carIds: [] }],
+      carOptions: [],
       carForm: { fleetId: null },
       carRules: {
         fleetId: [{ required: true, message: '请选择车队', trigger: 'change' }]
@@ -282,6 +296,7 @@ export default {
     reloadStepData() {
       if (this.step === 1) {
         this.loadDrivers()
+        this.loadCarOptions()
       } else if (this.step === 2) {
         this.loadCars()
       }
@@ -359,7 +374,18 @@ export default {
       })
     },
     addDriverRow() {
-      this.driverRows.push({ userAccount: '', userName: '', phoneNumber: '' })
+      this.driverRows.push({ userAccount: '', userName: '', phoneNumber: '', carIds: [] })
+    },
+    loadCarOptions() {
+      if (!this.orgId()) {
+        this.carOptions = []
+        return
+      }
+      getCarListByOrgId(this.orgId()).then(res => {
+        if (res.code === 200) {
+          this.carOptions = res.data || []
+        }
+      }).catch(() => { this.carOptions = [] })
     },
     removeDriverRow(index) {
       this.driverRows.splice(index, 1)
@@ -398,13 +424,14 @@ export default {
           phoneNumber: row.phoneNumber,
           userPlatform: 2,
           belongToId: this.orgId(),
-          fleetId: this.driverForm.fleetId
+          fleetId: this.driverForm.fleetId,
+          carIds: row.carIds || []
         }))
       }).then(res => {
         this.saving = false
         if (res.code === 200) {
           this.$message.success(res.msg || '司机已保存')
-          this.driverRows = [{ userAccount: '', userName: '', phoneNumber: '' }]
+          this.driverRows = [{ userAccount: '', userName: '', phoneNumber: '', carIds: [] }]
           this.loadDrivers()
           this.$emit('changed')
         } else {
@@ -611,6 +638,11 @@ export default {
 }
 .fleet-step__row-input {
   flex: 1;
+  min-width: 120px;
+}
+.fleet-step__row-select {
+  flex: 1.2;
+  min-width: 160px;
 }
 .fleet-step__row-del {
   flex: none;
