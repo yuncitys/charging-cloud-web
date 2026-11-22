@@ -59,7 +59,7 @@
           <el-step title="车辆" description="车牌与车队" />
         </el-steps>
 
-        <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="120px">
           <div class="create-section">
             <div class="create-section__title"><i class="el-icon-office-building" /> 基本信息</div>
             <el-row :gutter="16">
@@ -92,25 +92,15 @@
                   <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
-                <el-form-item label="机构类型" prop="orgType">
-                  <el-radio-group v-model="form.orgType" :disabled="isDetail">
-                    <el-radio :label="1">客户机构</el-radio>
-                  </el-radio-group>
-                  <el-radio-group v-model="form.stationScopeType" :disabled="true" style="margin-left: 8px;">
-                    <el-radio :label="2">按电站</el-radio>
-                  </el-radio-group>
-                </el-form-item>
-              </el-col>
             </el-row>
           </div>
 
           <div class="create-section">
             <div class="create-section__title">
-              <i class="el-icon-location-outline" /> 可用站点
+              <i class="el-icon-location-outline" /> 站点配置
               <span class="create-section__desc">客户司机仅能在勾选的站点使用企业钱包充电</span>
             </div>
-            <el-form-item label="可用站点" prop="dataId">
+            <el-form-item label="站点配置" prop="dataId">
               <el-input v-model="searchKey" placeholder="输入关键字过滤站点" clearable class="station-search" :disabled="isDetail" />
               <div :class="['station-tree-wrap', { 'is-disabled': isDetail }]">
                 <el-tree
@@ -128,6 +118,7 @@
         </el-form>
 
         <fleet-init-steps
+          ref="fleetSteps"
           v-if="drawerMode === 'create' && createStep > 0"
           :customer="createdCustomer"
           :step="createStep - 1"
@@ -650,10 +641,22 @@ export default {
       })
     },
     handleCreateFinish() {
-      this.drawerVisible = false
-      this.createStep = 0
-      this.createdCustomer = null
-      this.loadList()
+      const steps = this.$refs.fleetSteps
+      const close = () => {
+        this.drawerVisible = false
+        this.createStep = 0
+        this.createdCustomer = null
+        this.loadList()
+      }
+      if (steps && typeof steps.hasUnsaved === 'function' && steps.hasUnsaved()) {
+        this.$confirm('还有未保存的司机/车辆输入，完成后将丢失，确认完成？', '提示', {
+          type: 'warning',
+          confirmButtonText: '仍要完成',
+          cancelButtonText: '继续录入'
+        }).then(close).catch(() => {})
+        return
+      }
+      close()
     },
     openFinance(row) {
       if (!this.hasPerm(':charging:customer:finance')) return

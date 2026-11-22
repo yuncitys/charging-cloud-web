@@ -13,6 +13,8 @@
         <el-table :data="fleets" size="mini" border empty-text="还没有车队，请在下方新增">
           <el-table-column prop="fleetCode" label="车队编码" width="160" />
           <el-table-column prop="name" label="车队名称" />
+          <el-table-column prop="driverCount" label="司机数" width="80" align="center" />
+          <el-table-column prop="carCount" label="车辆数" width="80" align="center" />
           <el-table-column label="状态" width="80" align="center">
             <template slot-scope="scope">
               <el-tag size="mini" :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? '启用' : '停用' }}</el-tag>
@@ -49,9 +51,12 @@
       </div>
       <el-form ref="driverFormRef" :model="driverForm" :rules="driverRules" label-width="90px" size="small">
         <el-form-item label="所属车队" prop="fleetId">
-          <el-select v-model="driverForm.fleetId" placeholder="请选择车队" style="width: 260px;">
+          <el-select v-model="driverForm.fleetId" placeholder="请选择车队" style="width: 260px;" @change="loadDrivers">
             <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
           </el-select>
+          <span v-if="!enabledFleets.length" class="fleet-step__hint">
+            还没有可用车队，请先回到「车队」步骤新增
+          </span>
         </el-form-item>
       </el-form>
       <div class="fleet-step__rows">
@@ -67,8 +72,22 @@
         <el-button size="mini" icon="el-icon-plus" @click="addDriverRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveDrivers">保存司机</el-button>
         <el-button size="mini" icon="el-icon-upload2" @click="openImport('driver')">批量导入</el-button>
-        <el-button size="mini" type="text" icon="el-icon-download" @click="downloadTemplate('driver')">下载导入模板</el-button>
       </div>
+
+      <el-card shadow="never" class="fleet-step__card fleet-step__card--list">
+        <div slot="header" class="fleet-step__card-head">
+          <span>已添加司机（{{ driverTotal }}）</span>
+          <el-button size="mini" icon="el-icon-refresh" :loading="listLoading" @click="loadDrivers">刷新</el-button>
+        </div>
+        <div v-if="driverTotal > driverList.length" class="fleet-step__hint">仅显示最近 {{ driverList.length }} 条，共 {{ driverTotal }} 条</div>
+        <el-table v-loading="listLoading" :data="driverList" size="mini" border max-height="240" empty-text="还没有司机，请在上方录入或批量导入">
+          <el-table-column prop="userAccount" label="账号" width="150" show-overflow-tooltip />
+          <el-table-column prop="userName" label="姓名" width="110" show-overflow-tooltip />
+          <el-table-column prop="phoneNumber" label="手机号" width="130" />
+          <el-table-column prop="fleetName" label="车队" min-width="120" show-overflow-tooltip />
+          <el-table-column prop="cash" label="余额(元)" width="100" />
+        </el-table>
+      </el-card>
     </template>
 
     <!-- 车辆 -->
@@ -78,9 +97,12 @@
       </div>
       <el-form ref="carFormRef" :model="carForm" :rules="carRules" label-width="90px" size="small">
         <el-form-item label="所属车队" prop="fleetId">
-          <el-select v-model="carForm.fleetId" placeholder="请选择车队" style="width: 260px;">
+          <el-select v-model="carForm.fleetId" placeholder="请选择车队" style="width: 260px;" @change="loadCars">
             <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
           </el-select>
+          <span v-if="!enabledFleets.length" class="fleet-step__hint">
+            还没有可用车队，请先回到「车队」步骤新增
+          </span>
         </el-form-item>
       </el-form>
       <div class="fleet-step__rows">
@@ -95,8 +117,20 @@
         <el-button size="mini" icon="el-icon-plus" @click="addCarRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveCars">保存车辆</el-button>
         <el-button size="mini" icon="el-icon-upload2" @click="openImport('car')">批量导入</el-button>
-        <el-button size="mini" type="text" icon="el-icon-download" @click="downloadTemplate('car')">下载导入模板</el-button>
       </div>
+
+      <el-card shadow="never" class="fleet-step__card fleet-step__card--list">
+        <div slot="header" class="fleet-step__card-head">
+          <span>已添加车辆（{{ carTotal }}）</span>
+          <el-button size="mini" icon="el-icon-refresh" :loading="listLoading" @click="loadCars">刷新</el-button>
+        </div>
+        <div v-if="carTotal > carList.length" class="fleet-step__hint">仅显示最近 {{ carList.length }} 条，共 {{ carTotal }} 条</div>
+        <el-table v-loading="listLoading" :data="carList" size="mini" border max-height="240" empty-text="还没有车辆，请在上方录入或批量导入">
+          <el-table-column prop="plateNumber" label="车牌号" width="150" />
+          <el-table-column prop="vinCode" label="车架号VIN" min-width="160" show-overflow-tooltip />
+          <el-table-column prop="fleetName" label="车队" width="140" show-overflow-tooltip />
+        </el-table>
+      </el-card>
     </template>
 
     <!-- 批量导入弹窗 -->
@@ -160,14 +194,16 @@ import {
   previewDriverImport,
   submitDriverImport,
   uploadDriverFile,
-  downloadDriverTemplate
+  downloadDriverTemplate,
+  getDriverPage
 } from '@/api/chargingCustomer/chargingCustomerDriver'
 import {
   batchAddChargingCustomerCar,
   previewCarImport,
   submitCarImport,
   uploadCarFile,
-  downloadCarTemplate
+  downloadCarTemplate,
+  getChargingCustomerCarPage
 } from '@/api/chargingCustomer/chargingCustomerCar'
 
 /**
@@ -209,7 +245,12 @@ export default {
       importType: 'driver',
       importFleetId: null,
       importPreview: [],
-      importUploading: false
+      importUploading: false,
+      listLoading: false,
+      driverList: [],
+      driverTotal: 0,
+      carList: [],
+      carTotal: 0
     }
   },
   computed: {
@@ -221,13 +262,67 @@ export default {
     'customer.id': {
       handler() {
         this.loadFleets()
+        this.reloadStepData()
       },
       immediate: true
+    },
+    step() {
+      this.reloadStepData()
     }
   },
   methods: {
     orgId() {
       return this.customer && this.customer.id ? this.customer.id : null
+    },
+    hasUnsaved() {
+      const drivers = this.driverRows.some(r => r.userAccount || r.userName || r.phoneNumber)
+      const cars = this.carRows.some(r => r.plateNumber || r.vinCode)
+      return drivers || cars
+    },
+    reloadStepData() {
+      if (this.step === 1) {
+        this.loadDrivers()
+      } else if (this.step === 2) {
+        this.loadCars()
+      }
+    },
+    loadDrivers() {
+      if (!this.orgId()) {
+        this.driverList = []
+        this.driverTotal = 0
+        return
+      }
+      this.listLoading = true
+      const query = { page: 1, limit: 100, belongToId: String(this.orgId()) }
+      if (this.driverForm.fleetId) query.fleetId = this.driverForm.fleetId
+      getDriverPage(query).then(res => {
+        this.listLoading = false
+        if (res.code === 200) {
+          this.driverList = res.data || []
+          this.driverTotal = res.count == null ? this.driverList.length : res.count
+        } else {
+          this.$message.error(res.msg || '司机列表加载失败')
+        }
+      }).catch(() => { this.listLoading = false })
+    },
+    loadCars() {
+      if (!this.orgId()) {
+        this.carList = []
+        this.carTotal = 0
+        return
+      }
+      this.listLoading = true
+      const query = { page: 1, limit: 100, belongToId: this.orgId() }
+      if (this.carForm.fleetId) query.fleetId = this.carForm.fleetId
+      getChargingCustomerCarPage(query).then(res => {
+        this.listLoading = false
+        if (res.code === 200) {
+          this.carList = res.data || []
+          this.carTotal = res.count == null ? this.carList.length : res.count
+        } else {
+          this.$message.error(res.msg || '车辆列表加载失败')
+        }
+      }).catch(() => { this.listLoading = false })
     },
     loadFleets() {
       if (!this.orgId()) {
@@ -310,6 +405,7 @@ export default {
         if (res.code === 200) {
           this.$message.success(res.msg || '司机已保存')
           this.driverRows = [{ userAccount: '', userName: '', phoneNumber: '' }]
+          this.loadDrivers()
           this.$emit('changed')
         } else {
           this.$message.error(res.msg || '保存失败')
@@ -356,6 +452,7 @@ export default {
         if (res.code === 200) {
           this.$message.success(res.msg || '车辆已保存')
           this.carRows = [{ plateNumber: '', vinCode: '' }]
+          this.loadCars()
           this.$emit('changed')
         } else {
           this.$message.error(res.msg || '保存失败')
@@ -425,6 +522,11 @@ export default {
           this.$message.success(res.msg || '导入成功')
           this.importVisible = false
           this.importPreview = []
+          if (this.importType === 'driver') {
+            this.loadDrivers()
+          } else {
+            this.loadCars()
+          }
           this.$emit('changed')
         } else {
           this.$message.error(res.msg || '导入失败')
@@ -525,5 +627,8 @@ export default {
   margin-left: 10px;
   color: #909399;
   font-size: 12px;
+}
+.fleet-step__card--list {
+  margin-top: 12px;
 }
 </style>
