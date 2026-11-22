@@ -43,7 +43,7 @@
       <el-table-column prop="createTime" label="创建时间" align="center" width="170">
         <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="300" align="center">
+      <el-table-column label="操作" width="300" align="center" fixed="right">
         <template slot-scope="scope">
           <el-button v-if="hasPerm(':charging:customer:fleet:edit')" size="mini" type="primary" @click="openDialog('edit', scope.row)">编辑</el-button>
           <el-button v-if="hasPerm(':charging:customer:fleet:status')" size="mini" :type="scope.row.status === 1 ? 'warning' : 'success'" @click="toggleStatus(scope.row)">

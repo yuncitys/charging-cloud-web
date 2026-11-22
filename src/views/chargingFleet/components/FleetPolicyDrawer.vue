@@ -63,39 +63,39 @@
 
             <el-form-item label="可用时段">
               <div v-for="(range, index) in form.timeRanges" :key="'tr' + index" class="time-range">
-                <el-time-picker v-model="range.start" format="HH:mm" value-format="HH:mm" placeholder="开始" size="small" style="width: 110px;" />
+                <el-time-picker v-model="range.start" format="HH:mm" value-format="HH:mm" placeholder="开始" size="small" class="time-range__picker" />
                 <span class="time-range__sep">~</span>
-                <el-time-picker v-model="range.end" format="HH:mm" value-format="HH:mm" placeholder="结束" size="small" style="width: 110px;" />
+                <el-time-picker v-model="range.end" format="HH:mm" value-format="HH:mm" placeholder="结束" size="small" class="time-range__picker" />
                 <el-button type="text" class="time-range__del" @click="form.timeRanges.splice(index, 1)">删除</el-button>
               </div>
-              <el-button size="mini" icon="el-icon-plus" @click="addTimeRange">新增时段</el-button>
+              <el-button size="mini" type="primary" plain icon="el-icon-plus" @click="addTimeRange">新增时段</el-button>
               <div class="hint">留空表示不限时段；开始晚于结束视为跨天（如 22:00~06:00）</div>
             </el-form-item>
 
             <el-form-item label="单次限额">
               <div class="limit-row">
                 <el-input-number v-model="form.singleLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" class="limit-row__input" />
-                <span class="unit">元</span>
+                <span class="unit unit--money">元</span>
                 <el-input-number v-model="form.singleLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" class="limit-row__input" />
-                <span class="unit">kWh</span>
+                <span class="unit unit--power">kWh</span>
               </div>
             </el-form-item>
 
             <el-form-item label="日限额">
               <div class="limit-row">
                 <el-input-number v-model="form.dayLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" class="limit-row__input" />
-                <span class="unit">元</span>
+                <span class="unit unit--money">元</span>
                 <el-input-number v-model="form.dayLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" class="limit-row__input" />
-                <span class="unit">kWh</span>
+                <span class="unit unit--power">kWh</span>
               </div>
             </el-form-item>
 
             <el-form-item label="月限额">
               <div class="limit-row">
                 <el-input-number v-model="form.monthLimitMoney" :min="0" :precision="2" :controls="false" placeholder="金额不限" class="limit-row__input" />
-                <span class="unit">元</span>
+                <span class="unit unit--money">元</span>
                 <el-input-number v-model="form.monthLimitPower" :min="0" :precision="2" :controls="false" placeholder="电量不限" class="limit-row__input" />
-                <span class="unit">kWh</span>
+                <span class="unit unit--power">kWh</span>
               </div>
               <div class="hint hint--block">
                 <i class="el-icon-info" /> 限额留空或填 <strong>0</strong> 表示不限额；金额按实付（优惠后）统计，电量按订单充电量统计；
@@ -108,7 +108,7 @@
                 <el-select v-model="copyFromFleetId" placeholder="从同机构其它车队复制" clearable filterable class="limit-row__select">
                   <el-option v-for="f in siblingFleets" :key="f.id" :label="f.name" :value="f.id" />
                 </el-select>
-                <el-button size="small" :disabled="!copyFromFleetId" @click="handleCopy">复制</el-button>
+                <el-button size="small" type="primary" plain :disabled="!copyFromFleetId" @click="handleCopy">复制</el-button>
               </div>
               <div class="hint hint--block">复制后默认不启用，确认无误再开启</div>
             </el-form-item>
@@ -498,12 +498,19 @@ export default {
   width: 100%;
 }
 .limit-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 180px 36px 180px 52px;
   align-items: center;
-  gap: 8px;
+  gap: 8px 10px;
 }
 .limit-row__input {
   width: 180px;
+}
+.unit--money {
+  width: 36px;
+}
+.unit--power {
+  width: 52px;
 }
 .limit-row__select {
   flex: 1;
@@ -530,6 +537,10 @@ export default {
   gap: 8px;
   margin-bottom: 8px;
 }
+.time-range__picker {
+  width: 120px;
+  flex: none;
+}
 .time-range__sep {
   color: #909399;
 }
@@ -537,8 +548,8 @@ export default {
   color: #f56c6c;
 }
 .unit {
-  margin-left: 6px;
   color: #909399;
+  font-size: 12px;
 }
 .usage-card {
   padding: 8px 0;
@@ -588,5 +599,9 @@ export default {
   display: block;
   margin: 6px 0 0;
   line-height: 18px;
+}
+/* 时段选择器固定宽度（放在样式末尾，覆盖抽屉内通用 100% 规则） */
+.policy-body >>> .el-date-editor.time-range__picker {
+  width: 120px;
 }
 </style>
