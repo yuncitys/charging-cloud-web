@@ -26,6 +26,7 @@
           <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
           <el-button v-if="hasPerm(':charging:customer:edit')" size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
           <el-button v-if="hasPerm(':charging:customer:finance')" size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
+          <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" plain @click="openAccountDialog(scope.row)">后台账号</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -335,12 +336,64 @@
       </div>
     </el-drawer>
     <downloadProgress ref="downloadProgress" />
+
+    <!-- 客户机构后台账号（role_type=5，只读查看本机构车队数据） -->
+    <el-dialog title="客户机构后台账号" :visible.sync="accountDialogVisible" width="720px" append-to-body>
+      <div class="account-org">客户机构：<strong>{{ accountOrg.name }}</strong></div>
+      <el-table v-loading="accountLoading" :data="accountList" size="small" border max-height="240">
+        <el-table-column prop="adminName" label="登录账号" min-width="130" />
+        <el-table-column prop="adminFullname" label="姓名" min-width="110" />
+        <el-table-column prop="adminPhone" label="手机号" min-width="130" />
+        <el-table-column label="状态" width="90" align="center">
+          <template slot-scope="scope">
+            <el-tag size="mini" :type="scope.row.freezeStatus === 1 ? 'danger' : 'success'">
+              {{ scope.row.freezeStatus === 1 ? '已冻结' : '正常' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="开通时间" min-width="150">
+          <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
+        </el-table-column>
+      </el-table>
+
+      <el-divider content-position="left">开通新账号</el-divider>
+      <el-form ref="accountForm" :model="accountForm" :rules="accountRules" label-width="90px" size="small">
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="登录账号" prop="account">
+              <el-input v-model="accountForm.account" maxlength="20" placeholder="至少 4 位" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="初始密码" prop="password">
+              <el-input v-model="accountForm.password" maxlength="20" placeholder="至少 6 位" show-password />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="姓名" prop="fullname">
+              <el-input v-model="accountForm.fullname" maxlength="20" placeholder="默认取机构名称" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="手机号" prop="phone">
+              <el-input v-model="accountForm.phone" maxlength="11" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <div class="account-hint">该账号登录运营后台后，只能只读查看本机构的车队、车辆、司机、报表、账单与对账数据。</div>
+      </el-form>
+      <span slot="footer">
+        <el-button size="small" @click="accountDialogVisible = false">关闭</el-button>
+        <el-button size="small" type="primary" :loading="accountSaving" @click="submitAccount">开通</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { parseTime } from '@/utils/index'
 import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
+import { createCustomerAdminAccount, listCustomerAdminAccount } from '@/api/enterpriseFleet/customerAccount'
 import {
   addChargingCustomer,
   adjustChargingCustomerAllocation,
@@ -366,6 +419,16 @@ export default {
   },
   data() {
     return {
+      accountDialogVisible: false,
+      accountLoading: false,
+      accountSaving: false,
+      accountOrg: {},
+      accountList: [],
+      accountForm: { account: '', password: '', fullname: '', phone: '' },
+      accountRules: {
+        account: [{ required: true, message: '请输入登录账号', trigger: 'blur' }, { min: 4, message: '至少 4 位', trigger: 'blur' }],
+        password: [{ required: true, message: '请输入初始密码', trigger: 'blur' }, { min: 6, message: '至少 6 位', trigger: 'blur' }]
+      },
       loading: false,
       total: 0,
       list: [],
@@ -496,6 +559,37 @@ export default {
     this.loadStationTree()
   },
   methods: {
+    openAccountDialog(row) {
+      this.accountOrg = row || {}
+      this.accountList = []
+      this.accountForm = { account: '', password: '', fullname: '', phone: '' }
+      this.accountDialogVisible = true
+      this.loadAccountList()
+    },
+    loadAccountList() {
+      if (!this.accountOrg.id) return
+      this.accountLoading = true
+      listCustomerAdminAccount(this.accountOrg.id).then(res => {
+        this.accountLoading = false
+        if (res.code === 200) this.accountList = res.data || []
+      }).catch(() => { this.accountLoading = false })
+    },
+    submitAccount() {
+      this.$refs.accountForm.validate(valid => {
+        if (!valid || !this.accountOrg.id) return
+        this.accountSaving = true
+        createCustomerAdminAccount(this.accountOrg.id, this.accountForm).then(res => {
+          this.accountSaving = false
+          if (res.code === 200) {
+            this.$message.success(res.msg || '开通成功')
+            this.accountForm = { account: '', password: '', fullname: '', phone: '' }
+            this.loadAccountList()
+          } else {
+            this.$message.error(res.msg || '开通失败')
+          }
+        }).catch(() => { this.accountSaving = false })
+      })
+    },
     hasPerm(permission) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
     },
@@ -1161,5 +1255,14 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+.account-org {
+  margin-bottom: 8px;
+  color: #606266;
+}
+.account-hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 18px;
 }
 </style>
