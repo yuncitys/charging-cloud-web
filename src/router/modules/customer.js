@@ -24,6 +24,15 @@ export default [
     }
   },
   {
+    path: '/chargingFleet/bill',
+    component: () => import('@/views/chargingFleet/bill'),
+    name: 'ChargingFleetBill',
+    meta: {
+      title: '车队账单',
+      icon: 'el-icon-document'
+    }
+  },
+  {
     path: '/chargingFleet/stat',
     component: () => import('@/views/chargingFleet/stat'),
     name: 'ChargingFleetStat',
