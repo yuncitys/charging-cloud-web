@@ -65,36 +65,45 @@
       />
     </div>
 
-    <el-dialog :title="dialogTitle" :visible.sync="dialogVisible" width="560px" :close-on-click-modal="false" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-form-item label="所属机构" prop="orgId">
-          <el-select v-model="form.orgId" placeholder="请选择归属机构" filterable style="width: 100%;" @change="handleFormOrgChange">
-            <el-option v-for="opt in orgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="车队编码" prop="fleetCode">
-          <el-input v-model="form.fleetCode" placeholder="机构内唯一，如 TEAM-A" clearable maxlength="32" />
-        </el-form-item>
-        <el-form-item label="车队名称" prop="name">
-          <el-input v-model="form.name" placeholder="如 城配一队" clearable maxlength="64" />
-        </el-form-item>
-        <el-form-item label="负责人" prop="leaderUserId">
-          <el-select v-model="form.leaderUserId" placeholder="可空，需为该机构下司机" clearable filterable style="width: 100%;" :disabled="!form.orgId">
-            <el-option v-for="d in driverOptions" :key="d.id" :label="d.userName + '（' + d.userAccount + '）'" :value="d.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="排序" prop="sortCode">
-          <el-input-number v-model="form.sortCode" :min="0" :max="9999" controls-position="right" />
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="255" show-word-limit />
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
+    <el-drawer
+      :title="dialogTitle"
+      :visible.sync="dialogVisible"
+      size="520px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="fleet-drawer-body">
+        <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+          <el-form-item label="所属机构" prop="orgId">
+            <el-select v-model="form.orgId" placeholder="请选择归属机构" filterable style="width: 100%;" @change="handleFormOrgChange">
+              <el-option v-for="opt in orgOptions" :key="opt.id" :label="opt.name" :value="opt.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="车队编码" prop="fleetCode">
+            <el-input v-model="form.fleetCode" placeholder="机构内唯一，如 TEAM-A" clearable maxlength="32" />
+          </el-form-item>
+          <el-form-item label="车队名称" prop="name">
+            <el-input v-model="form.name" placeholder="如 城配一队" clearable maxlength="64" />
+          </el-form-item>
+          <el-form-item label="负责人" prop="leaderUserId">
+            <el-select v-model="form.leaderUserId" placeholder="可空，需为该机构下司机" clearable filterable style="width: 100%;" :disabled="!form.orgId">
+              <el-option v-for="d in driverOptions" :key="d.id" :label="d.userName + '（' + d.userAccount + '）'" :value="d.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="排序" prop="sortCode">
+            <el-input-number v-model="form.sortCode" :min="0" :max="9999" controls-position="right" />
+          </el-form-item>
+          <el-form-item label="备注" prop="remark">
+            <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="255" show-word-limit />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="fleet-drawer-footer">
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" :loading="saving" @click="submitForm">确定</el-button>
-      </span>
-    </el-dialog>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -248,6 +257,17 @@ export default {
     },
     toggleStatus(row) {
       const next = row.status === 1 ? 0 : 1
+      if (next === 0) {
+        this.$confirm(`停用后，该车队（${row.name}）下的司机将无法继续使用企业钱包充电，确认停用？`, '停用车队', {
+          type: 'warning',
+          confirmButtonText: '确认停用',
+          cancelButtonText: '取消'
+        }).then(() => this.doUpdateStatus(row, next)).catch(() => {})
+        return
+      }
+      this.doUpdateStatus(row, next)
+    },
+    doUpdateStatus(row, next) {
       updateFleetStatus(row.id, next).then(res => {
         if (res.code === 200) {
           this.$message.success(res.msg || '操作成功')
@@ -284,5 +304,19 @@ export default {
   display: flex;
   gap: 10px;
   margin-bottom: 10px;
+}
+
+.fleet-drawer-body {
+  padding: 0 20px 20px;
+}
+.fleet-drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
+  text-align: right;
 }
 </style>

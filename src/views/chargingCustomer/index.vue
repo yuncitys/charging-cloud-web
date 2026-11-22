@@ -21,11 +21,12 @@
       <el-table-column prop="createTime" label="创建时间" align="center">
         <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="300" align="center">
+      <el-table-column label="操作" width="420" align="center">
         <template slot-scope="scope">
           <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
           <el-button v-if="hasPerm(':charging:customer:edit')" size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
           <el-button v-if="hasPerm(':charging:customer:finance')" size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
+          <el-button v-if="hasPerm(':charging:customer:fleet:add')" size="mini" @click="openFleetWizard(scope.row)">车队/司机/车辆</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -303,6 +304,12 @@
         <el-button type="primary" :loading="allocationAdjustLoading" @click="submitAllocationAdjust">确定</el-button>
       </div>
     </el-drawer>
+    <fleet-init-wizard
+      :visible.sync="fleetWizardVisible"
+      :customer="fleetWizardCustomer"
+      @done="loadList"
+      @changed="loadList"
+    />
     <downloadProgress ref="downloadProgress" />
   </div>
 </template>
@@ -323,13 +330,15 @@ import {
   updateChargingCustomer
 } from '@/api/chargingCustomer/index'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
+import FleetInitWizard from './components/FleetInitWizard.vue'
 import organizationImg from '@/assets/charging-customer/organization.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
 
 export default {
   name: 'ChargingCustomer',
   components: {
-    downloadProgress
+    downloadProgress,
+    FleetInitWizard
   },
   data() {
     return {
@@ -405,6 +414,8 @@ export default {
       allocationGroups: [],
       allocationTree: [],
       allocationUserKeyword: '',
+      fleetWizardVisible: false,
+      fleetWizardCustomer: {},
       flowTypeOptions: [],
       organizationImg,
       walletImg
@@ -567,11 +578,27 @@ export default {
             this.$message.success(res.msg || '保存成功')
             this.drawerVisible = false
             this.loadList()
+            const created = res.data
+            if (this.drawerMode !== 'edit' && created && created.id) {
+              this.fleetWizardCustomer = { id: created.id, name: created.name }
+              this.$confirm('客户已创建，是否继续按「车队 → 司机 → 车辆」完成初始化？', '继续配置', {
+                type: 'info',
+                confirmButtonText: '继续配置',
+                cancelButtonText: '稍后再说'
+              }).then(() => {
+                this.fleetWizardVisible = true
+              }).catch(() => {})
+            }
           } else {
             this.$message.error(res.msg || '保存失败')
           }
         })
       })
+    },
+    openFleetWizard(row) {
+      if (!row || !row.id) return
+      this.fleetWizardCustomer = { id: row.id, name: row.name }
+      this.fleetWizardVisible = true
     },
     openFinance(row) {
       if (!this.hasPerm(':charging:customer:finance')) return
