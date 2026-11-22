@@ -1,95 +1,119 @@
 <template>
-  <div class="fleet-init-step">
+  <div class="fleet-step">
     <!-- 车队 -->
-    <div v-if="step === 0">
-      <el-alert type="info" :closable="false" show-icon title="先建车队（可多个）。车队只是组织维度，额度仍由机构钱包分配给司机。" />
-      <el-table :data="fleets" size="mini" border style="margin: 12px 0;">
-        <el-table-column prop="fleetCode" label="车队编码" width="150" />
-        <el-table-column prop="name" label="车队名称" />
-        <el-table-column label="状态" width="80" align="center">
-          <template slot-scope="scope">{{ scope.row.status === 1 ? '启用' : '停用' }}</template>
-        </el-table-column>
-      </el-table>
-      <el-form ref="fleetFormRef" :model="fleetForm" :rules="fleetRules" label-width="90px" size="small">
-        <el-form-item label="车队编码" prop="fleetCode">
-          <el-input v-model="fleetForm.fleetCode" placeholder="机构内唯一，如 TEAM-A" maxlength="32" />
-        </el-form-item>
-        <el-form-item label="车队名称" prop="name">
-          <el-input v-model="fleetForm.name" placeholder="如 城配一队" maxlength="64" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="saving" @click="handleAddFleet">添加车队</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
+    <template v-if="step === 0">
+      <div class="fleet-step__tip">
+        <i class="el-icon-info" /> 先建车队（可多个）。车队只是组织维度，额度仍由机构钱包分配给司机。
+      </div>
+      <el-card shadow="never" class="fleet-step__card">
+        <div slot="header" class="fleet-step__card-head">
+          <span>已有车队（{{ fleets.length }}）</span>
+          <el-button size="mini" icon="el-icon-refresh" @click="loadFleets">刷新</el-button>
+        </div>
+        <el-table :data="fleets" size="mini" border empty-text="还没有车队，请在下方新增">
+          <el-table-column prop="fleetCode" label="车队编码" width="160" />
+          <el-table-column prop="name" label="车队名称" />
+          <el-table-column label="状态" width="80" align="center">
+            <template slot-scope="scope">
+              <el-tag size="mini" :type="scope.row.status === 1 ? 'success' : 'info'">{{ scope.row.status === 1 ? '启用' : '停用' }}</el-tag>
+            </template>
+          </el-table-column>
+        </el-table>
+      </el-card>
+      <el-card shadow="never" class="fleet-step__card">
+        <div slot="header" class="fleet-step__card-head"><span>新增车队</span></div>
+        <el-form ref="fleetFormRef" :model="fleetForm" :rules="fleetRules" label-width="90px" size="small">
+          <el-row :gutter="12">
+            <el-col :span="10">
+              <el-form-item label="车队编码" prop="fleetCode">
+                <el-input v-model="fleetForm.fleetCode" placeholder="机构内唯一，如 TEAM-A" maxlength="32" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :span="10">
+              <el-form-item label="车队名称" prop="name">
+                <el-input v-model="fleetForm.name" placeholder="如 城配一队" maxlength="64" clearable />
+              </el-form-item>
+            </el-col>
+            <el-col :span="4" class="fleet-step__inline-btn">
+              <el-button type="primary" size="small" :loading="saving" @click="handleAddFleet">添加</el-button>
+            </el-col>
+          </el-row>
+        </el-form>
+      </el-card>
+    </template>
 
     <!-- 司机 -->
-    <div v-else-if="step === 1">
-      <el-alert type="info" :closable="false" show-icon title="司机必须归属车队；可手工逐行录入，也可下载模板批量导入。" />
-      <el-form ref="driverFormRef" :model="driverForm" :rules="driverRules" label-width="90px" size="small" style="margin-top: 12px;">
+    <template v-else-if="step === 1">
+      <div class="fleet-step__tip">
+        <i class="el-icon-info" /> 司机必须归属车队。可逐行录入，也可下载模板整理后批量导入。
+      </div>
+      <el-form ref="driverFormRef" :model="driverForm" :rules="driverRules" label-width="90px" size="small">
         <el-form-item label="所属车队" prop="fleetId">
-          <el-select v-model="driverForm.fleetId" placeholder="请选择车队" style="width: 100%;">
+          <el-select v-model="driverForm.fleetId" placeholder="请选择车队" style="width: 260px;">
             <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
           </el-select>
         </el-form-item>
       </el-form>
-      <el-table :data="driverRows" size="mini" border>
-        <el-table-column label="用户账号" width="170">
-          <template slot-scope="scope"><el-input v-model="scope.row.userAccount" placeholder="账号" /></template>
-        </el-table-column>
-        <el-table-column label="姓名" width="130">
-          <template slot-scope="scope"><el-input v-model="scope.row.userName" placeholder="姓名" /></template>
-        </el-table-column>
-        <el-table-column label="手机号">
-          <template slot-scope="scope"><el-input v-model="scope.row.phoneNumber" placeholder="11 位手机号" /></template>
-        </el-table-column>
-        <el-table-column label="操作" width="70" align="center">
-          <template slot-scope="scope">
-            <el-button type="text" @click="removeDriverRow(scope.$index)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="fleet-init-step__actions">
+      <div class="fleet-step__rows">
+        <div v-for="(row, index) in driverRows" :key="'driver-' + index" class="fleet-step__row">
+          <span class="fleet-step__row-index">{{ index + 1 }}</span>
+          <el-input v-model="row.userAccount" size="small" placeholder="用户账号" class="fleet-step__row-input" />
+          <el-input v-model="row.userName" size="small" placeholder="姓名" class="fleet-step__row-input" />
+          <el-input v-model="row.phoneNumber" size="small" placeholder="11 位手机号" class="fleet-step__row-input" />
+          <el-button size="mini" type="text" class="fleet-step__row-del" @click="removeDriverRow(index)">删除</el-button>
+        </div>
+      </div>
+      <div class="fleet-step__actions">
         <el-button size="mini" icon="el-icon-plus" @click="addDriverRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveDrivers">保存司机</el-button>
         <el-button size="mini" icon="el-icon-upload2" @click="openImport('driver')">批量导入</el-button>
+        <el-button size="mini" type="text" icon="el-icon-download" @click="downloadTemplate('driver')">下载导入模板</el-button>
       </div>
-    </div>
+    </template>
 
     <!-- 车辆 -->
-    <div v-else>
-      <el-alert type="info" :closable="false" show-icon title="批量录入车辆并指定车队（可空）；车辆类型固定为机构车辆，用途/产权可后续调整。" />
-      <el-form ref="carFormRef" :model="carForm" :rules="carRules" label-width="90px" size="small" style="margin-top: 12px;">
+    <template v-else>
+      <div class="fleet-step__tip">
+        <i class="el-icon-info" /> 车辆必须归属车队。车辆类型固定为「机构车辆」，用途/产权可后续在客户车辆页调整。
+      </div>
+      <el-form ref="carFormRef" :model="carForm" :rules="carRules" label-width="90px" size="small">
         <el-form-item label="所属车队" prop="fleetId">
-          <el-select v-model="carForm.fleetId" placeholder="请选择车队" style="width: 100%;">
+          <el-select v-model="carForm.fleetId" placeholder="请选择车队" style="width: 260px;">
             <el-option v-for="f in enabledFleets" :key="f.id" :label="f.name" :value="f.id" />
           </el-select>
         </el-form-item>
       </el-form>
-      <el-table :data="carRows" size="mini" border>
-        <el-table-column label="车牌号" width="170">
-          <template slot-scope="scope"><el-input v-model="scope.row.plateNumber" placeholder="如 粤B12345" /></template>
-        </el-table-column>
-        <el-table-column label="车架号 VIN">
-          <template slot-scope="scope"><el-input v-model="scope.row.vinCode" placeholder="可空" /></template>
-        </el-table-column>
-        <el-table-column label="操作" width="70" align="center">
-          <template slot-scope="scope">
-            <el-button type="text" @click="removeCarRow(scope.$index)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <div class="fleet-init-step__actions">
+      <div class="fleet-step__rows">
+        <div v-for="(row, index) in carRows" :key="'car-' + index" class="fleet-step__row">
+          <span class="fleet-step__row-index">{{ index + 1 }}</span>
+          <el-input v-model="row.plateNumber" size="small" placeholder="车牌号，如 粤B12345" class="fleet-step__row-input" />
+          <el-input v-model="row.vinCode" size="small" placeholder="车架号 VIN（可空）" class="fleet-step__row-input" />
+          <el-button size="mini" type="text" class="fleet-step__row-del" @click="removeCarRow(index)">删除</el-button>
+        </div>
+      </div>
+      <div class="fleet-step__actions">
         <el-button size="mini" icon="el-icon-plus" @click="addCarRow">新增一行</el-button>
         <el-button size="mini" type="primary" :loading="saving" @click="handleSaveCars">保存车辆</el-button>
         <el-button size="mini" icon="el-icon-upload2" @click="openImport('car')">批量导入</el-button>
+        <el-button size="mini" type="text" icon="el-icon-download" @click="downloadTemplate('car')">下载导入模板</el-button>
       </div>
-    </div>
+    </template>
 
-    <!-- 批量导入弹窗（司机 / 车辆） -->
-    <el-dialog :title="importType === 'driver' ? '批量导入司机' : '批量导入车辆'" :visible.sync="importVisible" width="640px" append-to-body :close-on-click-modal="false">
+    <!-- 批量导入弹窗 -->
+    <el-dialog
+      :title="importType === 'driver' ? '批量导入司机' : '批量导入车辆'"
+      :visible.sync="importVisible"
+      width="640px"
+      append-to-body
+      :close-on-click-modal="false"
+    >
       <div v-if="!importPreview.length">
-        <el-alert type="info" :closable="false" show-icon :title="importType === 'driver' ? '导入的司机会统一挂到下面的车队' : '导入的车辆会统一挂到下面的车队'" />
+        <div class="fleet-step__tip">
+          <i class="el-icon-info" />
+          导入的数据统一挂到所选车队；请先
+          <el-button type="text" size="mini" @click="downloadTemplate(importType)">下载模板</el-button>
+          填好再上传。
+        </div>
         <el-form label-width="90px" size="small" style="margin-top: 12px;">
           <el-form-item label="所属车队" required>
             <el-select v-model="importFleetId" placeholder="请选择车队" style="width: 100%;">
@@ -106,12 +130,12 @@
             >
               <el-button size="small" icon="el-icon-folder-opened" :loading="importUploading">选择 Excel 文件</el-button>
             </el-upload>
-            <span class="fleet-init-step__hint">仅支持 .xlsx / .xls，模板与「{{ importType === 'driver' ? '客户司机' : '客户车辆' }}」页一致</span>
+            <span class="fleet-step__hint">仅支持 .xlsx / .xls</span>
           </el-form-item>
         </el-form>
       </div>
       <div v-else>
-        <div class="fleet-init-step__hint">共解析 {{ importPreview.length }} 条，确认后导入到所选车队</div>
+        <div class="fleet-step__hint">共解析 {{ importPreview.length }} 条，确认后导入到所选车队</div>
         <el-table :data="importPreview" size="mini" border max-height="300" style="margin-top: 8px;">
           <el-table-column v-if="importType === 'driver'" prop="userAccount" label="账号" width="140" />
           <el-table-column v-if="importType === 'driver'" prop="userName" label="姓名" width="100" />
@@ -131,11 +155,23 @@
 
 <script>
 import { addFleet, getFleetOptions } from '@/api/enterpriseFleet/fleet'
-import { batchSaveDriver, previewDriverImport, submitDriverImport, uploadDriverFile } from '@/api/chargingCustomer/chargingCustomerDriver'
-import { batchAddChargingCustomerCar, previewCarImport, submitCarImport, uploadCarFile } from '@/api/chargingCustomer/chargingCustomerCar'
+import {
+  batchSaveDriver,
+  previewDriverImport,
+  submitDriverImport,
+  uploadDriverFile,
+  downloadDriverTemplate
+} from '@/api/chargingCustomer/chargingCustomerDriver'
+import {
+  batchAddChargingCustomerCar,
+  previewCarImport,
+  submitCarImport,
+  uploadCarFile,
+  downloadCarTemplate
+} from '@/api/chargingCustomer/chargingCustomerCar'
 
 /**
- * 「新增客户」向导里的第 2~4 步内容（车队 / 司机 / 车辆），由父级控制 step 与前后按钮。
+ * 「新增客户」向导里的第 2~4 步内容（车队 / 司机 / 车辆），由父级控制步骤与前后按钮。
  */
 export default {
   name: 'FleetInitSteps',
@@ -204,9 +240,6 @@ export default {
         }
       }).catch(() => { this.fleets = [] })
     },
-    addFleetCount() {
-      return this.fleets.length
-    },
     handleAddFleet() {
       this.$refs.fleetFormRef.validate(valid => {
         if (!valid) return
@@ -236,79 +269,6 @@ export default {
     removeDriverRow(index) {
       this.driverRows.splice(index, 1)
       if (!this.driverRows.length) this.addDriverRow()
-    },
-    openImport(type) {
-      const formRef = type === 'driver' ? 'driverFormRef' : 'carFormRef'
-      this.$refs[formRef].validate(valid => {
-        if (!valid) {
-          this.$message.warning('请先选择车队')
-          return
-        }
-        this.importType = type
-        this.importFleetId = type === 'driver' ? this.driverForm.fleetId : this.carForm.fleetId
-        this.importPreview = []
-        this.importVisible = true
-      })
-    },
-    onImportFileChange(file) {
-      const raw = file && file.raw
-      if (!raw) return
-      const formData = new FormData()
-      formData.append('file', raw)
-      this.importUploading = true
-      const upload = this.importType === 'driver' ? uploadDriverFile : uploadCarFile
-      const preview = this.importType === 'driver' ? previewDriverImport : previewCarImport
-      upload(formData).then(res => {
-        if (res.code === 200 && res.data && res.data.name) {
-          return preview(res.data.name).then(previewRes => {
-            this.importUploading = false
-            if (previewRes.code === 200) {
-              this.importPreview = previewRes.data || []
-              if (!this.importPreview.length) {
-                this.$message.warning('Excel 文件中未发现有效数据')
-              }
-            } else {
-              this.$message.error(previewRes.msg || '预览解析失败')
-            }
-          })
-        }
-        this.importUploading = false
-        this.$message.error(res.msg || '文件上传失败')
-      }).catch(() => { this.importUploading = false })
-    },
-    submitImport() {
-      if (!this.importFleetId) {
-        this.$message.warning('请先选择车队')
-        return
-      }
-      this.saving = true
-      const done = res => {
-        this.saving = false
-        if (res.code === 200) {
-          this.$message.success(res.msg || '导入成功')
-          this.importVisible = false
-          this.importPreview = []
-          this.$emit('changed')
-        } else {
-          this.$message.error(res.msg || '导入失败')
-        }
-      }
-      if (this.importType === 'driver') {
-        submitDriverImport({
-          belongToId: this.orgId(),
-          fleetId: this.importFleetId,
-          driverData: this.importPreview
-        }).then(done).catch(() => { this.saving = false })
-      } else {
-        submitCarImport({
-          belongToId: this.orgId(),
-          fleetId: this.importFleetId,
-          carData: this.importPreview
-        }).then(done).catch(() => { this.saving = false })
-      }
-    },
-    resetImport() {
-      this.importPreview = []
     },
     handleSaveDrivers() {
       const rows = this.driverRows.filter(r => r.userAccount || r.userName || r.phoneNumber)
@@ -401,20 +361,169 @@ export default {
           this.$message.error(res.msg || '保存失败')
         }
       }).catch(() => { this.saving = false })
+    },
+    openImport(type) {
+      const formRef = type === 'driver' ? 'driverFormRef' : 'carFormRef'
+      this.$refs[formRef].validate(valid => {
+        if (!valid) {
+          this.$message.warning('请先选择车队')
+          return
+        }
+        this.importType = type
+        this.importFleetId = type === 'driver' ? this.driverForm.fleetId : this.carForm.fleetId
+        this.importPreview = []
+        this.importVisible = true
+      })
+    },
+    downloadTemplate(type) {
+      const api = type === 'driver' ? downloadDriverTemplate : downloadCarTemplate
+      const filename = type === 'driver' ? '客户司机导入模板.xlsx' : '客户车辆导入模板.xlsx'
+      api().then(res => {
+        const blob = new Blob([res])
+        const link = document.createElement('a')
+        link.href = window.URL.createObjectURL(blob)
+        link.download = filename
+        link.click()
+        window.URL.revokeObjectURL(link.href)
+      }).catch(() => {})
+    },
+    onImportFileChange(file) {
+      const raw = file && file.raw
+      if (!raw) return
+      const formData = new FormData()
+      formData.append('file', raw)
+      this.importUploading = true
+      const upload = this.importType === 'driver' ? uploadDriverFile : uploadCarFile
+      const preview = this.importType === 'driver' ? previewDriverImport : previewCarImport
+      upload(formData).then(res => {
+        if (res.code === 200 && res.data && res.data.name) {
+          return preview(res.data.name).then(previewRes => {
+            this.importUploading = false
+            if (previewRes.code === 200) {
+              this.importPreview = previewRes.data || []
+              if (!this.importPreview.length) {
+                this.$message.warning('Excel 文件中未发现有效数据')
+              }
+            } else {
+              this.$message.error(previewRes.msg || '预览解析失败')
+            }
+          })
+        }
+        this.importUploading = false
+        this.$message.error(res.msg || '文件上传失败')
+      }).catch(() => { this.importUploading = false })
+    },
+    submitImport() {
+      if (!this.importFleetId) {
+        this.$message.warning('请先选择车队')
+        return
+      }
+      this.saving = true
+      const done = res => {
+        this.saving = false
+        if (res.code === 200) {
+          this.$message.success(res.msg || '导入成功')
+          this.importVisible = false
+          this.importPreview = []
+          this.$emit('changed')
+        } else {
+          this.$message.error(res.msg || '导入失败')
+        }
+      }
+      if (this.importType === 'driver') {
+        submitDriverImport({
+          belongToId: this.orgId(),
+          fleetId: this.importFleetId,
+          driverData: this.importPreview
+        }).then(done).catch(() => { this.saving = false })
+      } else {
+        submitCarImport({
+          belongToId: this.orgId(),
+          fleetId: this.importFleetId,
+          carData: this.importPreview
+        }).then(done).catch(() => { this.saving = false })
+      }
+    },
+    resetImport() {
+      this.importPreview = []
     }
   }
 }
 </script>
 
 <style scoped>
-.fleet-init-step__hint {
+.fleet-step__tip {
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  background: #f4f8ff;
+  border: 1px solid #d9ecff;
+  border-radius: 4px;
+  color: #606266;
+  font-size: 12px;
+  line-height: 20px;
+}
+.fleet-step__tip i {
+  color: #409eff;
+  margin-right: 4px;
+}
+.fleet-step__card {
+  margin-bottom: 12px;
+  border-radius: 4px;
+}
+.fleet-step__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+}
+.fleet-step__inline-btn {
+  display: flex;
+  align-items: center;
+  padding-top: 2px;
+}
+.fleet-step__rows {
+  border: 1px solid #ebeef5;
+  border-radius: 4px;
+  padding: 8px;
+  background: #fafafa;
+  max-height: 260px;
+  overflow: auto;
+}
+.fleet-step__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.fleet-step__row:last-child {
+  margin-bottom: 0;
+}
+.fleet-step__row-index {
+  width: 20px;
+  text-align: center;
+  color: #909399;
+  font-size: 12px;
+  flex: none;
+}
+.fleet-step__row-input {
+  flex: 1;
+}
+.fleet-step__row-del {
+  flex: none;
+  color: #f56c6c;
+}
+.fleet-step__actions {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.fleet-step__hint {
   margin-left: 10px;
   color: #909399;
   font-size: 12px;
-}
-.fleet-init-step__actions {
-  margin-top: 10px;
-  display: flex;
-  gap: 10px;
 }
 </style>

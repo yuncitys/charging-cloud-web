@@ -53,56 +53,80 @@
     >
       <div class="drawer-body">
         <el-steps v-if="drawerMode === 'create'" :active="createStep" finish-status="success" simple class="customer-create-steps">
-          <el-step title="客户" />
-          <el-step title="车队" />
-          <el-step title="司机" />
-          <el-step title="车辆" />
+          <el-step title="客户" description="基本信息与站点" />
+          <el-step title="车队" description="组织分组" />
+          <el-step title="司机" description="账号与车队" />
+          <el-step title="车辆" description="车牌与车队" />
         </el-steps>
-        <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="110px">
-          <el-form-item label="客户名称" prop="name">
-            <el-input v-model="form.name" :disabled="isDetail" placeholder="请输入客户名称" />
-          </el-form-item>
-          <el-form-item label="公司名称" prop="companyName">
-            <el-input v-model="form.companyName" :disabled="isDetail" placeholder="请输入公司名称" />
-          </el-form-item>
-          <el-form-item label="社会信用代码" prop="socialCreditCode">
-            <el-input
-              v-model="form.socialCreditCode"
-              :disabled="isDetail || drawerMode === 'edit'"
-              placeholder="请输入统一社会信用代码"
-            />
-          </el-form-item>
-          <el-form-item label="管理员" prop="manageName">
-            <el-input v-model="form.manageName" :disabled="isDetail" placeholder="请输入管理员姓名" />
-          </el-form-item>
-          <el-form-item label="联系方式" prop="contactInfo">
-            <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
-          </el-form-item>
-          <el-form-item label="机构类型" prop="orgType">
-            <el-radio-group v-model="form.orgType" :disabled="isDetail">
-              <el-radio :label="1">客户机构</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="电站维度">
-            <el-radio-group v-model="form.stationScopeType" :disabled="true">
-              <el-radio :label="2">按电站</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="可用站点" prop="dataId">
-            <el-input v-model="searchKey" placeholder="输入关键字过滤站点" clearable class="station-search" :disabled="isDetail" />
-            <div :class="['station-tree-wrap', { 'is-disabled': isDetail }]">
-              <el-tree
-                ref="stationTree"
-                :data="stationTreeData"
-                node-key="id"
-                show-checkbox
-                :props="treeProps"
-                :filter-node-method="filterTreeNode"
-                @check-change="onTreeCheck"
-              />
+
+        <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="100px">
+          <div class="create-section">
+            <div class="create-section__title"><i class="el-icon-office-building" /> 基本信息</div>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="客户名称" prop="name">
+                  <el-input v-model="form.name" :disabled="isDetail" placeholder="请输入客户名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="公司名称" prop="companyName">
+                  <el-input v-model="form.companyName" :disabled="isDetail" placeholder="请输入公司名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="社会信用代码" prop="socialCreditCode">
+                  <el-input
+                    v-model="form.socialCreditCode"
+                    :disabled="isDetail || drawerMode === 'edit'"
+                    placeholder="请输入统一社会信用代码"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="管理员" prop="manageName">
+                  <el-input v-model="form.manageName" :disabled="isDetail" placeholder="请输入管理员姓名" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="联系方式" prop="contactInfo">
+                  <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="机构类型" prop="orgType">
+                  <el-radio-group v-model="form.orgType" :disabled="isDetail">
+                    <el-radio :label="1">客户机构</el-radio>
+                  </el-radio-group>
+                  <el-radio-group v-model="form.stationScopeType" :disabled="true" style="margin-left: 8px;">
+                    <el-radio :label="2">按电站</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div class="create-section">
+            <div class="create-section__title">
+              <i class="el-icon-location-outline" /> 可用站点
+              <span class="create-section__desc">客户司机仅能在勾选的站点使用企业钱包充电</span>
             </div>
-          </el-form-item>
+            <el-form-item label="可用站点" prop="dataId">
+              <el-input v-model="searchKey" placeholder="输入关键字过滤站点" clearable class="station-search" :disabled="isDetail" />
+              <div :class="['station-tree-wrap', { 'is-disabled': isDetail }]">
+                <el-tree
+                  ref="stationTree"
+                  :data="stationTreeData"
+                  node-key="id"
+                  show-checkbox
+                  :props="treeProps"
+                  :filter-node-method="filterTreeNode"
+                  @check-change="onTreeCheck"
+                />
+              </div>
+            </el-form-item>
+          </div>
         </el-form>
+
         <fleet-init-steps
           v-if="drawerMode === 'create' && createStep > 0"
           :customer="createdCustomer"
@@ -110,6 +134,7 @@
         />
       </div>
       <div class="drawer-footer">
+        <span v-if="drawerMode === 'create'" class="drawer-step-hint">第 {{ createStep + 1 }} 步 / 共 4 步</span>
         <el-button @click="drawerVisible = false">取消</el-button>
         <template v-if="drawerMode === 'create'">
           <el-button v-if="createStep > 0" @click="createStep -= 1">上一步</el-button>
@@ -1100,5 +1125,39 @@ export default {
 
 .customer-create-steps {
   margin-bottom: 16px;
+}
+
+.create-section {
+  margin-bottom: 8px;
+}
+.create-section + .create-section {
+  border-top: 1px dashed #ebeef5;
+  padding-top: 12px;
+}
+.create-section__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+}
+.create-section__title i {
+  color: #409eff;
+  margin-right: 4px;
+}
+.create-section__desc {
+  margin-left: 8px;
+  font-weight: 400;
+  color: #909399;
+  font-size: 12px;
+}
+.drawer-step-hint {
+  margin-right: auto;
+  color: #909399;
+  font-size: 12px;
+}
+.drawer-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>
