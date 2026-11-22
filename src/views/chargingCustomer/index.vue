@@ -21,12 +21,11 @@
       <el-table-column prop="createTime" label="创建时间" align="center">
         <template slot-scope="scope">{{ scope.row.createTime | formatDate }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="420" align="center">
+      <el-table-column label="操作" width="300" align="center">
         <template slot-scope="scope">
           <el-button v-if="hasPerm(':charging:customer:detail')" size="mini" type="primary" @click="openDrawer('detail', scope.row)">详情</el-button>
           <el-button v-if="hasPerm(':charging:customer:edit')" size="mini" type="warning" @click="openDrawer('edit', scope.row)">编辑</el-button>
           <el-button v-if="hasPerm(':charging:customer:finance')" size="mini" type="success" @click="openFinance(scope.row)">财务</el-button>
-          <el-button v-if="hasPerm(':charging:customer:fleet:add')" size="mini" @click="openFleetWizard(scope.row)">车队/司机/车辆</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -53,7 +52,13 @@
       append-to-body
     >
       <div class="drawer-body">
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+        <el-steps v-if="drawerMode === 'create'" :active="createStep" finish-status="success" simple class="customer-create-steps">
+          <el-step title="客户" />
+          <el-step title="车队" />
+          <el-step title="司机" />
+          <el-step title="车辆" />
+        </el-steps>
+        <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="110px">
           <el-form-item label="客户名称" prop="name">
             <el-input v-model="form.name" :disabled="isDetail" placeholder="请输入客户名称" />
           </el-form-item>
@@ -98,10 +103,20 @@
             </div>
           </el-form-item>
         </el-form>
+        <fleet-init-steps
+          v-if="drawerMode === 'create' && createStep > 0"
+          :customer="createdCustomer"
+          :step="createStep - 1"
+        />
       </div>
       <div class="drawer-footer">
         <el-button @click="drawerVisible = false">取消</el-button>
-        <el-button v-if="!isDetail && canSaveCustomer" type="primary" @click="submit">保存</el-button>
+        <template v-if="drawerMode === 'create'">
+          <el-button v-if="createStep > 0" @click="createStep -= 1">上一步</el-button>
+          <el-button v-if="createStep < 3" type="primary" :loading="saving" @click="handleCreateNext">下一步</el-button>
+          <el-button v-else type="primary" @click="handleCreateFinish">完成</el-button>
+        </template>
+        <el-button v-else-if="!isDetail && canSaveCustomer" type="primary" @click="submit">保存</el-button>
       </div>
     </el-drawer>
 
@@ -304,12 +319,6 @@
         <el-button type="primary" :loading="allocationAdjustLoading" @click="submitAllocationAdjust">确定</el-button>
       </div>
     </el-drawer>
-    <fleet-init-wizard
-      :visible.sync="fleetWizardVisible"
-      :customer="fleetWizardCustomer"
-      @done="loadList"
-      @changed="loadList"
-    />
     <downloadProgress ref="downloadProgress" />
   </div>
 </template>
@@ -330,7 +339,7 @@ import {
   updateChargingCustomer
 } from '@/api/chargingCustomer/index'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
-import FleetInitWizard from './components/FleetInitWizard.vue'
+import FleetInitSteps from './components/FleetInitSteps.vue'
 import organizationImg from '@/assets/charging-customer/organization.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
 
@@ -338,7 +347,7 @@ export default {
   name: 'ChargingCustomer',
   components: {
     downloadProgress,
-    FleetInitWizard
+    FleetInitSteps
   },
   data() {
     return {
@@ -355,6 +364,9 @@ export default {
       },
       drawerVisible: false,
       drawerMode: 'create',
+      createStep: 0,
+      createdCustomer: null,
+      saving: false,
       form: {
         id: null,
         name: '',
@@ -414,8 +426,6 @@ export default {
       allocationGroups: [],
       allocationTree: [],
       allocationUserKeyword: '',
-      fleetWizardVisible: false,
-      fleetWizardCustomer: {},
       flowTypeOptions: [],
       organizationImg,
       walletImg
@@ -554,6 +564,8 @@ export default {
       if (mode === 'detail' && !this.hasPerm(':charging:customer:detail')) return
       this.drawerMode = mode
       this.drawerVisible = true
+      this.createStep = 0
+      this.createdCustomer = null
       this.resetForm()
       if (!row) return
       getChargingCustomerDetail(row.id).then(res => {
@@ -578,27 +590,45 @@ export default {
             this.$message.success(res.msg || '保存成功')
             this.drawerVisible = false
             this.loadList()
-            const created = res.data
-            if (this.drawerMode !== 'edit' && created && created.id) {
-              this.fleetWizardCustomer = { id: created.id, name: created.name }
-              this.$confirm('客户已创建，是否继续按「车队 → 司机 → 车辆」完成初始化？', '继续配置', {
-                type: 'info',
-                confirmButtonText: '继续配置',
-                cancelButtonText: '稍后再说'
-              }).then(() => {
-                this.fleetWizardVisible = true
-              }).catch(() => {})
-            }
           } else {
             this.$message.error(res.msg || '保存失败')
           }
         })
       })
     },
-    openFleetWizard(row) {
-      if (!row || !row.id) return
-      this.fleetWizardCustomer = { id: row.id, name: row.name }
-      this.fleetWizardVisible = true
+    // 新增客户向导：第 1 步校验并保存客户，之后进入车队/司机/车辆
+    handleCreateNext() {
+      if (this.createStep > 0) {
+        this.createStep += 1
+        return
+      }
+      if (this.createdCustomer && this.createdCustomer.id) {
+        this.createStep = 1
+        return
+      }
+      this.$refs.formRef.validate(valid => {
+        if (!valid) return
+        const req = Object.assign({}, this.form, { stationScopeType: 2 })
+        this.saving = true
+        addChargingCustomer(req).then(res => {
+          this.saving = false
+          if (res.code === 200) {
+            this.$message.success('客户已保存，请继续配置车队/司机/车辆')
+            const created = res.data || {}
+            this.createdCustomer = { id: created.id, name: created.name || this.form.name }
+            this.createStep = 1
+            this.loadList()
+          } else {
+            this.$message.error(res.msg || '保存失败')
+          }
+        }).catch(() => { this.saving = false })
+      })
+    },
+    handleCreateFinish() {
+      this.drawerVisible = false
+      this.createStep = 0
+      this.createdCustomer = null
+      this.loadList()
     },
     openFinance(row) {
       if (!this.hasPerm(':charging:customer:finance')) return
@@ -1066,5 +1096,9 @@ export default {
   max-height: 320px;
   overflow: auto;
   width: 100%;
+}
+
+.customer-create-steps {
+  margin-bottom: 16px;
 }
 </style>
