@@ -35,3 +35,31 @@ export function lockFleetBill(id) {
     params: { id }
   })
 }
+
+// 对账差异列表
+export function getFleetReconcilePage(data) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/reconcile/page',
+    method: 'post',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    data
+  })
+}
+
+// 生成/重算对账
+export function runFleetReconcile(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/reconcile/run',
+    method: 'post',
+    params
+  })
+}
+
+// 处理对账差异
+export function handleFleetReconcile(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/reconcile/handle',
+    method: 'post',
+    params
+  })
+}

@@ -24,6 +24,15 @@ export default [
     }
   },
   {
+    path: '/chargingFleet/reconcile',
+    component: () => import('@/views/chargingFleet/reconcile'),
+    name: 'ChargingFleetReconcile',
+    meta: {
+      title: '车队对账',
+      icon: 'el-icon-s-check'
+    }
+  },
+  {
     path: '/chargingFleet/bill',
     component: () => import('@/views/chargingFleet/bill'),
     name: 'ChargingFleetBill',
