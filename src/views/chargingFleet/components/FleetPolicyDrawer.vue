@@ -68,7 +68,7 @@
                 <el-time-picker v-model="range.end" format="HH:mm" value-format="HH:mm" placeholder="结束" size="small" class="time-range__picker" />
                 <el-button type="text" class="time-range__del" @click="form.timeRanges.splice(index, 1)">删除</el-button>
               </div>
-              <el-button size="mini" type="primary" plain icon="el-icon-plus" @click="addTimeRange">新增时段</el-button>
+              <el-button size="mini" type="primary" icon="el-icon-plus" @click="addTimeRange">新增时段</el-button>
               <div class="hint">留空表示不限时段；开始晚于结束视为跨天（如 22:00~06:00）</div>
             </el-form-item>
 
@@ -104,11 +104,11 @@
             </el-form-item>
 
             <el-form-item label="策略模板">
-              <div class="limit-row">
-                <el-select v-model="copyFromFleetId" placeholder="从同机构其它车队复制" clearable filterable class="limit-row__select">
+              <div class="template-row">
+                <el-select v-model="copyFromFleetId" placeholder="从同机构其它车队复制" clearable filterable class="template-row__select">
                   <el-option v-for="f in siblingFleets" :key="f.id" :label="f.name" :value="f.id" />
                 </el-select>
-                <el-button size="small" type="primary" plain :disabled="!copyFromFleetId" @click="handleCopy">复制</el-button>
+                <el-button size="small" type="primary" :disabled="!copyFromFleetId" @click="handleCopy">复制</el-button>
               </div>
               <div class="hint hint--block">复制后默认不启用，确认无误再开启</div>
             </el-form-item>
@@ -499,12 +499,13 @@ export default {
 }
 .limit-row {
   display: grid;
-  grid-template-columns: 180px 36px 180px 52px;
+  grid-template-columns: 1fr 36px 1fr 52px;
   align-items: center;
   gap: 8px 10px;
+  width: 100%;
 }
 .limit-row__input {
-  width: 180px;
+  width: 100%;
 }
 .unit--money {
   width: 36px;
@@ -512,7 +513,13 @@ export default {
 .unit--power {
   width: 52px;
 }
-.limit-row__select {
+.template-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.template-row__select {
   flex: 1;
 }
 .station-tree {
@@ -538,8 +545,8 @@ export default {
   margin-bottom: 8px;
 }
 .time-range__picker {
-  width: 120px;
-  flex: none;
+  flex: 1;
+  width: auto;
 }
 .time-range__sep {
   color: #909399;
@@ -599,9 +606,5 @@ export default {
   display: block;
   margin: 6px 0 0;
   line-height: 18px;
-}
-/* 时段选择器固定宽度（放在样式末尾，覆盖抽屉内通用 100% 规则） */
-.policy-body >>> .el-date-editor.time-range__picker {
-  width: 120px;
 }
 </style>
