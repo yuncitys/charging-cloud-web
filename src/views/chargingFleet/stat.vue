@@ -193,17 +193,17 @@
         </div>
         <el-table v-loading="rankLoading" :data="rankRows" fit highlight-current-row style="width: 100%">
           <el-table-column type="index" label="#" width="60" align="center" />
-          <el-table-column prop="plateNumber" label="车牌号" width="150" />
-          <el-table-column prop="fleetName" label="车队" width="150">
+          <el-table-column prop="plateNumber" label="车牌号" min-width="170" />
+          <el-table-column prop="fleetName" label="车队" min-width="180">
             <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
           </el-table-column>
-          <el-table-column prop="totalDegree" label="电量(度)" width="120" align="right">
+          <el-table-column prop="totalDegree" label="电量(度)" min-width="140" align="right">
             <template slot-scope="scope">{{ formatNumber(scope.row.totalDegree, 2) }}</template>
           </el-table-column>
-          <el-table-column prop="actualPayAmount" label="实付金额(元)" width="140" align="right">
+          <el-table-column prop="actualPayAmount" label="实付金额(元)" min-width="150" align="right">
             <template slot-scope="scope">{{ formatNumber(scope.row.actualPayAmount, 2) }}</template>
           </el-table-column>
-          <el-table-column prop="totalOrderCount" label="订单量" width="100" align="right" />
+          <el-table-column prop="totalOrderCount" label="订单量" min-width="110" align="right" />
         </el-table>
       </el-tab-pane>
     </el-tabs>

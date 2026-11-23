@@ -155,15 +155,15 @@
         </el-descriptions>
         <div class="detail-title">日明细</div>
         <el-table :data="detailDaily" size="mini" fit highlight-current-row max-height="420" style="width: 100%">
-          <el-table-column prop="summaryDate" label="日期" width="130" />
-          <el-table-column prop="totalDegree" label="电量(度)" width="110" align="right">
+          <el-table-column prop="summaryDate" label="日期" min-width="130" />
+          <el-table-column prop="totalDegree" label="电量(度)" min-width="110" align="right">
             <template slot-scope="scope">{{ formatNumber(scope.row.totalDegree, 2) }}</template>
           </el-table-column>
-          <el-table-column prop="totalOrderCount" label="订单量" width="90" align="right" />
-          <el-table-column prop="actualPayAmount" label="实付金额(元)" width="130" align="right">
+          <el-table-column prop="totalOrderCount" label="订单量" min-width="90" align="right" />
+          <el-table-column prop="actualPayAmount" label="实付金额(元)" min-width="130" align="right">
             <template slot-scope="scope">{{ formatNumber(scope.row.actualPayAmount, 2) }}</template>
           </el-table-column>
-          <el-table-column prop="enterprisePayAmount" label="企业支付(元)" width="130" align="right">
+          <el-table-column prop="enterprisePayAmount" label="企业支付(元)" min-width="130" align="right">
             <template slot-scope="scope">{{ formatNumber(scope.row.enterprisePayAmount, 2) }}</template>
           </el-table-column>
         </el-table>
