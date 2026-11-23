@@ -38,6 +38,7 @@
         <el-table-column label="操作" align="center" width="420" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
+              <el-button v-if="canDetail" type="primary" size="mini" plain @click="openDetail(scope.row)">详情</el-button>
               <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
               <el-button
                 v-if="canMoveIn && canMoveMembers(scope.row)"
@@ -76,6 +77,11 @@
       </div>
     </div>
 
+    <user-group-detail-drawer
+      :visible.sync="detailVisible"
+      :group="detailGroup"
+    />
+
     <user-group-form-drawer
       :visible.sync="drawerVisible"
       :group="editingGroup"
@@ -94,6 +100,7 @@
 <script>
 import { userGroupPage, deleteUserGroup, updateUserGroupLabelStatus } from '@/api/marketing/marketing'
 import UserGroupFormDrawer from './components/UserGroupFormDrawer'
+import UserGroupDetailDrawer from './components/UserGroupDetailDrawer'
 import UserGroupMoveDrawer from './components/UserGroupMoveDrawer'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
@@ -103,7 +110,7 @@ import './styles/marketing.scss'
 
 export default {
   name: 'userGroupList',
-  components: { UserGroupFormDrawer, UserGroupMoveDrawer },
+  components: { UserGroupFormDrawer, UserGroupMoveDrawer, UserGroupDetailDrawer },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -119,6 +126,8 @@ export default {
       total: 0,
       listQuery: { page: 1, limit: 10, groupName: '' },
       drawerVisible: false,
+      detailVisible: false,
+      detailGroup: null,
       editingGroup: null,
       moveDrawerVisible: false,
       moveTarget: null,
@@ -127,6 +136,7 @@ export default {
   },
   computed: {
     canCreate() { return hasMarketingPerm(MARKETING_PERMS.userGroupCreate) },
+    canDetail() { return hasMarketingPerm(MARKETING_PERMS.userGroupDetail) },
     canUpdate() { return hasMarketingPerm(MARKETING_PERMS.userGroupUpdate) },
     canDelete() { return hasMarketingPerm(MARKETING_PERMS.userGroupDelete) },
     canMoveIn() { return hasMarketingPerm(MARKETING_PERMS.userGroupMoveIn) },
@@ -138,6 +148,10 @@ export default {
     this.getList()
   },
   methods: {
+    openDetail(row) {
+      this.detailGroup = row
+      this.detailVisible = true
+    },
     groupDimensionLabel(code) {
       return getUserGroupDimensionLabel(code)
     },

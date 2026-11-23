@@ -32,6 +32,7 @@
         </el-table-column>
         <el-table-column label="操作" align="center" width="260" fixed="right">
           <template slot-scope="scope">
+            <el-button v-if="canDetail" type="primary" size="mini" plain @click="openDetail(scope.row)">详情</el-button>
             <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
             <el-button
               v-if="canLabelStatus && scope.row.labelStatus === '1'"
@@ -57,6 +58,11 @@
       </div>
     </div>
 
+    <station-group-detail-drawer
+      :visible.sync="detailVisible"
+      :group="detailGroup"
+    />
+
     <station-group-form-drawer
       :visible.sync="drawerVisible"
       :group="editingGroup"
@@ -68,6 +74,7 @@
 <script>
 import { stationGroupPage, deleteStationGroup, updateStationGroupLabelStatus } from '@/api/marketing/marketing'
 import StationGroupFormDrawer from './components/StationGroupFormDrawer'
+import StationGroupDetailDrawer from './components/StationGroupDetailDrawer'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
@@ -75,7 +82,7 @@ import './styles/marketing.scss'
 
 export default {
   name: 'stationGroupList',
-  components: { StationGroupFormDrawer },
+  components: { StationGroupFormDrawer, StationGroupDetailDrawer },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -91,11 +98,14 @@ export default {
       total: 0,
       listQuery: { page: 1, limit: 10, groupName: '' },
       drawerVisible: false,
+      detailVisible: false,
+      detailGroup: null,
       editingGroup: null
     }
   },
   computed: {
     canCreate() { return hasMarketingPerm(MARKETING_PERMS.stationGroupCreate) },
+    canDetail() { return hasMarketingPerm(MARKETING_PERMS.stationGroupDetail) },
     canUpdate() { return hasMarketingPerm(MARKETING_PERMS.stationGroupUpdate) },
     canDelete() { return hasMarketingPerm(MARKETING_PERMS.stationGroupDelete) },
     canLabelStatus() { return hasMarketingPerm(MARKETING_PERMS.stationGroupLabelStatus) }
@@ -104,6 +114,10 @@ export default {
     this.getList()
   },
   methods: {
+    openDetail(row) {
+      this.detailGroup = row
+      this.detailVisible = true
+    },
     getList() {
       this.listLoading = true
       stationGroupPage(this.listQuery).then(res => {
