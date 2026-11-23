@@ -145,6 +145,45 @@
         </div>
       </el-tab-pane>
 
+      <el-tab-pane label="司机明细" name="driver">
+        <el-table v-loading="driverLoading" :data="driverRows" fit highlight-current-row style="width: 100%">
+          <el-table-column prop="userName" label="司机" width="140">
+            <template slot-scope="scope">{{ scope.row.userName || scope.row.userAccount || '-' }}</template>
+          </el-table-column>
+          <el-table-column prop="userAccount" label="司机账号" width="150" />
+          <el-table-column prop="plateNumber" label="主要车牌" width="140">
+            <template slot-scope="scope">{{ scope.row.plateNumber || '未绑定车辆' }}</template>
+          </el-table-column>
+          <el-table-column prop="fleetName" label="车队" width="140">
+            <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
+          </el-table-column>
+          <el-table-column prop="orgName" label="所属机构" min-width="170" show-overflow-tooltip />
+          <el-table-column prop="totalDegree" label="电量(度)" width="110" align="right">
+            <template slot-scope="scope">{{ formatNumber(scope.row.totalDegree, 2) }}</template>
+          </el-table-column>
+          <el-table-column prop="totalOrderCount" label="订单量" width="90" align="right" />
+          <el-table-column prop="actualPayAmount" label="实付金额(元)" width="130" align="right">
+            <template slot-scope="scope">{{ formatNumber(scope.row.actualPayAmount, 2) }}</template>
+          </el-table-column>
+          <el-table-column prop="enterprisePayAmount" label="企业支付(元)" width="130" align="right">
+            <template slot-scope="scope">{{ formatNumber(scope.row.enterprisePayAmount, 2) }}</template>
+          </el-table-column>
+          <el-table-column prop="totalDuration" label="时长(分钟)" width="110" align="right" />
+        </el-table>
+        <div class="pagination-container">
+          <el-pagination
+            :current-page="driverQuery.page"
+            :page-size="driverQuery.limit"
+            :page-sizes="[10, 20, 50]"
+            :total="driverTotal"
+            background
+            layout="total, sizes, prev, pager, next"
+            @size-change="handleDriverSizeChange"
+            @current-change="handleDriverCurrentChange"
+          />
+        </div>
+      </el-tab-pane>
+
       <el-tab-pane label="车辆 TOP10" name="rank">
         <div class="rank-bar">
           <el-radio-group v-model="rankMetric" size="mini" @change="loadRank">
@@ -211,7 +250,7 @@
 import echarts from 'echarts'
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getFleetPage } from '@/api/enterpriseFleet/fleet'
-import { exportFleetCarStat, exportFleetStat, getFleetCarStatPage, getFleetCarStatRank, getFleetStatPage, getFleetStatTrend, syncFleetStat } from '@/api/enterpriseFleet/stat'
+import { exportFleetCarStat, exportFleetDriverStat, exportFleetStat, getFleetDriverStatPage, getFleetCarStatPage, getFleetCarStatRank, getFleetStatPage, getFleetStatTrend, syncFleetStat } from '@/api/enterpriseFleet/stat'
 import { downloadBlob } from '@/utils/downloadBlob'
 
 function defaultRange() {
@@ -234,6 +273,10 @@ export default {
       orgOptions: [],
       fleetRows: [],
       total: 0,
+      driverQuery: { page: 1, limit: 10, fleetId: null, orgId: null },
+      driverRows: [],
+      driverTotal: 0,
+      driverLoading: false,
       carRows: [],
       carTotal: 0,
       rankRows: [],
@@ -283,9 +326,10 @@ export default {
         fleetId: this.query.fleetId,
         orgId: this.query.orgId
       })
+      const isDriver = this.activeTab === 'driver'
       const isCar = this.activeTab === 'car' || this.activeTab === 'rank'
-      const api = isCar ? exportFleetCarStat : exportFleetStat
-      const name = isCar ? '车队车辆明细' : '车队报表'
+      const api = isDriver ? exportFleetDriverStat : (isCar ? exportFleetCarStat : exportFleetStat)
+      const name = isDriver ? '车队司机明细' : (isCar ? '车队车辆明细' : '车队报表')
       this.exporting = true
       api(params).then(res => {
         this.exporting = false
@@ -329,6 +373,7 @@ export default {
     loadAll() {
       this.loadFleet()
       this.loadCars()
+      this.loadDrivers()
       this.loadRank()
       this.loadTrend()
     },
@@ -402,6 +447,26 @@ export default {
     resizeChart() {
       if (this.chart) this.chart.resize()
     },
+    loadDrivers() {
+      this.driverLoading = true
+      const params = Object.assign({}, this.driverQuery, this.dateParams())
+      getFleetDriverStatPage(params).then(res => {
+        this.driverLoading = false
+        if (res.code === 200) {
+          this.driverRows = res.data || []
+          this.driverTotal = res.count || 0
+        }
+      }).catch(() => { this.driverLoading = false })
+    },
+    handleDriverSizeChange(val) {
+      this.driverQuery.limit = val
+      this.driverQuery.page = 1
+      this.loadDrivers()
+    },
+    handleDriverCurrentChange(val) {
+      this.driverQuery.page = val
+      this.loadDrivers()
+    },
     loadCars() {
       this.carLoading = true
       const params = Object.assign({}, this.carQuery, this.dateParams())
@@ -432,6 +497,8 @@ export default {
     },
     search() {
       this.query.page = 1
+      this.driverQuery.fleetId = this.query.fleetId
+      this.driverQuery.orgId = this.query.orgId
       this.carQuery.fleetId = this.query.fleetId
       this.carQuery.orgId = this.query.orgId
       this.carQuery.page = 1

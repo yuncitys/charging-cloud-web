@@ -24,6 +24,15 @@ export default [
     }
   },
   {
+    path: '/chargingFleet/hitLog',
+    component: () => import('@/views/chargingFleet/hitLog'),
+    name: 'ChargingFleetHitLog',
+    meta: {
+      title: '车队限额命中日志',
+      icon: 'el-icon-warning-outline'
+    }
+  },
+  {
     path: '/chargingFleet/reconcile',
     component: () => import('@/views/chargingFleet/reconcile'),
     name: 'ChargingFleetReconcile',

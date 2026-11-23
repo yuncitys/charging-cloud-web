@@ -636,6 +636,9 @@
           <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/chargingFleet/reconcile')">
             车队对账 <i class="el-icon-arrow-right" />
           </el-link>
+          <el-link class="wb-block__link" type="primary" :underline="false" @click="go('/chargingFleet/hitLog')">
+            命中日志 <i class="el-icon-arrow-right" />
+          </el-link>
         </div>
         <div v-if="blocks.fleet.error" class="wb-error">
           <span>{{ blocks.fleet.error }}</span>

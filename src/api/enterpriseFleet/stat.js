@@ -57,6 +57,26 @@ export function syncFleetStat(params) {
   })
 }
 
+// 司机维度明细（分页）
+export function getFleetDriverStatPage(data) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/driverPage',
+    method: 'post',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    data
+  })
+}
+
+// 导出司机明细
+export function exportFleetDriverStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/driverExport',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
 // 导出车队汇总
 export function exportFleetStat(params) {
   return request({
