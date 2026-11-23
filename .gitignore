@@ -27,3 +27,13 @@ yarn.lock
 !.cursor/rules/
 !.cursor/rules/*.mdc
 .pw-artifacts/
+
+
+# 根目录临时截图/验证产物，避免误提交
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.gif
+/*.bmp
+/dist.zip
