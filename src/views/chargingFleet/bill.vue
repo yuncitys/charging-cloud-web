@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="list" size="small" border>
+    <el-table v-loading="loading" :data="list" fit highlight-current-row style="width: 100%">
       <el-table-column prop="fleetName" label="车队" min-width="150">
         <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
       </el-table-column>
@@ -87,53 +87,62 @@
     </div>
 
     <!-- 生成账单 -->
-    <el-dialog title="生成车队账单" :visible.sync="generateVisible" width="460px" append-to-body :close-on-click-modal="false">
-      <el-form label-width="90px" size="small">
-        <el-form-item label="车队" required>
-          <el-select v-model="generateForm.fleetId" placeholder="请选择车队" filterable style="width: 100%;">
-            <el-option v-for="f in fleetOptions" :key="f.id" :label="f.name" :value="f.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="周期" required>
-          <el-radio-group v-model="generateForm.periodType" @change="syncGenerateKey">
-            <el-radio :label="1">日账单</el-radio>
-            <el-radio :label="2">月账单</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="期间" required>
-          <el-date-picker
-            v-if="generateForm.periodType === 1"
-            v-model="generateForm.day"
-            type="date"
-            value-format="yyyy-MM-dd"
-            style="width: 100%;"
-            @change="syncGenerateKey"
-          />
-          <el-date-picker
-            v-else
-            v-model="generateForm.month"
-            type="month"
-            value-format="yyyy-MM"
-            style="width: 100%;"
-            @change="syncGenerateKey"
-          />
-        </el-form-item>
-        <el-form-item label="说明">
-          <div class="hint">
-            同周期重复生成会覆盖未锁定账单；已锁定账单不可重算。<br>
-            当月账单按「月初至今」滚动生成，可随时重算查看；月末核对无误后请锁定。
-          </div>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button size="small" @click="generateVisible = false">取消</el-button>
-        <el-button size="small" type="primary" :loading="generating" @click="submitGenerate">生成</el-button>
-      </span>
-    </el-dialog>
+    <el-drawer
+      title="生成车队账单"
+      :visible.sync="generateVisible"
+      size="480px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="drawer-body">
+        <el-form label-width="90px" size="small">
+          <el-form-item label="车队" required>
+            <el-select v-model="generateForm.fleetId" placeholder="请选择车队" filterable style="width: 100%;">
+              <el-option v-for="f in fleetOptions" :key="f.id" :label="f.name" :value="f.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="周期" required>
+            <el-radio-group v-model="generateForm.periodType" @change="syncGenerateKey">
+              <el-radio :label="1">日账单</el-radio>
+              <el-radio :label="2">月账单</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="期间" required>
+            <el-date-picker
+              v-if="generateForm.periodType === 1"
+              v-model="generateForm.day"
+              type="date"
+              value-format="yyyy-MM-dd"
+              style="width: 100%;"
+              @change="syncGenerateKey"
+            />
+            <el-date-picker
+              v-else
+              v-model="generateForm.month"
+              type="month"
+              value-format="yyyy-MM"
+              style="width: 100%;"
+              @change="syncGenerateKey"
+            />
+          </el-form-item>
+          <el-form-item label="说明">
+            <div class="hint">
+              同周期重复生成会覆盖未锁定账单；已锁定账单不可重算。<br>
+              当月账单按「月初至今」滚动生成，可随时重算查看；月末核对无误后请锁定。
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="generateVisible = false">取消</el-button>
+        <el-button type="primary" :loading="generating" @click="submitGenerate">生成</el-button>
+      </div>
+    </el-drawer>
 
     <!-- 详情 -->
     <el-drawer :title="detailTitle" :visible.sync="detailVisible" size="720px" direction="rtl" :wrapper-closable="false" append-to-body>
-      <div class="detail-body" v-if="detailBill">
+      <div v-if="detailBill" class="detail-body">
         <el-descriptions :column="3" border size="small">
           <el-descriptions-item label="车队">{{ detailBill.fleetName || detail.fleetName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="期间">{{ detailBill.periodKey }}</el-descriptions-item>
@@ -143,7 +152,7 @@
           <el-descriptions-item label="实付金额(元)">{{ formatNumber(detailBill.userActualPayAmount, 2) }}</el-descriptions-item>
         </el-descriptions>
         <div class="detail-title">日明细</div>
-        <el-table :data="detailDaily" size="mini" border max-height="420">
+        <el-table :data="detailDaily" size="mini" fit highlight-current-row max-height="420" style="width: 100%">
           <el-table-column prop="summaryDate" label="日期" width="130" />
           <el-table-column prop="totalDegree" label="电量(度)" width="110" align="right">
             <template slot-scope="scope">{{ formatNumber(scope.row.totalDegree, 2) }}</template>
@@ -346,5 +355,20 @@ export default {
   color: #909399;
   font-size: 12px;
   line-height: 18px;
+}
+.drawer-body {
+  padding: 0 20px 70px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
 }
 </style>

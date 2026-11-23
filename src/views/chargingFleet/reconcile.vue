@@ -41,7 +41,7 @@
       </div>
     </div>
 
-    <el-table v-loading="loading" :data="list" size="small" border>
+    <el-table v-loading="loading" :data="list" fit highlight-current-row style="width: 100%">
       <el-table-column prop="fleetName" label="车队" min-width="150">
         <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
       </el-table-column>
@@ -95,71 +95,89 @@
     </div>
 
     <!-- 生成对账 -->
-    <el-dialog title="生成/重算对账" :visible.sync="runVisible" width="460px" append-to-body :close-on-click-modal="false">
-      <el-form label-width="90px" size="small">
-        <el-form-item label="车队" required>
-          <el-select v-model="runForm.fleetId" placeholder="请选择车队" filterable style="width: 100%;">
-            <el-option v-for="f in fleetOptions" :key="f.id" :label="f.name" :value="f.id" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="周期" required>
-          <el-radio-group v-model="runForm.periodType" @change="syncRunKey">
-            <el-radio :label="1">日账单</el-radio>
-            <el-radio :label="2">月账单</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="期间" required>
-          <el-date-picker
-            v-if="runForm.periodType === 1"
-            v-model="runForm.day"
-            type="date"
-            value-format="yyyy-MM-dd"
-            style="width: 100%;"
-            @change="syncRunKey"
-          />
-          <el-date-picker
-            v-else
-            v-model="runForm.month"
-            type="month"
-            value-format="yyyy-MM"
-            style="width: 100%;"
-            @change="syncRunKey"
-          />
-        </el-form-item>
-        <el-form-item label="说明">
-          <div class="hint">对账口径：账单实付金额 vs 机构钱包向该车队司机的分配净额（分配 - 扣回）。</div>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button size="small" @click="runVisible = false">取消</el-button>
-        <el-button size="small" type="primary" :loading="running" @click="submitRun">生成</el-button>
-      </span>
-    </el-dialog>
+    <el-drawer
+      title="生成/重算对账"
+      :visible.sync="runVisible"
+      size="480px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="drawer-body">
+        <el-form label-width="90px" size="small">
+          <el-form-item label="车队" required>
+            <el-select v-model="runForm.fleetId" placeholder="请选择车队" filterable style="width: 100%;">
+              <el-option v-for="f in fleetOptions" :key="f.id" :label="f.name" :value="f.id" />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="周期" required>
+            <el-radio-group v-model="runForm.periodType" @change="syncRunKey">
+              <el-radio :label="1">日账单</el-radio>
+              <el-radio :label="2">月账单</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="期间" required>
+            <el-date-picker
+              v-if="runForm.periodType === 1"
+              v-model="runForm.day"
+              type="date"
+              value-format="yyyy-MM-dd"
+              style="width: 100%;"
+              @change="syncRunKey"
+            />
+            <el-date-picker
+              v-else
+              v-model="runForm.month"
+              type="month"
+              value-format="yyyy-MM"
+              style="width: 100%;"
+              @change="syncRunKey"
+            />
+          </el-form-item>
+          <el-form-item label="说明">
+            <div class="hint">对账口径：账单实付金额 vs 机构钱包向该车队司机的分配净额（分配 - 扣回）。</div>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="runVisible = false">取消</el-button>
+        <el-button type="primary" :loading="running" @click="submitRun">生成</el-button>
+      </div>
+    </el-drawer>
 
     <!-- 处理差异 -->
-    <el-dialog title="处理对账差异" :visible.sync="handleVisible" width="460px" append-to-body :close-on-click-modal="false">
-      <el-form label-width="90px" size="small">
-        <el-form-item label="车队">{{ handleRow.fleetName || '-' }}</el-form-item>
-        <el-form-item label="期间">{{ handleRow.periodKey }}</el-form-item>
-        <el-form-item label="差额">
-          {{ formatNumber(handleRow.billAmount) }} - {{ formatNumber(handleRow.allocatedAmount) }} =
-          <strong>{{ formatNumber(handleRow.diffAmount) }}</strong> 元
-        </el-form-item>
-        <el-form-item label="处理结果" required>
-          <el-radio-group v-model="handleForm.status">
-            <el-radio :label="1">已处理</el-radio>
-            <el-radio :label="2">忽略</el-radio>
-          </el-radio-group>
-        </el-form-item>
-        <el-form-item label="说明">
-          <el-input v-model="handleForm.remark" type="textarea" :rows="3" maxlength="255" show-word-limit placeholder="如：线下已补分配" />
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button size="small" @click="handleVisible = false">取消</el-button>
-        <el-button size="small" type="primary" :loading="handling" @click="submitHandle">确定</el-button>
-      </span>
-    </el-dialog>
+    <el-drawer
+      title="处理对账差异"
+      :visible.sync="handleVisible"
+      size="480px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="drawer-body">
+        <el-form label-width="90px" size="small">
+          <el-form-item label="车队">{{ handleRow.fleetName || '-' }}</el-form-item>
+          <el-form-item label="期间">{{ handleRow.periodKey }}</el-form-item>
+          <el-form-item label="差额">
+            {{ formatNumber(handleRow.billAmount) }} - {{ formatNumber(handleRow.allocatedAmount) }} =
+            <strong>{{ formatNumber(handleRow.diffAmount) }}</strong> 元
+          </el-form-item>
+          <el-form-item label="处理结果" required>
+            <el-radio-group v-model="handleForm.status">
+              <el-radio :label="1">已处理</el-radio>
+              <el-radio :label="2">忽略</el-radio>
+            </el-radio-group>
+          </el-form-item>
+          <el-form-item label="说明">
+            <el-input v-model="handleForm.remark" type="textarea" :rows="3" maxlength="255" show-word-limit placeholder="如：线下已补分配" />
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="handleVisible = false">取消</el-button>
+        <el-button type="primary" :loading="handling" @click="submitHandle">确定</el-button>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -330,5 +348,20 @@ export default {
   color: #909399;
   font-size: 12px;
   line-height: 18px;
+}
+.drawer-body {
+  padding: 0 20px 70px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
 }
 </style>

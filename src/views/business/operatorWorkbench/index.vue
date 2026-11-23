@@ -668,7 +668,7 @@
               <div class="wb-card__value">{{ int(fleet.driverCount) }}</div>
             </div>
           </div>
-          <el-table :data="fleetTop" size="small" style="width: 100%" empty-text="所选区间内暂无车队限额命中">
+          <el-table :data="fleetTop" size="small" class="wb-fleet__table" style="width: 100%" empty-text="所选区间内暂无车队限额命中">
             <el-table-column label="车队" min-width="150">
               <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
             </el-table-column>
@@ -1762,6 +1762,9 @@ export default {
     }
   }
   .wb-yesterday,
+  .wb-fleet__table {
+    margin-top: 14px;
+  }
   .wb-roi {
     margin-top: 12px;
     font-size: 13px;

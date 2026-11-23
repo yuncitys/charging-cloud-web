@@ -69,7 +69,7 @@
     <!-- 明细 -->
     <el-tabs v-model="activeTab" class="stat-tabs">
       <el-tab-pane label="车队汇总" name="fleet">
-        <el-table v-loading="loading" :data="fleetRows" size="small" border>
+        <el-table v-loading="loading" :data="fleetRows" fit highlight-current-row style="width: 100%">
           <el-table-column prop="fleetName" label="车队" min-width="140">
             <template slot-scope="scope">{{ scope.row.fleetName || '未编队' }}</template>
           </el-table-column>
@@ -112,7 +112,7 @@
       </el-tab-pane>
 
       <el-tab-pane label="车辆明细" name="car">
-        <el-table v-loading="carLoading" :data="carRows" size="small" border>
+        <el-table v-loading="carLoading" :data="carRows" fit highlight-current-row style="width: 100%">
           <el-table-column prop="plateNumber" label="车牌号" width="150" />
           <el-table-column prop="vinCode" label="车架号VIN" min-width="170" show-overflow-tooltip />
           <el-table-column prop="fleetName" label="车队" width="140">
@@ -151,7 +151,7 @@
             <el-radio-button label="actualPayAmount">按金额</el-radio-button>
           </el-radio-group>
         </div>
-        <el-table v-loading="rankLoading" :data="rankRows" size="small" border>
+        <el-table v-loading="rankLoading" :data="rankRows" fit highlight-current-row style="width: 100%">
           <el-table-column type="index" label="#" width="60" align="center" />
           <el-table-column prop="plateNumber" label="车牌号" width="150" />
           <el-table-column prop="fleetName" label="车队" width="150">
@@ -169,31 +169,40 @@
     </el-tabs>
 
     <!-- 手工重算统计 -->
-    <el-dialog title="重算车队统计" :visible.sync="syncVisible" width="460px" append-to-body :close-on-click-modal="false">
-      <el-form label-width="90px" size="small">
-        <el-form-item label="统计区间" required>
-          <el-date-picker
-            v-model="syncRange"
-            type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
-            value-format="yyyy-MM-dd"
-            style="width: 100%;"
-          />
-        </el-form-item>
-        <el-form-item label="说明">
-          <div class="hint">
-            按订单明细重算所选区间内的车队/车辆日统计（覆盖同日旧数据，不影响已锁定账单）。<br>
-            定时任务每 15 分钟会自动重算「昨日 + 今日」，历史补数请用这里。
-          </div>
-        </el-form-item>
-      </el-form>
-      <span slot="footer">
-        <el-button size="small" @click="syncVisible = false">取消</el-button>
-        <el-button size="small" type="primary" :loading="syncing" @click="submitSync">开始重算</el-button>
-      </span>
-    </el-dialog>
+    <el-drawer
+      title="重算车队统计"
+      :visible.sync="syncVisible"
+      size="480px"
+      direction="rtl"
+      :wrapper-closable="false"
+      append-to-body
+    >
+      <div class="drawer-body">
+        <el-form label-width="90px" size="small">
+          <el-form-item label="统计区间" required>
+            <el-date-picker
+              v-model="syncRange"
+              type="daterange"
+              range-separator="至"
+              start-placeholder="开始日期"
+              end-placeholder="结束日期"
+              value-format="yyyy-MM-dd"
+              style="width: 100%;"
+            />
+          </el-form-item>
+          <el-form-item label="说明">
+            <div class="hint">
+              按订单明细重算所选区间内的车队/车辆日统计（覆盖同日旧数据，不影响已锁定账单）。<br>
+              定时任务每 15 分钟会自动重算「昨日 + 今日」，历史补数请用这里。
+            </div>
+          </el-form-item>
+        </el-form>
+      </div>
+      <div class="drawer-footer">
+        <el-button @click="syncVisible = false">取消</el-button>
+        <el-button type="primary" :loading="syncing" @click="submitSync">开始重算</el-button>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -508,5 +517,20 @@ export default {
   color: #909399;
   font-size: 12px;
   line-height: 18px;
+}
+.drawer-body {
+  padding: 0 20px 70px;
+  overflow-y: auto;
+  height: calc(100vh - 120px);
+}
+.drawer-footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px 20px;
+  text-align: right;
+  border-top: 1px solid #ebeef5;
+  background: #fff;
 }
 </style>
