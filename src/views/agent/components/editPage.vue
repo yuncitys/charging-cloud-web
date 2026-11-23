@@ -21,7 +21,7 @@
 				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="editData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
-				<el-form-item v-if="editData.roleType !== 5" :label="'归属租户'" prop="tenantId">
+				<el-form-item :label="'归属租户'" prop="tenantId">
 					<el-select v-model="editData.tenantId" class="filter-item" placeholder="请选择归属租户" disabled style="width: 100%;">
 						<el-option v-for="item in tenantList" :key="String(item.operatorId || item.id || item.tenantId)" :label="item.name" :value="tenantOptionValue(item)" />
 					</el-select>
@@ -162,17 +162,8 @@
 						trigger: 'blur'
 					}],
 					tenantId: [{
-						validator: (rule, value, callback) => {
-							if (this.editData.roleType === 5) {
-								callback()
-								return
-							}
-							if (!value) {
-								callback(new Error('请选择归属租户'))
-								return
-							}
-							callback()
-						},
+						required: true,
+						message: '请选择归属租户',
 						trigger: 'change'
 					}],
 					roleId: [{
@@ -346,10 +337,18 @@
 				return item.id
 			},
 			// 编辑时拉取租户下拉数据，回显当前租户并与选项 value 类型对齐；无匹配项时用行数据补一条仅展示用选项
+			loginTenantId() {
+				const user = this.$store.getters.adminUser || {}
+				return user.tenantId != null ? String(user.tenantId) : ''
+			},
 			getTenantListForEdit(rowItem) {
 				getOperator().then(res => {
 					let list = (res && res.code == 200) ? (res.data || []) : []
-					const raw = rowItem.tenantId || rowItem.operatorId || rowItem.operator_id || rowItem.tenant_id
+					let raw = rowItem.tenantId || rowItem.operatorId || rowItem.operator_id || rowItem.tenant_id
+					// 客户机构管理员账号可能没有租户：回退当前登录租户，保证可编辑保存
+					if ((raw === '' || raw == null) && Number(rowItem.roleType) === 5) {
+						raw = this.loginTenantId()
+					}
 					const rawStr = raw === '' || raw == null ? '' : String(raw)
 					let matched = null
 					if (rawStr) {

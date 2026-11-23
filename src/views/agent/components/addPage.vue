@@ -21,7 +21,7 @@
 				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="addData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
-				<el-form-item v-if="addData.roleType !== 5" :label="'归属租户'" prop="tenantId">
+				<el-form-item :label="'归属租户'" prop="tenantId">
 					<el-select v-model="addData.tenantId" class="filter-item" placeholder="请选择归属租户" filterable clearable style="width: 100%;">
 						<el-option v-for="item in tenantList" :key="item.operatorId || item.id" :label="item.name" :value="item.operatorId || item.id" />
 					</el-select>
@@ -156,17 +156,8 @@
 						trigger: 'blur'
 					}],
 					tenantId: [{
-						validator: (rule, value, callback) => {
-							if (this.addData.roleType === 5) {
-								callback()
-								return
-							}
-							if (!value) {
-								callback(new Error('请选择归属租户'))
-								return
-							}
-							callback()
-						},
+						required: true,
+						message: '请选择归属租户',
 						trigger: 'change'
 					}],
 					roleId: [{
@@ -320,11 +311,12 @@
 			},
 			getTenantList() {
 				getOperator().then(res => {
-					if (res && res.code == 200) {
-						this.tenantList = res.data || []
-					} else {
-						this.tenantList = []
+					let list = (res && res.code == 200) ? (res.data || []) : []
+					const tid = this.loginTenantId()
+					if (tid && !list.some(t => String(t.operatorId || t.id) === tid)) {
+						list = [{ name: `当前租户（${tid}）`, operatorId: tid, id: tid }].concat(list)
 					}
+					this.tenantList = list
 				}).catch(() => {
 					this.tenantList = []
 				})
@@ -350,10 +342,20 @@
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
+			loginTenantId() {
+				const user = this.$store.getters.adminUser || {}
+				const tid = user.tenantId != null ? String(user.tenantId) : ''
+				return tid
+			},
 			onShowAdd() {
 				this.syncRoleTypeRadioOptions()
 				this.showAdd = true
 				this.getTenantList()
+				// 默认归属租户 = 当前登录账号租户（客户机构管理员等场景与后台添加账号保持一致）
+				const tid = this.loginTenantId()
+				if (tid && !this.addData.tenantId) {
+					this.addData.tenantId = tid
+				}
 			},
 			onaddData(formName) {
 				let addData = JSON.parse(JSON.stringify(this.addData))
