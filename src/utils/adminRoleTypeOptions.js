@@ -6,6 +6,7 @@ export const ROLE_TYPE_DEFS = [
   { value: 2, label: '租户管理员' },
   { value: 3, label: '商户管理员' },
   { value: 4, label: '站点管理员' },
+  { value: 5, label: '客户机构管理员' },
 ]
 
 function resolveRoleLabel(value, fallback) {

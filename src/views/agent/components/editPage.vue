@@ -7,10 +7,11 @@
       		编辑
 		</el-button>
 		<!-- 编辑代理商-->
-		<el-dialog :visible.sync="showEdit" title="编辑" @close="showEdit = false" @opened="syncRoleTypeRadioOptions"
-			style="width: 100%;" :append-to-body="true">
+		<el-drawer :visible.sync="showEdit" title="编辑账号" size="720px" direction="rtl"
+			:wrapper-closable="false" append-to-body @close="showEdit = false" @opened="syncRoleTypeRadioOptions">
+			<div class="drawer-body">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="120px"
-				style="margin-left:50px;width: 650px;" :rules="rules">
+				style="width: 100%;" :rules="rules">
 				<el-form-item :label="'登录账号'" prop="adminName">
 					<el-input v-model="editData.adminName" placeholder="请输入登录账号" disabled clearable />
 				</el-form-item>
@@ -20,7 +21,7 @@
 				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="editData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
-				<el-form-item :label="'归属租户'" prop="tenantId">
+				<el-form-item v-if="editData.roleType !== 5" :label="'归属租户'" prop="tenantId">
 					<el-select v-model="editData.tenantId" class="filter-item" placeholder="请选择归属租户" disabled style="width: 100%;">
 						<el-option v-for="item in tenantList" :key="String(item.operatorId || item.id || item.tenantId)" :label="item.name" :value="tenantOptionValue(item)" />
 					</el-select>
@@ -45,21 +46,24 @@
 						<el-tree
 							ref="tree"
 							:data="filteredData"
-							show-checkbox
+							:show-checkbox="editData.roleType !== 5"
+							:highlight-current="editData.roleType === 5"
 							node-key="id"
 							:props="defaultProps"
-							:default-expand-all="false"
+							:default-expand-all="editData.roleType === 5"
 							:filter-node-method="filterNode"
 							@check-change="handleCheck"
+							@node-click="handleNodeClick"
 						></el-tree>
 					</div>
 				</el-form-item>
-				<el-form-item>
-					<el-button type="primary" @click="onEditData('editData')">确定</el-button>
-					<el-button @click="showEdit = false">取消</el-button>
-				</el-form-item>
 			</el-form>
-		</el-dialog>
+			</div>
+			<div class="drawer-footer">
+				<el-button @click="showEdit = false">取消</el-button>
+				<el-button type="primary" :loading="saving" @click="onEditData('editData')">确定</el-button>
+			</div>
+		</el-drawer>
 	</div>
 </template>
 
@@ -68,6 +72,9 @@
 		updateAdminUser,
 		getDataPermissionsIdList
 	} from '@/api/agent/agentList.js'
+	import {
+		getChargingOrganizationTree
+	} from '@/api/chargingCustomer/index.js'
 	import {
 		findRoleAllList,
 	} from '@/api/permission/role.js'
@@ -123,6 +130,7 @@
 			return {
 				roleTypeRadioOptions: [],
 				showEdit: false,
+				saving: false,
 				editData: {
           			id: '',
 					adminName: '',
@@ -131,6 +139,7 @@
 					tenantId: '',
 					roleId: '',
 					roleType: '',
+					orgId: null,
 					dataIdList: [],
 				},
 				rules: {
@@ -153,8 +162,17 @@
 						trigger: 'blur'
 					}],
 					tenantId: [{
-						required: true,
-						message: '请选择归属租户',
+						validator: (rule, value, callback) => {
+							if (this.editData.roleType === 5) {
+								callback()
+								return
+							}
+							if (!value) {
+								callback(new Error('请选择归属租户'))
+								return
+							}
+							callback()
+						},
 						trigger: 'change'
 					}],
 					roleId: [{
@@ -222,6 +240,28 @@
             filterTree() {
               	this.$refs.tree.filter(this.searchKey);
             },
+            handleNodeClick(data) {
+				if (this.editData.roleType === 5 && data && data.id != null) {
+					this.editData.orgId = Number(data.id)
+				}
+			},
+			getCustomerOrgTree(currentOrgId){
+				getChargingOrganizationTree({}).then(res => {
+					if (res.code != 200) return
+					const groups = res.data || {}
+					const list = groups['客户机构'] || []
+					this.filteredData = list.map(o => ({
+						id: o.id,
+						label: o.name,
+						type: 'customer'
+					}))
+					this.$nextTick(() => {
+						if (currentOrgId && this.$refs.tree) {
+							this.$refs.tree.setCurrentKey(Number(currentOrgId))
+						}
+					})
+				})
+			},
             handleCheck(data, checked) {
 				const selected = this.$refs.tree.getCheckedKeys();
 				console.log("handleCheck selected:",selected)
@@ -240,6 +280,10 @@
 					case 4:
 						this.label = '选择站点'
 						this.getChargeStation()
+						break
+					case 5:
+						this.label = '选择客户机构'
+						this.getCustomerOrgTree(this.editData.orgId)
 						break
 					default:
 						break;
@@ -336,6 +380,8 @@
 				console.log("changeRoleType:",roleType)
 				this.editData.roleType = roleType
 				this.editData.roleId = ''
+				this.editData.dataIdList = []
+				this.editData.orgId = null
 				this.findRoleAllList(roleType)
 				this.initTreeData(roleType)
 				this.$nextTick(() => this.syncRoleTypeRadioOptions())
@@ -352,6 +398,7 @@
 				this.editData.tenantId = item.tenantId || item.operatorId || item.operator_id || item.tenant_id || ''
 				this.editData.roleId = item.roleId
 				this.editData.roleType = item.roleType
+				this.editData.orgId = item.orgId != null ? Number(item.orgId) : null
 				this.showEdit = true
 				this.syncRoleTypeRadioOptions()
 				this.getTenantListForEdit(item)
@@ -362,6 +409,14 @@
 			},
 			onEditData(formName) {
 				let editData = JSON.parse(JSON.stringify(this.editData))
+				if (editData.roleType === 5) {
+					if (!editData.orgId) {
+						this.$message.warning('请选择客户机构')
+						return
+					}
+					editData.dataIdList = []
+					editData.tenantId = editData.tenantId || ''
+				}
 				this.$refs[formName].validate(valid => {
 					if (valid) {
 						console.log("通过")
@@ -400,6 +455,30 @@
 
 
 <style scoped>
+  .drawer-body {
+    padding: 0 20px 70px;
+    overflow-y: auto;
+    height: calc(100vh - 120px);
+  }
+  .drawer-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 20px;
+    text-align: right;
+    border-top: 1px solid #ebeef5;
+    background: #fff;
+  }
+  ::v-deep .el-radio-group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  ::v-deep .el-radio-group .el-radio {
+    margin-right: 16px;
+    white-space: nowrap;
+  }
  .station-select-box {
     border: 0.2px solid gray;
     padding: 10px;
