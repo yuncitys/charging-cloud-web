@@ -21,6 +21,7 @@
         </el-select>
         <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
         <el-button plain @click="resetQuery">重置</el-button>
+        <el-button v-if="hasPerm(':charging:customer:fleet:stat:edit')" type="success" icon="el-icon-refresh" @click="openSync">重算统计</el-button>
       </div>
     </div>
 
@@ -166,6 +167,33 @@
         </el-table>
       </el-tab-pane>
     </el-tabs>
+
+    <!-- 手工重算统计 -->
+    <el-dialog title="重算车队统计" :visible.sync="syncVisible" width="460px" append-to-body :close-on-click-modal="false">
+      <el-form label-width="90px" size="small">
+        <el-form-item label="统计区间" required>
+          <el-date-picker
+            v-model="syncRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="yyyy-MM-dd"
+            style="width: 100%;"
+          />
+        </el-form-item>
+        <el-form-item label="说明">
+          <div class="hint">
+            按订单明细重算所选区间内的车队/车辆日统计（覆盖同日旧数据，不影响已锁定账单）。<br>
+            定时任务每 15 分钟会自动重算「昨日 + 今日」，历史补数请用这里。
+          </div>
+        </el-form-item>
+      </el-form>
+      <span slot="footer">
+        <el-button size="small" @click="syncVisible = false">取消</el-button>
+        <el-button size="small" type="primary" :loading="syncing" @click="submitSync">开始重算</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 
@@ -173,7 +201,7 @@
 import echarts from 'echarts'
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getFleetPage } from '@/api/enterpriseFleet/fleet'
-import { getFleetCarStatPage, getFleetCarStatRank, getFleetStatPage, getFleetStatTrend } from '@/api/enterpriseFleet/stat'
+import { getFleetCarStatPage, getFleetCarStatRank, getFleetStatPage, getFleetStatTrend, syncFleetStat } from '@/api/enterpriseFleet/stat'
 
 function defaultRange() {
   const end = new Date()
@@ -206,7 +234,10 @@ export default {
       rankMetric: 'totalDegree',
       summary: {},
       trendData: [],
-      chart: null
+      chart: null,
+      syncVisible: false,
+      syncing: false,
+      syncRange: []
     }
   },
   computed: {
@@ -234,6 +265,28 @@ export default {
   methods: {
     hasPerm(permission) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
+    },
+    openSync() {
+      this.syncRange = (this.dateRange || defaultRange()).slice()
+      this.syncVisible = true
+    },
+    submitSync() {
+      const range = this.syncRange || []
+      if (!range || range.length !== 2) {
+        this.$message.warning('请选择统计区间')
+        return
+      }
+      this.syncing = true
+      syncFleetStat({ startDate: range[0], endDate: range[1] }).then(res => {
+        this.syncing = false
+        if (res.code === 200) {
+          this.$message.success(res.msg || '重算完成')
+          this.syncVisible = false
+          this.loadAll()
+        } else {
+          this.$message.error(res.msg || '重算失败')
+        }
+      }).catch(() => { this.syncing = false })
     },
     dateParams() {
       const range = this.dateRange || defaultRange()
@@ -450,5 +503,10 @@ export default {
 .pagination-container {
   margin-top: 10px;
   text-align: right;
+}
+.hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 18px;
 }
 </style>

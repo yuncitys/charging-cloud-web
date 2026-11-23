@@ -47,3 +47,12 @@ export function getFleetMonitorOverview(params) {
     params
   })
 }
+
+// 手工重算车队统计（运维）
+export function syncFleetStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/sync',
+    method: 'post',
+    params
+  })
+}

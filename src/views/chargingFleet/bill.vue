@@ -119,7 +119,10 @@
           />
         </el-form-item>
         <el-form-item label="说明">
-          <div class="hint">同周期重复生成会覆盖未锁定账单；已锁定账单不可重算。</div>
+          <div class="hint">
+            同周期重复生成会覆盖未锁定账单；已锁定账单不可重算。<br>
+            当月账单按「月初至今」滚动生成，可随时重算查看；月末核对无误后请锁定。
+          </div>
         </el-form-item>
       </el-form>
       <span slot="footer">
