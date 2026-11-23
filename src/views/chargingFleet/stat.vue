@@ -22,6 +22,7 @@
         <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
         <el-button plain @click="resetQuery">重置</el-button>
         <el-button v-if="hasPerm(':charging:customer:fleet:stat:edit')" type="success" icon="el-icon-refresh" @click="openSync">重算统计</el-button>
+        <el-button v-if="hasPerm(':charging:customer:fleet:stat')" plain icon="el-icon-download" :loading="exporting" @click="handleExport">导出</el-button>
       </div>
     </div>
 
@@ -210,7 +211,8 @@
 import echarts from 'echarts'
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getFleetPage } from '@/api/enterpriseFleet/fleet'
-import { getFleetCarStatPage, getFleetCarStatRank, getFleetStatPage, getFleetStatTrend, syncFleetStat } from '@/api/enterpriseFleet/stat'
+import { exportFleetCarStat, exportFleetStat, getFleetCarStatPage, getFleetCarStatRank, getFleetStatPage, getFleetStatTrend, syncFleetStat } from '@/api/enterpriseFleet/stat'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 function defaultRange() {
   const end = new Date()
@@ -244,6 +246,7 @@ export default {
       summary: {},
       trendData: [],
       chart: null,
+      exporting: false,
       syncVisible: false,
       syncing: false,
       syncRange: []
@@ -274,6 +277,20 @@ export default {
   methods: {
     hasPerm(permission) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
+    },
+    handleExport() {
+      const params = Object.assign({}, this.dateParams(), {
+        fleetId: this.query.fleetId,
+        orgId: this.query.orgId
+      })
+      const isCar = this.activeTab === 'car' || this.activeTab === 'rank'
+      const api = isCar ? exportFleetCarStat : exportFleetStat
+      const name = isCar ? '车队车辆明细' : '车队报表'
+      this.exporting = true
+      api(params).then(res => {
+        this.exporting = false
+        downloadBlob(res, `${name}_${params.startDate}_${params.endDate}`, msg => this.$message.error(msg))
+      }).catch(() => { this.exporting = false; this.$message.error('导出失败') })
     },
     openSync() {
       this.syncRange = (this.dateRange || defaultRange()).slice()

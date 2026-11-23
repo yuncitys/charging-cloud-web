@@ -56,3 +56,23 @@ export function syncFleetStat(params) {
     params
   })
 }
+
+// 导出车队汇总
+export function exportFleetStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+// 导出车辆明细
+export function exportFleetCarStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/carExport',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}

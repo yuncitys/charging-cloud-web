@@ -37,6 +37,7 @@
         <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
         <el-button plain @click="resetQuery">重置</el-button>
         <el-button v-if="canEdit" type="success" icon="el-icon-plus" @click="openGenerate">生成账单</el-button>
+        <el-button v-if="canView" plain icon="el-icon-download" :loading="exporting" @click="handleExport">导出</el-button>
       </div>
     </div>
 
@@ -69,6 +70,7 @@
         <template slot-scope="scope">
           <el-button size="mini" type="primary" @click="openDetail(scope.row)">详情</el-button>
           <el-button v-if="canEdit && scope.row.status !== 1" size="mini" type="warning" @click="handleLock(scope.row)">锁定</el-button>
+          <el-button v-if="canEdit && scope.row.status === 1" size="mini" plain @click="handleUnlock(scope.row)">解锁</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -173,7 +175,8 @@
 <script>
 import { getOrganizationOptions } from '@/api/organization/organization'
 import { getFleetPage } from '@/api/enterpriseFleet/fleet'
-import { generateFleetBill, getFleetBillDetail, getFleetBillPage, lockFleetBill } from '@/api/enterpriseFleet/bill'
+import { exportFleetBill, generateFleetBill, getFleetBillDetail, getFleetBillPage, lockFleetBill, unlockFleetBill } from '@/api/enterpriseFleet/bill'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 function todayStr() {
   const d = new Date()
@@ -194,6 +197,7 @@ export default {
       generateVisible: false,
       generating: false,
       generateForm: { fleetId: null, periodType: 1, day: todayStr(), month: todayStr().slice(0, 7), periodKey: 'D' + todayStr() },
+      exporting: false,
       detailVisible: false,
       detailBill: null,
       detailDaily: [],
@@ -201,6 +205,9 @@ export default {
     }
   },
   computed: {
+    canView() {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':charging:customer:fleet:bill'))
+    },
     canEdit() {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':charging:customer:fleet:bill:edit'))
     },
@@ -306,6 +313,37 @@ export default {
           this.$message.error(res.msg || '详情加载失败')
         }
       }).catch(() => {})
+    },
+    handleUnlock(row) {
+      if (!row || !row.id) return
+      this.$confirm(`确认解锁账单「${row.periodKey}」？解锁后可重新生成（金额会被重算覆盖）`, '提示', {
+        type: 'warning',
+        confirmButtonText: '解锁',
+        cancelButtonText: '取消'
+      }).then(() => {
+        unlockFleetBill({ id: row.id }).then(res => {
+          if (res.code === 200) {
+            this.$message.success(res.msg || '已解锁')
+            this.loadList()
+          } else {
+            this.$message.error(res.msg || '解锁失败')
+          }
+        })
+      }).catch(() => {})
+    },
+    handleExport() {
+      if (!this.canView) return
+      this.exporting = true
+      exportFleetBill({
+        periodType: this.query.periodType,
+        periodDate: this.query.periodDate,
+        fleetId: this.query.fleetId,
+        orgId: this.query.orgId,
+        status: this.query.status
+      }).then(res => {
+        this.exporting = false
+        downloadBlob(res, `车队账单_${this.query.periodDate || ''}`, msg => this.$message.error(msg))
+      }).catch(() => { this.exporting = false; this.$message.error('导出失败') })
     },
     handleLock(row) {
       this.$confirm(`锁定后账单不可重算，确认锁定「${row.periodKey}」？`, '锁定账单', {

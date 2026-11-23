@@ -38,6 +38,7 @@
         <el-button type="primary" icon="el-icon-search" @click="search">查询</el-button>
         <el-button plain @click="resetQuery">重置</el-button>
         <el-button v-if="canEdit" type="success" icon="el-icon-refresh" @click="openRun">生成对账</el-button>
+        <el-button v-if="canView" plain icon="el-icon-download" :loading="exporting" @click="handleExport">导出</el-button>
       </div>
     </div>
 
@@ -183,7 +184,8 @@
 
 <script>
 import { getFleetPage } from '@/api/enterpriseFleet/fleet'
-import { getFleetReconcilePage, handleFleetReconcile, runFleetReconcile } from '@/api/enterpriseFleet/bill'
+import { exportFleetReconcile, getFleetReconcilePage, handleFleetReconcile, runFleetReconcile } from '@/api/enterpriseFleet/bill'
+import { downloadBlob } from '@/utils/downloadBlob'
 
 function todayStr() {
   const d = new Date()
@@ -206,10 +208,14 @@ export default {
       handleVisible: false,
       handling: false,
       handleRow: {},
-      handleForm: { status: 1, remark: '' }
+      handleForm: { status: 1, remark: '' },
+      exporting: false
     }
   },
   computed: {
+    canView() {
+      return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':charging:customer:fleet:bill'))
+    },
     canEdit() {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(':charging:customer:fleet:bill:edit'))
     }
@@ -256,6 +262,20 @@ export default {
     handleCurrentChange(val) {
       this.query.page = val
       this.loadList()
+    },
+    handleExport() {
+      if (!this.canView) return
+      this.exporting = true
+      exportFleetReconcile({
+        periodType: this.query.periodType,
+        periodDate: this.query.periodDate,
+        fleetId: this.query.fleetId,
+        status: this.query.status,
+        diffType: this.query.diffType
+      }).then(res => {
+        this.exporting = false
+        downloadBlob(res, `车队对账_${this.query.periodDate || ''}`, msg => this.$message.error(msg))
+      }).catch(() => { this.exporting = false; this.$message.error('导出失败') })
     },
     openRun() {
       this.runForm = {

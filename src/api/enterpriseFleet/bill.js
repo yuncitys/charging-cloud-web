@@ -63,3 +63,32 @@ export function handleFleetReconcile(params) {
     params
   })
 }
+
+// 解锁账单（已锁定 → 未锁定）
+export function unlockFleetBill(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/bill/unlock',
+    method: 'post',
+    params
+  })
+}
+
+// 导出车队账单
+export function exportFleetBill(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/bill/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+// 导出车队对账差异
+export function exportFleetReconcile(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/reconcile/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
