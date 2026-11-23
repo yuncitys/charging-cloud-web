@@ -97,7 +97,7 @@
           </div>
         </div>
         <div class="fleet-step__tip fleet-step__tip--inline">
-          <i class="el-icon-info" /> 司机可选绑定上面已添加的车辆（可空、可多选）。
+          <i class="el-icon-info" /> 司机可选绑定上面已添加的车辆（可空、可多选）；新增司机初始密码统一为 <strong>123456</strong>，司机可在小程序用「账号+密码」登录后自行使用。
         </div>
         <div class="fleet-step__rows">
           <div v-for="(row, index) in driverRows" :key="'driver-' + index" class="fleet-step__row">
