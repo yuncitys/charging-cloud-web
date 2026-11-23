@@ -21,7 +21,7 @@
 				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="addData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
-				<el-form-item :label="'归属租户'" prop="tenantId">
+				<el-form-item v-if="showTenantSelect" :label="'归属租户'" prop="tenantId">
 					<el-select v-model="addData.tenantId" class="filter-item" placeholder="请选择归属租户" filterable clearable style="width: 100%;">
 						<el-option v-for="item in tenantList" :key="item.operatorId || item.id" :label="item.name" :value="item.operatorId || item.id" />
 					</el-select>
@@ -156,8 +156,13 @@
 						trigger: 'blur'
 					}],
 					tenantId: [{
-						required: true,
-						message: '请选择归属租户',
+						validator: (rule, value, callback) => {
+							if (this.showTenantSelect && !value) {
+								callback(new Error('请选择归属租户'))
+								return
+							}
+							callback()
+						},
 						trigger: 'change'
 					}],
 					roleId: [{
@@ -182,6 +187,13 @@
 				},
 				filteredData: [],
 			}
+		},
+		computed: {
+			// 仅平台管理员需要选择归属租户；其他角色默认用登录账号租户
+			showTenantSelect() {
+				const user = this.$store.getters.adminUser || {}
+				return Number(user.roleType) === 1
+			},
 		},
 		filters: {
 			formatDate: function(time) {
@@ -312,8 +324,10 @@
 			getTenantList() {
 				getOperator().then(res => {
 					let list = (res && res.code == 200) ? (res.data || []) : []
+					// 仅平台管理员下拉展示；已登录租户若不在列表中补一条可读选项
 					const tid = this.loginTenantId()
-					if (tid && !list.some(t => String(t.operatorId || t.id) === tid)) {
+					if (this.showTenantSelect && tid && tid !== '0'
+						&& !list.some(t => String(t.operatorId || t.id) === tid)) {
 						list = [{ name: `当前租户（${tid}）`, operatorId: tid, id: tid }].concat(list)
 					}
 					this.tenantList = list
@@ -351,14 +365,19 @@
 				this.syncRoleTypeRadioOptions()
 				this.showAdd = true
 				this.getTenantList()
-				// 默认归属租户 = 当前登录账号租户（客户机构管理员等场景与后台添加账号保持一致）
+				// 归属租户：平台管理员自行选择；其他角色固定为当前登录账号租户
 				const tid = this.loginTenantId()
-				if (tid && !this.addData.tenantId) {
+				if (!this.showTenantSelect) {
+					this.addData.tenantId = tid || ''
+				} else if (tid && tid !== '0' && !this.addData.tenantId) {
 					this.addData.tenantId = tid
 				}
 			},
 			onaddData(formName) {
 				let addData = JSON.parse(JSON.stringify(this.addData))
+				if (!this.showTenantSelect) {
+					addData.tenantId = this.loginTenantId() || addData.tenantId
+				}
 				if (addData.roleType === 5) {
 					if (!addData.orgId) {
 						this.$message.warning('请选择客户机构')

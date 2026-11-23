@@ -4,7 +4,7 @@
 			@click="showDidlaoEditData()" size="mini"
 			v-if="btnAuthen.permsVerifAuthention(':permission:role:edit')">编辑
 		</el-button>
-		<el-drawer :visible.sync="showEdit" title="编辑角色" size="640px" direction="rtl"
+		<el-drawer :visible.sync="showEdit" title="编辑角色" size="720px" direction="rtl"
 			:wrapper-closable="false" append-to-body @close="showEdit = false" @opened="syncRoleTypeRadioOptions">
 			<div class="drawer-body">
 			<el-form ref="editData" :model="editData" label-position="left" label-width="100px"
@@ -258,8 +258,11 @@
 	align-items: center;
 }
 ::v-deep .el-radio-group .el-radio {
-	margin-right: 16px;
+	margin-right: 14px;
 	white-space: nowrap;
+}
+::v-deep .el-radio-group .el-radio__label {
+	padding-left: 8px;
 }
 .menu-tree-node {
 	display: inline-flex;
