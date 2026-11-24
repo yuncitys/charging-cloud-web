@@ -35,36 +35,24 @@
         <el-table-column prop="createTime" label="创建时间" align="center" width="160">
           <template slot-scope="scope"><span>{{ scope.row.createTime | formatDate }}</span></template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="420" fixed="right">
+        <el-table-column label="操作" align="center" width="170" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
-              <el-button v-if="canDetail" type="primary" size="mini" plain @click="openDetail(scope.row)">详情</el-button>
-              <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
-              <el-button
-                v-if="canMoveIn && canMoveMembers(scope.row)"
-                type="primary"
-                size="mini"
-                @click="openMoveDrawer(scope.row, 'in')"
-              >迁入</el-button>
-              <el-button
-                v-if="canMoveOut && canMoveMembers(scope.row)"
-                type="primary"
-                size="mini"
-                @click="openMoveDrawer(scope.row, 'out')"
-              >迁出</el-button>
-              <el-button
-                v-if="canLabelStatus && scope.row.labelStatus === '1'"
-                type="primary"
-                size="mini"
-                @click="handleToggleStatus(scope.row, '0')"
-              >启用</el-button>
-              <el-button
-                v-else-if="canLabelStatus"
-                type="warning"
-                size="mini"
-                @click="handleToggleStatus(scope.row, '1')"
-              >停用</el-button>
-              <el-button v-if="canDelete" type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button v-if="canDetail" type="primary" size="mini" @click="openDetail(scope.row)">详情</el-button>
+              <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+                <el-button type="primary" size="mini">
+                  更多<i class="el-icon-arrow-down el-icon--right" />
+                </el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item v-if="canUpdate" command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item v-if="canMoveIn && canMoveMembers(scope.row)" command="moveIn" divided>迁入</el-dropdown-item>
+                  <el-dropdown-item v-if="canMoveOut && canMoveMembers(scope.row)" command="moveOut">迁出</el-dropdown-item>
+                  <el-dropdown-item v-if="canLabelStatus" command="toggleStatus" divided>
+                    {{ scope.row.labelStatus === '1' ? '启用' : '停用' }}
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="canDelete" command="delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
             </div>
           </template>
         </el-table-column>
@@ -148,6 +136,27 @@ export default {
     this.getList()
   },
   methods: {
+    hasMoreActions(row) {
+      if (!row) return false
+      return this.canUpdate ||
+        (this.canMoveIn && this.canMoveMembers(row)) ||
+        (this.canMoveOut && this.canMoveMembers(row)) ||
+        this.canLabelStatus ||
+        this.canDelete
+    },
+    handleMoreCommand(cmd, row) {
+      if (cmd === 'edit') {
+        this.openDrawer(row)
+      } else if (cmd === 'moveIn') {
+        this.openMoveDrawer(row, 'in')
+      } else if (cmd === 'moveOut') {
+        this.openMoveDrawer(row, 'out')
+      } else if (cmd === 'toggleStatus') {
+        this.handleToggleStatus(row, row.labelStatus === '1' ? '0' : '1')
+      } else if (cmd === 'delete') {
+        this.handleDelete(row)
+      }
+    },
     openDetail(row) {
       this.detailGroup = row
       this.detailVisible = true
