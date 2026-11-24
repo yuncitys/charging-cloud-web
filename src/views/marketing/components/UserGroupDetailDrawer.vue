@@ -3,7 +3,7 @@
     title="用户分组详情"
     :visible.sync="visibleSync"
     direction="rtl"
-    size="820px"
+    size="960px"
     :wrapper-closable="false"
     append-to-body
     custom-class="marketing-activity-drawer"
@@ -25,7 +25,7 @@
 
       <div class="group-detail__toolbar">
         <span class="group-detail__title">分组内用户（{{ total }}）</span>
-        <div>
+        <div class="group-detail__search">
           <el-input
             v-model="query.keyword"
             size="small"
@@ -169,6 +169,11 @@ export default {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 10px;
+}
+.group-detail__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .group-detail__title {
   font-size: 14px;
