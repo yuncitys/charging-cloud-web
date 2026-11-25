@@ -1,0 +1,98 @@
+import request from '@/utils/request'
+
+// 车队汇总（区间，分页）
+export function getFleetStatPage(data) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/page',
+    method: 'post',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    data
+  })
+}
+
+// 日趋势
+export function getFleetStatTrend(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/trend',
+    method: 'get',
+    params
+  })
+}
+
+// 车辆明细（区间，分页）
+export function getFleetCarStatPage(data) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/carPage',
+    method: 'post',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    data
+  })
+}
+
+// 车辆 TOP
+export function getFleetCarStatRank(data) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/carRank',
+    method: 'post',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    data
+  })
+}
+
+// 工作台：车队充电监控（拒绝率 / 停充次数 / 触顶 TOP5）
+export function getFleetMonitorOverview(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/monitor/overview',
+    method: 'get',
+    params
+  })
+}
+
+// 手工重算车队统计（运维）
+export function syncFleetStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/sync',
+    method: 'post',
+    params
+  })
+}
+
+// 司机维度明细（分页）
+export function getFleetDriverStatPage(data) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/driverPage',
+    method: 'post',
+    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+    data
+  })
+}
+
+// 导出司机明细
+export function exportFleetDriverStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/driverExport',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+// 导出车队汇总
+export function exportFleetStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/export',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}
+
+// 导出车辆明细
+export function exportFleetCarStat(params) {
+  return request({
+    url: '/api/web/chargingCustomer/fleet/stat/carExport',
+    method: 'get',
+    params,
+    responseType: 'blob'
+  })
+}

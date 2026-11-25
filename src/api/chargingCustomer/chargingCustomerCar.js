@@ -31,6 +31,17 @@ export function addChargingCustomerCar(data) {
   })
 }
 
+export function batchAddChargingCustomerCar(data) {
+  return request({
+    url: '/api/web/chargingCustomer/car/batchAdd',
+    method: 'post',
+    headers: {
+      'Content-Type': 'application/json; charset=UTF-8'
+    },
+    data
+  })
+}
+
 export function updateChargingCustomerCar(data) {
   return request({
     url: '/api/web/chargingCustomer/car/update',

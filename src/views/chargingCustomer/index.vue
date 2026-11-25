@@ -52,55 +52,115 @@
       append-to-body
     >
       <div class="drawer-body">
-        <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
-          <el-form-item label="客户名称" prop="name">
-            <el-input v-model="form.name" :disabled="isDetail" placeholder="请输入客户名称" />
-          </el-form-item>
-          <el-form-item label="公司名称" prop="companyName">
-            <el-input v-model="form.companyName" :disabled="isDetail" placeholder="请输入公司名称" />
-          </el-form-item>
-          <el-form-item label="社会信用代码" prop="socialCreditCode">
-            <el-input
-              v-model="form.socialCreditCode"
-              :disabled="isDetail || drawerMode === 'edit'"
-              placeholder="请输入统一社会信用代码"
-            />
-          </el-form-item>
-          <el-form-item label="管理员" prop="manageName">
-            <el-input v-model="form.manageName" :disabled="isDetail" placeholder="请输入管理员姓名" />
-          </el-form-item>
-          <el-form-item label="联系方式" prop="contactInfo">
-            <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
-          </el-form-item>
-          <el-form-item label="机构类型" prop="orgType">
-            <el-radio-group v-model="form.orgType" :disabled="isDetail">
-              <el-radio :label="1">客户机构</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="电站维度">
-            <el-radio-group v-model="form.stationScopeType" :disabled="true">
-              <el-radio :label="2">按电站</el-radio>
-            </el-radio-group>
-          </el-form-item>
-          <el-form-item label="可用站点" prop="dataId">
-            <el-input v-model="searchKey" placeholder="输入关键字过滤站点" clearable class="station-search" :disabled="isDetail" />
-            <div :class="['station-tree-wrap', { 'is-disabled': isDetail }]">
-              <el-tree
-                ref="stationTree"
-                :data="stationTreeData"
-                node-key="id"
-                show-checkbox
-                :props="treeProps"
-                :filter-node-method="filterTreeNode"
-                @check-change="onTreeCheck"
-              />
+        <el-steps v-if="drawerMode === 'create'" :active="createStep" finish-status="success" simple class="customer-create-steps">
+          <el-step title="客户" description="基本信息与站点" />
+          <el-step title="车队" description="组织分组" />
+          <el-step title="车辆与司机" description="先车后人，司机可绑定车辆" />
+        </el-steps>
+
+        <el-form v-show="drawerMode !== 'create' || createStep === 0" ref="formRef" :model="form" :rules="rules" label-width="120px">
+          <div class="create-section">
+            <div class="create-section__title"><i class="el-icon-office-building" /> 基本信息</div>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="客户名称" prop="name">
+                  <el-input v-model="form.name" :disabled="isDetail" placeholder="请输入客户名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="公司名称" prop="companyName">
+                  <el-input v-model="form.companyName" :disabled="isDetail" placeholder="请输入公司名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="社会信用代码" prop="socialCreditCode">
+                  <el-input
+                    v-model="form.socialCreditCode"
+                    :disabled="isDetail || drawerMode === 'edit'"
+                    placeholder="请输入统一社会信用代码"
+                  />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="管理员" prop="manageName">
+                  <el-input v-model="form.manageName" :disabled="isDetail" placeholder="请输入管理员姓名" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="联系方式" prop="contactInfo">
+                  <el-input v-model="form.contactInfo" :disabled="isDetail" placeholder="请输入联系方式" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div v-if="drawerMode === 'create'" class="create-section">
+            <div class="create-section__title">
+              <i class="el-icon-user" /> 自助后台账号
+              <span class="create-section__desc">可选：开通后客户可登录后台，只读查看本机构车队、车辆、司机、报表、账单与对账</span>
             </div>
-          </el-form-item>
+            <el-row :gutter="16">
+              <el-col :span="12">
+                <el-form-item label="登录账号" prop="adminAccount">
+                  <el-input v-model="adminAccountForm.account" maxlength="20" placeholder="留空则不开通，至少 4 位" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="初始密码" prop="adminPassword">
+                  <el-input v-model="adminAccountForm.password" maxlength="20" show-password placeholder="至少 6 位" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="账号姓名">
+                  <el-input v-model="adminAccountForm.fullname" maxlength="20" placeholder="默认取客户名称" />
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="手机号">
+                  <el-input v-model="adminAccountForm.phone" maxlength="11" placeholder="选填" />
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </div>
+
+          <div class="create-section">
+            <div class="create-section__title">
+              <i class="el-icon-location-outline" /> 站点配置
+              <span class="create-section__desc">客户司机仅能在勾选的站点使用企业钱包充电</span>
+            </div>
+            <el-form-item label="站点配置" prop="dataId">
+              <el-input v-model="searchKey" placeholder="输入关键字过滤站点" clearable class="station-search" :disabled="isDetail" />
+              <div :class="['station-tree-wrap', { 'is-disabled': isDetail }]">
+                <el-tree
+                  ref="stationTree"
+                  :data="stationTreeData"
+                  node-key="id"
+                  show-checkbox
+                  :props="treeProps"
+                  :filter-node-method="filterTreeNode"
+                  @check-change="onTreeCheck"
+                />
+              </div>
+            </el-form-item>
+          </div>
         </el-form>
+
+        <fleet-init-steps
+          ref="fleetSteps"
+          v-if="drawerMode === 'create' && createStep > 0"
+          :customer="createdCustomer"
+          :step="createStep - 1"
+        />
       </div>
       <div class="drawer-footer">
+        <span v-if="drawerMode === 'create'" class="drawer-step-hint">第 {{ createStep + 1 }} 步 / 共 3 步</span>
         <el-button @click="drawerVisible = false">取消</el-button>
-        <el-button v-if="!isDetail && canSaveCustomer" type="primary" @click="submit">保存</el-button>
+        <template v-if="drawerMode === 'create'">
+          <el-button v-if="createStep > 0" @click="createStep -= 1">上一步</el-button>
+          <el-button v-if="createStep < 2" type="primary" :loading="saving" @click="handleCreateNext">下一步</el-button>
+          <el-button v-else type="primary" @click="handleCreateFinish">完成</el-button>
+        </template>
+        <el-button v-else-if="!isDetail && canSaveCustomer" type="primary" @click="submit">保存</el-button>
       </div>
     </el-drawer>
 
@@ -276,14 +336,21 @@
           <el-form-item label="选择对象">
             <div class="allocation-user-panel">
               <div class="allocation-user-toolbar">
-                <el-checkbox :value="allocationAllChecked" @change="toggleSelectAllAllocationUsers">全选</el-checkbox>
-                <el-input v-model="allocationUserKeyword" placeholder="请输入关键字进行过滤" clearable class="allocation-user-search" />
+                <el-button size="mini" @click="checkAllAllocationTree(true)">全选</el-button>
+                <el-button size="mini" @click="checkAllAllocationTree(false)">清空</el-button>
+                <el-input v-model="allocationUserKeyword" placeholder="请输入账号/车队进行过滤" clearable class="allocation-user-search" />
               </div>
-              <el-checkbox-group v-model="allocationAdjustForm.targetIds" class="allocation-user-list">
-                <el-checkbox v-for="item in filteredAllocationUsers" :key="item.id" :label="item.id" class="allocation-user-item">
-                  {{ item.userAccount }}
-                </el-checkbox>
-              </el-checkbox-group>
+              <el-tree
+                ref="allocationTree"
+                :data="allocationTree"
+                show-checkbox
+                node-key="key"
+                default-expand-all
+                :filter-node-method="filterAllocationNode"
+                :props="{ label: 'label', children: 'children' }"
+                class="allocation-fleet-tree"
+                @check="syncAllocationSelection"
+              />
             </div>
           </el-form-item>
           <el-form-item label="备注">
@@ -297,12 +364,14 @@
       </div>
     </el-drawer>
     <downloadProgress ref="downloadProgress" />
+
   </div>
 </template>
 
 <script>
 import { parseTime } from '@/utils/index'
 import { getChargeStationTreeByMerchant } from '@/api/netWorkDot/netWorkDotList'
+import { createCustomerAdminAccount } from '@/api/enterpriseFleet/customerAccount'
 import {
   addChargingCustomer,
   adjustChargingCustomerAllocation,
@@ -316,16 +385,19 @@ import {
   updateChargingCustomer
 } from '@/api/chargingCustomer/index'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
+import FleetInitSteps from './components/FleetInitSteps.vue'
 import organizationImg from '@/assets/charging-customer/organization.png'
 import walletImg from '@/assets/charging-customer/wallet.png'
 
 export default {
   name: 'ChargingCustomer',
   components: {
-    downloadProgress
+    downloadProgress,
+    FleetInitSteps
   },
   data() {
     return {
+      adminAccountForm: { account: '', password: '', fullname: '', phone: '' },
       loading: false,
       total: 0,
       list: [],
@@ -339,6 +411,9 @@ export default {
       },
       drawerVisible: false,
       drawerMode: 'create',
+      createStep: 0,
+      createdCustomer: null,
+      saving: false,
       form: {
         id: null,
         name: '',
@@ -356,7 +431,23 @@ export default {
         socialCreditCode: [{ required: true, message: '请输入统一社会信用代码', trigger: 'blur' }],
         manageName: [{ required: true, message: '请输入管理员', trigger: 'blur' }],
         contactInfo: [{ required: true, message: '请输入联系方式', trigger: 'blur' }],
-        dataId: [{ required: true, message: '请选择站点', trigger: 'change' }]
+        dataId: [{ required: true, message: '请选择站点', trigger: 'change' }],
+        // 自助后台账号：留空不开通；填了账号则必须填 6 位以上密码
+        adminAccount: [{
+          validator: (rule, value, callback) => {
+            const f = this.adminAccountForm || {}
+            if (f.account && String(f.account).trim().length < 4) {
+              callback(new Error('登录账号至少 4 位'))
+              return
+            }
+            if (f.account && (!f.password || String(f.password).length < 6)) {
+              callback(new Error('请填写初始密码（至少 6 位）'))
+              return
+            }
+            callback()
+          },
+          trigger: 'blur'
+        }]
       },
       stationTreeData: [],
       treeProps: { children: 'children', label: 'label' },
@@ -395,6 +486,8 @@ export default {
         remark: ''
       },
       allocationUsers: [],
+      allocationGroups: [],
+      allocationTree: [],
       allocationUserKeyword: '',
       flowTypeOptions: [],
       organizationImg,
@@ -421,16 +514,6 @@ export default {
         ? '正数：每人增加；负数：每人扣回（不足则扣至0）'
         : '绝对值为目标余额；正数分配补齐，负数扣回补齐'
     },
-    filteredAllocationUsers() {
-      const keyword = String(this.allocationUserKeyword || '').trim().toLowerCase()
-      if (!keyword) return this.allocationUsers
-      return this.allocationUsers.filter(item => String(item.userAccount || '').toLowerCase().indexOf(keyword) > -1)
-    },
-    allocationAllChecked() {
-      if (!this.filteredAllocationUsers.length) return false
-      const selectedSet = new Set(this.allocationAdjustForm.targetIds || [])
-      return this.filteredAllocationUsers.every(item => selectedSet.has(item.id))
-    },
     canSaveCustomer() {
       if (this.drawerMode === 'edit') return this.hasPerm(':charging:customer:edit')
       if (this.drawerMode === 'create') return this.hasPerm(':charging:customer:add')
@@ -438,6 +521,12 @@ export default {
     }
   },
   watch: {
+    allocationUserKeyword(val) {
+      this.$nextTick(() => {
+        const tree = this.$refs.allocationTree
+        if (tree) tree.filter(String(val || '').trim())
+      })
+    },
     searchKey(val) {
       if (this.$refs.stationTree) this.$refs.stationTree.filter(val)
     }
@@ -458,18 +547,37 @@ export default {
     hasPerm(permission) {
       return !!(this.btnAuthen && this.btnAuthen.permsVerifAuthention(permission))
     },
-    formatOrgFlowType(code) {
-      return this.$dict.formatDictLabel('finance_org_flow_type', code)
-    },
     filterTreeNode(value, data) {
       if (!value) return true
       return String(data.label || '').indexOf(value) > -1
+    },
+    formatOrgFlowType(code) {
+      return this.$dict.formatDictLabel('finance_org_flow_type', code)
     },
     onTreeCheck() {
       if (this.isDetail) return
       if (!this.$refs.stationTree) return
       const keys = this.$refs.stationTree.getCheckedKeys()
       this.form.dataId = keys.filter(k => typeof k === 'number' || /^\d+$/.test(String(k))).map(v => Number(v))
+    },
+    // 客户创建完成后按需开通自助后台账号（失败不影响主流程）
+    createAdminAccountIfNeeded(orgId) {
+      const form = this.adminAccountForm || {}
+      if (!form.account) return Promise.resolve()
+      return createCustomerAdminAccount(orgId, {
+        account: form.account.trim(),
+        password: form.password,
+        fullname: form.fullname,
+        phone: form.phone
+      }).then(res => {
+        if (res.code === 200) {
+          this.$message.success('自助后台账号已开通')
+        } else {
+          this.$message.warning(`客户已创建，但账号开通失败：${res.msg || '请重试'}`)
+        }
+      }).catch(() => {
+        this.$message.warning('客户已创建，但账号开通失败，请稍后重试')
+      })
     },
     loadStationTree() {
       getChargeStationTreeByMerchant({}).then(res => {
@@ -538,6 +646,9 @@ export default {
       if (mode === 'detail' && !this.hasPerm(':charging:customer:detail')) return
       this.drawerMode = mode
       this.drawerVisible = true
+      this.createStep = 0
+      this.createdCustomer = null
+      this.adminAccountForm = { account: '', password: '', fullname: '', phone: '' }
       this.resetForm()
       if (!row) return
       getChargingCustomerDetail(row.id).then(res => {
@@ -567,6 +678,53 @@ export default {
           }
         })
       })
+    },
+    // 新增客户向导：第 1 步校验并保存客户，之后进入车队/司机/车辆
+    handleCreateNext() {
+      if (this.createStep > 0) {
+        this.createStep += 1
+        return
+      }
+      if (this.createdCustomer && this.createdCustomer.id) {
+        this.createStep = 1
+        return
+      }
+      this.$refs.formRef.validate(valid => {
+        if (!valid) return
+        const req = Object.assign({}, this.form, { stationScopeType: 2 })
+        this.saving = true
+        addChargingCustomer(req).then(res => {
+          this.saving = false
+          if (res.code === 200) {
+            this.$message.success('客户已保存，请继续配置车队/司机/车辆')
+            const created = res.data || {}
+            this.createdCustomer = { id: created.id, name: created.name || this.form.name }
+            this.createAdminAccountIfNeeded(created.id)
+            this.createStep = 1
+            this.loadList()
+          } else {
+            this.$message.error(res.msg || '保存失败')
+          }
+        }).catch(() => { this.saving = false })
+      })
+    },
+    handleCreateFinish() {
+      const steps = this.$refs.fleetSteps
+      const close = () => {
+        this.drawerVisible = false
+        this.createStep = 0
+        this.createdCustomer = null
+        this.loadList()
+      }
+      if (steps && typeof steps.hasUnsaved === 'function' && steps.hasUnsaved()) {
+        this.$confirm('还有未保存的司机/车辆输入，完成后将丢失，确认完成？', '提示', {
+          type: 'warning',
+          confirmButtonText: '仍要完成',
+          cancelButtonText: '继续录入'
+        }).then(close).catch(() => {})
+        return
+      }
+      close()
     },
     openFinance(row) {
       if (!this.hasPerm(':charging:customer:finance')) return
@@ -677,28 +835,63 @@ export default {
       this.allocationAdjustForm = { operationObject: 'CHARGING_USER', operationMode: 'EQUAL', amount: '', targetIds: [], remark: '' }
       this.allocationUserKeyword = ''
       this.allocationUsers = []
+      this.allocationTree = []
+      this.allocationGroups = []
       this.loadAllocationUsers()
       this.allocationAdjustDrawerVisible = true
     },
     loadAllocationUsers() {
       if (!this.financeCustomer || !this.financeCustomer.id) return
+      this.allocationTree = []
+      this.allocationGroups = []
+      this.allocationUsers = []
       getChargingCustomerAllocationUsers(this.financeCustomer.id).then(res => {
-        if (res.code === 200) {
-          this.allocationUsers = res.data || []
-        } else {
+        if (res.code !== 200) {
           this.$message.error(res.msg || '查询充电用户失败')
+          return
         }
+        const data = res.data || {}
+        // 兼容：后端返回 { groups, users } 或历史平铺数组
+        const groups = Array.isArray(data) ? [{ fleetName: '未编队', status: 1, users: data }] : (data.groups || [])
+        const flat = Array.isArray(data) ? data : (data.users || [])
+        this.allocationGroups = groups
+        this.allocationUsers = flat
+        this.allocationTree = groups.map(group => {
+          const fleetId = group.fleetId
+          const users = group.users || []
+          return {
+            key: 'fleet-' + (fleetId == null ? 'unassigned' : fleetId),
+            label: `${group.fleetName || '未编队'}（${users.length}人）${group.status === 0 ? ' [已停用]' : ''}`,
+            disabled: group.status === 0,
+            children: users.map(user => ({
+              key: 'user-' + user.id,
+              label: `${user.userAccount || ''}（余额 ${user.cash == null ? 0 : user.cash} 元）`,
+              driverId: user.id
+            }))
+          }
+        })
+        this.$nextTick(() => {
+          this.checkAllAllocationTree(false)
+        })
       })
     },
-    toggleSelectAllAllocationUsers(checked) {
-      const filteredIds = this.filteredAllocationUsers.map(item => item.id)
-      const selected = new Set(this.allocationAdjustForm.targetIds || [])
-      if (checked) {
-        filteredIds.forEach(id => selected.add(id))
-      } else {
-        filteredIds.forEach(id => selected.delete(id))
-      }
-      this.allocationAdjustForm.targetIds = Array.from(selected)
+    filterAllocationNode(value, data) {
+      if (!value) return true
+      return String(data.label || '').toLowerCase().indexOf(String(value).toLowerCase()) > -1
+    },
+    checkAllAllocationTree(checked) {
+      const tree = this.$refs.allocationTree
+      if (!tree) return
+      tree.setCheckedKeys(checked ? this.allocationTree.filter(node => !node.disabled).map(node => node.key) : [])
+      this.syncAllocationSelection()
+    },
+    syncAllocationSelection() {
+      const tree = this.$refs.allocationTree
+      if (!tree) return
+      const ids = tree.getCheckedNodes()
+        .filter(node => node.driverId != null)
+        .map(node => node.driverId)
+      this.allocationAdjustForm.targetIds = ids
     },
     submitAllocationAdjust() {
       const raw = this.allocationAdjustForm.amount
@@ -993,5 +1186,49 @@ export default {
 .allocation-user-item ::v-deep .el-checkbox__label {
   line-height: 1.35;
   padding-left: 6px;
+}
+
+.allocation-fleet-tree {
+  max-height: 320px;
+  overflow: auto;
+  width: 100%;
+}
+
+.customer-create-steps {
+  margin-bottom: 16px;
+}
+
+.create-section {
+  margin-bottom: 8px;
+}
+.create-section + .create-section {
+  border-top: 1px dashed #ebeef5;
+  padding-top: 12px;
+}
+.create-section__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #303133;
+  margin-bottom: 12px;
+}
+.create-section__title i {
+  color: #409eff;
+  margin-right: 4px;
+}
+.create-section__desc {
+  margin-left: 8px;
+  font-weight: 400;
+  color: #909399;
+  font-size: 12px;
+}
+.drawer-step-hint {
+  margin-right: auto;
+  color: #909399;
+  font-size: 12px;
+}
+.drawer-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

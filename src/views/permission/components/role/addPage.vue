@@ -3,10 +3,11 @@
 		<el-button style="margin-right: 20px ;" type="primary" @click="onShowAdd"
 			v-if="btnAuthen.permsVerifAuthention(':permission:role:add')">新增角色</el-button>
 		
-		<el-dialog :visible.sync="showAdd" title="新增角色" @close="showAdd = false" @opened="syncRoleTypeRadioOptions"
-			:append-to-body="true">
+		<el-drawer :visible.sync="showAdd" title="新增角色" size="720px" direction="rtl"
+			:wrapper-closable="false" append-to-body @close="showAdd = false" @opened="syncRoleTypeRadioOptions">
+			<div class="drawer-body">
 			<el-form ref="addData" :model="addData" label-position="left" label-width="100px"
-				style="width: 600px; margin-left:50px;" :rules="rules">
+				style="width: 100%;" :rules="rules">
 				<el-form-item :label="'角色名称'" prop="roleName">
 					<el-input v-model="addData.roleName" placeholder="请输入角色名称" clearable />
 				</el-form-item>
@@ -37,12 +38,13 @@
 						</span>
 					</el-tree>
 				</el-form-item>
-				<el-form-item>
-					<el-button type="primary" @click="onaddData('addData')" :loading="Loading">确定</el-button>
-					<el-button @click="showAdd = false">取消</el-button>
-				</el-form-item>
 			</el-form>
-		</el-dialog>
+			</div>
+			<div class="drawer-footer">
+				<el-button @click="showAdd = false">取消</el-button>
+				<el-button type="primary" @click="onaddData('addData')" :loading="Loading">确定</el-button>
+			</div>
+		</el-drawer>
 	</div>
 </template>
 
@@ -201,6 +203,33 @@
 </script>
 
 <style scoped>
+.drawer-body {
+	padding: 0 20px 70px;
+	overflow-y: auto;
+	height: calc(100vh - 120px);
+}
+.drawer-footer {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	padding: 12px 20px;
+	text-align: right;
+	border-top: 1px solid #ebeef5;
+	background: #fff;
+}
+::v-deep .el-radio-group {
+	display: flex;
+	flex-wrap: nowrap;
+	align-items: center;
+}
+::v-deep .el-radio-group .el-radio {
+	margin-right: 14px;
+	white-space: nowrap;
+}
+::v-deep .el-radio-group .el-radio__label {
+	padding-left: 8px;
+}
 .menu-tree-node {
 	display: inline-flex;
 	align-items: center;

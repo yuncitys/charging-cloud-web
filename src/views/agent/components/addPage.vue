@@ -7,10 +7,11 @@
 			v-if="btnAuthen.permsVerifAuthention(':sys:admin:addAdminUser')">添加账号
 		</el-button>
 		<!-- 添加代理商-->
-		<el-dialog :visible.sync="showAdd" title="添加账号" @close="showAdd = false" @opened="syncRoleTypeRadioOptions"
-			style="width: 100%;" :append-to-body="true">
+		<el-drawer :visible.sync="showAdd" title="添加账号" size="720px" direction="rtl"
+			:wrapper-closable="false" append-to-body @close="showAdd = false" @opened="syncRoleTypeRadioOptions">
+			<div class="drawer-body">
 			<el-form ref="addData" :model="addData" label-position="left" label-width="120px"
-				style="margin-left:50px;width: 650px;" :rules="rules">
+				style="width: 100%;" :rules="rules">
 				<el-form-item :label="'登录账号'" prop="adminName">
 					<el-input v-model="addData.adminName" placeholder="请输入登录账号" clearable />
 				</el-form-item>
@@ -20,7 +21,7 @@
 				<el-form-item :label="'手机号码'" prop="adminPhone">
 					<el-input v-model="addData.adminPhone" placeholder="请输入手机号" clearable />
 				</el-form-item>
-				<el-form-item :label="'归属租户'" prop="tenantId">
+				<el-form-item v-if="showTenantSelect" :label="'归属租户'" prop="tenantId">
 					<el-select v-model="addData.tenantId" class="filter-item" placeholder="请选择归属租户" filterable clearable style="width: 100%;">
 						<el-option v-for="item in tenantList" :key="item.operatorId || item.id" :label="item.name" :value="item.operatorId || item.id" />
 					</el-select>
@@ -45,21 +46,24 @@
 						<el-tree
 							ref="tree"
 							:data="filteredData"
-							show-checkbox
+							:show-checkbox="addData.roleType !== 5"
+							:highlight-current="addData.roleType === 5"
 							node-key="id"
 							:props="defaultProps"
-							:default-expand-all="false"
+							:default-expand-all="addData.roleType === 5"
 							:filter-node-method="filterNode"
 							@check-change="handleCheck"
+							@node-click="handleNodeClick"
 						></el-tree>
 					</div>
 				</el-form-item>
-				<el-form-item>
-					<el-button type="primary" @click="onaddData('addData')">确定</el-button>
-					<el-button @click="showAdd = false">取消</el-button>
-				</el-form-item>
 			</el-form>
-		</el-dialog>
+			</div>
+			<div class="drawer-footer">
+				<el-button @click="showAdd = false">取消</el-button>
+				<el-button type="primary" :loading="saving" @click="onaddData('addData')">确定</el-button>
+			</div>
+		</el-drawer>
 	</div>
 </template>
 
@@ -67,6 +71,9 @@
 	import {
 		addAdminUser
 	} from '@/api/agent/agentList.js'
+	import {
+		getChargingOrganizationTree
+	} from '@/api/chargingCustomer/index.js'
 	import {
 		findRoleAllList,
 	} from '@/api/permission/role.js'
@@ -117,6 +124,7 @@
 			return {
 				roleTypeRadioOptions: [],
 				showAdd: false,
+				saving: false,
 				showRole: true,
 				addData: {
 					adminName: '',
@@ -125,6 +133,7 @@
 					tenantId: '',
 					roleId: '',
 					roleType: '',
+					orgId: null,
 					dataIdList: [],
 				},
 				rules: {
@@ -147,8 +156,13 @@
 						trigger: 'blur'
 					}],
 					tenantId: [{
-						required: true,
-						message: '请选择归属租户',
+						validator: (rule, value, callback) => {
+							if (this.showTenantSelect && !value) {
+								callback(new Error('请选择归属租户'))
+								return
+							}
+							callback()
+						},
 						trigger: 'change'
 					}],
 					roleId: [{
@@ -173,6 +187,13 @@
 				},
 				filteredData: [],
 			}
+		},
+		computed: {
+			// 仅平台管理员需要选择归属租户；其他角色默认用登录账号租户
+			showTenantSelect() {
+				const user = this.$store.getters.adminUser || {}
+				return Number(user.roleType) === 1
+			},
 		},
 		filters: {
 			formatDate: function(time) {
@@ -208,6 +229,23 @@
 				console.log("handleCheck selected:",selected)
 				this.addData.dataIdList = this.filterMerchantIds(selected);
             },
+			handleNodeClick(data) {
+				if (this.addData.roleType === 5 && data && data.id != null) {
+					this.addData.orgId = Number(data.id)
+				}
+			},
+			getCustomerOrgTree(){
+				getChargingOrganizationTree({}).then(res => {
+					if (res.code != 200) return
+					const groups = res.data || {}
+					const list = groups['客户机构'] || []
+					this.filteredData = list.map(o => ({
+						id: o.id,
+						label: o.name,
+						type: 'customer'
+					}))
+				})
+			},
 			initTreeData(roleType){
 				switch (roleType) {
 					case 2:
@@ -221,6 +259,11 @@
 					case 4:
 						this.label = '选择站点'
 						this.getChargeStation()
+						break
+					case 5:
+						this.label = '选择客户机构'
+						this.addData.orgId = null
+						this.getCustomerOrgTree()
 						break
 					default:
 						break;
@@ -280,11 +323,14 @@
 			},
 			getTenantList() {
 				getOperator().then(res => {
-					if (res && res.code == 200) {
-						this.tenantList = res.data || []
-					} else {
-						this.tenantList = []
+					let list = (res && res.code == 200) ? (res.data || []) : []
+					// 仅平台管理员下拉展示；已登录租户若不在列表中补一条可读选项
+					const tid = this.loginTenantId()
+					if (this.showTenantSelect && tid && tid !== '0'
+						&& !list.some(t => String(t.operatorId || t.id) === tid)) {
+						list = [{ name: `当前租户（${tid}）`, operatorId: tid, id: tid }].concat(list)
 					}
+					this.tenantList = list
 				}).catch(() => {
 					this.tenantList = []
 				})
@@ -302,19 +348,44 @@
 				this.showRole = false
 				this.addData.roleType = roleType
 				this.addData.roleId = ''
+				this.addData.dataIdList = []
+				this.addData.orgId = null
 				this.findRoleAllList(roleType)
 				this.initTreeData(roleType)
 			},
 			resetForm(formName) {
 				this.$refs[formName].resetFields();
 			},
+			loginTenantId() {
+				const user = this.$store.getters.adminUser || {}
+				const tid = user.tenantId != null ? String(user.tenantId) : ''
+				return tid
+			},
 			onShowAdd() {
 				this.syncRoleTypeRadioOptions()
 				this.showAdd = true
 				this.getTenantList()
+				// 归属租户：平台管理员自行选择；其他角色固定为当前登录账号租户
+				const tid = this.loginTenantId()
+				if (!this.showTenantSelect) {
+					this.addData.tenantId = tid || ''
+				} else if (tid && tid !== '0' && !this.addData.tenantId) {
+					this.addData.tenantId = tid
+				}
 			},
 			onaddData(formName) {
 				let addData = JSON.parse(JSON.stringify(this.addData))
+				if (!this.showTenantSelect) {
+					addData.tenantId = this.loginTenantId() || addData.tenantId
+				}
+				if (addData.roleType === 5) {
+					if (!addData.orgId) {
+						this.$message.warning('请选择客户机构')
+						return
+					}
+					addData.dataIdList = []
+					addData.tenantId = addData.tenantId || ''
+				}
 				this.$refs[formName].validate(valid => {
 					if (valid) {
 						console.log("通过")
@@ -352,6 +423,30 @@
 </script>
 
 <style scoped>
+  .drawer-body {
+    padding: 0 20px 70px;
+    overflow-y: auto;
+    height: calc(100vh - 120px);
+  }
+  .drawer-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 12px 20px;
+    text-align: right;
+    border-top: 1px solid #ebeef5;
+    background: #fff;
+  }
+  ::v-deep .el-radio-group {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+  ::v-deep .el-radio-group .el-radio {
+    margin-right: 16px;
+    white-space: nowrap;
+  }
  .station-select-box {
     border: 0.2px solid gray;
     padding: 10px;

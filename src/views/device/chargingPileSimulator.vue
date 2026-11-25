@@ -616,6 +616,8 @@
         	} else {
         		this.$message.error(res.msg)
         	}
+        }).catch(() => {
+          // 轮询失败（如 transport 重启中）保持静默，由 request.js 统一 toast
         })
       },
       //断开连接
@@ -630,7 +632,7 @@
         	} else {
         		this.$message.error(res.msg)
         	}
-        })
+        }).catch(() => {})
       },
       //初始化连接状态
       initConnectStatus() {
