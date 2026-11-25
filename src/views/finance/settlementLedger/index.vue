@@ -75,6 +75,11 @@
             <el-option v-for="item in settlementModeOptions" :key="item.value" :value="item.value" :label="item.label" />
           </el-select>
         </el-form-item>
+        <el-form-item label="分账方式">
+          <el-select v-model="searchForm.payoutMode" clearable placeholder="全部" style="width: 150px">
+            <el-option v-for="item in payoutModeOptions" :key="item.value" :value="item.value" :label="item.label" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="商户">
           <el-select v-model="searchForm.merchantId" clearable filterable placeholder="全部" style="width: 200px">
             <el-option v-for="m in merchantList" :key="m.id" :label="m.name" :value="m.id" />
@@ -107,6 +112,7 @@
       </el-form>
 
       <el-table
+        id="tableBox"
         v-loading="listLoading"
         :data="list"
         element-loading-text="拼命加载中......"
@@ -114,7 +120,6 @@
         highlight-current-row
         style="width: 100%;"
         align="center"
-        id="tableBox"
       >
         <el-table-column type="index" width="55" label="序号" align="center" :index="indexMethod" />
         <el-table-column label="商户" min-width="140" align="center" show-overflow-tooltip>
@@ -129,16 +134,26 @@
         <el-table-column label="结算方式" width="100" align="center">
           <template slot-scope="scope">{{ settlementModeLabel(scope.row.settlementMode) }}</template>
         </el-table-column>
+        <el-table-column label="分账方式" width="180" align="center">
+          <template slot-scope="scope">
+            <el-tag :type="payoutModeTagType(scope.row.payoutMode)" size="small">
+              {{ payoutModeLabel(scope.row.payoutMode) }}
+            </el-tag>
+            <div v-if="scope.row.payoutMode === 2" class="fund-source-tip">
+              {{ fundSourceLabel(scope.row.fundSource) }}
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column label="账期起止" min-width="200" align="center">
           <template slot-scope="scope">
             <span>{{ fmtDate(scope.row.startDate) }} ~ {{ fmtDate(scope.row.endDate) }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="120" align="center">
+        <el-table-column label="状态" width="140" align="center">
           <template slot-scope="scope">
             <el-tag
-              v-if="scope.row.status === 0 || scope.row.status === 1 || scope.row.status === 2"
-              :type="scope.row.status === 0 ? 'info' : scope.row.status === 1 ? 'warning' : 'success'"
+              v-if="scope.row.status !== null && scope.row.status !== undefined && scope.row.status !== ''"
+              :type="statusTagType(scope.row.status)"
               size="small"
             >{{ statusLabel(scope.row.status) }}</el-tag>
             <span v-else>—</span>
@@ -170,7 +185,7 @@
                 @click="openDrawer(scope.row)"
               >台账明细</el-button>
               <el-button
-                v-if="scope.row.status !== 2 && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
+                v-if="!isPeriodClosed(scope.row.status) && btnAuthen.permsVerifAuthention(':web:settlementLedger:payout:submit')"
                 size="mini"
                 type="primary"
                 icon="el-icon-s-finance"
@@ -237,8 +252,12 @@
           </el-col>
           <el-col :span="6">
             <div class="summary-card">
-              <div class="summary-label">状态</div>
+              <div class="summary-label">状态 / 分账方式</div>
               <div class="summary-value">{{ statusLabel(drawer.summary.status) }}</div>
+              <div class="fund-source-tip">
+                {{ payoutModeLabel(drawer.summary.payoutMode) }}
+                <span v-if="drawer.summary.payoutMode === 2">· {{ fundSourceLabel(drawer.summary.fundSource) }}</span>
+              </div>
             </div>
           </el-col>
         </el-row>
@@ -655,6 +674,25 @@ import SubsidyLedgerPanel from '@/views/marketing/components/SubsidyLedgerPanel'
 import { MARKETING_PERMS } from '@/views/marketing/constants/marketingPermissions'
 import { hasMarketingPerm } from '@/views/marketing/utils/marketingActivityAuth'
 
+/** 分账方式：与后端 t_settlement_period.payout_mode 对应（值少且语义固定，不走字典） */
+const PAYOUT_MODE_OPTIONS = [
+  { value: 1, label: '渠道分账' },
+  { value: 2, label: '仅记账' }
+]
+/** 状态兜底：字典 settlement_ledger_status 未配置 3 时也能正确展示 */
+const STATUS_FALLBACK = {
+  0: '待关账',
+  1: '已关账',
+  2: '已分账',
+  3: '内部结算已结清'
+}
+/** 资金归属：与后端 fund_source 对应 */
+const FUND_SOURCE_LABELS = {
+  CHANNEL: '渠道资金',
+  COMPANY_WALLET: '企业钱包',
+  INTERCONNECTION: '互联流量方'
+}
+
 export default {
   name: 'SettlementLedger',
   components: {
@@ -692,6 +730,7 @@ export default {
       },
       periodTypeOptions: [],
       settlementModeOptions: [],
+      payoutModeOptions: PAYOUT_MODE_OPTIONS,
       ledgerStatusOptions: [],
       payoutItemStatusOptions: [],
       searchForm: {
@@ -700,6 +739,7 @@ export default {
         merchantId: '',
         periodType: '',
         settlementMode: '',
+        payoutMode: '',
         status: '',
         periodKey: '',
         startDateFrom: '',
@@ -761,8 +801,8 @@ export default {
       return key ? `营销补款 — ${key}` : '营销补款'
     },
     canOpenSubsidy() {
-      return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage)
-        || hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage)
+      return hasMarketingPerm(MARKETING_PERMS.subsidyLedgerPage) ||
+        hasMarketingPerm(MARKETING_PERMS.subsidyBatchPage)
     }
   },
   created() {
@@ -915,9 +955,9 @@ export default {
     },
     hasChannelFeeDetail(ledgerRow) {
       if (!ledgerRow) return false
-      return this.splitChannelFeeTotal(ledgerRow) > 0
-        || this.splitChannelFeePayDetails(ledgerRow).length > 0
-        || this.splitChannelFeeMerchantAlloc(ledgerRow).length > 0
+      return this.splitChannelFeeTotal(ledgerRow) > 0 ||
+        this.splitChannelFeePayDetails(ledgerRow).length > 0 ||
+        this.splitChannelFeeMerchantAlloc(ledgerRow).length > 0
     },
     openChannelFeeDetailDialog(ledgerRow) {
       if (!ledgerRow) return
@@ -956,10 +996,36 @@ export default {
       const label = formatDictLabel('settlement_mode', mode)
       return label === String(mode) ? '—' : label
     },
+    payoutModeLabel(mode) {
+      if (mode === null || mode === undefined || mode === '') return '—'
+      const hit = PAYOUT_MODE_OPTIONS.find(o => o.value === Number(mode))
+      return hit ? hit.label : '—'
+    },
+    payoutModeTagType(mode) {
+      if (Number(mode) === 2) return 'warning'
+      if (Number(mode) === 1) return ''
+      return 'info'
+    },
+    fundSourceLabel(source) {
+      if (!source) return '—'
+      return FUND_SOURCE_LABELS[String(source).toUpperCase()] || String(source)
+    },
+    statusTagType(s) {
+      if (Number(s) === 0) return 'info'
+      if (Number(s) === 1) return 'warning'
+      if (Number(s) === 2) return 'success'
+      return ''
+    },
+    /** PAID(2) 与 仅记账已结清(3) 都视为已结清，不允许再提交分账 */
+    isPeriodClosed(s) {
+      const n = Number(s)
+      return n === 2 || n === 3
+    },
     statusLabel(s) {
       if (s === null || s === undefined || s === '') return '—'
       const label = formatDictLabel('settlement_ledger_status', s)
-      return label === String(s) ? '—' : label
+      if (label !== String(s)) return label
+      return STATUS_FALLBACK[Number(s)] || '—'
     },
     loadDictOptions() {
       this.$dict.getSelectorOptions('settlement_cycle_type', { numeric: true }).then(list => {
@@ -1039,6 +1105,7 @@ export default {
         merchantId: this.searchForm.merchantId === '' ? null : this.searchForm.merchantId,
         periodType: this.searchForm.periodType === '' ? null : this.searchForm.periodType,
         settlementMode: this.searchForm.settlementMode === '' ? null : this.searchForm.settlementMode,
+        payoutMode: this.searchForm.payoutMode === '' ? null : this.searchForm.payoutMode,
         status: this.searchForm.status === '' ? null : this.searchForm.status,
         periodKey: this.searchForm.periodKey || null,
         startDateFrom: this.searchForm.startDateFrom || null,
@@ -1339,13 +1406,16 @@ export default {
         this.$message.warning('仅手动结算方式账期允许提交分账')
         return
       }
+      const ledgerOnly = Number(row.payoutMode) === 2
       this.$confirm(
-        `确认对账期「${row.periodKey}」提交分账任务？任务将在后台执行，提交后可在「台账明细」-「分账执行记录」查看进度与结果。`,
-        '提交分账',
+        ledgerOnly
+          ? `账期「${row.periodKey}」为仅记账账期（${this.fundSourceLabel(row.fundSource)}），不会提交渠道分账：本期应结金额将锁定并置为「内部结算已结清」。确认结清？`
+          : `确认对账期「${row.periodKey}」提交分账任务？任务将在后台执行，提交后可在「台账明细」-「分账执行记录」查看进度与结果。`,
+        ledgerOnly ? '仅记账账期结清' : '提交分账',
         { type: 'warning' }
       ).then(() => {
         this.payoutSubmittingId = row.id
-        submitPayout({ periodId: row.id })
+        submitPayout({ periodId: row.id, payoutMode: Number(row.payoutMode) || 1 })
           .then(res => {
             if (res.code === 200) {
               this.$message.success(
@@ -1374,6 +1444,13 @@ export default {
 <style scoped>
 .settlement-ledger-page .ledger-role-tip {
   margin-bottom: 16px;
+}
+.fund-source-tip {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 400;
+  color: #909399;
+  line-height: 1.2;
 }
 .task-monitor-container {
   border: 1px solid #ebeef5;
