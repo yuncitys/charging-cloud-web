@@ -35,35 +35,24 @@
         <el-table-column prop="createTime" label="创建时间" align="center" width="160">
           <template slot-scope="scope"><span>{{ scope.row.createTime | formatDate }}</span></template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="420" fixed="right">
+        <el-table-column label="操作" align="center" width="170" fixed="right">
           <template slot-scope="scope">
             <div class="marketing-table-actions">
-              <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
-              <el-button
-                v-if="canMoveIn && canMoveMembers(scope.row)"
-                type="primary"
-                size="mini"
-                @click="openMoveDrawer(scope.row, 'in')"
-              >迁入</el-button>
-              <el-button
-                v-if="canMoveOut && canMoveMembers(scope.row)"
-                type="primary"
-                size="mini"
-                @click="openMoveDrawer(scope.row, 'out')"
-              >迁出</el-button>
-              <el-button
-                v-if="canLabelStatus && scope.row.labelStatus === '1'"
-                type="primary"
-                size="mini"
-                @click="handleToggleStatus(scope.row, '0')"
-              >启用</el-button>
-              <el-button
-                v-else-if="canLabelStatus"
-                type="warning"
-                size="mini"
-                @click="handleToggleStatus(scope.row, '1')"
-              >停用</el-button>
-              <el-button v-if="canDelete" type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
+              <el-button v-if="canDetail" type="primary" size="mini" @click="openDetail(scope.row)">详情</el-button>
+              <el-dropdown v-if="hasMoreActions(scope.row)" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+                <el-button type="primary" size="mini">
+                  更多<i class="el-icon-arrow-down el-icon--right" />
+                </el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item v-if="canUpdate" command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item v-if="canMoveIn && canMoveMembers(scope.row)" command="moveIn" divided>迁入</el-dropdown-item>
+                  <el-dropdown-item v-if="canMoveOut && canMoveMembers(scope.row)" command="moveOut">迁出</el-dropdown-item>
+                  <el-dropdown-item v-if="canLabelStatus" command="toggleStatus" divided>
+                    {{ scope.row.labelStatus === '1' ? '启用' : '停用' }}
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="canDelete" command="delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
             </div>
           </template>
         </el-table-column>
@@ -75,6 +64,11 @@
           @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </div>
+
+    <user-group-detail-drawer
+      :visible.sync="detailVisible"
+      :group="detailGroup"
+    />
 
     <user-group-form-drawer
       :visible.sync="drawerVisible"
@@ -94,6 +88,7 @@
 <script>
 import { userGroupPage, deleteUserGroup, updateUserGroupLabelStatus } from '@/api/marketing/marketing'
 import UserGroupFormDrawer from './components/UserGroupFormDrawer'
+import UserGroupDetailDrawer from './components/UserGroupDetailDrawer'
 import UserGroupMoveDrawer from './components/UserGroupMoveDrawer'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
@@ -103,7 +98,7 @@ import './styles/marketing.scss'
 
 export default {
   name: 'userGroupList',
-  components: { UserGroupFormDrawer, UserGroupMoveDrawer },
+  components: { UserGroupFormDrawer, UserGroupMoveDrawer, UserGroupDetailDrawer },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -119,6 +114,8 @@ export default {
       total: 0,
       listQuery: { page: 1, limit: 10, groupName: '' },
       drawerVisible: false,
+      detailVisible: false,
+      detailGroup: null,
       editingGroup: null,
       moveDrawerVisible: false,
       moveTarget: null,
@@ -127,6 +124,7 @@ export default {
   },
   computed: {
     canCreate() { return hasMarketingPerm(MARKETING_PERMS.userGroupCreate) },
+    canDetail() { return hasMarketingPerm(MARKETING_PERMS.userGroupDetail) },
     canUpdate() { return hasMarketingPerm(MARKETING_PERMS.userGroupUpdate) },
     canDelete() { return hasMarketingPerm(MARKETING_PERMS.userGroupDelete) },
     canMoveIn() { return hasMarketingPerm(MARKETING_PERMS.userGroupMoveIn) },
@@ -138,6 +136,31 @@ export default {
     this.getList()
   },
   methods: {
+    hasMoreActions(row) {
+      if (!row) return false
+      return this.canUpdate ||
+        (this.canMoveIn && this.canMoveMembers(row)) ||
+        (this.canMoveOut && this.canMoveMembers(row)) ||
+        this.canLabelStatus ||
+        this.canDelete
+    },
+    handleMoreCommand(cmd, row) {
+      if (cmd === 'edit') {
+        this.openDrawer(row)
+      } else if (cmd === 'moveIn') {
+        this.openMoveDrawer(row, 'in')
+      } else if (cmd === 'moveOut') {
+        this.openMoveDrawer(row, 'out')
+      } else if (cmd === 'toggleStatus') {
+        this.handleToggleStatus(row, row.labelStatus === '1' ? '0' : '1')
+      } else if (cmd === 'delete') {
+        this.handleDelete(row)
+      }
+    },
+    openDetail(row) {
+      this.detailGroup = row
+      this.detailVisible = true
+    },
     groupDimensionLabel(code) {
       return getUserGroupDimensionLabel(code)
     },

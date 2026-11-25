@@ -30,22 +30,23 @@
         <el-table-column prop="createTime" label="创建时间" align="center" width="160">
           <template slot-scope="scope"><span>{{ scope.row.createTime | formatDate }}</span></template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="260" fixed="right">
+        <el-table-column label="操作" align="center" width="170" fixed="right">
           <template slot-scope="scope">
-            <el-button v-if="canUpdate" type="primary" size="mini" @click="openDrawer(scope.row)">编辑</el-button>
-            <el-button
-              v-if="canLabelStatus && scope.row.labelStatus === '1'"
-              type="primary"
-              size="mini"
-              @click="handleToggleStatus(scope.row, '0')"
-            >启用</el-button>
-            <el-button
-              v-else-if="canLabelStatus"
-              type="warning"
-              size="mini"
-              @click="handleToggleStatus(scope.row, '1')"
-            >停用</el-button>
-            <el-button v-if="canDelete" type="danger" size="mini" @click="handleDelete(scope.row)">删除</el-button>
+            <div class="marketing-table-actions">
+              <el-button v-if="canDetail" type="primary" size="mini" @click="openDetail(scope.row)">详情</el-button>
+              <el-dropdown v-if="hasMoreActions" trigger="click" @command="(cmd) => handleMoreCommand(cmd, scope.row)">
+                <el-button type="primary" size="mini">
+                  更多<i class="el-icon-arrow-down el-icon--right" />
+                </el-button>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item v-if="canUpdate" command="edit">编辑</el-dropdown-item>
+                  <el-dropdown-item v-if="canLabelStatus" command="toggleStatus" divided>
+                    {{ scope.row.labelStatus === '1' ? '启用' : '停用' }}
+                  </el-dropdown-item>
+                  <el-dropdown-item v-if="canDelete" command="delete" divided>删除</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -56,6 +57,11 @@
           @size-change="handleSizeChange" @current-change="handleCurrentChange" />
       </div>
     </div>
+
+    <station-group-detail-drawer
+      :visible.sync="detailVisible"
+      :group="detailGroup"
+    />
 
     <station-group-form-drawer
       :visible.sync="drawerVisible"
@@ -68,6 +74,7 @@
 <script>
 import { stationGroupPage, deleteStationGroup, updateStationGroupLabelStatus } from '@/api/marketing/marketing'
 import StationGroupFormDrawer from './components/StationGroupFormDrawer'
+import StationGroupDetailDrawer from './components/StationGroupDetailDrawer'
 import { MARKETING_PERMS } from './constants/marketingPermissions'
 import { hasMarketingPerm } from './utils/marketingActivityAuth'
 import { parseTime } from '@/utils/index'
@@ -75,7 +82,7 @@ import './styles/marketing.scss'
 
 export default {
   name: 'stationGroupList',
-  components: { StationGroupFormDrawer },
+  components: { StationGroupFormDrawer, StationGroupDetailDrawer },
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -91,11 +98,15 @@ export default {
       total: 0,
       listQuery: { page: 1, limit: 10, groupName: '' },
       drawerVisible: false,
+      detailVisible: false,
+      detailGroup: null,
       editingGroup: null
     }
   },
   computed: {
     canCreate() { return hasMarketingPerm(MARKETING_PERMS.stationGroupCreate) },
+    canDetail() { return hasMarketingPerm(MARKETING_PERMS.stationGroupDetail) },
+    hasMoreActions() { return this.canUpdate || this.canLabelStatus || this.canDelete },
     canUpdate() { return hasMarketingPerm(MARKETING_PERMS.stationGroupUpdate) },
     canDelete() { return hasMarketingPerm(MARKETING_PERMS.stationGroupDelete) },
     canLabelStatus() { return hasMarketingPerm(MARKETING_PERMS.stationGroupLabelStatus) }
@@ -104,6 +115,19 @@ export default {
     this.getList()
   },
   methods: {
+    handleMoreCommand(cmd, row) {
+      if (cmd === 'edit') {
+        this.openDrawer(row)
+      } else if (cmd === 'toggleStatus') {
+        this.handleToggleStatus(row, row.labelStatus === '1' ? '0' : '1')
+      } else if (cmd === 'delete') {
+        this.handleDelete(row)
+      }
+    },
+    openDetail(row) {
+      this.detailGroup = row
+      this.detailVisible = true
+    },
     getList() {
       this.listLoading = true
       stationGroupPage(this.listQuery).then(res => {

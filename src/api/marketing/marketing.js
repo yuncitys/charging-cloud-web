@@ -188,3 +188,12 @@ export function pageSubsidyBatch(params) {
 export function confirmSubsidyBatch(batchId) {
   return formRequest(`${BASE}/subsidy/batch/confirmOffline`, { batchId })
 }
+
+// 分组内成员明细（详情抽屉用）
+export function stationGroupMembers(id, params) {
+  return request({ url: `${BASE}/stationGroup/${id}/stations`, method: 'get', params })
+}
+
+export function userGroupMembers(id, params) {
+  return request({ url: `${BASE}/userGroup/${id}/users`, method: 'get', params })
+}
