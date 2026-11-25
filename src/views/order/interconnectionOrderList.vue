@@ -32,6 +32,7 @@ export const INTERCONNECTION_THEAD = {
 }
 
 export default {
+  // eslint-disable-next-line vue/name-property-casing, vue/component-definition-name-casing -- 与路由 name 保持一致，keep-alive include 才能命中
   name: 'interconnectionOrderList',
   components: { ScanOrderList },
   data() {
