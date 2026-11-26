@@ -102,10 +102,10 @@
       <el-table-column prop="detectTime" label="检测时间" width="150">
         <template slot-scope="scope">{{ formatTime(scope.row.detectTime) }}</template>
       </el-table-column>
-      <el-table-column label="失败原因" min-width="160" show-overflow-tooltip>
+      <el-table-column label="失败原因" min-width="180" show-overflow-tooltip>
         <template slot-scope="scope">{{ scope.row.lastError || '-' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="230" fixed="right" align="center">
+      <el-table-column label="操作" width="300" fixed="right" align="center">
         <template slot-scope="scope">
           <el-button size="mini" type="primary" @click="openDetail(scope.row)">详情</el-button>
           <el-button
