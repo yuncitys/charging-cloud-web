@@ -166,27 +166,24 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="操作" width="300" fixed="right" align="center">
+      <el-table-column label="操作" width="190" fixed="right" align="center">
         <template slot-scope="scope">
-          <el-button size="mini" type="primary" @click="openDetail(scope.row)">详情</el-button>
-          <el-button
-            v-if="scope.row.status === 1 && canSettle"
-            size="mini"
-            type="warning"
-            @click="openSettle(scope.row)"
-          >结算</el-button>
-          <el-button
-            v-if="scope.row.status === 1 && canSettle"
-            size="mini"
-            type="success"
-            @click="retryRow(scope.row)"
-          >重试</el-button>
-          <el-button
-            v-if="scope.row.status === 1 && canSettle"
-            size="mini"
-            type="danger"
-            @click="voidRow(scope.row)"
-          >作废</el-button>
+          <div class="abnormal-actions">
+            <el-button size="mini" type="primary" icon="el-icon-view" @click="openDetail(scope.row)">详情</el-button>
+            <el-dropdown
+              v-if="canSettle && scope.row.status === 1"
+              size="mini"
+              trigger="click"
+              @command="(command) => handleCommand(command, scope.row)"
+            >
+              <el-button size="mini" type="primary" icon="el-icon-d-arrow-right">更多</el-button>
+              <el-dropdown-menu slot="dropdown">
+                <el-dropdown-item command="settle" icon="el-icon-edit-outline">确认结算</el-dropdown-item>
+                <el-dropdown-item command="retry" icon="el-icon-refresh">重新结算</el-dropdown-item>
+                <el-dropdown-item command="void" icon="el-icon-delete" divided>作废</el-dropdown-item>
+              </el-dropdown-menu>
+            </el-dropdown>
+          </div>
         </template>
       </el-table-column>
     </el-table>
@@ -389,6 +386,15 @@ export default {
       this.listQuery.page = val
       this.loadData()
     },
+    handleCommand(command, row) {
+      if (command === 'settle') {
+        this.openSettle(row)
+      } else if (command === 'retry') {
+        this.retryRow(row)
+      } else if (command === 'void') {
+        this.voidRow(row)
+      }
+    },
     openSettle(row) {
       this.currentRow = row
       this.settleVisible = true
@@ -523,5 +529,56 @@ export default {
 }
 .filter-row {
   margin-bottom: 8px;
+}
+.abnormal-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.abnormal-data-table ::v-deep .el-table__cell {
+  padding: 0 !important;
+}
+.abnormal-data-table ::v-deep .el-table__header-wrapper th .cell {
+  text-align: center;
+}
+.abnormal-data-table .order-layout-col {
+  padding: 10px 0;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.abnormal-data-table .order-layout-item {
+  font-size: 14px;
+  color: #000;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+.abnormal-data-table .order-layout-item > span:first-child {
+  color: #909399;
+  flex-shrink: 0;
+  margin-right: 6px;
+  text-align: left;
+}
+.abnormal-data-table .order-layout-col--order .order-layout-item > span:first-child { width: 70px; }
+.abnormal-data-table .order-layout-col--station .order-layout-item > span:first-child { width: 70px; }
+.abnormal-data-table .order-layout-col--charge .order-layout-item > span:first-child { width: 98px; }
+.abnormal-data-table .order-layout-col--pay .order-layout-item > span:first-child { width: 98px; }
+.abnormal-data-table .order-layout-value {
+  color: #000;
+  flex: 1;
+  text-align: left;
+  display: block;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 </style>

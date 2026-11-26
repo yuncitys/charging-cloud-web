@@ -108,7 +108,7 @@
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
+        <el-row v-if="listQuery.orderType !== 4" :gutter="20">
           <el-col :span="8">
             <el-form-item label="异常状态">
               <el-select v-model="listQuery.abnormalStatus" clearable placeholder="全部" style="width: 100%;" @change="$emit('filter')">
