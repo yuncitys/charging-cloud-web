@@ -63,7 +63,6 @@
           v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormal:export')"
           size="small"
           type="primary"
-          plain
           icon="el-icon-download"
           :loading="exportLoading"
           @click="handleExport"
@@ -72,39 +71,101 @@
       </el-form-item>
     </el-form>
 
-    <el-table v-loading="listLoading" :data="list" border size="small" style="width: 100%;">
-      <el-table-column prop="orderCode" label="订单号" min-width="170" show-overflow-tooltip />
-      <el-table-column label="设备/枪" min-width="130">
-        <template slot-scope="scope">{{ scope.row.deviceCode || '-' }} / {{ scope.row.devicePort == null ? '-' : scope.row.devicePort }}</template>
-      </el-table-column>
-      <el-table-column label="用户" min-width="120">
-        <template slot-scope="scope">{{ scope.row.phoneNumber || scope.row.userCode || scope.row.plateNumber || '-' }}</template>
-      </el-table-column>
-      <el-table-column prop="payType" label="支付方式" width="110" />
-      <el-table-column label="上报电量/金额" min-width="130" align="right">
-        <template slot-scope="scope">{{ money(scope.row.reportedPower) }} 度 / {{ money(scope.row.reportedAmount) }} 元</template>
-      </el-table-column>
-      <el-table-column label="容量/来源" width="130">
-        <template slot-scope="scope">{{ scope.row.deviceCapacityW || '-' }}W / {{ capacityText(scope.row.capacitySource) }}</template>
-      </el-table-column>
-      <el-table-column label="类型" width="140">
+    <el-table
+      id="tableBox"
+      :key="tableKey"
+      v-loading="listLoading"
+      :data="list"
+      element-loading-text="拼命加载中......"
+      fit
+      :max-height="tableMaxHeight"
+      style="width: 100%;"
+      class="order-layout-table abnormal-data-table"
+    >
+      <el-table-column label="异常单" min-width="300">
         <template slot-scope="scope">
-          <el-tooltip :content="scope.row.abnormalReason || ''" placement="top">
-            <el-tag size="mini" :type="typeTag(scope.row.abnormalType)">{{ typeText(scope.row.abnormalType) }}</el-tag>
-          </el-tooltip>
+          <div class="order-layout-col order-layout-col--order">
+            <div class="order-layout-item">
+              <span>订单号：</span>
+              <span class="order-layout-value">{{ scope.row.orderCode }}</span>
+            </div>
+            <div class="order-layout-item">
+              <span>异常类型：</span>
+              <span class="order-layout-value">
+                <el-tag size="mini" :type="typeTag(scope.row.abnormalType)">{{ typeText(scope.row.abnormalType) }}</el-tag>
+              </span>
+            </div>
+            <div class="order-layout-item">
+              <span>异常原因：</span>
+              <span class="order-layout-value" :title="scope.row.abnormalReason">{{ scope.row.abnormalReason || '-' }}</span>
+            </div>
+          </div>
         </template>
       </el-table-column>
-      <el-table-column label="状态" width="110" align="center">
+
+      <el-table-column label="设备 / 用户" min-width="240">
         <template slot-scope="scope">
-          <el-tag size="mini" :type="statusTag(scope.row.status)">{{ statusText(scope.row.status) }}</el-tag>
+          <div class="order-layout-col order-layout-col--station">
+            <div class="order-layout-item">
+              <span>设备/枪：</span>
+              <span class="order-layout-value">{{ scope.row.deviceCode || '-' }} / {{ scope.row.devicePort == null ? '-' : scope.row.devicePort }}</span>
+            </div>
+            <div class="order-layout-item">
+              <span>用户：</span>
+              <span class="order-layout-value">{{ scope.row.phoneNumber || scope.row.userCode || scope.row.plateNumber || '-' }}</span>
+            </div>
+            <div class="order-layout-item">
+              <span>支付方式：</span>
+              <span class="order-layout-value">{{ scope.row.payType || '-' }}</span>
+            </div>
+          </div>
         </template>
       </el-table-column>
-      <el-table-column prop="detectTime" label="检测时间" width="150">
-        <template slot-scope="scope">{{ formatTime(scope.row.detectTime) }}</template>
+
+      <el-table-column label="上报凭证" min-width="260">
+        <template slot-scope="scope">
+          <div class="order-layout-col order-layout-col--charge">
+            <div class="order-layout-item">
+              <span>上报电量：</span>
+              <span class="order-layout-value">{{ money(scope.row.reportedPower) }} 度</span>
+            </div>
+            <div class="order-layout-item">
+              <span>上报金额：</span>
+              <span class="order-layout-value">{{ money(scope.row.reportedAmount) }} 元</span>
+            </div>
+            <div class="order-layout-item">
+              <span>容量/来源：</span>
+              <span class="order-layout-value">{{ scope.row.deviceCapacityW || '-' }}W / {{ capacityText(scope.row.capacitySource) }}</span>
+            </div>
+            <div class="order-layout-item">
+              <span>电表起止：</span>
+              <span class="order-layout-value">{{ money(scope.row.meterStart) }} → {{ money(scope.row.meterEnd) }}</span>
+            </div>
+          </div>
+        </template>
       </el-table-column>
-      <el-table-column label="失败原因" min-width="180" show-overflow-tooltip>
-        <template slot-scope="scope">{{ scope.row.lastError || '-' }}</template>
+
+      <el-table-column label="处理状态" min-width="230">
+        <template slot-scope="scope">
+          <div class="order-layout-col order-layout-col--pay">
+            <div class="order-layout-item">
+              <span>状态：</span>
+              <span class="order-layout-value">
+                <el-tag size="mini" :type="statusTag(scope.row.status)">{{ statusText(scope.row.status) }}</el-tag>
+              </span>
+            </div>
+            <div class="order-layout-item">
+              <span>检测时间：</span>
+              <span class="order-layout-value">{{ formatTime(scope.row.detectTime) }}</span>
+            </div>
+            <div class="order-layout-item">
+              <span>失败原因：</span>
+              <span class="order-layout-value" :title="scope.row.lastError">{{ scope.row.lastError || '-' }}</span>
+            </div>
+          </div>
+        </template>
       </el-table-column>
+
       <el-table-column label="操作" width="300" fixed="right" align="center">
         <template slot-scope="scope">
           <el-button size="mini" type="primary" @click="openDetail(scope.row)">详情</el-button>
@@ -118,14 +179,12 @@
             v-if="scope.row.status === 1 && canSettle"
             size="mini"
             type="success"
-            plain
             @click="retryRow(scope.row)"
           >重试</el-button>
           <el-button
             v-if="scope.row.status === 1 && canSettle"
             size="mini"
             type="danger"
-            plain
             @click="voidRow(scope.row)"
           >作废</el-button>
         </template>
@@ -151,7 +210,14 @@
       @success="loadData"
     />
 
-    <el-dialog title="异常订单详情" :visible.sync="detailVisible" width="1000px">
+    <el-drawer
+      title="异常订单详情"
+      :visible.sync="detailVisible"
+      direction="rtl"
+      size="1000px"
+      append-to-body
+      custom-class="abnormal-detail-drawer"
+    >
       <template v-if="detail">
         <el-descriptions :column="3" border size="small">
           <el-descriptions-item label="订单号">{{ detail.orderCode }}</el-descriptions-item>
@@ -191,7 +257,7 @@
           </el-table-column>
         </el-table>
       </template>
-    </el-dialog>
+    </el-drawer>
   </div>
 </template>
 
@@ -223,6 +289,8 @@ export default {
       listLoading: false,
       list: [],
       total: 0,
+      tableKey: 0,
+      tableMaxHeight: 620,
       summary: {},
       timeRange: [],
       listQuery: {

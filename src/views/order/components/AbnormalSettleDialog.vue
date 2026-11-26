@@ -1,9 +1,12 @@
 <template>
-  <el-dialog
+  <el-drawer
     title="异常订单结算"
     :visible="visible"
-    width="960px"
-    :close-on-click-modal="false"
+    direction="rtl"
+    size="960px"
+    append-to-body
+    :wrapper-closable="false"
+    custom-class="abnormal-settle-drawer"
     @close="close"
   >
     <div v-if="row" class="abnormal-settle">
@@ -34,7 +37,7 @@
         <template v-if="form.mode === 'CORRECTED'">
           <el-form-item label="总电量">
             <el-input-number v-model="form.totalPower" :min="0" :precision="4" :step="0.1" style="width: 180px;" />
-            <el-button size="mini" type="primary" plain style="margin-left: 8px;" @click="autoSplit">按上报占比分摊</el-button>
+            <el-button size="mini" type="primary" style="margin-left: 8px;" @click="autoSplit">按上报占比分摊</el-button>
             <span class="tip">只填总电量时，点“按上报占比分摊”生成四段，可再逐段微调</span>
           </el-form-item>
           <el-row :gutter="12">
@@ -112,11 +115,11 @@
       </el-form>
     </div>
 
-    <span slot="footer">
+    <div class="drawer-footer">
       <el-button size="small" @click="close">取消</el-button>
       <el-button size="small" type="primary" :loading="submitting" :disabled="!canSubmit" @click="doSubmit">确认结算</el-button>
-    </span>
-  </el-dialog>
+    </div>
+  </el-drawer>
 </template>
 
 <script>
@@ -306,5 +309,15 @@ export default {
   color: #909399;
   font-size: 12px;
   margin-left: 8px;
+}
+.drawer-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin-top: 16px;
+  padding: 12px 0;
+  background: #fff;
+  border-top: 1px solid #ebeef5;
+  text-align: right;
 }
 </style>
