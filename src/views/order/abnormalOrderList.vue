@@ -542,6 +542,13 @@ export default {
 .abnormal-data-table ::v-deep .el-table__header-wrapper th .cell {
   text-align: center;
 }
+.abnormal-data-table ::v-deep .el-table__body tr:hover > td.el-table__cell,
+.abnormal-data-table ::v-deep.el-table--enable-row-hover .el-table__body tr:hover > td,
+.abnormal-data-table ::v-deep .el-table__body tr.hover-row > td,
+.abnormal-data-table ::v-deep .el-table__body tr.current-row > td,
+.abnormal-data-table ::v-deep .el-table__body tr.current-row:hover > td {
+  background-color: #fff !important;
+}
 .abnormal-data-table .order-layout-col {
   padding: 10px 0;
   background: #fff;

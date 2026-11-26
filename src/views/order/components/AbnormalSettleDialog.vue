@@ -26,7 +26,7 @@
         <el-descriptions-item label="异常类型">{{ row.abnormalType || '-' }}</el-descriptions-item>
       </el-descriptions>
 
-      <el-form label-width="96px" size="small" style="margin-top: 12px;">
+      <el-form label-position="left" label-width="96px" size="small" style="margin-top: 12px;">
         <el-form-item label="结算方式">
           <el-radio-group v-model="form.mode" @change="onModeChange">
             <el-radio label="CORRECTED">修正后结算</el-radio>
@@ -40,24 +40,26 @@
             <el-button size="mini" type="primary" style="margin-left: 8px;" @click="autoSplit">按上报占比分摊</el-button>
             <span class="tip">只填总电量时，点“按上报占比分摊”生成四段，可再逐段微调</span>
           </el-form-item>
-          <el-row :gutter="12">
-            <el-col :span="6">
-              <el-form-item label="尖电量" label-width="70px">
+          <el-row :gutter="24">
+            <el-col :span="12">
+              <el-form-item label="尖电量">
                 <el-input-number v-model="form.jian" :min="0" :precision="4" :step="0.1" style="width: 100%;" />
               </el-form-item>
             </el-col>
-            <el-col :span="6">
-              <el-form-item label="峰电量" label-width="70px">
+            <el-col :span="12">
+              <el-form-item label="峰电量">
                 <el-input-number v-model="form.feng" :min="0" :precision="4" :step="0.1" style="width: 100%;" />
               </el-form-item>
             </el-col>
-            <el-col :span="6">
-              <el-form-item label="平电量" label-width="70px">
+          </el-row>
+          <el-row :gutter="24">
+            <el-col :span="12">
+              <el-form-item label="平电量">
                 <el-input-number v-model="form.ping" :min="0" :precision="4" :step="0.1" style="width: 100%;" />
               </el-form-item>
             </el-col>
-            <el-col :span="6">
-              <el-form-item label="谷电量" label-width="70px">
+            <el-col :span="12">
+              <el-form-item label="谷电量">
                 <el-input-number v-model="form.gu" :min="0" :precision="4" :step="0.1" style="width: 100%;" />
               </el-form-item>
             </el-col>
@@ -102,7 +104,7 @@
         <div class="tip" style="margin-top: 6px;">{{ preview.note }}</div>
       </template>
 
-      <el-form label-width="96px" size="small" style="margin-top: 12px;">
+      <el-form label-position="left" label-width="96px" size="small" style="margin-top: 12px;">
         <el-form-item label="原因" required>
           <el-input v-model="form.reason" maxlength="255" show-word-limit placeholder="必填：修正依据 / 与用户沟通情况" />
         </el-form-item>
@@ -310,12 +312,26 @@ export default {
   font-size: 12px;
   margin-left: 8px;
 }
-.drawer-footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  margin-top: 16px;
-  padding: 12px 0;
+
+</style>
+
+<style>
+.abnormal-settle-drawer .el-drawer__body {
+  display: flex;
+  flex-direction: column;
+  height: calc(100% - 55px);
+  padding: 0;
+  overflow: hidden;
+}
+.abnormal-settle-drawer .abnormal-settle {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 20px 12px;
+}
+.abnormal-settle-drawer .drawer-footer {
+  flex: 0 0 auto;
+  padding: 12px 20px;
   background: #fff;
   border-top: 1px solid #ebeef5;
   text-align: right;
