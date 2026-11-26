@@ -1,4 +1,5 @@
 <template>
+  <!-- eslint-disable vue/no-mutating-props -->
   <div class="order-search-panel">
     <el-form :model="listQuery" label-width="96px" class="order-search-form" size="small" @submit.native.prevent>
       <el-row :gutter="20">
@@ -109,6 +110,19 @@
 
         <el-row :gutter="20">
           <el-col :span="8">
+            <el-form-item label="异常状态">
+              <el-select v-model="listQuery.abnormalStatus" clearable placeholder="全部" style="width: 100%;" @change="$emit('filter')">
+                <el-option :value="1" label="待处理" />
+                <el-option :value="2" label="已结算" />
+                <el-option :value="5" label="已放行" />
+                <el-option :value="0" label="无异常" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="8">
             <el-form-item label="时间类型">
               <el-select v-model="listQuery.timeQueryType" placeholder="请选择时间类型" style="width: 100%;" @change="$emit('filter')">
                 <el-option :value="1" label="订单创建" />
@@ -142,7 +156,7 @@
         <downExcel :query-data="listQuery" :export-keys="exportKeys" size="small" class="order-search-export" />
         <el-button type="text" size="small" class="order-search-toggle" @click="searchExpanded = !searchExpanded">
           {{ searchExpanded ? '收起' : '展开' }}
-          <i :class="searchExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'"></i>
+          <i :class="searchExpanded ? 'el-icon-arrow-up' : 'el-icon-arrow-down'" />
         </el-button>
       </div>
     </el-form>
@@ -190,17 +204,17 @@ export default {
       electricOutOptions: []
     }
   },
-  created() {
-    getElectricOutTypeOptions().then(list => {
-      this.electricOutOptions = list || []
-    })
-  },
   computed: {
     timeQueryTypeLabel() {
       if (this.listQuery.timeQueryType === 2) return '订单开始时间'
       if (this.listQuery.timeQueryType === 3) return '订单结束时间'
       return '订单创建时间'
     }
+  },
+  created() {
+    getElectricOutTypeOptions().then(list => {
+      this.electricOutOptions = list || []
+    })
   },
   methods: {
     onTimeChange(value) {
