@@ -59,6 +59,16 @@
       <el-form-item>
         <el-button type="primary" size="small" icon="el-icon-search" @click="handleFilter">查询</el-button>
         <el-button size="small" icon="el-icon-refresh" @click="resetSearch">重置</el-button>
+        <el-button
+          v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormal:export')"
+          size="small"
+          type="primary"
+          plain
+          icon="el-icon-download"
+          :loading="exportLoading"
+          @click="handleExport"
+        >导出凭证</el-button>
+        <download-progress ref="downloadProgress" />
       </el-form-item>
     </el-form>
 
@@ -186,8 +196,9 @@
 </template>
 
 <script>
-import { getAbnormalPage, getAbnormalSummary, getAbnormalDetail, voidAbnormal, retryAbnormal } from '@/api/order/abnormalOrder.js'
+import { getAbnormalPage, getAbnormalSummary, getAbnormalDetail, voidAbnormal, retryAbnormal, exportAbnormal } from '@/api/order/abnormalOrder.js'
 import AbnormalSettleDialog from './components/AbnormalSettleDialog.vue'
+import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { parseTime } from '@/utils/index'
 
 const TYPE_OPTIONS = [
@@ -206,7 +217,7 @@ const TYPE_OPTIONS = [
 export default {
   // eslint-disable-next-line vue/name-property-casing, vue/component-definition-name-casing -- 与路由 name 保持一致，keep-alive include 才能命中
   name: 'abnormalOrderList',
-  components: { AbnormalSettleDialog },
+  components: { AbnormalSettleDialog, downloadProgress },
   data() {
     return {
       listLoading: false,
@@ -235,7 +246,8 @@ export default {
       currentRow: null,
       detailVisible: false,
       detail: null,
-      logs: []
+      logs: [],
+      exportLoading: false
     }
   },
   computed: {
@@ -324,6 +336,20 @@ export default {
         }
       }).catch(() => {
         this.$message.error('查询失败')
+      })
+    },
+    handleExport() {
+      this.exportLoading = true
+      exportAbnormal(this.listQuery).then((res) => {
+        if (res.code === 200 && res.data && res.data.id) {
+          this.$refs.downloadProgress.open(res.data.id)
+        } else {
+          this.$message.error(res.msg || '导出失败')
+        }
+      }).catch(() => {
+        this.$message.error('导出失败')
+      }).finally(() => {
+        this.exportLoading = false
       })
     },
     retryRow(row) {

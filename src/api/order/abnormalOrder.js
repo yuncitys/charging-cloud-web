@@ -57,3 +57,7 @@ export function retryAbnormal(data) {
 export function getAbnormalLogs(data) {
   return toForm({ url: '/api/web/order/abnormal/log/page', data })
 }
+
+export function exportAbnormal(data) {
+  return toForm({ url: '/api/web/order/abnormal/export', data })
+}
