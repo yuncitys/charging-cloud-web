@@ -116,7 +116,7 @@
             </div>
             <div class="order-layout-item">
               <span>支付方式：</span>
-              <span class="order-layout-value">{{ scope.row.payType || '-' }}</span>
+              <span class="order-layout-value">{{ payTypeText(scope.row.payType) }}</span>
             </div>
           </div>
         </template>
@@ -218,7 +218,7 @@
       <template v-if="detail">
         <el-descriptions :column="3" border size="small">
           <el-descriptions-item label="订单号">{{ detail.orderCode }}</el-descriptions-item>
-          <el-descriptions-item label="支付方式">{{ detail.payType || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="支付方式">{{ payTypeText(detail.payType) }}</el-descriptions-item>
           <el-descriptions-item label="状态">{{ statusText(detail.status) }}</el-descriptions-item>
           <el-descriptions-item label="异常类型">{{ typeText(detail.abnormalType) }}</el-descriptions-item>
           <el-descriptions-item label="检测来源">{{ detectSourceText(detail.detectSource) }}</el-descriptions-item>
@@ -263,6 +263,7 @@ import { getAbnormalPage, getAbnormalSummary, getAbnormalDetail, voidAbnormal, r
 import AbnormalSettleDialog from './components/AbnormalSettleDialog.vue'
 import downloadProgress from '@/components/Common/downloadProgress.vue'
 import { parseTime } from '@/utils/index'
+import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 
 const TYPE_OPTIONS = [
   { value: 'POWER_OVER_MAX', label: '超绝对上限' },
@@ -328,6 +329,9 @@ export default {
         { name: '谷', electric: this.detail.reportedGele, price: this.detail.reportedGprice, money: this.detail.reportedGmoney }
       ]
     }
+  },
+  mounted() {
+    this.$dict.getSelector('order_pay_method')
   },
   created() {
     const orderCode = this.$route.query.orderCode
@@ -461,6 +465,12 @@ export default {
           this.$message.error(res.msg || '作废失败')
         }
       }).catch(() => {})
+    },
+    payTypeText(payType) {
+      if (!payType) return '-'
+      const code = normalizeOrderPayMethodCode(payType)
+      const label = formatDictLabel('order_pay_method', code)
+      return label === code ? payType : label
     },
     formatTime(value) {
       return value ? parseTime(value) : '-'

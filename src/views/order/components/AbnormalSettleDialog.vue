@@ -19,7 +19,7 @@
 
       <el-descriptions :column="3" border size="small" style="margin-top: 12px;">
         <el-descriptions-item label="订单号">{{ row.orderCode }}</el-descriptions-item>
-        <el-descriptions-item label="支付方式">{{ row.payType || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="支付方式">{{ payTypeText(row.payType) }}</el-descriptions-item>
         <el-descriptions-item label="订单金额">{{ money(row.orderTotalPrice || row.totalPrice) }}</el-descriptions-item>
         <el-descriptions-item label="上报电量">{{ money(row.reportedPower) }} 度</el-descriptions-item>
         <el-descriptions-item label="上报金额">{{ money(row.reportedAmount) }} 元</el-descriptions-item>
@@ -126,6 +126,7 @@
 
 <script>
 import { previewAbnormalSettle, settleAbnormal } from '@/api/order/abnormalOrder.js'
+import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 
 export default {
   name: 'AbnormalSettleDialog',
@@ -159,6 +160,9 @@ export default {
         this.reset()
       }
     }
+  },
+  mounted() {
+    this.$dict.getSelector('order_pay_method')
   },
   methods: {
     emptyForm() {
@@ -285,6 +289,12 @@ export default {
     numberOrUndefined(value) {
       const num = Number(value)
       return Number.isFinite(num) && num > 0 ? num : undefined
+    },
+    payTypeText(payType) {
+      if (!payType) return '-'
+      const code = normalizeOrderPayMethodCode(payType)
+      const label = formatDictLabel('order_pay_method', code)
+      return label === code ? payType : label
     },
     money(value) {
       if (value === null || value === undefined || value === '') return '-'
