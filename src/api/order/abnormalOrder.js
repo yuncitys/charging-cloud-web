@@ -4,8 +4,9 @@ const formHeaders = {
   'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
 }
 
-function toForm(data) {
+function postForm(url, data) {
   return request({
+    url,
     method: 'post',
     headers: formHeaders,
     transformRequest: [
@@ -18,46 +19,46 @@ function toForm(data) {
         return ret.substring(0, ret.lastIndexOf('&'))
       }
     ],
-    data
+    data: data || {}
   })
 }
 
 export function getAbnormalPage(data) {
-  return toForm({ url: '/api/web/order/abnormal/page', data })
+  return postForm('/api/web/order/abnormal/page', data)
 }
 
 export function getAbnormalSummary(data) {
-  return toForm({ url: '/api/web/order/abnormal/summary', data })
+  return postForm('/api/web/order/abnormal/summary', data)
 }
 
 export function getAbnormalDetail(data) {
-  return toForm({ url: '/api/web/order/abnormal/detail', data })
+  return postForm('/api/web/order/abnormal/detail', data)
 }
 
 export function markAbnormal(data) {
-  return toForm({ url: '/api/web/order/abnormal/mark', data })
+  return postForm('/api/web/order/abnormal/mark', data)
 }
 
 export function voidAbnormal(data) {
-  return toForm({ url: '/api/web/order/abnormal/void', data })
+  return postForm('/api/web/order/abnormal/void', data)
 }
 
 export function previewAbnormalSettle(data) {
-  return toForm({ url: '/api/web/order/abnormal/settle/preview', data })
+  return postForm('/api/web/order/abnormal/settle/preview', data)
 }
 
 export function settleAbnormal(data) {
-  return toForm({ url: '/api/web/order/abnormal/settle', data })
+  return postForm('/api/web/order/abnormal/settle', data)
 }
 
 export function retryAbnormal(data) {
-  return toForm({ url: '/api/web/order/abnormal/retry', data })
+  return postForm('/api/web/order/abnormal/retry', data)
 }
 
 export function getAbnormalLogs(data) {
-  return toForm({ url: '/api/web/order/abnormal/log/page', data })
+  return postForm('/api/web/order/abnormal/log/page', data)
 }
 
 export function exportAbnormal(data) {
-  return toForm({ url: '/api/web/order/abnormal/export', data })
+  return postForm('/api/web/order/abnormal/export', data)
 }
