@@ -63,14 +63,14 @@
           <template slot-scope="scope">
             <el-button
               v-if="canCancelUserCoupon(scope.row)"
-              type="text"
-              size="small"
+              type="primary"
+              size="mini"
               @click="handleCancelUserCoupon(scope.row)"
             >作废</el-button>
             <el-button
               v-if="scope.row.orderCode"
-              type="text"
-              size="small"
+              type="primary"
+              size="mini"
               @click="viewOrder(scope.row)"
             >查看订单</el-button>
           </template>
@@ -102,7 +102,7 @@ import { parseTime } from '@/utils/index'
 import './styles/marketing.scss'
 
 export default {
-  name: 'cardCouponIssueList',
+  name: 'CardCouponIssueList',
   filters: {
     formatDate(time) {
       if (!time) return ''
@@ -159,7 +159,8 @@ export default {
     },
     canCancelUserCoupon(row) {
       if (!hasMarketingPerm(MARKETING_PERMS.userCouponCancel)) return false
-      return row.usedStatus === '0' || row.usedStatus === '3'
+      // 仅「未使用」可作废：已过期/使用中/已使用/已作废均为终态，不再提供作废入口
+      return row.usedStatus === '0'
     },
     goBack() {
       this.$router.push({ name: 'cardCouponList' })
