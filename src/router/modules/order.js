@@ -69,6 +69,15 @@ export default [
     }
   },
   {
+    path: '/order/abnormalLogList',
+    component: () => import('@/views/order/abnormalLogList'),
+    name: 'abnormalLogList',
+    meta: {
+      title: '异常处理记录',
+      icon: 'el-icon-document'
+    }
+  },
+  {
     path: '/order/orderDetail',
     component: () => import('@/views/order/components/orderDetail.vue'),
     name: 'orderDetail',

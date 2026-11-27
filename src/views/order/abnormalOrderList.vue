@@ -253,6 +253,9 @@
             <template slot-scope="scope">{{ formatTime(scope.row.createTime) }}</template>
           </el-table-column>
         </el-table>
+        <div style="margin-top: 10px; text-align: right;">
+          <el-button size="mini" @click="goLogPage">查看全部处理记录</el-button>
+        </div>
       </template>
     </el-drawer>
   </div>
@@ -402,6 +405,9 @@ export default {
     openSettle(row) {
       this.currentRow = row
       this.settleVisible = true
+    },
+    goLogPage() {
+      this.$router.push({ path: '/order/abnormalLogList', query: { orderCode: this.detail && this.detail.orderCode }})
     },
     openDetail(row) {
       getAbnormalDetail({ id: row.id }).then((res) => {

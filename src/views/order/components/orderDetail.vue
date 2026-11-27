@@ -364,7 +364,7 @@
 <script>
 import { findOrderInfoById, findOrderInfoByOrderCode, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
 import { getOrderExpenseInfo } from '@/api/orderExpenseInfo/orderExpenseInfo.js'
-import { getAbnormalDetail } from '@/api/order/abnormalOrder.js'
+import { getAbnormalDetail, markAbnormal } from '@/api/order/abnormalOrder.js'
 import { parseTime } from '@/utils/index'
 import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 import OrderTrendChart from './OrderTrendChart.vue'
@@ -408,6 +408,10 @@ export default {
     }
   },
   computed: {
+    canMarkAbnormal() {
+      return this.orderInfo && this.orderInfo.orderStatus === 3 && !this.abnormalInfo &&
+        this.btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormal')
+    },
     orderId() {
       const q = this.$route.query || {}
       const id = q.orderId != null && q.orderId !== '' ? q.orderId : q.id
@@ -638,6 +642,21 @@ export default {
         this.abnormalInfo = null
         this.abnormalLogs = []
       })
+    },
+    handleMarkAbnormal() {
+      this.$prompt('请输入标记异常的原因', '标记异常订单', {
+        inputValidator: (v) => !!(v && v.trim()),
+        inputPlaceholder: '如：人工发现电量异常，待确认结算'
+      }).then(({ value }) => {
+        return markAbnormal({ orderCode: this.orderInfo.orderCode, reason: value })
+      }).then((res) => {
+        if (res && res.code === 200) {
+          this.$message.success('已登记异常订单')
+          this.loadAbnormal(this.orderInfo.orderCode)
+        } else if (res) {
+          this.$message.error(res.msg || '标记失败')
+        }
+      }).catch(() => {})
     },
     goAbnormalHandle() {
       this.$router.push({ path: '/order/abnormalOrderList', query: { orderCode: this.orderInfo.orderCode }})
