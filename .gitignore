@@ -22,10 +22,9 @@ selenium-debug.log
 yarn.lock
 
 .worktrees/
-# Cursor 本地态忽略；rules 需入库以便团队/agent 共用
-.cursor/*
-!.cursor/rules/
-!.cursor/rules/*.mdc
+# Cursor / superpowers 仅本地使用，不入库
+.cursor/
+.superpowers/
 .pw-artifacts/
 
 
