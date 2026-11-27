@@ -18,13 +18,14 @@ export function createDefaultListQuery(orderType, ruleId) {
     networkName: '',
     orderType,
     ruleId,
+    abnormalStatus: null,
     chargingStationIds: ''
   }
 }
 
 export function sanitizeOrderListQuery(query) {
   const q = { ...query }
-  ;['electricOut', 'payStatus', 'orderStatus'].forEach((key) => {
+  ;['electricOut', 'payStatus', 'orderStatus', 'abnormalStatus'].forEach((key) => {
     const value = q[key]
     if (value === '' || value === null || value === undefined) {
       delete q[key]

@@ -1,7 +1,7 @@
 <template>
   <div class="order-detail-page app-container">
     <div class="toolbar">
-      <el-button icon="el-icon-back" size="small" @click="goBack" type="primary">返回</el-button>
+      <el-button icon="el-icon-back" size="small" type="primary" @click="goBack">返回</el-button>
     </div>
 
     <div v-loading="detailLoading" class="detail-body">
@@ -224,6 +224,70 @@
           </el-table>
         </el-card>
 
+        <!-- 异常信息 -->
+        <el-card v-if="abnormalInfo" class="block-card" shadow="never">
+          <div class="block-title">异常信息</div>
+          <el-row :gutter="16" class="kv-grid">
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">异常状态</span>
+              <span class="kv-value">
+                <el-tag size="mini" :type="abnormalInfo.status === 1 ? 'warning' : 'success'">{{ abnormalStatusText(abnormalInfo.status) }}</el-tag>
+              </span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">异常类型</span>
+              <span class="kv-value">{{ abnormalInfo.abnormalType || '—' }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">检测来源/时间</span>
+              <span class="kv-value">{{ abnormalInfo.detectSource || '—' }} / {{ formatDt(abnormalInfo.detectTime) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">上报电量</span>
+              <span class="kv-value">{{ abnormalInfo.reportedPower == null ? '—' : abnormalInfo.reportedPower + ' 度' }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">上报金额</span>
+              <span class="kv-value">{{ moneyText(abnormalInfo.reportedAmount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">容量/来源</span>
+              <span class="kv-value">{{ abnormalInfo.deviceCapacityW || '—' }}W / {{ abnormalInfo.capacitySource || '—' }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">电表起止</span>
+              <span class="kv-value">{{ abnormalInfo.meterStart == null ? '—' : abnormalInfo.meterStart }} → {{ abnormalInfo.meterEnd == null ? '—' : abnormalInfo.meterEnd }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">计算/结算金额</span>
+              <span class="kv-value">{{ moneyText(abnormalInfo.calcAmount) }} / {{ moneyText(abnormalInfo.settleAmount) }}</span>
+            </el-col>
+            <el-col :xs="24" :sm="12" :md="8" class="kv-item">
+              <span class="kv-label">结算阶段/重试</span>
+              <span class="kv-value">{{ abnormalInfo.settleStage || '—' }} / {{ abnormalInfo.settleRetryCount || 0 }} 次</span>
+            </el-col>
+            <el-col :xs="24" :sm="24" :md="24" class="kv-item">
+              <span class="kv-label">异常原因</span>
+              <span class="kv-value">{{ abnormalInfo.abnormalReason || '—' }}</span>
+            </el-col>
+            <el-col v-if="abnormalInfo.lastError" :xs="24" :sm="24" :md="24" class="kv-item">
+              <span class="kv-label">最近失败</span>
+              <span class="kv-value">{{ abnormalInfo.lastError }}</span>
+            </el-col>
+          </el-row>
+          <el-table v-if="abnormalLogs && abnormalLogs.length" :data="abnormalLogs" size="mini" border style="margin-top: 12px;">
+            <el-table-column prop="action" label="动作" width="130" />
+            <el-table-column prop="reason" label="原因" min-width="200" show-overflow-tooltip />
+            <el-table-column prop="operatorName" label="操作人" width="120" />
+            <el-table-column label="时间" width="170">
+              <template slot-scope="scope">{{ formatDt(scope.row.createTime) }}</template>
+            </el-table-column>
+          </el-table>
+          <div v-if="abnormalInfo.status === 1" style="margin-top: 10px;">
+            <el-button size="mini" type="warning" @click="goAbnormalHandle">去处理</el-button>
+          </div>
+        </el-card>
+
         <!-- 充电明细 -->
         <el-card class="block-card charge-details" shadow="never">
           <div class="block-title">充电明细（分段计费）</div>
@@ -300,11 +364,11 @@
 <script>
 import { findOrderInfoById, findOrderInfoByOrderCode, findDevicePowerDetails } from '@/api/order/scanOrderList.js'
 import { getOrderExpenseInfo } from '@/api/orderExpenseInfo/orderExpenseInfo.js'
+import { getAbnormalDetail, markAbnormal } from '@/api/order/abnormalOrder.js'
 import { parseTime } from '@/utils/index'
 import { formatDictLabel, normalizeOrderPayMethodCode } from '@/utils/dictionary'
 import OrderTrendChart from './OrderTrendChart.vue'
 
-const RULE_BIKE = 1
 const RULE_CAR = 2
 
 function axisTime(t) {
@@ -337,11 +401,17 @@ export default {
       chartsLoading: false,
       orderInfo: {},
       chargeDetails: [],
+      abnormalInfo: null,
+      abnormalLogs: [],
       chartTimes: [],
       chartRawList: []
     }
   },
   computed: {
+    canMarkAbnormal() {
+      return this.orderInfo && this.orderInfo.orderStatus === 3 && !this.abnormalInfo &&
+        this.btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormal')
+    },
     orderId() {
       const q = this.$route.query || {}
       const id = q.orderId != null && q.orderId !== '' ? q.orderId : q.id
@@ -522,6 +592,7 @@ export default {
           const code = this.orderInfo.orderCode || this.orderCode
           if (code) {
             this.loadExpense(code)
+            this.loadAbnormal(code)
             if (this.canViewCharts) {
               this.loadCharts(code)
             }
@@ -544,6 +615,7 @@ export default {
           const code = this.orderInfo.orderCode
           if (code) {
             this.loadExpense(code)
+            this.loadAbnormal(code)
             if (this.canViewCharts) {
               this.loadCharts(code)
             }
@@ -556,6 +628,41 @@ export default {
         this.detailLoading = false
         this.orderInfo = {}
       })
+    },
+    loadAbnormal(orderCode) {
+      getAbnormalDetail({ orderCode }).then(res => {
+        if (res.code === 200 && res.data && res.data.record) {
+          this.abnormalInfo = res.data.record
+          this.abnormalLogs = res.data.logs || []
+        } else {
+          this.abnormalInfo = null
+          this.abnormalLogs = []
+        }
+      }).catch(() => {
+        this.abnormalInfo = null
+        this.abnormalLogs = []
+      })
+    },
+    handleMarkAbnormal() {
+      this.$prompt('请输入标记异常的原因', '标记异常订单', {
+        inputValidator: (v) => !!(v && v.trim()),
+        inputPlaceholder: '如：人工发现电量异常，待确认结算'
+      }).then(({ value }) => {
+        return markAbnormal({ orderCode: this.orderInfo.orderCode, reason: value })
+      }).then((res) => {
+        if (res && res.code === 200) {
+          this.$message.success('已登记异常订单')
+          this.loadAbnormal(this.orderInfo.orderCode)
+        } else if (res) {
+          this.$message.error(res.msg || '标记失败')
+        }
+      }).catch(() => {})
+    },
+    goAbnormalHandle() {
+      this.$router.push({ path: '/order/abnormalOrderList', query: { orderCode: this.orderInfo.orderCode }})
+    },
+    abnormalStatusText(status) {
+      return { 1: '待处理', 2: '修正后已结算', 3: '按上报值已结算', 4: '已作废', 5: '已放行' }[status] || '—'
     },
     loadExpense(orderCode) {
       getOrderExpenseInfo(orderCode).then(res => {

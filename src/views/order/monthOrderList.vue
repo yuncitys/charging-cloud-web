@@ -145,6 +145,7 @@
               <div v-if="formThead.realityPayMoney" class="order-layout-item"><span>订单实付金额：</span><span v-overflow-title class="order-layout-value">{{ disp(scope.row.realityPayMoney) }}</span></div>
               <div v-if="formThead.payStatus" class="order-layout-item"><span>支付状态：</span><span v-overflow-title class="order-layout-value">{{ payStatusText(scope.row.payStatus) }}</span></div>
               <div v-if="formThead.payType" class="order-layout-item"><span>支付方式：</span><span v-overflow-title class="order-layout-value">{{ payTypeText(scope.row.payType) }}</span></div>
+              <div v-if="scope.row.abnormalStatus" class="order-layout-item"><span>异常：</span><span class="order-layout-value"><el-tag size="mini" :type="abnormalTagType(scope.row.abnormalStatus)">{{ abnormalStatusText(scope.row.abnormalStatus) }}</el-tag></span></div>
             </div>
           </template>
         </el-table-column>
@@ -172,6 +173,11 @@
                     command="handleAbnormalOrderSettlement"
                     icon="el-icon-warning-outline"
                   >异常结算</el-dropdown-item>
+                  <el-dropdown-item
+                    v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:abnormal') && scope.row.abnormalStatus == 1"
+                    command="handleAbnormalOrder"
+                    icon="el-icon-warning"
+                  >异常处理</el-dropdown-item>
                   <!-- <el-dropdown-item
                     v-if="btnAuthen.permsVerifAuthention(':sys:orderInfo:orderRefund') && showReturn(scope.row.orderStatus,scope.row.payStatus)"
                     command="handleOrderRefund"
@@ -311,11 +317,11 @@ export default {
     }
   },
   mounted() {
-      this.$dict.getSelector('order_type')
-      this.$dict.getSelector('electric_out_type')
-      this.$dict.getSelector('order_pay_method')
-      this.$dict.getSelector('order_start_type')
-      this.$dict.getSelector('price_type')
+    this.$dict.getSelector('order_type')
+    this.$dict.getSelector('electric_out_type')
+    this.$dict.getSelector('order_pay_method')
+    this.$dict.getSelector('order_start_type')
+    this.$dict.getSelector('price_type')
     this.getChargingStationList(this.activeName)
   },
   created() {
@@ -423,6 +429,9 @@ export default {
         case 'handleAbnormalOrderSettlement':
           this.abnormalOrderSettlement(row.orderCode)
           break
+        case 'handleAbnormalOrder':
+          this.toAbnormalOrder(row.orderCode)
+          break
         case 'handleOrderRefund':
           this.orderRefund(row.orderCode)
           break
@@ -435,6 +444,15 @@ export default {
         default:
           break
       }
+    },
+    toAbnormalOrder(orderCode) {
+      this.$router.push({ path: '/order/abnormalOrderList', query: { orderCode }})
+    },
+    abnormalStatusText(status) {
+      return { 1: '待处理', 2: '已结算', 3: '已结算', 4: '已作废', 5: '已放行' }[status] || ''
+    },
+    abnormalTagType(status) {
+      return { 1: 'warning', 2: 'success', 3: 'success', 4: 'info', 5: 'info' }[status] || ''
     },
     // 切换导航
     handleClick(tab, event) {
